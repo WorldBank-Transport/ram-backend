@@ -16,12 +16,12 @@ def filterTags(attrs):
     tags = {}
     
     if attrs['Class']:
-        tags.update({'Class':attrs['Class']})
+        tags.update({'highway':attrs['Class']})
     if attrs['ID']:
         tags.update({'id':attrs['ID']})
     if attrs['township_p']:
-        tags.update({'Township':attrs['township_p']})
+        tags.update({'TownshipUpgrade':attrs['township_p']})
     if attrs['county_p']:
-        tags.update({'Country':attrs['county_p']})
+        tags.update({'CountryUpgrade':attrs['county_p']})
         
     return tags
