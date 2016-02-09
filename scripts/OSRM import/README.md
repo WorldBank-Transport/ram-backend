@@ -22,4 +22,4 @@ Finally run the extract and prepare tools:
 ./osrm-prepare map.osrm
 ```
 
-This will take a few minutes depending on your configuration and the data. You will end up with a series of map.osrm.* files. These are the prepared OSRM files, which can be used by [osrm-iscochrone](https://github.com/mapbox/osrm-isochrone) for isochrones or osrm-routed for routing.
+This will take a few minutes depending on your configuration and the data. You will end up with a series of map.osrm.* files. These are the prepared OSRM files, which can be used by [osrm-isochrone](https://github.com/mapbox/osrm-isochrone) for isochrones or osrm-routed for routing.
