@@ -8,3 +8,6 @@ Documentation and translation file to convert a shapefile with a roadnetwork to 
 
 Documentation and profile file to convert an .osm file to an OSRM-prepared dataset
 
+###node
+
+The actual services to get statistics on the data run `node timematrix.js` or better `supervisor timematrix.js`
