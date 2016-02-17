@@ -40,7 +40,7 @@ POIs.prefectures = JSON.parse(fs.readFileSync('../../data/POIs/prefectures.geojs
 
 var villages = JSON.parse(fs.readFileSync('../../data/Ready to Use/Village_pop.geojson', 'utf8'));
 
-var network = '/home/steven/osrm-backend/build/map.osrm';
+var network = '../../data/OSRM-ready/map.osrm';
 
 var maxSpeed = 120,
 	maxTime = 3600;

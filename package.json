@@ -16,6 +16,7 @@
     "url": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility/issues"
   },
   "dependencies": {
+    "d3": "^3.5.15",
     "osrm": "^4.9.1",
     "osrm-isochrone": "^2.0.0",
     "socket.io": "^1.4.5",
