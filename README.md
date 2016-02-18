@@ -20,3 +20,4 @@ node index.js
 
 and open your browser at localhost:8080
 
+Then click on a region and the csv should come out (with messages on the terminal and the web console).
