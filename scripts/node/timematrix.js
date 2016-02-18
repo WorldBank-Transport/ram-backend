@@ -22,7 +22,7 @@ villages: point to the geojson containing the centerpoint of the villages
 
 network: point to the absolute location of the osrm file of the road network
 
-maxSpeed: the speed that will be used to define the size of the buffer around polygons 
+maxSpeed: the speed that will be used to define the size of the buffer around polygons
 in which to look for POIs (by multiplying the maxTime and maxSpeed)
 (typically 120km/h)
 
@@ -38,7 +38,7 @@ POIs.banks = JSON.parse(fs.readFileSync('../../data/POIs/banks.geojson','utf8'))
 POIs.counties = JSON.parse(fs.readFileSync('../../data/POIs/counties.geojson','utf8'));
 POIs.prefectures = JSON.parse(fs.readFileSync('../../data/POIs/prefectures.geojson','utf8'));
 
-var villages = JSON.parse(fs.readFileSync('../../data/Ready to Use/Village_pop.geojson', 'utf8'));
+var villages = JSON.parse(fs.readFileSync('../../data/ReadytoUse/Village_pop.geojson', 'utf8'));
 
 var network = '../../data/OSRM-ready/map.osrm';
 
@@ -63,12 +63,12 @@ io.on('connection',function (socket) {
 		if(!data||!data.center) {
 			console.warn('no data')
 			return false;
-		} 
+		}
 
-		socket.emit('status',{id:data.id,msg:'creating isochrone'})		
-		
+		socket.emit('status',{id:data.id,msg:'creating isochrone'})
+
 		var workingSet =villagesInCircle(data.center,data.time,maxSpeed);
-		
+
 		socket.emit('status',{id:data.id,msg:'workingset for the isochrone is '+workingSet.features.length})
 		var options = {
 			resolution: data.res,
@@ -89,22 +89,22 @@ io.on('connection',function (socket) {
 		if(!data||!data.feature) {
 			console.warn('no data')
 			return false;
-		} 
+		}
 		socket.emit('status',{id:data.id,msg:'creating statistics'})
-		
+
 		var result = [],
 		    poilist = [],
 		    geometryId = data.geometryId,
 		    workingSet = villagesInRegion(data.feature);
 
 		socket.emit('status',{id:data.id,msg:'workingset is '+workingSet.features.length});
-	
+
 		for(key in POIs) {
 			var poiset = poisInBuffer(data.feature,data.time,data.maxSpeed,POIs[key]);
 			socket.emit('status',{id:data.id,msg:'poiset for ' + key + 'is '+poiset.length});
 			poilist.push({type:key,feature:poiset});
 		}
-		
+
 		var options = {
 			network: network,
 			socket: socket,
@@ -122,9 +122,9 @@ io.on('connection',function (socket) {
 				}
 				else {
         			result.forEach(function(item){
-        				var key = item.poi;        				
+        				var key = item.poi;
         				item.list.forEach(function(listitem,idx){
-        					workingSet.features[idx].properties[key] = listitem.eta;	
+        					workingSet.features[idx].properties[key] = listitem.eta;
         				})
         			})
 					socket.emit('finished',{type:'poilist',data:workingSet,geometryId:geometryId});
