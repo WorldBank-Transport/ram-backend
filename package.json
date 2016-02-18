@@ -23,7 +23,6 @@
     "turf-buffer": "^1.1.0",
     "turf-featurecollection": "^1.0.1",
     "turf-point": "^2.0.1",
-    "turf-within": "^1.0.1",
-    "path": "0.12.7"
+    "turf-within": "^1.0.1"
   }
 }
