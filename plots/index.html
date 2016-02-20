@@ -122,6 +122,7 @@
       d.hospitals = d3.round((+d.hospitals)/60.,0);
       d.schools = d3.round((+d.schools)/60.,0);
       d.counties = d3.round((+d.counties)/60.,0);
+      if (d.prefectures == "Infinity") d.prefectures = -1;
       d.prefectures = d3.round((+d.prefectures)/60.,0);
     });
 
@@ -157,6 +158,7 @@
     .reduceSum(function(d) { return d.hospitals; });	// sums the magnitudes per hospitals
   var hospitalsValueGroupCount = hospitalsValue.group()
     .reduceCount(function(d) { return d.hospitals; }) // counts the number of the facts by hospitals
+  var maxHospital = hospitalsValue.top(1)[0].hospitals;
 
   var banksValue = facts.dimension(function (d) {
     return d.banks;       // group or filter by magnitude
@@ -165,6 +167,7 @@
     .reduceSum(function(d) { return d.banks; });	// sums the magnitudes per banks
   var banksValueGroupCount = banksValue.group()
     .reduceCount(function(d) { return d.banks; }) // counts the number of the facts by banks
+  var maxBanks = banksValue.top(1)[0].banks;
 
   var prefecturesValue = facts.dimension(function (d) {
     return d.prefectures;       // group or filter by magnitude
@@ -173,6 +176,7 @@
     .reduceSum(function(d) { return d.prefectures; });	// sums the magnitudes per counties
   var prefecturesValueGroupCount = prefecturesValue.group()
     .reduceCount(function(d) { return d.prefectures; }) // counts the number of the facts by counties
+  var maxPrefectures = prefecturesValue.top(1)[0].prefectures;
 
   var countiesValue = facts.dimension(function (d) {
     return d.counties;       // group or filter by magnitude
@@ -181,6 +185,7 @@
     .reduceSum(function(d) { return d.counties; });	// sums the magnitudes per counties
   var countiesValueGroupCount = countiesValue.group()
     .reduceCount(function(d) { return d.counties; }) // counts the number of the facts by counties
+  var maxCounties = countiesValue.top(1)[0].counties;
 
   var schoolsValue = facts.dimension(function (d) {
     return d.schools;       // group or filter by magnitude
@@ -189,6 +194,7 @@
     .reduceSum(function(d) { return d.schools; });	// sums the magnitudes per counties
   var schoolsValueGroupCount = schoolsValue.group()
     .reduceCount(function(d) { return d.schools; }) // counts the number of the facts by counties
+  var maxSchools = schoolsValue.top(1)[0].schools;
 
 
   // For datatable
@@ -207,10 +213,11 @@
     return (d.population);
   });
   // map/reduce to group sum
-  var volumeByPopulationGroup = volumeByPopulation.group()
+  var volumeByPopulationCount = volumeByPopulation.group()
     .reduceCount(function(d) { return d.population; });
-    var volumeByPopulationGroup = volumeByPopulation.group()
+  var volumeByPopulationGroup = volumeByPopulation.group()
       .reduceSum(function(d) { return d.population; });
+  var maxPopulation = volumeByPopulation.top(1)[0].population;
 
 /***************************************
 * 	Step4: Create the Visualisations   *
@@ -226,7 +233,7 @@
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
     .x(d3.scale.linear()
-    .domain([0, 200]))
+    .domain([0, maxHospital]))
 	.elasticY(true)
 	.xAxis().tickFormat(function(v) {return v;});
 
@@ -250,7 +257,7 @@
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, 200]))
+    .x(d3.scale.linear().domain([0, maxSchools]))
 	.elasticY(true)
 	.xAxis().tickFormat(function(v) {return v;});
 
@@ -262,7 +269,7 @@
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, 700]))
+    .x(d3.scale.linear().domain([0, maxPrefectures]))
 	.elasticY(true)
 	.xAxis().tickFormat(function(v) {return v;});
 
@@ -275,19 +282,20 @@
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, 200]))
+    .x(d3.scale.linear().domain([0, maxCounties]))
 	.elasticY(true)
-	.xAxis().tickFormat(function(v) {return v;});
+  .elasticX(true)
+  .xAxis().tickFormat(function(v) {return v;});
 
   // time graph
   populationChart.width(480)
     .height(150)
     .margins({top: 10, right: 10, bottom: 20, left: 40})
     .dimension(volumeByPopulation)
-    .group(volumeByPopulationGroup)
+    .group(volumeByPopulationCount)
     .transitionDuration(500)
 	.elasticY(true)
-    .x(d3.scale.log().domain([1e2, 1e8])) // scale and domain of the graph
+    .x(d3.scale.log().domain([1e2, maxPopulation])) // scale and domain of the graph
     .xAxis();
 
   // Table of earthquake data
