@@ -262,7 +262,7 @@
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, 200]))
+    .x(d3.scale.linear().domain([0, 700]))
 	.elasticY(true)
 	.xAxis().tickFormat(function(v) {return v;});
 
@@ -296,9 +296,9 @@
 	.group(function(d) {
     return "List of all villages corresponding to the filters"
 	 })
-	.size(100)							// number of rows to return
+	.size(1000)							// number of rows to return
     .columns([
-      function(d) { return d.COUNT; },
+      function(d) { return d.NAME; },
       function(d) { return d.NAME_2},
       function(d) { return d.NAME_3},
       function(d) { return d.NAME_4; },
