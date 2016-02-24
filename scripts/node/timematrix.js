@@ -7,7 +7,8 @@ var app = require('http').createServer(handler),
 	featurecollection = require('turf-featurecollection'),
     OSRM = require('osrm'),
     Isochrone = require('osrm-isochrone'),
-    d3 = require('d3');
+    d3 = require('d3'),
+    turf = require('turf');
 
 /* local file */
 var NearestPoi = require('./nearestpoi.js');
@@ -92,6 +93,17 @@ io.on('connection',function (socket) {
 			return false;
 		}
 		socket.emit('status',{id:data.id,msg:'creating statistics'})
+
+		var box = turf.envelope(data.feature);
+		var bl = turf.point([box.geometry.coordinates[0][0][0],box.geometry.coordinates[0][0][1]]);
+		var br = turf.point([box.geometry.coordinates[0][1][0],box.geometry.coordinates[0][1][1]]);
+		var tr = turf.point([box.geometry.coordinates[0][2][0],box.geometry.coordinates[0][2][1]]);
+		var tl = turf.point([box.geometry.coordinates[0][3][0],box.geometry.coordinates[0][3][1]]);
+
+		console.log('hieght: '+turf.distance(bl,tl,'kilometers'));
+		console.log('height: '+turf.distance(br,tr,'kilometers'));
+		console.log('width: '+turf.distance(bl,br,'kilometers'));
+		console.log('width: '+turf.distance(tl,tr,'kilometers'));
 
 		var result = [],
 		    poilist = [],
