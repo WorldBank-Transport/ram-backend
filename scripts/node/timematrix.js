@@ -45,7 +45,7 @@ var villages = JSON.parse(fs.readFileSync('../../data/ReadytoUse/Village_pop.geo
 var network = '../../data/OSRM-ready/map.osrm';
 
 var maxSpeed = 120,
-	maxTime = 1200;
+	maxTime = 3600;
 
 app.listen(5000);
 
@@ -95,20 +95,23 @@ io.on('connection',function (socket) {
 		socket.emit('status',{id:data.id,msg:'creating statistics'})
 
 		var box = turf.envelope(data.feature);
-		var bl = turf.point([box.geometry.coordinates[0][0][0],box.geometry.coordinates[0][0][1]]);
-		var br = turf.point([box.geometry.coordinates[0][1][0],box.geometry.coordinates[0][1][1]]);
-		var tr = turf.point([box.geometry.coordinates[0][2][0],box.geometry.coordinates[0][2][1]]);
-		var tl = turf.point([box.geometry.coordinates[0][3][0],box.geometry.coordinates[0][3][1]]);
+		var extent =[box.geometry.coordinates[0][0][0],box.geometry.coordinates[0][0][1],box.geometry.coordinates[0][2][0],box.geometry.coordinates[0][2][1]];
 
-		console.log('hieght: '+turf.distance(bl,tl,'kilometers'));
-		console.log('height: '+turf.distance(br,tr,'kilometers'));
-		console.log('width: '+turf.distance(bl,br,'kilometers'));
-		console.log('width: '+turf.distance(tl,tr,'kilometers'));
+		var grid =  turf.squareGrid(extent, 50, 'kilometers');
 
+		socket.emit('status',{id:data.id,msg:'created '+grid.features.length+' grid squares'})
+
+		grid.features.forEach(function(region,idx){
+			statsPerSquare(data,region,idx);
+		})
+	}
+
+	function statsPerSquare(data,region,squareId){
+		console.log('running statsPerSquare '+squareId);
 		var result = [],
 		    poilist = [],
-		    geometryId = data.geometryId,
-		    workingSet = villagesInRegion(data.feature);
+		    geometryId = data.geometryId+"-"+squareId,
+		    workingSet = villagesInRegion(region);
 
 		socket.emit('status',{id:data.id,msg:'workingset is '+workingSet.features.length});
 
