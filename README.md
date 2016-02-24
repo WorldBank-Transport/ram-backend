@@ -8,6 +8,7 @@ the files 'Village_pop.geojson' from the Ready to Use directory to data/ReadytoU
 
 The entire OSRM-ready directory to your choosing, update the network variable in scripts/node/timematrix.js
 
+prerequisites: node 0.10.* npm and git
 
 To run the service and get results (in csv form):
 ```
