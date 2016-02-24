@@ -6,7 +6,8 @@ var app = require('http').createServer(handler),
 	buffer = require('turf-buffer'),
 	featurecollection = require('turf-featurecollection'),
     OSRM = require('osrm'),
-    Isochrone = require('osrm-isochrone');
+    Isochrone = require('osrm-isochrone'),
+    d3 = require('d3');
 
 /* local file */
 var NearestPoi = require('./nearestpoi.js');
@@ -134,7 +135,18 @@ io.on('connection',function (socket) {
         					workingSet.features[idx].properties[key] = listitem.eta;
         				})
         			})
-					socket.emit('finished',{type:'poilist',data:workingSet,geometryId:geometryId});
+					var properties = workingSet.features.map(function (f) {
+                        f.properties.lat = f.geometry.coordinates[1];
+                        f.properties.lon = f.geometry.coordinates[0];
+                        return f.properties});
+					var print = d3.csv.format(properties);
+                    var file = '../../data/'+geometryId+'-'+data.id+'.csv';
+                    fs.writeFile(file, print, function(err){
+                        if(err) {
+                            return console.log(err);
+                        }
+                        socket.emit('finished',{type:'poilist',file:file,geometryId:geometryId});
+                    });
 				}
 			})
 			socket.emit('status',{id:data.id,msg:'matrix calculation for ' + poilist[index].type + ' is started'});
