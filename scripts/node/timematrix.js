@@ -43,7 +43,7 @@ var villages = JSON.parse(fs.readFileSync('../../data/ReadytoUse/Village_pop.geo
 var network = '../../data/OSRM-ready/map.osrm';
 
 var maxSpeed = 120,
-	maxTime = 3600;
+	maxTime = 1200;
 
 app.listen(5000);
 
@@ -100,8 +100,15 @@ io.on('connection',function (socket) {
 		socket.emit('status',{id:data.id,msg:'workingset is '+workingSet.features.length});
 
 		for(key in POIs) {
-			var poiset = poisInBuffer(data.feature,data.time,data.maxSpeed,POIs[key]);
-			socket.emit('status',{id:data.id,msg:'poiset for ' + key + 'is '+poiset.length});
+			var poiset={features:[]};
+			var buffertime = data.time;
+			while(poiset.features.length ==0) {
+			  console.log('buffertime for poi: '+buffertime)
+			  poiset= poisInBuffer(data.feature,buffertime,data.maxSpeed,POIs[key]);
+			  buffertime = buffertime+900;
+			}
+			buffertime -= 900;
+			socket.emit('status',{id:data.id,msg:'poiset for ' + key + ' is '+poiset.features.length + ' buffer id '+buffertime});
 			poilist.push({type:key,feature:poiset});
 		}
 
