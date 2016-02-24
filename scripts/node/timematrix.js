@@ -102,6 +102,8 @@ io.on('connection',function (socket) {
 		socket.emit('status',{id:data.id,msg:'created '+grid.features.length+' grid squares'})
 
 		grid.features.forEach(function(region,idx){
+
+			//TODO: make sure this is properly split out in child processes and that the number of childproccess == # cores
 			statsPerSquare(data,region,idx);
 		})
 	}
