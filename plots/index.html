@@ -83,6 +83,18 @@
 	</div>
   </div>
 
+  <div class='row'>
+    <div class='span12'>
+      <div class='row'>
+        <div class='pie-graph span6' id='dc-county-chart'>
+        <h4>Villages by County</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
 <H5>Generated with
   <a href="http://nickqizhu.github.io/dc.js/">dc.js</a>,
   <a href="http://square.github.io/crossfilter/">crossfilter</a>,
@@ -124,6 +136,7 @@
       d.counties = d3.round((+d.counties)/60.,0);
       if (d.prefectures == "Infinity") d.prefectures = -1;
       d.prefectures = d3.round((+d.prefectures)/60.,0);
+      d.county= d.NAME_3;
     });
 
 /******************************************************
@@ -137,6 +150,7 @@
   var prefecturesChart = dc.barChart("#dc-prefectures-chart");
   var countiesChart = dc.barChart("#dc-counties-chart");
   var dataTable = dc.dataTable("#dc-table-graph");
+  var isCountyChart = dc.rowChart("#dc-county-chart");
 
 /****************************************
 * 	Run the data through crossfilter    *
@@ -196,6 +210,11 @@
     .reduceCount(function(d) { return d.schools; }) // counts the number of the facts by counties
   var maxSchools = schoolsValue.top(1)[0].schools;
 
+  //For Counties. Pie Chart
+  var isCounty = facts.dimension(function (d) {
+    return d.county;
+    });
+  var isCountyGroup = isCounty.group();
 
   // For datatable
   var populationDimension = facts.dimension(function (d) {
@@ -297,6 +316,27 @@
 	.elasticY(true)
     .x(d3.scale.log().domain([1e2, maxPopulation])) // scale and domain of the graph
     .xAxis();
+
+  // Counties Charts
+  isCountyChart.width(900)
+      .height(2020)
+      .margins({top: 5, left: 10, right: 10, bottom: 20})
+      .dimension(isCounty)
+      .group(isCountyGroup)
+      .colors(d3.scale.category10())
+      .label(function (d){
+         return d.key;
+      })
+      .title(function(d){return d.value;})
+      .xAxis().ticks(4);
+
+  /*isCountyChart.width(250)
+    .height(220)
+    .radius(100)
+    .innerRadius(30)
+    .dimension(isCounty)
+    .title(function(d){return d.value;})
+    .group(isCountyGroup);*/
 
   // Table of earthquake data
   dataTable.width(960).height(800)
