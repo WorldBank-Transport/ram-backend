@@ -4,7 +4,7 @@
   <meta charset='utf-8'>
   <meta content='width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0' name='viewport'>
 
-  <title>dc.js Experiment</title>
+  <title>Accesibility stats</title>
 
   <script src='d3.js' type='text/javascript'></script>
   <script src='crossfilter.js' type='text/javascript'></script>
@@ -28,10 +28,10 @@
     <div class='span12'>
       <div class='row'>
         <div class='pie-graph span6' id='dc-hospital-chart'>
-        <h4>Villages by time to hospitals</h4>
+        <h4>Population by time to hospitals</h4>
         </div>
         <div class='pie-graph span6' id='dc-bank-chart'>
-	      <h4>Villages by time to banks</h4>
+	      <h4>Population by time to banks</h4>
         </div>
       </div>
     </div>
@@ -40,10 +40,10 @@
     <div class='span12'>
       <div class='row'>
         <div class='pie-graph span6' id='dc-counties-chart'>
-        <h4>Villages by time to counties</h4>
+        <h4>Population by time to counties</h4>
         </div>
         <div class='pie-graph span6' id='dc-prefectures-chart'>
-	      <h4>Villages by time to prefectures</h4>
+	      <h4>Population by time to prefectures</h4>
         </div>
       </div>
     </div>
@@ -53,10 +53,20 @@
     <div class='span12'>
       <div class='row'>
         <div class='pie-graph span6' id='dc-schools-chart'>
-        <h4>Villages by time to schools</h4>
+        <h4>Population by time to schools</h4>
         </div>
         <div class='pie-graph span6' id='dc-population-chart'>
 	      <h4>Villages by population</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class='row'>
+    <div class='span12'>
+      <div class='row'>
+        <div class='pie-graph span6' id='dc-county-chart'>
+        <h4>Villages by County</h4>
         </div>
       </div>
     </div>
@@ -81,16 +91,6 @@
         </thead>
       </table>
 	</div>
-  </div>
-
-  <div class='row'>
-    <div class='span12'>
-      <div class='row'>
-        <div class='pie-graph span6' id='dc-county-chart'>
-        <h4>Villages by County</h4>
-        </div>
-      </div>
-    </div>
   </div>
 
 
@@ -169,7 +169,7 @@
     return d.hospitals;       // group or filter by hospitals
   });
   var hospitalsValueGroupSum = hospitalsValue.group()
-    .reduceSum(function(d) { return d.hospitals; });	// sums the magnitudes per hospitals
+    .reduceSum(function(d) { return d.population; });	// sums the magnitudes per hospitals
   var hospitalsValueGroupCount = hospitalsValue.group()
     .reduceCount(function(d) { return d.hospitals; }) // counts the number of the facts by hospitals
   var maxHospital = hospitalsValue.top(1)[0].hospitals;
@@ -178,7 +178,7 @@
     return d.banks;       // group or filter by magnitude
   });
   var banksValueGroupSum = banksValue.group()
-    .reduceSum(function(d) { return d.banks; });	// sums the magnitudes per banks
+    .reduceSum(function(d) { return d.population; });	// sums the magnitudes per banks
   var banksValueGroupCount = banksValue.group()
     .reduceCount(function(d) { return d.banks; }) // counts the number of the facts by banks
   var maxBanks = banksValue.top(1)[0].banks;
@@ -187,7 +187,7 @@
     return d.prefectures;       // group or filter by magnitude
   });
   var prefecturesValueGroupSum = prefecturesValue.group()
-    .reduceSum(function(d) { return d.prefectures; });	// sums the magnitudes per counties
+    .reduceSum(function(d) { return d.population; });	// sums the magnitudes per counties
   var prefecturesValueGroupCount = prefecturesValue.group()
     .reduceCount(function(d) { return d.prefectures; }) // counts the number of the facts by counties
   var maxPrefectures = prefecturesValue.top(1)[0].prefectures;
@@ -196,7 +196,7 @@
     return d.counties;       // group or filter by magnitude
   });
   var countiesValueGroupSum = countiesValue.group()
-    .reduceSum(function(d) { return d.counties; });	// sums the magnitudes per counties
+    .reduceSum(function(d) { return d.population; });	// sums the magnitudes per counties
   var countiesValueGroupCount = countiesValue.group()
     .reduceCount(function(d) { return d.counties; }) // counts the number of the facts by counties
   var maxCounties = countiesValue.top(1)[0].counties;
@@ -205,9 +205,11 @@
     return d.schools;       // group or filter by magnitude
   });
   var schoolsValueGroupSum = schoolsValue.group()
-    .reduceSum(function(d) { return d.schools; });	// sums the magnitudes per counties
+    .reduceSum(function(d) { return d.population; });	// sums the magnitudes per counties
   var schoolsValueGroupCount = schoolsValue.group()
-    .reduceCount(function(d) { return d.schools; }) // counts the number of the facts by counties
+    .reduceCount(function(d) {
+      return d.schools; })
+      // counts the number of the facts by counties
   var maxSchools = schoolsValue.top(1)[0].schools;
 
   //For Counties. Pie Chart
@@ -245,9 +247,9 @@
   // hospitalChart Bar Graph Summed
   hospitalChart.width(480)
     .height(150)
-    .margins({top: 10, right: 10, bottom: 20, left: 40})
+    .margins({top: 10, right: 10, bottom: 20, left: 60})
     .dimension(hospitalsValue)								// the values across the x axis
-    .group(hospitalsValueGroupCount)							// the values on the y axis
+    .group(hospitalsValueGroupSum)							// the values on the y axis
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
@@ -258,9 +260,9 @@
 
   bankChart.width(480)
     .height(150)
-    .margins({top: 10, right: 10, bottom: 20, left: 40})
+    .margins({top: 10, right: 10, bottom: 20, left: 60})
     .dimension(banksValue)								// the values across the x axis
-    .group(banksValueGroupCount)							// the values on the y axis
+    .group(banksValueGroupSum)							// the values on the y axis
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
@@ -270,9 +272,9 @@
 
   schoolsChart.width(480)
     .height(150)
-    .margins({top: 10, right: 10, bottom: 20, left: 40})
+    .margins({top: 10, right: 10, bottom: 20, left: 60})
     .dimension(schoolsValue)	// the values across the x axis
-    .group(schoolsValueGroupCount) // the values on the y axis
+    .group(schoolsValueGroupSum) // the values on the y axis
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
@@ -282,9 +284,9 @@
 
   prefecturesChart.width(480)
     .height(150)
-    .margins({top: 10, right: 10, bottom: 20, left: 40})
+    .margins({top: 10, right: 10, bottom: 20, left: 60})
     .dimension(prefecturesValue)								// the values across the x axis
-    .group(prefecturesValueGroupCount)							// the values on the y axis
+    .group(prefecturesValueGroupSum)							// the values on the y axis
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
@@ -295,9 +297,9 @@
 
   countiesChart.width(480)
     .height(150)
-    .margins({top: 10, right: 10, bottom: 20, left: 40})
+    .margins({top: 10, right: 10, bottom: 20, left: 60})
     .dimension(countiesValue)								// the values across the x axis
-    .group(countiesValueGroupCount)							// the values on the y axis
+    .group(countiesValueGroupSum)							// the values on the y axis
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
@@ -309,7 +311,7 @@
   // time graph
   populationChart.width(480)
     .height(150)
-    .margins({top: 10, right: 10, bottom: 20, left: 40})
+    .margins({top: 10, right: 10, bottom: 20, left: 60})
     .dimension(volumeByPopulation)
     .group(volumeByPopulationCount)
     .transitionDuration(500)
@@ -323,7 +325,7 @@
       .margins({top: 5, left: 10, right: 10, bottom: 20})
       .dimension(isCounty)
       .group(isCountyGroup)
-      .colors(d3.scale.category10())
+      .colors(d3.scale.category20())
       .label(function (d){
          return d.key;
       })
