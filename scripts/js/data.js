@@ -1,4 +1,4 @@
-d3.json('../../data/ReadytoUse/Guizhou_county.min.geojson',function (d) {
+d3.json('data/ReadytoUse/Guizhou_county.min.geojson',function (d) {
 	countylist = d.features;
 	var list = d3.select('#countyList')
 		.selectAll('p')

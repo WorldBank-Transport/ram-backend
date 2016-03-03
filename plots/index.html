@@ -7,15 +7,22 @@
   <title>Accesibility stats</title>
 
   <script src='d3.js' type='text/javascript'></script>
+  <script src='queue.v1.min.js' type='text/javascript'></script>
   <script src='crossfilter.js' type='text/javascript'></script>
-  <script src='dc.js' type='text/javascript'></script>
+  <script src='../node_modules/dc/dc.js' type='text/javascript'></script>
   <script src='jquery-1.9.1.min.js' type='text/javascript'></script>
   <script src='bootstrap.min.js' type='text/javascript'></script>
-
+ <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.15.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.15.0/mapbox-gl.css' rel='stylesheet' />
   <link href='bootstrap.min.css' rel='stylesheet' type='text/css'>
   <link href='dc.css' rel='stylesheet' type='text/css'>
+  <link href='../node_modules/leaflet/dist/leaflet.css' rel='stylesheet' type='text/css'>
+ 
 
-  <style type="text/css"></style>
+  <style type="text/css">
+  #map {
+height: 600px;
+    }</style>
 </head>
 
 <body>
@@ -32,9 +39,8 @@
           <span class="total-count"></span></span>
            villages
         </h3>
-
+      </div>
     </div>
-  </div>
   </div>
 
   <div class='row'>
@@ -78,12 +84,23 @@
   <div class='row'>
     <div class='span12'>
       <div class='row'>
+        <div class='span12' id='map'>
+        <h4>Map<button type="button" class="btn btn-default pull-right" onclick="onTheMap()">refresh</button></h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class='row'>
+    <div class='span12'>
+      <div class='row'>
         <div class='pie-graph span6' id='dc-county-chart'>
         <h4>Villages by County</h4>
         </div>
       </div>
     </div>
   </div>
+
 
   <div class='row'>
 	<div class='pie-graph span12'>
@@ -120,7 +137,18 @@
 </div>
 
 <script>
-
+function accumulate_group(source_group) {
+    return {
+        all:function () {
+            var cumulate = 0;
+            var result = [];
+            return source_group.all().map(function(d) {
+                cumulate += d.value;
+                return {key:d.key, value:cumulate};
+            });
+        }
+    };
+}
 /**********************************
 * Step0: Load data from json file *
 **********************************/
@@ -139,9 +167,15 @@
     d.depth = d3.round(+d.depth,0);
   });*/
 
-  d3.csv("normal.csv", function (data) {
+queue()
+.defer(d3.csv, '../data/normal.csv')
+.defer(d3.csv, '../data/fast.csv')
+.await(buildGraphs)
 
-    data.forEach(function(d) {
+var facts,all, hospitalsValue,volumeByPopulation;
+function buildGraphs(err,normal,fast) {
+
+    normal.forEach(function(d) {
       d.population  = +d.POP;
       d.banks   = d3.round((+d.banks)/60.,0);
       d.hospitals = d3.round((+d.hospitals)/60.,0);
@@ -152,6 +186,26 @@
       d.county= d.NAME_3;
     });
 
+    fast.forEach(function(d,idx) {
+      d.population  = +d.POP;
+      d.popdif=normal[idx].population - d.population;
+      d.banks   = d3.round((+d.banks)/60.,0);
+      d.bankdif = normal[idx].banks - d.banks;
+      d.hospitals = d3.round((+d.hospitals)/60.,0);
+      d.hospdif = normal[idx].hospitals - d.hospitals;
+      d.schools = d3.round((+d.schools)/60.,0);
+      d.schooldif = normal[idx].schools - d.schools;
+      d.counties = d3.round((+d.counties)/60.,0);
+      d.countydif = normal[idx].counties - d.counties
+      if (d.prefectures == "Infinity") d.prefectures = -1;
+      d.prefectures = d3.round((+d.prefectures)/60.,0);
+      d.prefdif = normal[idx].prefectures - d.prefectures;
+      d.county= d.NAME_3;
+      d.lat = d3.round(+d.lat,6);
+      d.lon = d3.round(+d.lon,6);
+    });
+
+    data = fast;
 /******************************************************
 * Step1: Create the dc.js chart objects & ling to div *
 ******************************************************/
@@ -169,8 +223,8 @@
 * 	Run the data through crossfilter    *
 ****************************************/
 
-  var facts = crossfilter(data);  // Gets our 'facts' into crossfilter
-  var all = facts.groupAll();
+  facts = crossfilter(data);  // Gets our 'facts' into crossfilter
+  all = facts.groupAll();
 
 /******************************************************
 * Create the Dimensions                               *
@@ -182,10 +236,12 @@
 dc.dataCount(".dc-data-count")
   .dimension(facts)
   .group(all);
+
 // for Magnitude -> hospitals
-var hospitalsValue = facts.dimension(function (d) {
+hospitalsValue = facts.dimension(function (d) {
     return d.hospitals;       // group or filter by hospitals
   });
+ 
   var hospitalsValueGroupSum = hospitalsValue.group()
     .reduceSum(function(d) { return d.population; });	// sums the magnitudes per hospitals
   var hospitalsValueGroupCount = hospitalsValue.group()
@@ -250,7 +306,7 @@ var hospitalsValue = facts.dimension(function (d) {
   var depthValueGroup = depthValue.group();
 */
   // define a daily volume Dimension
-  var volumeByPopulation = facts.dimension(function(d) {
+  volumeByPopulation = facts.dimension(function(d) {
     return (d.population);
   });
   // map/reduce to group sum
@@ -259,6 +315,7 @@ var hospitalsValue = facts.dimension(function (d) {
   var volumeByPopulationGroup = volumeByPopulation.group()
       .reduceSum(function(d) { return d.population; });
   var maxPopulation = volumeByPopulation.top(1)[0].population;
+
 
 /***************************************
 * 	Step4: Create the Visualisations   *
@@ -269,8 +326,9 @@ var hospitalsValue = facts.dimension(function (d) {
     .height(150)
     .margins({top: 10, right: 10, bottom: 20, left: 60})
     .dimension(hospitalsValue)								// the values across the x axis
-    .group(hospitalsValueGroupSum)							// the values on the y axis
-	.transitionDuration(500)
+    .group(accumulate_group(hospitalsValueGroupSum))              // the values on the y axis
+//      .group(hospitalsValueGroupSum)              // the values on the y axis
+  .transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
     .x(d3.scale.linear()
@@ -282,7 +340,7 @@ var hospitalsValue = facts.dimension(function (d) {
     .height(150)
     .margins({top: 10, right: 10, bottom: 20, left: 60})
     .dimension(banksValue)								// the values across the x axis
-    .group(banksValueGroupSum)							// the values on the y axis
+    .group(accumulate_group(banksValueGroupSum))							// the values on the y axis
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
@@ -294,7 +352,7 @@ var hospitalsValue = facts.dimension(function (d) {
     .height(150)
     .margins({top: 10, right: 10, bottom: 20, left: 60})
     .dimension(schoolsValue)	// the values across the x axis
-    .group(schoolsValueGroupSum) // the values on the y axis
+    .group(accumulate_group(schoolsValueGroupSum)) // the values on the y axis
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
@@ -306,7 +364,7 @@ var hospitalsValue = facts.dimension(function (d) {
     .height(150)
     .margins({top: 10, right: 10, bottom: 20, left: 60})
     .dimension(prefecturesValue)								// the values across the x axis
-    .group(prefecturesValueGroupSum)							// the values on the y axis
+    .group(accumulate_group(prefecturesValueGroupSum))							// the values on the y axis
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
@@ -319,7 +377,7 @@ var hospitalsValue = facts.dimension(function (d) {
     .height(150)
     .margins({top: 10, right: 10, bottom: 20, left: 60})
     .dimension(countiesValue)								// the values across the x axis
-    .group(countiesValueGroupSum)							// the values on the y axis
+    .group(accumulate_group(countiesValueGroupSum))							// the values on the y axis
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
@@ -352,6 +410,7 @@ var hospitalsValue = facts.dimension(function (d) {
       .title(function(d){return d.value;})
       .xAxis().ticks(4);
 
+
   /*isCountyChart.width(250)
     .height(220)
     .radius(100)
@@ -382,15 +441,16 @@ var hospitalsValue = facts.dimension(function (d) {
     .sortBy(function(d){ return d.population; })
     .order(d3.ascending);
 
+ 
 /****************************
 * Step6: Render the Charts  *
 ****************************/
 
   dc.renderAll();
 
-});
+};
 
 </script>
-
+ <script src='map.js' type='text/javascript'></script>
 </body>
 </html>
