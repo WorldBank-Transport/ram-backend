@@ -19,7 +19,7 @@ Finally run the extract and prepare tools:
 
 ```
 ./osrm-extract map.osm
-./osrm-prepare map.osrm
+./osrm-contract map.osrm
 ```
 
-This will take a few minutes depending on your configuration and the data. You will end up with a series of map.osrm.* files. These are the prepared OSRM files, which can be used by [osrm-isochrone](https://github.com/mapbox/osrm-isochrone) for isochrones or osrm-routed for routing.
+This will take a few minutes depending on your configuration and the data. You will end up with a series of map.osrm.* files. These are the prepared OSRM files, you need to copy these files to the the `data` directory of the RRA application and configure it to point to `map.osrm`.
