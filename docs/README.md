@@ -36,4 +36,4 @@ Once the timematrix service has started you can start the main application by go
 ```
 node index.js
 ```
-This will start a webservice on port 8080 so point your browser to http://localhost:8080 if you run it locally to view the main application.
+This will start a webservice on port 8888 so point your browser to http://localhost:8888 if you run it locally to view the main application.
