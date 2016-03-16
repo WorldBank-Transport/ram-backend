@@ -3,12 +3,9 @@ html, body {
  padding: 0;
 }
 #map {
- 	position: absolute;
-    top:0px;
-    bottom: 0px;
-    left: 0px;
-    right: 300px;
-    background: #272822;
+ 	width: 600px;
+ 	height: 400px;
+ 	background: #272822;
 }
 #sidebar {
 	display:inline;
@@ -26,12 +23,10 @@ html, body {
 p:hover {
 	background: #eeeeec;
 }
-
-#csv {
- 	position: absolute;
-    top:0px;
-    bottom: 0px;
-    left: 0px;
-    right: 300px;
-  	overflow:auto;
+#countyname {
+	z-index:10000;
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	background: white;
 }
