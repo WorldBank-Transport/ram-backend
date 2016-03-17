@@ -11,7 +11,7 @@ var Isochrone = require('./isochronebypoints.js');
 var concaveman = require('concaveman');
 
 /* load the datasets */
-var villages = JSON.parse(fs.readFileSync('../../data/Ready to Use/Village_pop.geojson', 'utf8'));
+var villages = JSON.parse(fs.readFileSync('../../data/ReadytoUse/Village_pop.geojson', 'utf8'));
 
 var POIs = {}
 POIs.hospitals = JSON.parse(fs.readFileSync('../../data/POIs/hospitals.geojson','utf8'));
@@ -21,7 +21,7 @@ POIs.counties = JSON.parse(fs.readFileSync('../../data/POIs/counties.geojson','u
 POIs.prefectures = JSON.parse(fs.readFileSync('../../data/POIs/prefectures.geojson','utf8'));
 
 
-var network = '/home/steven/osrm-backend/build/map.osrm';
+var network = '/home/steven/Rural-Road-Accessibility/data/OSRM-ready/map-slow.osrm';
 
 var allowCrossDomain = function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');

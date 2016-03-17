@@ -8,7 +8,8 @@ var app = require('http').createServer(handler),
     OSRM = require('osrm'),
     Isochrone = require('osrm-isochrone'),
     d3 = require('d3'),
-    turf = require('turf');
+    turf = require('turf'),
+    mkdirp = require('mkdirp');
 
 /* local file */
 var NearestPoi = require('./nearestpoi.js');
@@ -54,8 +55,19 @@ function handler(req, res) {
 	res.end("{connected:true}");
 }
 
+mkdirp('../../data/csv', function(err) { 
+  if(err) console.log(err)
+});
+
+var dir = '../../data/csv/'
 io.on('connection',function (socket) {
 	socket.emit('status', {socketIsUp: true});
+	var files = fs.readdirSync(dir);
+	files.sort(function(a, b) {
+	               return fs.statSync(dir + a).mtime.getTime() - 
+	                      fs.statSync(dir + b).mtime.getTime();
+	           });
+	socket.emit('status',{csvs:files});
 	socket.on('debug',function(data){console.log(data)});
 
 	socket.on('getisochrone', createIsochrone);
@@ -157,12 +169,12 @@ io.on('connection',function (socket) {
                         f.properties.lon = f.geometry.coordinates[0];
                         return f.properties});
 					var print = d3.csv.format(properties);
-                    var file = '../../data/'+geometryId+'-'+data.id+'.csv';
-                    fs.writeFile(file, print, function(err){
+                    var file = geometryId+'-'+data.id+'.csv';
+                    fs.writeFile('../../data/csv/'+file, print, function(err){
                         if(err) {
                             return console.log(err);
                         }
-                        socket.emit('finished',{type:'poilist',file:file,geometryId:geometryId});
+                        socket.emit('status',{type:'poilist',file:file,geometryId:geometryId});
                     });
 				}
 			})
