@@ -3,9 +3,41 @@ var getAll = false;
 var POIS = ['hospitals','schools','prefectures','banks','counties'];
 var socket = io('http://localhost:5000');
  socket.on('status', function (data) {
-    console.log(data);
-});
+      if(data.msg) {
+          d3.select('#logfield')
+          .insert("div", ":first-child")
+          .html(data.msg)
+      }
+      else if (data.socketIsUp) {
+          d3.select('#logfield')
+          .insert("div", ":first-child")
+          .html('connected to the server')
+          .style({color:'green','font-weight':'bold'})
+      }
+      else if(data.csvs) {
+            console.log(data.csvs);
+          d3.select('#csvlist')
+          .selectAll("tr")
+          .data(data.csvs)
+          .enter()
+          .insert('tr',":first-child")
+          .html(createCsvList)
+      }
+      else if(data.file) {
+          d3.select('#csvlist')
+          .insert("tr", ":first-child")
+          .html(createCsvList(data.file))
+      }
 
+});
+function createCsvList(csv) {
+      var time = csv.split('-')[2].split('.')[0];
+      var id = csv.split('-')[0];
+      var date = new Date(parseInt(time));
+
+      var result = '<td>Calculation done on '+date.toLocaleString()+' for ID '+id +': </td><td><a href="data/csv/'+csv+'">download CSV file</a> </td><td> <a href="plots/index.html?csv=../data/csv/'+csv+'">view statistics</a></td>';
+      return result;
+}
 socket.on('finished',function(data){
  	console.log('finished');
  	if(!data||!data.type) throw('data and type are required');
@@ -25,14 +57,10 @@ socket.on('finished',function(data){
 })
 
 socket.on('disconnect',function(){
- 	console.log('disconnect');
- 	if(getAll) {
-	 	window.setTimeout(function () {
-	 		console.log(runIdx);
-	 		runIdx = runIdx -1;
-	 		bigrun();
-	 	},10000)
-	 }
+      d3.select('#logfield')
+          .insert("div", ":first-child")
+          .html('disconnected, hang on trying again in a few seconds')
+          .style({color:'red','font-weight':'bold'})
 })
 
 function getPoiPop(features,poi,time) {

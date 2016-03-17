@@ -167,8 +167,12 @@ function accumulate_group(source_group) {
     d.depth = d3.round(+d.depth,0);
   });*/
 
+var csv = '../data/csv/normal.csv';
+if(window.location.search.split('?').length>1)
+csv = window.location.search.split('?')[1].split('=')[1];
+
 queue()
-.defer(d3.csv, '../data/normal.csv')
+.defer(d3.csv, csv)
 .await(buildGraphs)
 
 var facts,all, hospitalsValue,volumeByPopulation;
