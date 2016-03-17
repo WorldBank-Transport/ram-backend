@@ -1,24 +1,10 @@
-# Rural-Road-Accessibility
+# Rural-Road-Accessibility (RRA)
 
-create a data directory in the root and copy the following files from the Box:
+To start with the RRA application with the Guizhou data you need to copy various files from the shared Box folder, download the files in this repository and configure the application according to the [docs](docs/README.md).
 
-the entire POIs directory to data/POIs
+The files you need from the Box folder are:
+* POIs/*
+* ReadyToUse/Village_pop.geojson
+* OSRM-Ready/*
 
-the files 'Village_pop.geojson' from the Ready to Use directory to data/ReadytoUse (no spaces)
-
-The entire OSRM-ready directory to your choosing, update the network variable in scripts/node/timematrix.js
-
-prerequisites: node 0.10.* npm and git
-
-To run the service and get results (in csv form):
-```
-npm install
-cd scripts/node
-node timematrix.js
-cd ../..
-node index.js
-```
-
-and open your browser at localhost:8080
-
-Then click on a region and the csv should come out (with messages on the terminal and the web console).
+Clone this project using git and create the directory `data` in the root of the project and copy these files, including the directory names.

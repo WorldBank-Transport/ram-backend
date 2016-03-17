@@ -9,7 +9,7 @@
   <script src='d3.js' type='text/javascript'></script>
   <script src='queue.v1.min.js' type='text/javascript'></script>
   <script src='crossfilter.js' type='text/javascript'></script>
-  <script src='../node_modules/dc/dc.js' type='text/javascript'></script>
+  <script src='dc.js' type='text/javascript'></script>
   <script src='jquery-1.9.1.min.js' type='text/javascript'></script>
   <script src='bootstrap.min.js' type='text/javascript'></script>
  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.15.0/mapbox-gl.js'></script>
@@ -85,7 +85,7 @@ height: 600px;
     <div class='span12'>
       <div class='row'>
         <div class='span12' id='map'>
-        <h4>Map<button type="button" class="btn btn-default pull-right" onclick="onTheMap()">refresh</button></h4>
+        <h4>Map<button type="button" class="btn btn-primary pull-right" onclick="onTheMap()">refresh</button></h4>
         </div>
       </div>
     </div>
@@ -169,43 +169,24 @@ function accumulate_group(source_group) {
 
 queue()
 .defer(d3.csv, '../data/normal.csv')
-.defer(d3.csv, '../data/fast.csv')
 .await(buildGraphs)
 
 var facts,all, hospitalsValue,volumeByPopulation;
-function buildGraphs(err,normal,fast) {
+function buildGraphs(err,normal) {
 
-    normal.forEach(function(d) {
+    normal.forEach(function(d,idx) {
       d.population  = +d.POP;
       d.banks   = d3.round((+d.banks)/60.,0);
       d.hospitals = d3.round((+d.hospitals)/60.,0);
       d.schools = d3.round((+d.schools)/60.,0);
       d.counties = d3.round((+d.counties)/60.,0);
-      if (d.prefectures == "Infinity") d.prefectures = -1;
       d.prefectures = d3.round((+d.prefectures)/60.,0);
-      d.county= d.NAME_3;
-    });
-
-    fast.forEach(function(d,idx) {
-      d.population  = +d.POP;
-      d.popdif=normal[idx].population - d.population;
-      d.banks   = d3.round((+d.banks)/60.,0);
-      d.bankdif = normal[idx].banks - d.banks;
-      d.hospitals = d3.round((+d.hospitals)/60.,0);
-      d.hospdif = normal[idx].hospitals - d.hospitals;
-      d.schools = d3.round((+d.schools)/60.,0);
-      d.schooldif = normal[idx].schools - d.schools;
-      d.counties = d3.round((+d.counties)/60.,0);
-      d.countydif = normal[idx].counties - d.counties
-      if (d.prefectures == "Infinity") d.prefectures = -1;
-      d.prefectures = d3.round((+d.prefectures)/60.,0);
-      d.prefdif = normal[idx].prefectures - d.prefectures;
       d.county= d.NAME_3;
       d.lat = d3.round(+d.lat,6);
       d.lon = d3.round(+d.lon,6);
     });
 
-    data = fast;
+    data = normal;
 /******************************************************
 * Step1: Create the dc.js chart objects & ling to div *
 ******************************************************/
