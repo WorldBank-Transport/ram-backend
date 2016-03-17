@@ -122,10 +122,11 @@ io.on('connection',function (socket) {
 
 	function statsPerSquare(data,region,squareId){
 		console.log('running statsPerSquare '+squareId);
+		var area = turf.intersect(data.feature,region);
 		var result = [],
 		    poilist = [],
 		    geometryId = data.geometryId+"-"+squareId,
-		    workingSet = villagesInRegion(region);
+		    workingSet = villagesInRegion(area);
 
 		socket.emit('status',{id:data.id,msg:'workingset is '+workingSet.features.length});
 
