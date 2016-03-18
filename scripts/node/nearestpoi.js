@@ -6,7 +6,6 @@ module.exports = function (villages,pois,options, done) {
     var socket = options.socket;
 
     this.draw = function(destinations) {
-        socket.emit('status',{id:options.id,msg:'osrm done'})
         return destinations;
     };
     
@@ -30,8 +29,6 @@ module.exports = function (villages,pois,options, done) {
             return done(null, result);
         }
         else {
-            socket.emit('status',{id:options.id,msg:'osrm started'})
-           
             osrm.table({
                     destinations: destinations,
                     sources: sources
