@@ -69,6 +69,7 @@ var parallelLimit = os.cpus().length;
 
 
 io.on('connection',function (socket) {
+	var beginTime;
 	socket.emit('status', {socketIsUp: true}); //tell the client it is connected
 
 	var files = fs.readdirSync(dir);
@@ -140,6 +141,7 @@ io.on('connection',function (socket) {
 	};
 
 	function createTimeMatrix(data) {
+		beginTime = new Date().getTime();
 		if(!data||!data.feature) {
 			console.warn('no data')
 			return false;
@@ -241,7 +243,10 @@ io.on('connection',function (socket) {
                 if(err) {
                     return console.log(err);
                 }
-                socket.emit('status',{id:data.id,msg:'timematrix has been calculated'})
+				var calculationTime = (new Date().getTime()-beginTime)/1000;
+				var timing = Math.round(calculationTime) + ' seconds';
+				if(calculationTime>60) timing = Math.round(calculationTime/60)+' minutes';
+                socket.emit('status',{id:data.id,msg:'timematrix has been calculated in '+timing})
                 socket.emit('status',{type:'poilist',file:file,geometryId:data.geometryId});
             });
 		});
