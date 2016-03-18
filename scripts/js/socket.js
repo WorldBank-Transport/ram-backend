@@ -1,7 +1,8 @@
 
 var getAll = false;
 var POIS = ['hospitals','schools','prefectures','banks','counties'];
-var socket = io('http://localhost:5000');
+var sockethost = window.location.protocol +'//'+ window.location.host.split(':')[0] + ':5000'
+var socket = io(sockethost);
  socket.on('status', function (data) {
       if(data.msg) {
           d3.select('#logfield')
