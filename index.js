@@ -2,7 +2,10 @@ var http = require("http"),
     url = require("url"),
     path = require("path"),
     fs = require("fs")
-    port = process.argv[2] || 8888;
+    port = process.argv[2] || 8888,
+    fork = require('child_process').fork;
+
+var timematrix = fork('./scripts/node/timematrix.js');
 
 http.createServer(function(request, response) {
 
