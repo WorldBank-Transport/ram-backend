@@ -165,7 +165,10 @@ io.on('connection',function (socket) {
 			//clip the square with the input geometry
 			var area = turf.intersect(data.feature,square);
 			if(area===undefined) {
-				return false;
+				console.warn('empty area');
+				return function task(callback) {
+					taskCallback(matrix, callback);
+				}
 			}
 			//create a list of nearby POIs for each type
 			for(key in POIs) {
