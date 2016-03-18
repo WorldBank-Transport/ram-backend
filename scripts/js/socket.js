@@ -31,7 +31,7 @@ var socket = io('http://localhost:5000');
 
 });
 function createCsvList(csv) {
-      var time = csv.split('-')[2].split('.')[0];
+      var time = csv.split('-')[1].split('.')[0];
       var id = csv.split('-')[0];
       var date = new Date(parseInt(time));
 

@@ -64,7 +64,7 @@
     })
 
 function generateCSV (feature) {
-   socket.emit('getStatsForRegion',{feature:feature,id:new Date().getTime(),time:3600,maxSpeed:120,geometryId:feature.properties.OBJECTID})
+   socket.emit('getMatrixForRegion',{feature:feature,id:new Date().getTime(),time:3600,maxSpeed:120,geometryId:feature.properties.OBJECTID})
         
 }
     </script>
