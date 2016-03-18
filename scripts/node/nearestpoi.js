@@ -3,8 +3,7 @@ var OSRM = require('osrm');
 module.exports = function (villages,pois,options, done) {
     if (!options) throw 'options is mandatory';
     if (!options.network) throw 'network is mandatory in options';
-    var socket = options.socket;
-
+    
     this.draw = function(destinations) {
         return destinations;
     };

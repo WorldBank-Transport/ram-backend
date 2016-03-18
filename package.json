@@ -21,6 +21,7 @@
     "osrm": "^4.9.1",
     "osrm-isochrone": "^2.0.0",
     "socket.io": "^1.4.5",
+    "socket.io-client": "^1.4.5",
     "turf": "^2.0.2",
     "turf-buffer": "^1.1.0",
     "turf-featurecollection": "^1.0.1",

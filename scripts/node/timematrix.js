@@ -37,16 +37,16 @@ maxTime: the cutoff time for the matrix: everything above that time might not be
 */
 
 var POIs = {}
-POIs.hospitals = JSON.parse(fs.readFileSync('../../data/POIs/hospitals.geojson','utf8'));
-POIs.schools = JSON.parse(fs.readFileSync('../../data/POIs/schools.geojson','utf8'));
-POIs.banks = JSON.parse(fs.readFileSync('../../data/POIs/banks.geojson','utf8'));
-POIs.counties = JSON.parse(fs.readFileSync('../../data/POIs/counties.geojson','utf8'));
-POIs.prefectures = JSON.parse(fs.readFileSync('../../data/POIs/prefectures.geojson','utf8'));
+POIs.hospitals = JSON.parse(fs.readFileSync('./data/POIs/hospitals.geojson','utf8'));
+POIs.schools = JSON.parse(fs.readFileSync('./data/POIs/schools.geojson','utf8'));
+POIs.banks = JSON.parse(fs.readFileSync('./data/POIs/banks.geojson','utf8'));
+POIs.counties = JSON.parse(fs.readFileSync('./data/POIs/counties.geojson','utf8'));
+POIs.prefectures = JSON.parse(fs.readFileSync('./data/POIs/prefectures.geojson','utf8'));
 
-var villages = JSON.parse(fs.readFileSync('../../data/ReadytoUse/Village_pop.geojson', 'utf8'));
+var villages = JSON.parse(fs.readFileSync('./data/ReadytoUse/Village_pop.geojson', 'utf8'));
 
-var network = '../../data/OSRM-ready/map.osrm';
-var dir = '../../data/csv/';
+var network = './data/OSRM-ready/map.osrm';
+var dir = './data/csv/';
 
 var maxSpeed = 120,
 	maxTime = 3600;
@@ -77,7 +77,7 @@ io.on('connection',function (socket) {
        return fs.statSync(dir + a).mtime.getTime() - fs.statSync(dir + b).mtime.getTime();
     });
 
-	socket.emit('status',{csvs:files}); //send the current list of csv files
+	io.emit('status',{csvs:files}); //send the current list of csv files
 
 	/* triggers on the socket */
 	socket.on('debug',function(data){console.log(data)}); //debug modus
@@ -104,11 +104,11 @@ io.on('connection',function (socket) {
 			return false;
 		}
 
-		socket.emit('status',{id:data.id,msg:'creating isochrone'})
+		io.emit('status',{id:data.id,msg:'creating isochrone'})
 
 		var workingSet =villagesInCircle(data.center,data.time,maxSpeed);
 
-		socket.emit('status',{id:data.id,msg:'workingset for the isochrone is '+workingSet.features.length})
+		io.emit('status',{id:data.id,msg:'workingset for the isochrone is '+workingSet.features.length})
 		var options = {
 			resolution: data.res,
 			maxspeed: maxSpeed,
@@ -119,7 +119,7 @@ io.on('connection',function (socket) {
 			id:data.id
 		}
 		var isochrone = new Isochrone(data.center,data.time,options,function(err,features){
-			socket.emit('finished',{type:'isochrone',data:features})
+			io.emit('finished',{type:'isochrone',data:features})
 		})
 		isochrone.getIsochrone();
 	}
@@ -149,7 +149,7 @@ io.on('connection',function (socket) {
 		data.maxTime = data.maxTime || maxTime;
 		data.maxSpeed = data.maxSpeed || maxSpeed;
 
-		socket.emit('status',{id:data.id,msg:'creating timematrix'})
+		io.emit('status',{id:data.id,msg:'creating timematrix'})
 
 		//split the input region in squares for parallelisation
 		var box = turf.envelope(data.feature);
@@ -159,7 +159,7 @@ io.on('connection',function (socket) {
 		console.log('#squares: '+squares.features.length)
 
 		//tell the client how many squares there are
-		socket.emit('status',{id:data.id,msg:'split region in '+squares.features.length+' grid squares'})
+		io.emit('status',{id:data.id,msg:'split region in '+squares.features.length+' grid squares'})
 
 		var matrix = [], poilist=[];
 		//create a list of parallel processes
@@ -195,7 +195,7 @@ io.on('connection',function (socket) {
 				socket: socket,
 				id:data.id
 			}
-			socket.emit('status',{id:data.id,msg:'start calculating square '+squareIdx})
+			io.emit('status',{id:data.id,msg:'start calculating square '+squareIdx})
 						
 			return function task(callback) {
 				var newIdx = 0;
@@ -224,7 +224,7 @@ io.on('connection',function (socket) {
 							properties.forEach(function(property){
 								matrix.push(property);
 							})
-							socket.emit('status',{id:data.id,msg:'finished calculating square '+squareIdx})
+							io.emit('status',{id:data.id,msg:'finished calculating square '+squareIdx})
 							taskCallback(matrix, callback);
 						}
 					})
@@ -246,8 +246,8 @@ io.on('connection',function (socket) {
 				var calculationTime = (new Date().getTime()-beginTime)/1000;
 				var timing = Math.round(calculationTime) + ' seconds';
 				if(calculationTime>60) timing = Math.round(calculationTime/60)+' minutes';
-                socket.emit('status',{id:data.id,msg:'timematrix has been calculated in '+timing})
-                socket.emit('status',{type:'poilist',file:file,geometryId:data.geometryId});
+                io.emit('status',{id:data.id,msg:'timematrix has been calculated in '+timing})
+                io.emit('status',{type:'poilist',file:file,geometryId:data.geometryId});
             });
 		});
 	}
