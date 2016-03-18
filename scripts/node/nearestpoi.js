@@ -30,7 +30,6 @@ module.exports = function (villages,pois,options, done) {
             return done(null, result);
         }
         else {
-            console.log('start osrm')
             socket.emit('status',{id:options.id,msg:'osrm started'})
            
             osrm.table({
@@ -51,7 +50,6 @@ module.exports = function (villages,pois,options, done) {
                             });
                         });
                     }
-                    console.log('done with orsm');
                     var result = self.draw(results);
                     return done(null, result);
                 }
