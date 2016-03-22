@@ -45,7 +45,7 @@ POIs.prefectures = JSON.parse(fs.readFileSync('./data/POIs/prefectures.geojson',
 
 var villages = JSON.parse(fs.readFileSync('./data/ReadytoUse/Village_pop.geojson', 'utf8'));
 
-var network = './data/OSRM-ready/map.osrm';
+var network = new OSRM('./data/OSRM-ready/map.osrm');
 var dir = './data/csv/';
 
 var maxSpeed = 120,
@@ -61,10 +61,6 @@ function handler(req, res) {
 mkdirp(dir, function(err) { 
   if(err) console.log(err)
 });
-
-
-var parallelLimit = os.cpus().length;
-
 
 
 
@@ -146,6 +142,7 @@ io.on('connection',function (socket) {
 			console.warn('no data')
 			return false;
 		}
+		console.log(data.maxTime);
 		data.maxTime = data.maxTime || maxTime;
 		data.maxSpeed = data.maxSpeed || maxSpeed;
 
@@ -154,7 +151,7 @@ io.on('connection',function (socket) {
 		//split the input region in squares for parallelisation
 		var box = turf.envelope(data.feature);
 		var extent =[box.geometry.coordinates[0][0][0],box.geometry.coordinates[0][0][1],box.geometry.coordinates[0][2][0],box.geometry.coordinates[0][2][1]];
-		var squares =  turf.squareGrid(extent, 40, 'kilometers');
+		var squares =  turf.squareGrid(extent, 100, 'kilometers');
 
 		console.log('#squares: '+squares.features.length)
 
@@ -235,7 +232,7 @@ io.on('connection',function (socket) {
 				createMatrix(newIdx,callback);
 			}
 		})
-		async.parallelLimit(tasks, parallelLimit, function(){
+		async.parallel(tasks, function(){
 			//we are done, save as csv and send the filename
 			var print = d3.csv.format(matrix);
             var file = data.geometryId+'-'+data.id+'.csv';
