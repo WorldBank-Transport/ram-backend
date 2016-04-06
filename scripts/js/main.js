@@ -37,7 +37,9 @@
         map.fitBounds(area.getBounds());
         d3.select('#generateAll')
         .on('click',function(){
-            var all = turf.merge(data)
+            var all = turf.merge(data);
+            all.properties = {};
+            all.properties.OBJECTID = "Entire region"
             generateCSV(all)
         })
         
