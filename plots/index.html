@@ -16,7 +16,7 @@
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.15.0/mapbox-gl.css' rel='stylesheet' />
   <link href='bootstrap.min.css' rel='stylesheet' type='text/css'>
   <link href='dc.css' rel='stylesheet' type='text/css'>
-  <link href='../node_modules/leaflet/dist/leaflet.css' rel='stylesheet' type='text/css'>
+  <link href='./node_modules/leaflet/dist/leaflet.css' rel='stylesheet' type='text/css'>
  
 
   <style type="text/css">
@@ -32,7 +32,7 @@ height: 600px;
 <div class='container' style='font: 12px sans-serif;'>
 
   <div class='row dc-data-count'>
-    <div class='span12'>
+    <div class='span11'>
       <div class='row'>
         <h3><span class="filter-count"></span>
             selected out of
@@ -167,8 +167,12 @@ function accumulate_group(source_group) {
     d.depth = d3.round(+d.depth,0);
   });*/
 
+var csv = '../data/csv/normal.csv';
+if(window.location.search.split('?').length>1)
+csv = window.location.search.split('?')[1].split('=')[1];
+
 queue()
-.defer(d3.csv, '../data/normal.csv')
+.defer(d3.csv, csv)
 .await(buildGraphs)
 
 var facts,all, hospitalsValue,volumeByPopulation;
@@ -325,7 +329,7 @@ hospitalsValue = facts.dimension(function (d) {
 	.transitionDuration(500)
     .centerBar(true)
 	.gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, 200]))
+    .x(d3.scale.linear().domain([0, maxBanks]))
 	.elasticY(true)
 	.xAxis().tickFormat(function(v) {return v;});
 
@@ -380,7 +384,7 @@ hospitalsValue = facts.dimension(function (d) {
 
   // Counties Charts
   isCountyChart.width(900)
-      .height(2020)
+      .height(isCountyGroup.size()*25+50)
       .margins({top: 5, left: 10, right: 10, bottom: 20})
       .dimension(isCounty)
       .group(isCountyGroup)

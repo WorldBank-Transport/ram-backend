@@ -2,7 +2,23 @@ var http = require("http"),
     url = require("url"),
     path = require("path"),
     fs = require("fs")
-    port = process.argv[2] || 8888;
+    port = process.argv[2] || 8888,
+    fork = require('child_process').fork;
+
+function timematrix() {
+   var tm = fork('./scripts/node/timematrix.js');
+
+    tm.on('disconnect', function () {
+      console.warn('timematrix disconnected!');
+    });
+
+    tm.on('close', function () {
+      console.warn('timematrix crashed!');
+      timematrix()
+    });
+}
+
+timematrix();
 
 http.createServer(function(request, response) {
 
