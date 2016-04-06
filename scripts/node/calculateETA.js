@@ -8,7 +8,8 @@
 	buffer = require('turf-buffer'),
 	featurecollection = require('turf-featurecollection');
 
-var POIs = {}
+var POIs = {};
+var villages;
 var cpus = os.cpus().length;
 process.env.UV_THREADPOOL_SIZE=Math.floor(cpus*1.5);
 
@@ -19,7 +20,8 @@ process.on('message', function(e) {
 	for (key in POIfiles) {
 		POIs[key] = JSON.parse(fs.readFileSync(POIfiles[key],'utf8'));
 	}
-	var villages = JSON.parse(fs.readFileSync(e.villages, 'utf8'));
+	villages = JSON.parse(fs.readFileSync(e.villages, 'utf8'));
+	process.send({type:'status',data:'loaded all files'});
 	var squares = e.squares;
 	var data = e.data;
 
@@ -33,7 +35,7 @@ process.on('message', function(e) {
 				callback(null,[]);
 			}
 			else {
-				var workingSet = villagesInRegion(area);
+				var workingSet = villagesInRegion(area,villages);
 				if(workingSet.features.length === 0) {
 					process.send({type:'square'});
 					callback(null,[]);
@@ -132,7 +134,7 @@ process.on('message', function(e) {
 })
 
 //helper function to retrieve the villages within the given region
-function villagesInRegion(region) {
+function villagesInRegion(region,villages) {
 	var fc = featurecollection([region]);
 	var result = within(villages,fc);
 	return result;

@@ -1,19 +1,12 @@
 var app = require('http').createServer(handler),
 	io = require('socket.io')(app),
 	fs = require('fs'),
-	within = require('turf-within'),
-	point = require('turf-point'),
-	buffer = require('turf-buffer'),
-	featurecollection = require('turf-featurecollection'),
-    OSRM = require('osrm'),
-    Isochrone = require('osrm-isochrone'),
-    d3 = require('d3'),
-    turf = require('turf'),
-    mkdirp = require('mkdirp'),
     os = require('os'),
-    async = require('async'),    
+    d3 = require('d3'),
+    mkdirp = require('mkdirp'),    
     fork = require('child_process').fork,
-    cETA;
+    cETA,
+    cISO;
 
 /*###############################################################################
 
@@ -22,7 +15,7 @@ CONFIGURATION
 POIs: For each GeoJSON with points of interest (POI), add an attribute to POIs
 and point it to the geojson on disk
 
-villages: point to the geojson containing the centerpoint of the villages
+villagesFile: point to the geojson containing the centerpoint of the villages
 
 osrm: point to the absolute location of the osrm file of the road network
 
@@ -44,7 +37,7 @@ POIs.banks = './data/POIs/banks.geojson';
 POIs.counties = './data/POIs/counties.geojson';
 POIs.prefectures = './data/POIs/prefectures.geojson';
 
-var villages = './data/ReadytoUse/Village_pop.geojson';
+var villagesFile = './data/ReadytoUse/Village_pop.geojson';
 var osrm = './data/OSRM-ready/map.osrm';
 var dir = './data/csv/';
 
@@ -56,11 +49,17 @@ app.listen(5000);
 /* We run the actual calculations in a seperate thread, this way the socket.io connection 
 keeps working. */
 
-function createChild() {
+function createCETA() {
 	cETA = fork('./scripts/node/calculateETA.js');
-    cETA.on('close', function () {createChild()});
+    cETA.on('close', function () {createCETA()});
 }
-createChild();
+createCETA();
+
+function createISO() {
+	cISO = fork('./scripts/node/calculateIsochrone.js');
+    cISO.on('close', function () {createISO()});
+}
+createISO();
 
 function handler(req, res) {
 	res.writeHead(200);
@@ -70,6 +69,8 @@ function handler(req, res) {
 mkdirp(dir, function(err) { 
   if(err) console.log(err)
 });
+
+var villages = JSON.parse(fs.readFileSync(villagesFile, 'utf8'));
 
 io.on('connection',function (socket) {
 	var beginTime;
@@ -106,25 +107,20 @@ io.on('connection',function (socket) {
 			console.warn('no data')
 			return false;
 		}
+		console.log(data.time)
+		io.emit('status',{id:data.id,msg:'creating isochrone for ETA: '+data.time})
 
-		io.emit('status',{id:data.id,msg:'creating isochrone'})
-
-		var workingSet =villagesInCircle(data.center,data.time,maxSpeed);
-
-		io.emit('status',{id:data.id,msg:'workingset for the isochrone is '+workingSet.features.length})
-		var options = {
-			resolution: data.res,
-			maxspeed: maxSpeed,
-			unit: 'kilometers',
-			network: osrm,
-			destinations: workingSet,
-			socket: socket,
-			id:data.id
-		}
-		var isochrone = new Isochrone(data.center,data.time,options,function(err,features){
-			io.emit('finished',{type:'isochrone',data:features})
-		})
-		isochrone.getIsochrone();
+		cISO.send({data:data,villages:villagesFile,osrm:osrm,maxSpeed:maxSpeed});
+		
+		cISO.on('message',function(msg){
+			if(msg.type == 'error') {
+				console.warn(msg.data);
+			}
+			else if(msg.type =='done') {
+				io.emit('status',{id:data.id,msg:'finished'});
+				io.emit('finished',{type:'isochrone',data:data.data});
+			}
+		});
 	}
 
 	/* create distance matrix
@@ -159,7 +155,7 @@ io.on('connection',function (socket) {
 		//tell the client how many squares there are
 		io.emit('status',{id:data.id,msg:'split region in '+squares.features.length+' grid squares'})
 
-		cETA.send({data:data,squares:squares.features,POIs:POIs,villages:villages,osrm:osrm});
+		cETA.send({data:data,squares:squares.features,POIs:POIs,villages:villagesFile,osrm:osrm});
 		var remaining = squares.features.length;
 		cETA.on('message',function(msg){
 			if(msg.type == 'status') {
@@ -177,7 +173,7 @@ io.on('connection',function (socket) {
 				if(calculationTime>60) timing = Math.round(calculationTime/60)+' minutes';
 				console.log('timing: '+timing);
 	            io.emit('status',{id:data.id,msg:'timematrix has been calculated in '+timing});
-	            io.emit('status',{id:data.id,msg:'writing result to disk, this will take a while'});
+	            io.emit('status',{id:data.id,msg:'writing result to disk, this might take a while'});
 				var print = d3.csv.format(msg.data);
 				var file = data.geometryId+'-'+data.id+'.csv';
 			    fs.writeFile(dir+file, print, function(err){
@@ -185,21 +181,13 @@ io.on('connection',function (socket) {
 		                return console.log(err);
 	                }
 					console.log('finished '+file);
+					 io.emit('status',{id:data.id,msg:'finished'});
 					io.emit('status',{id:data.id,type:'poilist',file:file,geometryId:data.geometryId});
 		        });
 			}
 		});
 	}
 })
-
-//helper function to retrieve the villages within maxSpeed*maxTime radius
-function villagesInCircle(center,time,speed) {
-	var centerPt = point([center[0],center[1]]);
-	var length = (time/3600)*speed;
-	var circle = buffer(centerPt,length,'kilometers');
-	var result = within(villages,circle);
-	return result;
-}
 
 
 
