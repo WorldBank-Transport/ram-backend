@@ -129,9 +129,11 @@ process.on('message', function(e) {
 	})
 	async.parallelLimit(tasks,cpus,function(err, allresults){
 		var endresult = [];
-		allresults[0].forEach(function(r){
-			endresult.push(r);
-		})
+		allresults.forEach(function(ar){
+			ar.forEach(function(r){
+				endresult.push(r);
+			});
+		});
 		console.log('done');
 		process.send({type:'done',data:endresult});
 	});
