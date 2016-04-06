@@ -39,7 +39,7 @@
         .on('click',function(){
             var all = turf.merge(data);
             all.properties = {};
-            all.properties.OBJECTID = "Entire region"
+            all.properties.OBJECTID = "EntireRegion"
             generateCSV(all)
         })
         

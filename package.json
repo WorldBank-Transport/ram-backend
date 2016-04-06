@@ -18,6 +18,7 @@
   "dependencies": {
     "async": "^1.5.2",
     "d3": "^3.5.15",
+    "leaflet": "^0.7.7",
     "mkdirp": "^0.5.1",
     "osrm": "^4.9.1",
     "osrm-isochrone": "^2.0.0",

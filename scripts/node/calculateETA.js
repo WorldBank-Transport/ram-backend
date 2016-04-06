@@ -128,12 +128,10 @@ process.on('message', function(e) {
 		}
 	})
 	async.parallelLimit(tasks,cpus,function(err, allresults){
-		//[[obj,obj],[obj,obj]]
 		var endresult = [];
 		allresults[0].forEach(function(r){
 			endresult.push(r);
 		})
-		console.log(endresult);
 		console.log('done');
 		process.send({type:'done',data:endresult});
 	});
