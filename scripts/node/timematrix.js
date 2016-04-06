@@ -12,43 +12,8 @@ var app = require('http').createServer(handler),
     mkdirp = require('mkdirp'),
     os = require('os'),
     async = require('async'),    
-    fork = require('child_process').fork;
-
-var cETA, cETA1;
-
-function createChild() {
-   cETA = fork('./scripts/node/calculateETA.js');
-
-
-    cETA.on('disconnect', function () {
-      console.warn('cETA disconnected!');
-    });
-
-    cETA.on('close', function () {
-      console.warn('cETA crashed!');
-      createChild()
-    });
-}
-
-createChild();
-
-function createChild1() {
-   cETA1 = fork('./scripts/node/calculateETA.js');
-
-
-    cETA1.on('disconnect', function () {
-      console.warn('cETA disconnected!');
-    });
-
-    cETA1.on('close', function () {
-      console.warn('cETA crashed!');
-      createChild1()
-    });
-}
-
-createChild1();
-/* local file */
-var NearestPoi = require('./nearestpoi.js');
+    fork = require('child_process').fork,
+    cETA;
 
 /*###############################################################################
 
@@ -59,7 +24,9 @@ and point it to the geojson on disk
 
 villages: point to the geojson containing the centerpoint of the villages
 
-network: point to the absolute location of the osrm file of the road network
+osrm: point to the absolute location of the osrm file of the road network
+
+dir: point to the output directory
 
 maxSpeed: the speed that will be used to define the size of the buffer around polygons
 in which to look for POIs (by multiplying the maxTime and maxSpeed)
@@ -71,22 +38,29 @@ maxTime: the cutoff time for the matrix: everything above that time might not be
 */
 
 var POIs = {}
-POIs.hospitals = JSON.parse(fs.readFileSync('./data/POIs/hospitals.geojson','utf8'));
-POIs.schools = JSON.parse(fs.readFileSync('./data/POIs/schools.geojson','utf8'));
-POIs.banks = JSON.parse(fs.readFileSync('./data/POIs/banks.geojson','utf8'));
-POIs.counties = JSON.parse(fs.readFileSync('./data/POIs/counties.geojson','utf8'));
-POIs.prefectures = JSON.parse(fs.readFileSync('./data/POIs/prefectures.geojson','utf8'));
+POIs.hospitals = './data/POIs/hospitals.geojson';
+POIs.schools = './data/POIs/schools.geojson';
+POIs.banks = './data/POIs/banks.geojson';
+POIs.counties = './data/POIs/counties.geojson';
+POIs.prefectures = './data/POIs/prefectures.geojson';
 
-var villages = JSON.parse(fs.readFileSync('./data/ReadytoUse/Village_pop.geojson', 'utf8'));
-
-var osrm = new OSRM('./data/OSRM-ready/map.osrm');
+var villages = './data/ReadytoUse/Village_pop.geojson';
+var osrm = './data/OSRM-ready/map.osrm';
 var dir = './data/csv/';
-
 
 var maxSpeed = 120,
 	maxTime = 3600;
 
 app.listen(5000);
+
+/* We run the actual calculations in a seperate thread, this way the socket.io connection 
+keeps working. */
+
+function createChild() {
+	cETA = fork('./scripts/node/calculateETA.js');
+    cETA.on('close', function () {createChild()});
+}
+createChild();
 
 function handler(req, res) {
 	res.writeHead(200);
@@ -96,8 +70,6 @@ function handler(req, res) {
 mkdirp(dir, function(err) { 
   if(err) console.log(err)
 });
-
-
 
 io.on('connection',function (socket) {
 	var beginTime;
@@ -167,8 +139,6 @@ io.on('connection',function (socket) {
 	returns:
 	location of CSV file
 	*/
-	
-
 
 	function createTimeMatrix(data) {
 		beginTime = new Date().getTime();
@@ -184,13 +154,12 @@ io.on('connection',function (socket) {
 		//split the input region in squares for parallelisation
 		var box = turf.envelope(data.feature);
 		var extent =[box.geometry.coordinates[0][0][0],box.geometry.coordinates[0][0][1],box.geometry.coordinates[0][2][0],box.geometry.coordinates[0][2][1]];
-		var squares =  turf.squareGrid(extent,40, 'kilometers');
+		var squares =  turf.squareGrid(extent,30, 'kilometers');
 
-		console.log('#squares: '+squares.features.length)
 		//tell the client how many squares there are
 		io.emit('status',{id:data.id,msg:'split region in '+squares.features.length+' grid squares'})
 
-		cETA.send({data:data,squares:squares.features});
+		cETA.send({data:data,squares:squares.features,POIs:POIS,villages:villages,osrm:osrm});
 		var remaining = squares.features.length;
 		cETA.on('message',function(msg){
 			if(msg.type == 'status') {
@@ -202,14 +171,13 @@ io.on('connection',function (socket) {
 				io.emit('status',{id:data.id,msg:remaining+' squares remaining'});
 			}
 			else if(msg.type =='done') {
-				console.log('writing the file to disk');
 				//we are done, save as csv and send the filename
 				var calculationTime = (new Date().getTime()-beginTime)/1000;
 				var timing = Math.round(calculationTime) + ' seconds';
 				if(calculationTime>60) timing = Math.round(calculationTime/60)+' minutes';
 				console.log('timing: '+timing);
 	            io.emit('status',{id:data.id,msg:'timematrix has been calculated in '+timing});
-	           
+	            io.emit('status',{id:data.id,msg:'writing result to disk, this will take a while'});
 				var print = d3.csv.format(msg.data);
 				var file = data.geometryId+'-'+data.id+'.csv';
 			    fs.writeFile(dir+file, print, function(err){
@@ -217,13 +185,12 @@ io.on('connection',function (socket) {
 		                return console.log(err);
 	                }
 					console.log('finished '+file);
-					io.emit('status',{type:'poilist',file:file,geometryId:data.geometryId});
+					io.emit('status',{id:data.id,type:'poilist',file:file,geometryId:data.geometryId});
 		        });
 			}
 		});
 	}
 })
-
 
 //helper function to retrieve the villages within maxSpeed*maxTime radius
 function villagesInCircle(center,time,speed) {
@@ -234,19 +201,5 @@ function villagesInCircle(center,time,speed) {
 	return result;
 }
 
-//helper function to retrieve the villages within the given region
-function villagesInRegion(region) {
-	var fc = featurecollection([region]);
-	var result = within(villages,fc);
-	return result;
-}
-
-//helper function to retrieve pois of type 'poi' within a buffer around region
-function poisInBuffer(feature,time,speed,poi) {
-	var length = (time/3600)*speed;
-	var geom = featurecollection([buffer(feature,length,'kilometers')]);
-	var result = within(poi,geom);
-	return result;
-}
 
 

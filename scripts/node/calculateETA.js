@@ -2,35 +2,30 @@
     async = require('async'),
     os = require('os'),
     fs = require('fs'),
-    turf = require('turf'),
+    intersect = require('turf-intersect'),
     within = require('turf-within'),
 	point = require('turf-point'),
 	buffer = require('turf-buffer'),
 	featurecollection = require('turf-featurecollection');
 
-
 var POIs = {}
-POIs.hospitals = JSON.parse(fs.readFileSync('./data/POIs/hospitals.geojson','utf8'));
-POIs.schools = JSON.parse(fs.readFileSync('./data/POIs/schools.geojson','utf8'));
-POIs.banks = JSON.parse(fs.readFileSync('./data/POIs/banks.geojson','utf8'));
-POIs.counties = JSON.parse(fs.readFileSync('./data/POIs/counties.geojson','utf8'));
-POIs.prefectures = JSON.parse(fs.readFileSync('./data/POIs/prefectures.geojson','utf8'));
-
-var villages = JSON.parse(fs.readFileSync('./data/ReadytoUse/Village_pop.geojson', 'utf8'));
-
 var cpus = os.cpus().length;
 process.env.UV_THREADPOOL_SIZE=Math.floor(cpus*1.5);
-var osrm = new OSRM('./data/OSRM-ready/map.osrm');
 
 process.on('message', function(e) {
 	process.send({type:'status',data:'started'});
-	console.log('incoming msg');
+	var POIfiles = e.POIs;
+	var osrm = new OSRM(e.osrm);
+	for (key in POIfiles) {
+		POIS[key] = JSON.parse(fs.readFileSync(POIfiles[key],'utf8'));
+	}
+	var villages = JSON.parse(fs.readFileSync(e.villages, 'utf8'));
 	var squares = e.squares;
 	var data = e.data;
 
 	var tasks = squares.map(function createTask(square,squareIdx){
 		//clip the square with the input geometry
-		var area = turf.intersect(data.feature,square);
+		var area = intersect(data.feature,square);
 					
 		return function task(callback) {
 			if(area===undefined) {
@@ -60,8 +55,6 @@ process.on('message', function(e) {
 					}
 
 					//create a list of villages
-					
-					console.log(workingSet.features.length);
 					var taskID = squareIdx;
 					var newIdx = 0;
 					var subtasks = poilist.map(function createSubTask(poiitem){
@@ -74,13 +67,12 @@ process.on('message', function(e) {
 					        var destinations = poiitem.feature.features.map(function(feat) {
 					            return [feat.geometry.coordinates[1], feat.geometry.coordinates[0]]
 					        });
-					        if(sources.length ===0 || destinations.length ==0)
-					        	throw('no sources/destinations')
+					        if(sources.length ===0) throw('no sources');
 					        //There might be 0 destinations in the given area, osrm will trip over this, so we'll say it's infinity
 					        if(destinations.length == 0) {
 					            console.log('infinity');
 					            var empty = workingSet.features.map(function(f){return {eta:Infinity}});
-					            return subcallback(null,{poi:poiitem.type,list:empty} )
+					            return subcallback(null,{poi:poiitem.type,list:empty} );
 					        }
 					        else {
 					            osrm.table({
@@ -102,12 +94,13 @@ process.on('message', function(e) {
 					                            });
 					                        });
 					                    }
-					                    return subcallback(null,{poi:poiitem.type,list:results} )
+					                    return subcallback(null,{poi:poiitem.type,list:results} );
 					                }
 					            );
 					        }
 						}
 					});
+					//In series, because the main async will keep track of the threadpool and adding parallel tasks here overloads it.
 					async.series(subtasks,function(err,subresult){
 						var submatrix = [];
 						subresult.forEach(function(item){
@@ -119,7 +112,8 @@ process.on('message', function(e) {
 						properties = workingSet.features.map(function (f) {
 		                    f.properties.lat = f.geometry.coordinates[1];
 		                    f.properties.lon = f.geometry.coordinates[0];
-		                    return f.properties});
+		                    return f.properties
+		                });
 						properties.forEach(function(property){
 							submatrix.push(property);
 						})
@@ -143,7 +137,6 @@ function villagesInRegion(region) {
 	var result = within(villages,fc);
 	return result;
 }
-
 
 //helper function to retrieve pois of type 'poi' within a buffer around region
 function poisInBuffer(feature,time,speed,poi) {
