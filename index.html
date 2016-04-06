@@ -2,78 +2,29 @@
 <meta charset="utf-8" lang="en">
 <head>
 <title>Rural Road Accessibility</title>
-  <script src="./node_modules/socket.io-client/socket.io.js"></script>
   <meta id='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <link href='https://fonts.googleapis.com/css?family=Overlock' rel='stylesheet' type='text/css'>
+
 	<link href='./style/style.css' rel='stylesheet' type='text/css'/>
   <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+  <script src="./node_modules/socket.io-client/socket.io.js"></script>
+  <script src="./node_modules/d3/d3.min.js" charset="utf-8"></script>
+
   <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+   <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
   <script type="text/javascript" src="
 //api.tiles.mapbox.com/mapbox.js/plugins/turf/v2.0.0/turf.min.js"></script>
-  <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
-  <script src="./node_modules/d3/d3.min.js" charset="utf-8"></script>
+  
 </head>
 <body>
     <h1>Control application for rural road accessibility</h1>
-    <p>Map with the area of interest</p>
     <div id="map"> <div id="countyname"></div> </div>
    
     <div id="commands">Generate CSV file for:
     <button id="generateAll">Entire Area</button> or click on the map for a specific subarea</div>
-    <div><table id="csvlist"></table></div>
+    <div class="csvlist"><table id="csvlist"></table></div>
     <div id="logfield"></div>
     <script type="text/javascript" src="scripts/js/socket.js"></script> 
-    <script>
-   
-    var areafile = 'data/ReadytoUse/Guizhou_county.min.geojson';
-    var area;
-    var layer = new L.StamenTileLayer("toner-lite");
-    var map = new L.Map("map", {
-        center: new L.LatLng(26.5,107.5),
-        zoom: 8
-    });
-    map.addLayer(layer);
-
-    d3.json(areafile,function (data) {
-        area = L.geoJson(data, {
-            style: function(feature){
-                return {color:'#a6bddb',weight:1}
-            },
-            onEachFeature: function (feature, layer) {
-               layer.on('click',function(e){
-                  if(e.originalEvent.ctrlKey) {
-                    generateIsochrone(e.latlng,[900,1800,2700,3600]);//,4500,5400,6300,7200]);
-                  }
-                  else {
-                    generateCSV(feature);
-                  }
-               });
-               layer.on('mousemove',function(e) {
-                  d3.select('#countyname')
-                   .html(feature.properties.NAME_3)
-                   .style({left:(e.layerPoint.x+15)+'px',top:(e.layerPoint.y+5)+'px'})
-               })
-               layer.on('mouseout',function(){
-                 d3.select('#countyname')
-                   .html('')
-               })
-            }
-        });
-        area.addTo(map);
-        map.fitBounds(area.getBounds());
-        d3.select('#generateAll')
-        .on('click',function(){
-            var all = turf.merge(data)
-            generateCSV(all)
-        })
-        
-    })
-
-function generateCSV (feature) {
-   socket.emit('getMatrixForRegion',{feature:feature,id:new Date().getTime(),time:3600,maxSpeed:120,geometryId:feature.properties.OBJECTID})
-}
-function generateIsochrone (latlng,time){
-  socket.emit('getisochrone',{center:[latlng.lng,latlng.lat],res:100,id:new Date().getTime(),time:time})
-}
-    </script>
+    <script type="text/javascript" src="scripts/js/main.js"></script> 
   </body>
 </html>

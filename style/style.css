@@ -1,27 +1,16 @@
+* {font-family: 'Overlock', sans-serif;}
 html, body {
- margin: 0;
+ margin: 10;
  padding: 0;
 }
+h1 {
+	font-size: large;
+}
 #map {
- 	width: 600px;
+ 	margin: 0px;
+ 	border: solid 1px #444;
  	height: 400px;
  	background: #272822;
-}
-#sidebar {
-	display:inline;
-	width:300px;
-	position: absolute;
-	top:0px;
-	right:0px;
-	bottom:0px;
-}
-#countyList {
-	overflow: auto;
-	height: 100%;
-	cursor:pointer;
-}
-p:hover {
-	background: #eeeeec;
 }
 #countyname {
 	z-index:10000;
@@ -39,4 +28,11 @@ p:hover {
 	background: #eeeeec;
 	border: solid 1px #999;
 	border-radius: 3px;
+}
+.csvlist {
+	max-height: 300px;
+	overflow:auto;
+}
+#commands {
+	margin:10px;
 }
