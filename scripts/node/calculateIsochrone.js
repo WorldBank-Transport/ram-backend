@@ -38,7 +38,7 @@ process.on('message', function(e) {
     //helper function to retrieve the villages within maxSpeed*maxTime radius
 function villagesInCircle(center,time,speed) {
     var centerPt = point([center[0],center[1]]);
-    var length = (time*2/3600)*speed;
+    var length = (time*1.5/3600)*speed;
     var circle = featurecollection([buffer(centerPt,length,'kilometers')]);
     var result = within(villages,circle);
     return result;

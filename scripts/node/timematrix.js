@@ -107,8 +107,7 @@ io.on('connection',function (socket) {
 			console.warn('no data')
 			return false;
 		}
-		console.log(data.time)
-		io.emit('status',{id:data.id,msg:'creating isochrone for ETA: '+data.time})
+		io.emit('status',{id:data.id,msg:'creating isochrones for ETAs: '+data.time})
 
 		cISO.send({data:data,villages:villagesFile,osrm:osrm,maxSpeed:maxSpeed});
 		
@@ -118,7 +117,7 @@ io.on('connection',function (socket) {
 			}
 			else if(msg.type =='done') {
 				io.emit('status',{id:data.id,msg:'finished'});
-				io.emit('finished',{type:'isochrone',data:data.data});
+				io.emit('finished',{type:'isochrone',data:msg.data});
 			}
 		});
 	}

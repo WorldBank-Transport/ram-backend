@@ -41,7 +41,7 @@
             onEachFeature: function (feature, layer) {
                layer.on('click',function(e){
                   if(e.originalEvent.ctrlKey) {
-                    generateIsochrone(e.latlng,[900,1800,2700,3600,4500,5400,6300,7200]);
+                    generateIsochrone(e.latlng,[900,1800,2700,3600]);//,4500,5400,6300,7200]);
                   }
                   else {
                     generateCSV(feature);
