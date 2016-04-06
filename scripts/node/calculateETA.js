@@ -17,7 +17,7 @@ process.on('message', function(e) {
 	var POIfiles = e.POIs;
 	var osrm = new OSRM(e.osrm);
 	for (key in POIfiles) {
-		POIS[key] = JSON.parse(fs.readFileSync(POIfiles[key],'utf8'));
+		POIs[key] = JSON.parse(fs.readFileSync(POIfiles[key],'utf8'));
 	}
 	var villages = JSON.parse(fs.readFileSync(e.villages, 'utf8'));
 	var squares = e.squares;
