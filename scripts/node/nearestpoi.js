@@ -3,11 +3,7 @@ var OSRM = require('osrm');
 module.exports = function (villages,pois,options, done) {
     if (!options) throw 'options is mandatory';
     if (!options.network) throw 'network is mandatory in options';
-    
-    this.draw = function(destinations) {
-        return destinations;
-    };
-    
+        
     this.getList = function() {
         var osrm = options.network instanceof OSRM ? options.network : new OSRM(options.network);
         
@@ -24,8 +20,7 @@ module.exports = function (villages,pois,options, done) {
         if(destinations.length == 0) {
             console.log('infinity');
             var empty = villages.features.map(function(f){return {eta:Infinity}});
-            var result = self.draw(empty)
-            return done(null, result);
+            return done(null, empty);
         }
         else {
             osrm.table({
@@ -46,8 +41,7 @@ module.exports = function (villages,pois,options, done) {
                             });
                         });
                     }
-                    var result = self.draw(results);
-                    return done(null, result);
+                    return done(null, results);
                 }
             );
         }

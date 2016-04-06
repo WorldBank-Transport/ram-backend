@@ -11,8 +11,42 @@ var app = require('http').createServer(handler),
     turf = require('turf'),
     mkdirp = require('mkdirp'),
     os = require('os'),
-    async = require('async');
+    async = require('async'),    
+    fork = require('child_process').fork;
 
+var cETA, cETA1;
+
+function createChild() {
+   cETA = fork('./scripts/node/calculateETA.js');
+
+
+    cETA.on('disconnect', function () {
+      console.warn('cETA disconnected!');
+    });
+
+    cETA.on('close', function () {
+      console.warn('cETA crashed!');
+      createChild()
+    });
+}
+
+createChild();
+
+function createChild1() {
+   cETA1 = fork('./scripts/node/calculateETA.js');
+
+
+    cETA1.on('disconnect', function () {
+      console.warn('cETA disconnected!');
+    });
+
+    cETA1.on('close', function () {
+      console.warn('cETA crashed!');
+      createChild1()
+    });
+}
+
+createChild1();
 /* local file */
 var NearestPoi = require('./nearestpoi.js');
 
@@ -45,8 +79,9 @@ POIs.prefectures = JSON.parse(fs.readFileSync('./data/POIs/prefectures.geojson',
 
 var villages = JSON.parse(fs.readFileSync('./data/ReadytoUse/Village_pop.geojson', 'utf8'));
 
-var network = new OSRM('./data/OSRM-ready/map.osrm');
+var osrm = new OSRM('./data/OSRM-ready/map.osrm');
 var dir = './data/csv/';
+
 
 var maxSpeed = 120,
 	maxTime = 3600;
@@ -109,7 +144,7 @@ io.on('connection',function (socket) {
 			resolution: data.res,
 			maxspeed: maxSpeed,
 			unit: 'kilometers',
-			network: network,
+			network: osrm,
 			destinations: workingSet,
 			socket: socket,
 			id:data.id
@@ -132,9 +167,8 @@ io.on('connection',function (socket) {
 	returns:
 	location of CSV file
 	*/
-	function taskCallback(matrix, callback) {
-		callback(null, matrix);
-	};
+	
+
 
 	function createTimeMatrix(data) {
 		beginTime = new Date().getTime();
@@ -142,7 +176,6 @@ io.on('connection',function (socket) {
 			console.warn('no data')
 			return false;
 		}
-		console.log(data.maxTime);
 		data.maxTime = data.maxTime || maxTime;
 		data.maxSpeed = data.maxSpeed || maxSpeed;
 
@@ -151,101 +184,42 @@ io.on('connection',function (socket) {
 		//split the input region in squares for parallelisation
 		var box = turf.envelope(data.feature);
 		var extent =[box.geometry.coordinates[0][0][0],box.geometry.coordinates[0][0][1],box.geometry.coordinates[0][2][0],box.geometry.coordinates[0][2][1]];
-		var squares =  turf.squareGrid(extent, 100, 'kilometers');
+		var squares =  turf.squareGrid(extent,40, 'kilometers');
 
 		console.log('#squares: '+squares.features.length)
-
 		//tell the client how many squares there are
 		io.emit('status',{id:data.id,msg:'split region in '+squares.features.length+' grid squares'})
 
-		var matrix = [], poilist=[];
-		//create a list of parallel processes
-		var tasks = squares.features.map(function createTask(square,squareIdx){
-			//clip the square with the input geometry
-			var area = turf.intersect(data.feature,square);
-			if(area===undefined) {
-				console.warn('empty area');
-				return function task(callback) {
-					taskCallback(matrix, callback);
-				}
+		cETA.send({data:data,squares:squares.features});
+		var remaining = squares.features.length;
+		cETA.on('message',function(msg){
+			if(msg.type == 'status') {
+				console.log(msg.data);
+				io.emit('status',{id:data.id,msg:msg.data});
 			}
-			//create a list of nearby POIs for each type
-			for(key in POIs) {
-				var poiset={features:[]};
-				var buffertime = data.maxTime;
-				while(poiset.features.length ==0) {
-				  console.log('buffertime for poi: '+buffertime)
-				  poiset= poisInBuffer(area,buffertime,data.maxSpeed,POIs[key]);
-				  buffertime = buffertime+900;
-				}
-				buffertime -= 900;
-				//socket.emit('status',{id:data.id,msg:'poiset for ' + key + ' is '+poiset.features.length + ' buffer is '+buffertime});
-				poilist.push({type:key,feature:poiset});
+			else if(msg.type=='square') {
+				remaining--;
+				io.emit('status',{id:data.id,msg:remaining+' squares remaining'});
 			}
-
-			//create a list of villages
-			var workingSet = villagesInRegion(area);
-
-			console.log('workingset for '+squareIdx+' is '+workingSet.features.length);
-			var options = {
-				network: network,
-				socket: socket,
-				id:data.id
-			}
-			io.emit('status',{id:data.id,msg:'start calculating square '+squareIdx})
-						
-			return function task(callback) {
-				var newIdx = 0;
-				var result = [];
-				function createMatrix(index,callback) {
-					console.log(poilist[index].type);
-					var nearestPoi = new NearestPoi(workingSet,poilist[index].feature,options,function (err,list) {
-					//	socket.emit('status',{id:data.id,msg:'matrix for ' + poilist[index].type + ' is done'});
-						result.push({poi:poilist[index].type,list:list});
-						//next item in the POIs object
-						if(index<poilist.length-1) {
-							newIdx = index +1;
-							createMatrix(newIdx,callback);
-						}
-						else {
-		        			result.forEach(function(item){
-		        				var key = item.poi;
-		        				item.list.forEach(function(listitem,idx){
-		        					workingSet.features[idx].properties[key] = listitem.eta;
-		        				})
-		        			})
-							properties = workingSet.features.map(function (f) {
-		                        f.properties.lat = f.geometry.coordinates[1];
-		                        f.properties.lon = f.geometry.coordinates[0];
-		                        return f.properties});
-							properties.forEach(function(property){
-								matrix.push(property);
-							})
-							io.emit('status',{id:data.id,msg:'finished calculating square '+squareIdx})
-							taskCallback(matrix, callback);
-						}
-					})
-					//socket.emit('status',{id:data.id,msg:'matrix calculation for ' + poilist[index].type + ' is started'});
-					nearestPoi.getList();
-				}
-				//Start calculating matrices
-				createMatrix(newIdx,callback);
-			}
-		})
-		async.parallel(tasks, function(){
-			//we are done, save as csv and send the filename
-			var print = d3.csv.format(matrix);
-            var file = data.geometryId+'-'+data.id+'.csv';
-            fs.writeFile(dir+file, print, function(err){
-                if(err) {
-                    return console.log(err);
-                }
+			else if(msg.type =='done') {
+				console.log('writing the file to disk');
+				//we are done, save as csv and send the filename
 				var calculationTime = (new Date().getTime()-beginTime)/1000;
 				var timing = Math.round(calculationTime) + ' seconds';
 				if(calculationTime>60) timing = Math.round(calculationTime/60)+' minutes';
-                io.emit('status',{id:data.id,msg:'timematrix has been calculated in '+timing})
-                io.emit('status',{type:'poilist',file:file,geometryId:data.geometryId});
-            });
+				console.log('timing: '+timing);
+	            io.emit('status',{id:data.id,msg:'timematrix has been calculated in '+timing});
+	           
+				var print = d3.csv.format(msg.data);
+				var file = data.geometryId+'-'+data.id+'.csv';
+			    fs.writeFile(dir+file, print, function(err){
+			        if(err) {
+		                return console.log(err);
+	                }
+					console.log('finished '+file);
+					io.emit('status',{type:'poilist',file:file,geometryId:data.geometryId});
+		        });
+			}
 		});
 	}
 })
@@ -272,7 +246,6 @@ function poisInBuffer(feature,time,speed,poi) {
 	var length = (time/3600)*speed;
 	var geom = featurecollection([buffer(feature,length,'kilometers')]);
 	var result = within(poi,geom);
-	console.log(result.features.length+ ' pois within time');
 	return result;
 }
 
