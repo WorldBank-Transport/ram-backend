@@ -40,7 +40,12 @@
             },
             onEachFeature: function (feature, layer) {
                layer.on('click',function(e){
-                    generateCSV(feature)
+                  if(e.originalEvent.ctrlKey) {
+                    generateIsochrone(e.latlng,[900,1800,2700,3600,4500,5400,6300,7200]);
+                  }
+                  else {
+                    generateCSV(feature);
+                  }
                });
                layer.on('mousemove',function(e) {
                   d3.select('#countyname')
@@ -65,7 +70,9 @@
 
 function generateCSV (feature) {
    socket.emit('getMatrixForRegion',{feature:feature,id:new Date().getTime(),time:3600,maxSpeed:120,geometryId:feature.properties.OBJECTID})
-        
+}
+function generateIsochrone (latlng,time){
+  socket.emit('getisochrone',{center:[latlng.lng,latlng.lat],res:100,id:new Date().getTime(),time:time})
 }
     </script>
   </body>

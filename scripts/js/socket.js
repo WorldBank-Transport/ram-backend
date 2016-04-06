@@ -31,19 +31,14 @@ var socket = io(sockethost);
       }
 
 });
-function createCsvList(csv) {
-      var time = csv.split('-')[1].split('.')[0];
-      var id = csv.split('-')[0];
-      var date = new Date(parseInt(time));
 
-      var result = '<td>Calculation done on '+date.toLocaleString()+' for ID '+id +': </td><td><a href="data/csv/'+csv+'">download CSV file</a> </td><td> <a href="plots/index.html?csv=../data/csv/'+csv+'">view statistics</a></td>';
-      return result;
-}
 socket.on('finished',function(data){
  	console.log('finished');
  	if(!data||!data.type) throw('data and type are required');
  	if(data.type == 'isochrone') {
- 		
+    console.log('isochrone');
+ 		var isochrone = L.geoJson(data.data).addTo(map);
+
  	}
  	if(data.type == 'poilist') {
  		listRecieved(data.data.features.map(function (d) {
@@ -94,4 +89,12 @@ function listRecieved(list) {
             return prev + '</br>' + cur;
       },'')
       d3.select('#csv').html(print);
+}
+function createCsvList(csv) {
+      var time = csv.split('-')[1].split('.')[0];
+      var id = csv.split('-')[0];
+      var date = new Date(parseInt(time));
+
+      var result = '<td>Calculation done on '+date.toLocaleString()+' for ID '+id +': </td><td><a href="data/csv/'+csv+'">download CSV file</a> </td><td> <a href="plots/index.html?csv=../data/csv/'+csv+'">view statistics</a></td>';
+      return result;
 }
