@@ -5,6 +5,8 @@ var app = require('http').createServer(handler),
     d3 = require('d3'),
     mkdirp = require('mkdirp'),    
     fork = require('child_process').fork,
+    envelope = require('turf-envelope'),
+    squareGrid = require('turf-square-grid'),
     cETA,
     cISO;
 
@@ -147,9 +149,9 @@ io.on('connection',function (socket) {
 		io.emit('status',{id:data.id,msg:'creating timematrix'})
 
 		//split the input region in squares for parallelisation
-		var box = turf.envelope(data.feature);
+		var box = envelope(data.feature);
 		var extent =[box.geometry.coordinates[0][0][0],box.geometry.coordinates[0][0][1],box.geometry.coordinates[0][2][0],box.geometry.coordinates[0][2][1]];
-		var squares =  turf.squareGrid(extent,30, 'kilometers');
+		var squares =  squareGrid(extent,30, 'kilometers');
 
 		//tell the client how many squares there are
 		io.emit('status',{id:data.id,msg:'split region in '+squares.features.length+' grid squares'})
