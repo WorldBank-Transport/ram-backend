@@ -119,6 +119,7 @@ process.on('message', function(e) {
 						properties.forEach(function(property){
 							submatrix.push(property);
 						})
+
 						process.send({type:'square'});
 						callback(null,submatrix);
 					})
@@ -127,8 +128,14 @@ process.on('message', function(e) {
 		}
 	})
 	async.parallelLimit(tasks,cpus,function(err, allresults){
+		//[[obj,obj],[obj,obj]]
+		var endresult = [];
+		allresults[0].forEach(function(r){
+			endresult.push(r);
+		})
+		console.log(endresult);
 		console.log('done');
-		process.send({type:'done',data:allresults});
+		process.send({type:'done',data:endresult});
 	});
 
 })
