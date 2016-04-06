@@ -14,14 +14,14 @@ var cpus = os.cpus().length;
 process.env.UV_THREADPOOL_SIZE=Math.floor(cpus*1.5);
 
 process.on('message', function(e) {
-	process.send({type:'status',data:'started'});
+	process.send({type:'status',data:'Started calculating the travel time between all villages and POIs in the given region.'});
 	var POIfiles = e.POIs;
 	var osrm = new OSRM(e.osrm);
 	for (key in POIfiles) {
 		POIs[key] = JSON.parse(fs.readFileSync(POIfiles[key],'utf8'));
 	}
 	villages = JSON.parse(fs.readFileSync(e.villages, 'utf8'));
-	process.send({type:'status',data:'loaded all files'});
+	process.send({type:'status',data:'Loaded all necessary files.'});
 	var squares = e.squares;
 	var data = e.data;
 
