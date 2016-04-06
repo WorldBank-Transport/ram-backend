@@ -159,7 +159,7 @@ io.on('connection',function (socket) {
 		//tell the client how many squares there are
 		io.emit('status',{id:data.id,msg:'split region in '+squares.features.length+' grid squares'})
 
-		cETA.send({data:data,squares:squares.features,POIs:POIS,villages:villages,osrm:osrm});
+		cETA.send({data:data,squares:squares.features,POIs:POIs,villages:villages,osrm:osrm});
 		var remaining = squares.features.length;
 		cETA.on('message',function(msg){
 			if(msg.type == 'status') {
