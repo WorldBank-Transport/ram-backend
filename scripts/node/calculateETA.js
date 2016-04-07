@@ -46,7 +46,7 @@ process.on('message', function(e) {
 					for(key in POIs) {
 						var poiset={features:[]};
 						var buffertime = data.maxTime;
-						while(poiset.features.length ==0) {
+						while(poiset.features.length <4) {
 						//  console.log('buffertime for poi: '+buffertime)
 						  poiset= poisInBuffer(area,buffertime,data.maxSpeed,POIs[key]);
 						  buffertime = buffertime+900;
@@ -73,7 +73,7 @@ process.on('message', function(e) {
 					        //There might be 0 destinations in the given area, osrm will trip over this, so we'll say it's infinity
 					        if(destinations.length == 0) {
 					            console.log('infinity');
-					            var empty = workingSet.features.map(function(f){return {eta:Infinity}});
+					            var empty = workingSet.features.map(function(f){return {eta:-100}});
 					            return subcallback(null,{poi:poiitem.type,list:empty} );
 					        }
 					        else {
@@ -92,7 +92,9 @@ process.on('message', function(e) {
 					                        res.distance_table[0].length == res.destination_coordinates.length) {
 					                        res.distance_table.forEach(function(time, idx) {
 					                            results.push({
-					                                eta: time.reduce(function(prev,cur){return Math.min(prev,cur)},Infinity) / 10 //the result is in tenth of a second                                    
+					                                eta: time.reduce(function(prev,cur){
+if(cur>1000000)console.log(cur)
+					                                return Math.min(prev,cur)},Infinity) / 10 //the result is in tenth of a second                                    
 					                            });
 					                        });
 					                    }
