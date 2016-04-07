@@ -93,7 +93,6 @@ process.on('message', function(e) {
 					                        res.distance_table.forEach(function(time, idx) {
 					                            results.push({
 					                                eta: time.reduce(function(prev,cur){
-if(cur>1000000)console.log(cur)
 					                                return Math.min(prev,cur)},Infinity) / 10 //the result is in tenth of a second                                    
 					                            });
 					                        });
@@ -106,24 +105,28 @@ if(cur>1000000)console.log(cur)
 					});
 					//In series, because the main async will keep track of the threadpool and adding parallel tasks here overloads it.
 					async.series(subtasks,function(err,subresult){
-						var submatrix = [];
-						subresult.forEach(function(item){
-		    				var key = item.poi;
-		    				item.list.forEach(function(listitem,idx){
-		    					workingSet.features[idx].properties[key] = listitem.eta;
-		    				})
-		    			})
-						properties = workingSet.features.map(function (f) {
-		                    f.properties.lat = f.geometry.coordinates[1];
-		                    f.properties.lon = f.geometry.coordinates[0];
-		                    return f.properties
-		                });
-						properties.forEach(function(property){
-							submatrix.push(property);
-						})
-
-						process.send({type:'square'});
-						callback(null,submatrix);
+						if(err) {
+							console.warn(err);
+						}
+						else {
+							var submatrix = [];
+							subresult.forEach(function(item){
+			    				var key = item.poi;
+			    				item.list.forEach(function(listitem,idx){
+			    					workingSet.features[idx].properties[key] = listitem.eta;
+			    				})
+			    			})
+							properties = workingSet.features.map(function (f) {
+			                    f.properties.lat = f.geometry.coordinates[1];
+			                    f.properties.lon = f.geometry.coordinates[0];
+			                    return f.properties
+			                });
+							properties.forEach(function(property){
+								submatrix.push(property);
+							})
+							process.send({type:'square'});
+							callback(null,submatrix);
+						}
 					})
 				}
 			}

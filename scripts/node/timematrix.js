@@ -7,7 +7,9 @@ var app = require('http').createServer(handler),
     mkdirp = require('mkdirp'),    
     fork = require('child_process').fork,
     envelope = require('turf-envelope'),
-    squareGrid = require('turf-square-grid');
+    squareGrid = require('turf-square-grid'),
+    siofu = require("socketio-file-upload"),
+    exec = require('child_process').exec;
 
 /*###############################################################################
 
@@ -40,7 +42,7 @@ POIs.prefectures = './data/POIs/prefectures.geojson';
 
 var villagesFile = './data/ReadytoUse/Village_pop.geojson';
 var osrm = './data/OSRM-ready/map.osrm';
-var dir = './data/csv/';
+var dir = './data/';
 var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
 
 var maxSpeed = 120,
@@ -53,7 +55,16 @@ function handler(req, res) {
 	res.end("{connected:true}");
 }
 
-mkdirp(dir, function(err) { 
+//create csv output dir
+mkdirp(dir+'csv/', function(err) { 
+  if(err) console.log(err)
+});
+//create shp2osm dir
+mkdirp(dir+'shp2osm/', function(err) { 
+  if(err) console.log(err)
+});
+//create osm2osrm dir
+mkdirp(dir+'osm2osrm/', function(err) { 
   if(err) console.log(err)
 });
 
@@ -79,12 +90,12 @@ function postAuthenticate(socket, data) {
 	var beginTime;
 	socket.emit('status', {socketIsUp: true}); //tell the client it is connected
 
-	var files = fs.readdirSync(dir);
+	var files = fs.readdirSync(dir+'csv/');
 	files.sort(function(a, b) {
-       return fs.statSync(dir + a).mtime.getTime() - fs.statSync(dir + b).mtime.getTime();
+       return fs.statSync(dir+'csv/' + a).mtime.getTime() - fs.statSync(dir+'csv/' + b).mtime.getTime();
     });
 
-	io.emit('status',{csvs:files}); //send the current list of csv files
+	socket.emit('status',{csvs:files}); //send the current list of csv files
 
 	/* triggers on the socket */
 	socket.on('debug',function(data){console.log(data)}); //debug modus
@@ -93,6 +104,14 @@ function postAuthenticate(socket, data) {
 
 	socket.on('getMatrixForRegion',createTimeMatrix);
 
+	socket.on('setOSRM',function(data){
+		console.log(data)
+		osrm = data.osrm;
+	})
+	var uploader = new siofu();
+	uploader.dir = dir;
+	uploader.listen(socket);
+	uploader.on('complete',uploadComplete)
 };
 
 /* create an isochrone
@@ -197,3 +216,18 @@ function createTimeMatrix(data) {
 
 
 
+function uploadComplete(e) {
+	var file = e.file.name;
+	var fsplit = file.split('.');
+	if(fsplit[fsplit.length-1].toLowerCase()=='zip') {
+		var cmd = './prepare.sh -f '+file+ ' -d '+dir;
+	    exec(cmd,function(error,stdout,stderr){
+	      if (error !== null) {
+	          console.log('exec error: ' + error);
+	      }
+	      var msg = stdout + '';
+	      io.emit('status',{msg:'finished preparing the data'})
+	      io.emit('status',{result:msg})
+	    })	
+	}
+}

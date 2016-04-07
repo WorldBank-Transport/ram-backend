@@ -4,80 +4,91 @@ d3.select("#loginform").on("submit", function() {
   var user = d3.select("#username").property("value");
   var pass = d3.select("#password").property("value");
   Authenticate(user,pass);
-  console.log('send');
   return false;
 });
-
+var socket;
 function Authenticate(user,pass) {
   var sockethost = window.location.protocol +'//'+ window.location.host.split(':')[0] + ':5000'
-  var socket = io(sockethost);
+  socket = io(sockethost);
+  var uploader = new SocketIOFileUpload(socket);
+  uploader.listenOnInput(document.getElementById("siofu_input"));
+  uploader.addEventListener('complete',function (e) {
+    console.log(e);
+  })
   socket.on('connect', function(){
     socket.emit('authentication', {username: user, password: pass});
-    socket.on('unauthorized', function(err){
-      alert('not a valid username or password, please try again.');
-      d3.select('#secure').style('visibility','collapse');
-       d3.select('#login').style('display','block');
+  });
+  socket.on('unauthorized', function(err){
+    alert('not a valid username or password, please try again.');
+   // d3.select('#secure').style('visibility','collapse');
+    d3.select('#login').style('display','block');
+  });
+  socket.on('authenticated', function() {
+    d3.select('#login').style('display','none');
+    d3.select('#secure').style('visibility','visible');
+
+   
+       
+    socket.on('status', function (data) {
+      if(data.msg) {
+          d3.select('#logfield')
+          .insert("div", ":first-child")
+          .html(data.msg)
+      }
+      else if (data.socketIsUp) {
+          d3.select('#logfield')
+          .insert("div", ":first-child")
+          .html('connected to the server')
+          .style({color:'green','font-weight':'bold'})
+      }
+      else if(data.csvs) {
+            console.log(data.csvs);
+          d3.select('#csvlist')
+          .selectAll("tr")
+          .data(data.csvs)
+          .enter()
+          .insert('tr',":first-child")
+          .html(createCsvList)
+      }
+      else if(data.file) {
+          d3.select('#csvlist')
+          .insert("tr", ":first-child")
+          .html(createCsvList(data.file))
+      }
+      else if(data.result) {
+        var pad = data.result.split('\n')[0];
+        socket.emit('setOSRM',{osrm:pad});
+      }
     });
-    socket.on('authenticated', function() {
-      d3.select('#login').style('display','none');
+    socket.on('finished',function(data){
+      console.log('finished');
+      if(!data||!data.type) throw('data and type are required');
+      if(data.type == 'isochrone') {
+        console.log('isochrone');
+        var isochrone = L.geoJson(data.data).addTo(map);
 
-      d3.select('#secure').style('visibility','visible');
-       socket.on('status', function (data) {
-            if(data.msg) {
-                d3.select('#logfield')
-                .insert("div", ":first-child")
-                .html(data.msg)
-            }
-            else if (data.socketIsUp) {
-                d3.select('#logfield')
-                .insert("div", ":first-child")
-                .html('connected to the server')
-                .style({color:'green','font-weight':'bold'})
-            }
-            else if(data.csvs) {
-                  console.log(data.csvs);
-                d3.select('#csvlist')
-                .selectAll("tr")
-                .data(data.csvs)
-                .enter()
-                .insert('tr',":first-child")
-                .html(createCsvList)
-            }
-            else if(data.file) {
-                d3.select('#csvlist')
-                .insert("tr", ":first-child")
-                .html(createCsvList(data.file))
-            }
-
-      });
-
-      socket.on('finished',function(data){
-        console.log('finished');
-        if(!data||!data.type) throw('data and type are required');
-        if(data.type == 'isochrone') {
-          console.log('isochrone');
-          var isochrone = L.geoJson(data.data).addTo(map);
-
+      }
+      if(data.type == 'poilist') {
+        listRecieved(data.data.features.map(function (d) {
+          return d.properties;
+        }))
+        
+        if(getAll) {
+          bigrun();
         }
-        if(data.type == 'poilist') {
-          listRecieved(data.data.features.map(function (d) {
-            return d.properties;
-          }))
-          
-          if(getAll) {
-            bigrun();
-          }
-        }
-
-      })
+      }
     })
   })
 
+
   socket.on('disconnect',function(){
-        d3.select('#logfield')
-            .insert("div", ":first-child")
-            .html('disconnected, hang on trying again in a few seconds')
-            .style({color:'red','font-weight':'bold'})
+    d3.select('#logfield')
+        .insert("div", ":first-child")
+        .html('disconnected, hang on trying again in a few seconds')
+        .style({color:'red','font-weight':'bold'})
+    socket.off('status');
+    socket.off('finished');
+
   })
 }
 
