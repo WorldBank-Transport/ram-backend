@@ -1,63 +1,86 @@
-
-var getAll = false;
-var POIS = ['hospitals','schools','prefectures','banks','counties'];
-var sockethost = window.location.protocol +'//'+ window.location.host.split(':')[0] + ':5000'
-var socket = io(sockethost);
- socket.on('status', function (data) {
-      if(data.msg) {
-          d3.select('#logfield')
-          .insert("div", ":first-child")
-          .html(data.msg)
-      }
-      else if (data.socketIsUp) {
-          d3.select('#logfield')
-          .insert("div", ":first-child")
-          .html('connected to the server')
-          .style({color:'green','font-weight':'bold'})
-      }
-      else if(data.csvs) {
-            console.log(data.csvs);
-          d3.select('#csvlist')
-          .selectAll("tr")
-          .data(data.csvs)
-          .enter()
-          .insert('tr',":first-child")
-          .html(createCsvList)
-      }
-      else if(data.file) {
-          d3.select('#csvlist')
-          .insert("tr", ":first-child")
-          .html(createCsvList(data.file))
-      }
-
+var socket;
+d3.select("#loginform").on("submit", function() {
+  d3.event.preventDefault()
+  var user = d3.select("#username").property("value");
+  var pass = d3.select("#password").property("value");
+  Authenticate(user,pass);
+  console.log('send');
+  return false;
 });
 
-socket.on('finished',function(data){
- 	console.log('finished');
- 	if(!data||!data.type) throw('data and type are required');
- 	if(data.type == 'isochrone') {
-    console.log('isochrone');
- 		var isochrone = L.geoJson(data.data).addTo(map);
+function Authenticate(user,pass) {
+  var sockethost = window.location.protocol +'//'+ window.location.host.split(':')[0] + ':5000'
+  var socket = io(sockethost);
+  socket.on('connect', function(){
+    socket.emit('authentication', {username: user, password: pass});
+    socket.on('unauthorized', function(err){
+      alert('not a valid username or password, please try again.');
+      d3.select('#secure').style('visibility','collapse');
+       d3.select('#login').style('display','block');
+    });
+    socket.on('authenticated', function() {
+      d3.select('#login').style('display','none');
 
- 	}
- 	if(data.type == 'poilist') {
- 		listRecieved(data.data.features.map(function (d) {
- 			return d.properties;
- 		}))
- 		
- 		if(getAll) {
-		 	bigrun();
- 		}
- 	}
+      d3.select('#secure').style('visibility','visible');
+       socket.on('status', function (data) {
+            if(data.msg) {
+                d3.select('#logfield')
+                .insert("div", ":first-child")
+                .html(data.msg)
+            }
+            else if (data.socketIsUp) {
+                d3.select('#logfield')
+                .insert("div", ":first-child")
+                .html('connected to the server')
+                .style({color:'green','font-weight':'bold'})
+            }
+            else if(data.csvs) {
+                  console.log(data.csvs);
+                d3.select('#csvlist')
+                .selectAll("tr")
+                .data(data.csvs)
+                .enter()
+                .insert('tr',":first-child")
+                .html(createCsvList)
+            }
+            else if(data.file) {
+                d3.select('#csvlist')
+                .insert("tr", ":first-child")
+                .html(createCsvList(data.file))
+            }
 
-})
+      });
 
-socket.on('disconnect',function(){
-      d3.select('#logfield')
-          .insert("div", ":first-child")
-          .html('disconnected, hang on trying again in a few seconds')
-          .style({color:'red','font-weight':'bold'})
-})
+      socket.on('finished',function(data){
+        console.log('finished');
+        if(!data||!data.type) throw('data and type are required');
+        if(data.type == 'isochrone') {
+          console.log('isochrone');
+          var isochrone = L.geoJson(data.data).addTo(map);
+
+        }
+        if(data.type == 'poilist') {
+          listRecieved(data.data.features.map(function (d) {
+            return d.properties;
+          }))
+          
+          if(getAll) {
+            bigrun();
+          }
+        }
+
+      })
+    })
+  })
+
+  socket.on('disconnect',function(){
+        d3.select('#logfield')
+            .insert("div", ":first-child")
+            .html('disconnected, hang on trying again in a few seconds')
+            .style({color:'red','font-weight':'bold'})
+  })
+}
+
 
 function getPoiPop(features,poi,time) {
  	var inside = features.filter(function(f){return f.properties[poi] <=time && f.properties[poi]!==null});

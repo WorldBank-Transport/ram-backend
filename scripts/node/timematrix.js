@@ -1,5 +1,6 @@
 var app = require('http').createServer(handler),
 	io = require('socket.io')(app),
+	auth = require('socketio-auth'),
 	fs = require('fs'),
     os = require('os'),
     d3 = require('d3'),
@@ -40,6 +41,7 @@ POIs.prefectures = './data/POIs/prefectures.geojson';
 var villagesFile = './data/ReadytoUse/Village_pop.geojson';
 var osrm = './data/OSRM-ready/map.osrm';
 var dir = './data/csv/';
+var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
 
 var maxSpeed = 120,
 	maxTime = 3600;
@@ -57,7 +59,23 @@ mkdirp(dir, function(err) {
 
 var villages = JSON.parse(fs.readFileSync(villagesFile, 'utf8'));
 
-io.on('connection',function (socket) {
+auth(io, {
+  authenticate: authenticate, 
+  postAuthenticate: postAuthenticate,
+  timeout: 1000
+});
+
+function authenticate(socket, data, callback) {
+  var username = data.username;
+  var password = data.password;
+
+  if(username == credentials.user && password==credentials.pass){
+	return callback(null, true);
+  }
+  else return callback(null, false)
+}
+
+function postAuthenticate(socket, data) {
 	var beginTime;
 	socket.emit('status', {socketIsUp: true}); //tell the client it is connected
 
@@ -75,7 +93,7 @@ io.on('connection',function (socket) {
 
 	socket.on('getMatrixForRegion',createTimeMatrix);
 
-});
+};
 
 /* create an isochrone
 requires:
