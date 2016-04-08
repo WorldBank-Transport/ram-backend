@@ -10,7 +10,6 @@
   <script src="./node_modules/socket.io-client/socket.io.js"></script>
   <script src="./node_modules/d3/d3.min.js" charset="utf-8"></script>
  <script src="./node_modules/socketio-file-upload/client.min.js" charset="utf-8"></script>
-
   <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
    <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
   <script type="text/javascript" src="
@@ -19,23 +18,6 @@
 </head>
 <body>
     <h1>Control application for rural road accessibility</h1>
-
-<div id="login">
-<p>Please log in to access the application</p>
-<div  class="loginform">
-<form  id="loginform" name="login" accept-charset="utf-8">
-    <ul>
-        <li><label for="username">Username</label>
-        <input type="text" id="username" name="username" placeholder="username" required></li>
-        <li><label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="password" required></li>
-        <li>
-        <input type="submit" value="Login"></li>
-    </ul>
-</form>
-</div>
-</div>
-    <div id="secure">
      <input type="file" id="siofu_input" />
     <div id="map"> <div id="countyname"></div> </div>
    
@@ -43,7 +25,6 @@
     <button id="generateAll">Entire Area</button> or click on the map for a specific subarea</div>
     <div class="csvlist"><table id="csvlist"></table></div>
     <div id="logfield"></div>
-    </div>
     <script type="text/javascript" src="scripts/js/socket.js"></script> 
     <script type="text/javascript" src="scripts/js/main.js"></script> 
   </body>

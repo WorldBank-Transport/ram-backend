@@ -17,7 +17,10 @@
   },
   "dependencies": {
     "async": "^1.5.2",
+    "basic-auth": "^1.0.3",
+    "compression": "^1.6.1",
     "d3": "^3.5.15",
+    "express": "^4.13.4",
     "leaflet": "^0.7.7",
     "mkdirp": "^0.5.1",
     "osrm": "^4.9.1",

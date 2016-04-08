@@ -1,10 +1,18 @@
-var http = require("http"),
+var express = require('express'),
     url = require("url"),
     path = require("path"),
     fs = require("fs")
     port = process.argv[2] || 8888,
-    fork = require('child_process').fork;
+    fork = require('child_process').fork,
+    basicAuth = require('basic-auth'),
+    compression = require('compression');
 
+//Keeping the credentials outside git
+var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
+
+var app = express();
+
+//Start the timematrix service and socket on a separate thread
 function timematrix() {
    var tm = fork('./scripts/node/timematrix.js');
 
@@ -20,34 +28,27 @@ function timematrix() {
 
 timematrix();
 
-http.createServer(function(request, response) {
+//basic authentication stuff
+var auth = function (req, res, next) {
+  function unauthorized(res) {
+    res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+    return res.sendStatus(401);
+  };
 
-  var uri = url.parse(request.url).pathname
-    , filename = path.join(process.cwd(), uri);
+  var user = basicAuth(req);
 
-  fs.exists(filename, function(exists) {
-    if(!exists) {
-      response.writeHead(404, {"Content-Type": "text/plain"});
-      response.write("404 Not Found\n");
-      response.end();
-      return;
-    }
+  if (!user || !user.name || !user.pass) {
+    return unauthorized(res);
+  };
 
-    if (fs.statSync(filename).isDirectory()) filename += '/index.html';
+  if (user.name === credentials.user && user.pass === credentials.pass) {
+    return next();
+  } else {
+    return unauthorized(res);
+  };
+};
 
-    fs.readFile(filename, "binary", function(err, file) {
-      if(err) {
-        response.writeHead(500, {"Content-Type": "text/plain"});
-        response.write(err + "\n");
-        response.end();
-        return;
-      }
+app.use('/', [auth, compression(), express.static(__dirname + '/',{ maxAge: 86400000 })]);
 
-      response.writeHead(200);
-      response.write(file, "binary");
-      response.end();
-    });
-  });
-}).listen(parseInt(port, 10));
-
+app.listen(parseInt(port, 10));
 console.log("Static file server running at\n  => http://localhost:" + port + "/\nCTRL + C to shutdown");

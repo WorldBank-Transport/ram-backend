@@ -1,11 +1,7 @@
 var socket;
-d3.select("#loginform").on("submit", function() {
-  d3.event.preventDefault()
-  var user = d3.select("#username").property("value");
-  var pass = d3.select("#password").property("value");
-  Authenticate(user,pass);
-  return false;
-});
+d3.json('./data/user.json',function(d){
+  Authenticate(d.user,d.pass);
+})
 var socket;
 function Authenticate(user,pass) {
   var sockethost = window.location.protocol +'//'+ window.location.host.split(':')[0] + ':5000'
@@ -20,15 +16,8 @@ function Authenticate(user,pass) {
   });
   socket.on('unauthorized', function(err){
     alert('not a valid username or password, please try again.');
-   // d3.select('#secure').style('visibility','collapse');
-    d3.select('#login').style('display','block');
   });
   socket.on('authenticated', function() {
-    d3.select('#login').style('display','none');
-    d3.select('#secure').style('visibility','visible');
-
-   
-       
     socket.on('status', function (data) {
       if(data.msg) {
           d3.select('#logfield')
