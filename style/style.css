@@ -36,3 +36,19 @@ h1 {
 #commands {
 	margin:10px;
 }
+
+.loginform ul {
+    padding: 0;
+    margin: 0;
+}
+.loginform li {
+    display: inline;
+   
+}
+#secure {
+	visibility: collapse;
+}
+#file_drop{
+	width:400px;
+	height:200px;
+}

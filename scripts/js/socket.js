@@ -1,9 +1,24 @@
-
-var getAll = false;
-var POIS = ['hospitals','schools','prefectures','banks','counties'];
-var sockethost = window.location.protocol +'//'+ window.location.host.split(':')[0] + ':5000'
-var socket = io(sockethost);
- socket.on('status', function (data) {
+var socket;
+d3.json('./data/user.json',function(d){
+  Authenticate(d.user,d.pass);
+})
+var socket;
+function Authenticate(user,pass) {
+  var sockethost = window.location.protocol +'//'+ window.location.host.split(':')[0] + ':5000'
+  socket = io(sockethost);
+  var uploader = new SocketIOFileUpload(socket);
+  uploader.listenOnInput(document.getElementById("siofu_input"));
+  uploader.addEventListener('complete',function (e) {
+    console.log(e);
+  })
+  socket.on('connect', function(){
+    socket.emit('authentication', {username: user, password: pass});
+  });
+  socket.on('unauthorized', function(err){
+    alert('not a valid username or password, please try again.');
+  });
+  socket.on('authenticated', function() {
+    socket.on('status', function (data) {
       if(data.msg) {
           d3.select('#logfield')
           .insert("div", ":first-child")
@@ -29,35 +44,43 @@ var socket = io(sockethost);
           .insert("tr", ":first-child")
           .html(createCsvList(data.file))
       }
+      else if(data.result) {
+        var pad = data.result.split('\n')[0];
+        socket.emit('setOSRM',{osrm:pad});
+      }
+    });
+    socket.on('finished',function(data){
+      console.log('finished');
+      if(!data||!data.type) throw('data and type are required');
+      if(data.type == 'isochrone') {
+        console.log('isochrone');
+        var isochrone = L.geoJson(data.data).addTo(map);
 
-});
+      }
+      if(data.type == 'poilist') {
+        listRecieved(data.data.features.map(function (d) {
+          return d.properties;
+        }))
+        
+        if(getAll) {
+          bigrun();
+        }
+      }
+    })
+  })
 
-socket.on('finished',function(data){
- 	console.log('finished');
- 	if(!data||!data.type) throw('data and type are required');
- 	if(data.type == 'isochrone') {
-    console.log('isochrone');
- 		var isochrone = L.geoJson(data.data).addTo(map);
 
- 	}
- 	if(data.type == 'poilist') {
- 		listRecieved(data.data.features.map(function (d) {
- 			return d.properties;
- 		}))
- 		
- 		if(getAll) {
-		 	bigrun();
- 		}
- 	}
+  socket.on('disconnect',function(){
+    d3.select('#logfield')
+        .insert("div", ":first-child")
+        .html('disconnected, hang on trying again in a few seconds')
+        .style({color:'red','font-weight':'bold'})
+    socket.off('status');
+    socket.off('finished');
 
-})
+  })
+}
 
-socket.on('disconnect',function(){
-      d3.select('#logfield')
-          .insert("div", ":first-child")
-          .html('disconnected, hang on trying again in a few seconds')
-          .style({color:'red','font-weight':'bold'})
-})
 
 function getPoiPop(features,poi,time) {
  	var inside = features.filter(function(f){return f.properties[poi] <=time && f.properties[poi]!==null});
