@@ -1,5 +1,5 @@
 var socket;
-d3.json('./data/user.json',function(d){
+d3.json('../data/user.json',function(d){
   Authenticate(d.user,d.pass);
 })
 var socket;
@@ -24,7 +24,7 @@ function Authenticate(user,pass) {
           .insert("div", ":first-child")
           .html(data.msg)
       }
-      else if (data.socketIsUp) {
+      else if (data.socketIsUp) { 
           d3.select('#logfield')
           .insert("div", ":first-child")
           .html('connected to the server')

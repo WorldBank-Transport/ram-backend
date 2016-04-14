@@ -1,5 +1,4 @@
 
-
 var areafile = 'data/ReadytoUse/Guizhou_county.min.geojson';
 var area;
 var layer = new L.StamenTileLayer("toner-lite");

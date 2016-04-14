@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<meta charset="utf-8" lang="en">
+<head>
+<title>Rural Road Accessibility</title>
+  <meta id='viewport' content='initial-scale=1'/>
+  <link href='https://fonts.googleapis.com/css?family=Overlock' rel='stylesheet' type='text/css'>
+  <link href='../style/style.css' rel='stylesheet' type='text/css'/>
+  <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css"  rel='stylesheet' type='text/css'/>
+  <script src="../node_modules/socket.io-client/socket.io.js"></script>
+  <script src="../node_modules/d3/d3.min.js" charset="utf-8"></script>
+  <script src="../node_modules/socketio-file-upload/client.min.js" charset="utf-8"></script>
+  
+</head>
+<body>
+<div class="container-fluid">
+  <div class="page-header">
+  <h1>Rural roads accessibility <small>upload, <a href="calculate.html">calculate</a>, <a href="analyse">analyse</a></small></h1>
+</div>
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    step
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    <h1>1</h1>
+  </div>
+  <div class="col-md-4 col-sm-4">
+    <h4>Upload zip file</h4>
+    <p><input type="file" id="file_input" /></p>
+    <p><input class="btn btn-default pull-right" id="uploadButton" type="button" value="Upload zip file"></p>
+  </div>
+  <div class="col-md-7 col-sm-7">
+    <h4>&nbsp;</h4>
+    <p>
+      Choose the correct zip file, press upload, wait for it to be processed and use the result in the next step.
+    </p>
+    <p class="text-muted">
+      <span class="glyphicon glyphicon-info-sign text-info"></span> 
+      The file you are uploading should be a zip file containing the following files all in the root of the zip file.
+      <ul class="text-muted">
+        <li>Shapefile of the road network; at least the .shp, .dbf &amp; .shx files</li>
+        <li>Translation file to translate the shape-attributes to osm-tags; a .py file like <a href="../scripts/Shapefile%20to%20OSM/guizhou.py">this</a></li>
+        <li>Profile file to set speed and restrictions on the road network; a .lua file like <a href="../scripts/OSRM%20import/profile.lua">this</a></li>
+     </ul>
+     After pressing upload zip file, the progress of uploading and processing is shown in the yellow status field. Once it is finished processing, step three will reveal itself.
+    </p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    <h1>2</h1>
+  </div>
+  <div class="col-md-11 col-sm-11">
+    <h4>Status</h4>
+    <div id="logfield"></div>
+    <p></p>
+  </div>
+</div>
+
+<div class="row" id="step3" style="display: none">
+  <div class="col-md-1 col-sm-1">
+    <h1>3</h1>
+  </div>
+  <div class="col-md-4 col-sm-4">
+    <h4>Use result</h4>
+     <p><a class="btn btn-default pull-right" id="nextStep" type="button" value="Use processed network">Use processed network</a></p>
+  </div>
+  <div class="col-md-7 col-sm-7">
+   <h4>&nbsp;</h4>
+  <p >
+    The file has been uploaded and processed, you can use the processed network to calculate a new time-distance matrix.
+  </p>
+  </div>
+  </div>
+
+  </div>
+</div>   
+
+<script type="text/javascript" src="../scripts/js/step1.js"></script> 
+</body>
+</html>

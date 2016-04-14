@@ -20,15 +20,6 @@ h1 {
 	background: white;
 }
 
-#logfield {
-	margin:10px;
-	padding:5px;
-	height: 300px;
-	overflow: auto;
-	background: #eeeeec;
-	border: solid 1px #999;
-	border-radius: 3px;
-}
 .csvlist {
 	max-height: 300px;
 	overflow:auto;
@@ -51,4 +42,29 @@ h1 {
 #file_drop{
 	width:400px;
 	height:200px;
+}
+
+#logfield {
+	width: 100%;
+	height: 100px;
+	background: #ffe;
+	border-radius: 4px;
+	overflow: auto;
+}
+
+.changeOSRM {
+	cursor: pointer;
+	color: #337ab7;
+}
+
+.changeOSRM:hover {
+    color: #23527c;
+    text-decoration: underline;
+}
+.activeOSRM {
+	font-weight: bold;
+}
+#osrmfiles {
+	max-height: 300px;
+	overflow: auto;
 }

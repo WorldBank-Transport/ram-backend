@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<meta charset="utf-8" lang="en">
+<head>
+<title>Rural Road Accessibility</title>
+  <meta id='viewport' content='initial-scale=1'/>
+  <link href='https://fonts.googleapis.com/css?family=Overlock' rel='stylesheet' type='text/css'>
+  <link href='../style/style.css' rel='stylesheet' type='text/css'/>
+  <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css"  rel='stylesheet' type='text/css'/>
+   <link href="../node_modules/leaflet/dist/leaflet.css"  rel='stylesheet' type='text/css'/>
+  <script src="../node_modules/socket.io-client/socket.io.js"></script>
+  <script src="../node_modules/d3/d3.min.js" charset="utf-8"></script>  
+  <script src="../node_modules/leaflet/dist/leaflet.js" charset="utf-8"></script>  
+  <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
+</head>
+<body>
+<div class="container-fluid">
+  <div class="page-header">
+  <h1>Rural roads accessibility <small><a href="./upload.html">upload</a>, calculate, <a href="analyse">analyse</a></small></h1>
+</div>
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    step
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    <h1>1</h1>
+  </div>
+  <div class="col-md-11 col-sm-11">
+    <h4>Choose a processed network</h4>
+    <div id="osrmfiles"></div>
+    <div id="chosenFile"></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    <h1>2</h1>
+  </div>
+  <div class="col-md-9 col-sm-9">
+    <h4>Choose an area</h4>
+    <div id="map" style="height:400px"><div id="countyname"></div></div>
+  </div>
+  <div class="col-md-2 col-sm-2">
+    <h4>Level</h4>
+    <div class="radio">
+      <label>
+        <input type="radio" class="levelButtons" name="level" id="localLevel" value="local" checked>
+        Local
+      </label>
+    </div>
+    <div class="radio">
+      <label>
+        <input type="radio" class="levelButtons" name="level" id="prefectureLevel" value="perfecture" >
+        Perfecture
+      </label>
+    </div>
+    <div class="radio">
+      <label>
+        <input type="radio" class="levelButtons" name="level" id="provincialLevel" value="province" >
+        Province
+      </label>
+    </div>
+    <hr/>
+    <p>
+    <span class="glyphicon glyphicon-info-sign text-info"></span> Choose the aggregation level and click on a polygon to start the calculation for that area.
+    </p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    <h1>3</h1>
+  </div>
+  <div class="col-md-11 col-sm-11">
+    <h4>Status</h4>
+    <div id="logfield"></div>
+    <p></p>
+  </div>
+</div>
+
+<div class="row" id="step4" style="display:none">
+  <div class="col-md-1 col-sm-1">
+    <h1>4</h1>
+  </div>
+  <div class="col-md-11 col-sm-11">
+    <h4>Use result</h4>
+     <div class="csvlist"><table class="table"id="csvlist"></table></div>
+  </div>
+ 
+  </div>
+
+  </div>
+</div>   
+
+<script type="text/javascript" src="../scripts/js/step2.js"></script> 
+</body>
+</html>
