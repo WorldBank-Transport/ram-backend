@@ -35,7 +35,7 @@ function Authenticate(user,pass) {
           d3.select('#csvlist')
           .selectAll("tr")
           .data(data.csvs)
-          .enter()
+          .enter()qq
           .insert('tr',":first-child")
           .html(createCsvList)
       }

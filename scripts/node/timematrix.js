@@ -108,6 +108,10 @@ function postAuthenticate(socket, data) {
 		console.log(data)
 		osrm = data.osrm;
 	})
+	socket.on('retrieveOSRM',function(){
+		var osrmfiles = fs.readdirSync(dir+'maps/');
+		socket.emit('status',{osrm:osrmfiles});
+	})
 	var uploader = new siofu();
 	uploader.dir = dir;
 	uploader.listen(socket);
@@ -201,7 +205,7 @@ function createTimeMatrix(data) {
             io.emit('status',{id:data.id,msg:'writing result to disk, this might take a while'});
 			var print = d3.csv.format(msg.data);
 			var file = data.geometryId+'-'+data.id+'.csv';
-		    fs.writeFile(dir+file, print, function(err){
+		    fs.writeFile(dir+'/csv/'+file, print, function(err){
 		        if(err) {
 	                return console.log(err);
                 }
