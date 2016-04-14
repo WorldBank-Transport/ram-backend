@@ -90,14 +90,14 @@ function createOsrmList(osrmlist) {
         .insert('div')
         .html(result)
     }
-    else {
+    
       var result = 'Processing done on '+date.toLocaleString()+' - <span class="changeOSRM">use this file</span>';
       
       d3.select('#osrmfiles')
         .insert("div", ":first-child")
         .html(result)
         .on('click',function(){setOsrm(osrm)})
-    }
+    
   });
 }
 function setOsrm(osrm) {

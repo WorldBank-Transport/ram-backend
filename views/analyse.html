@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<meta charset="utf-8" lang="en">
+<head>
+<title>Rural Road Accessibility</title>
+  <meta id='viewport' content='initial-scale=1'/>
+  <link href='https://fonts.googleapis.com/css?family=Overlock' rel='stylesheet' type='text/css'>
+  <link href='../style/style.css' rel='stylesheet' type='text/css'/>
+  <link href="../node_modules/bootstrap/dist/css/bootstrap.min.css"  rel='stylesheet' type='text/css'/>
+  <script src="../node_modules/socket.io-client/socket.io.js"></script>
+  <script src="../node_modules/d3/d3.min.js" charset="utf-8"></script>
+</head>
+<body>
+<div class="container-fluid">
+  <div class="page-header">
+  <h1>Rural roads accessibility <small><a href="./upload.html">upload</a>, <a href="calculate.html">calculate</a>, analyse</small></h1>
+</div>
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    step
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    <h1>1</h1>
+  </div>
+  <div class="col-md-11 col-sm-11">
+    <h4>Choose a time-distance matrix</h4>
+    <div class="csvlist"><table class="table  table-hover" id="csvlist"></table></div>
+  </div>
+</div>
+<div id="step2" style="display: none;">
+<div class='row dc-data-count'>
+    <div class='col-md-12 col-sm-12'>
+        <h3><span class="filter-count"></span>
+            selected out of
+          <span class="total-count"></span></span>
+           villages
+        </h3>
+    </div>
+  </div>
+
+  <div class='row'>
+
+        <div class='col-md-6 col-sm-6' id='dc-hospital-chart'>
+        <h4>Population by time to hospitals</h4>
+        </div>
+        <div class='col-md-6 col-sm-6' id='dc-bank-chart'>
+        <h4>Population by time to banks</h4>
+        </div>
+  
+  </div>
+  
+  <div class='row'>
+        <div class='col-md-6 col-sm-6' id='dc-counties-chart'>
+        <h4>Population by time to counties</h4>
+        </div>
+        <div class='col-md-6 col-sm-6' id='dc-prefectures-chart'>
+        <h4>Population by time to prefectures</h4>
+        
+    </div>
+  </div>
+
+  <div class='row'>
+   
+        <div class='col-md-6 col-sm-6' id='dc-schools-chart'>
+        <h4>Population by time to schools</h4>
+        </div>
+        <div class='col-md-6 col-sm-6' id='dc-population-chart'>
+        <h4>Villages by population</h4>
+      
+    </div>
+  </div>
+
+  <div class='row'>
+    
+        <div class='col-md-6 col-sm-6' id='dc-county-chart'>
+        <h4>Villages by County</h4>
+        </div>
+  </div>
+
+
+  <div class='row'>
+  <div class='col-md-12 col-sm-12'>
+      <table class='table table-hover' id='dc-table-graph'>
+        <thead>
+          <tr class='header'>
+            <th>COUNT</th>
+            <th>NAME_2</th>
+            <th>NAME_3</th>
+            <th>NAME_4</th>
+            <th>Population</th>
+            <th>Hospitals</th>
+            <th>Schools</th>
+            <th>Banks</th>
+            <th>Counties</th>
+            <th>Prefectures</th>
+          </tr>
+        </thead>
+      </table>
+  </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    <h1>3</h1>
+  </div>
+  <div class="col-md-11 col-sm-11">
+    <h4>Status</h4>
+    <div id="logfield"></div>
+    <p></p>
+  </div>
+</div>
+
+  </div>
+</div>   
+
+
+<script type="text/javascript" src="../scripts/js/step3.js"></script> 
+</body>
+</html>
