@@ -1,4 +1,4 @@
-#!/bin/bash
+py#!/bin/bash
 
 
 while [[ $# > 1 ]]
@@ -39,12 +39,12 @@ for p in *.py; do
 done
 shopt -u nocaseglob
 
-python ~/ogr2osm/ogr2osm.py "${SHAPEFILE}" -t "${TRANSLATE}" 1>&2 
+python ${WORKDIR}/../ogr2osm/ogr2osm.py "${SHAPEFILE}" -t "${TRANSLATE}" 1>&2 
 
 mkdir ../tmposm
 mv *.osm ../tmposm/map.osm #TODO: will only work with 1 osm file
 cp *.lua ../tmposm/.
-ln -s ~/osrm-backend/profiles/lib ../tmposm/lib
+ln -s ${WORKDIR}/../osrm-backend/profiles/lib ../tmposm/lib
 cd ../tmposm
 osrm-extract *.osm 1>&2 
 osrm-prepare *.osrm 1>&2 
