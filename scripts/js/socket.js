@@ -4,7 +4,7 @@ d3.json('../data/user.json',function(d){
 })
 var socket;
 function Authenticate(user,pass) {
-  var sockethost = window.location.protocol +'//'+ window.location.host.split(':')[0];
+  var sockethost = window.location.protocol +'//'+ window.location.host;
   socket = io(sockethost);
   var uploader = new SocketIOFileUpload(socket);
   uploader.listenOnInput(document.getElementById("siofu_input"));

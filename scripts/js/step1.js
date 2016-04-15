@@ -6,7 +6,7 @@ var socket;
 var uploader;
 var quint = 5;
 function Authenticate(user,pass) {
-  var sockethost = window.location.protocol +'//'+ window.location.host.split(':')[0]+':8888';
+  var sockethost = window.location.protocol +'//'+ window.location.host;
   socket = io(sockethost);
   uploader = new SocketIOFileUpload(socket);
   uploader.listenOnSubmit(document.getElementById("uploadButton"), document.getElementById("file_input"));
