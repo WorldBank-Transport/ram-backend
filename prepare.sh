@@ -1,4 +1,4 @@
-py#!/bin/bash
+#!/bin/bash
 
 
 while [[ $# > 1 ]]
