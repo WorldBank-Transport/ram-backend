@@ -1,51 +1,91 @@
 <!DOCTYPE html>
 <meta charset="utf-8" lang="en">
 <head>
-<title>Rural Road Accessibility</title>
+<title>Rural road accessibility</title>
   <meta id='viewport' content='initial-scale=1'/>
   <link href='https://fonts.googleapis.com/css?family=Overlock' rel='stylesheet' type='text/css'>
   <link href='./style/style.css' rel='stylesheet' type='text/css'/>
   <link href="./node_modules/bootstrap/dist/css/bootstrap.min.css"  rel='stylesheet' type='text/css'/>
+  <script src="../node_modules/jquery/dist/jquery.min.js"></script>
   <script src="./scripts/js/jquery.i18n.properties.min.js" type="text/javascript"  charset="utf-8"></script>
+  <script>
+function getUrlVars()
+{
+    var vars = [], hash;
+    var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+    for(var i = 0; i < hashes.length; i++)
+    {
+        hash = hashes[i].split('=');
+        vars.push(hash[0]);
+        vars[hash[0]] = hash[1];
+    }
+    return vars;
+};
+var lang = getUrlVars()["lang"];
+jQuery.i18n.properties({
+    name:'Messages', 
+    path:'i18n/', 
+    mode:'both',
+    language:lang,
+    checkAvailableLanguages: true
+});
+
+function t(a,b){
+  return  jQuery(document).ready(function() {         
+    $(a).append(jQuery.i18n.prop(b))          
+  })
+}
+jQuery(document).ready(function(){
+  $('#lng_zh').on('click',function(){
+     window.location.href='?lang=zh';
+  })
+  $('#lng_en').on('click',function(){
+    window.location.href='?lang=en';
+  })
+});
+
+  </script>
 </head>
 <body>
 <div class="container-fluid">
   <div class="page-header">
-  <h1>Rural roads accessibility <small><a href="views/upload.html">upload</a>, <a href="views/calculate.html">calculate</a>, <a href="views/analyse.html">analyse</a></small></h1>
+  <h1>
+  <span id="frt_title"><script>t('#frt_title','frt_title')</script></span> <small><a href="views/upload.html" id="frt_sub_upload"><script>t('#frt_sub_upload','frt_sub_upload')</script></a>, <a href="views/calculate.html" id="frt_sub_calculate"><script>t('#frt_sub_calculate','frt_sub_calculate')</script></a>, <a href="views/analyse.html" id="frt_sub_analyse"><script>t('#frt_sub_analyse','frt_sub_analyse')</script></a></small></h1>
+  <div id="switcher"><span id="lng_en"><script>t('#lng_en','lng_en')</script></span> <span id="lng_zh"><script>t('#lng_zh','lng_zh')</script></span></div>
 </div>
 <div class="row">
   <div class="col-md-1 col-sm-1">
-    step
-  </div>
-</div>
-
-<div class="row">
-  <div class="col-md-1 col-sm-1">
-    <h1>1</h1>
-  </div>
-  <div class="col-md-11 col-sm-11">
-    <h4>upload data</h4>
-    <p>Upload your data <a href="views/upload.html">here</a>
+    <span id="frt_step"><script>t('#frt_step','frt_step')</script></span>
   </div>
 </div>
 
 <div class="row">
   <div class="col-md-1 col-sm-1">
-    <h1>2</h1>
+    <h1 id="frt_1"><script>t('#frt_1','frt_1')</script></h1>
   </div>
   <div class="col-md-11 col-sm-11">
-    <h4>calculate timematrix</h4>
-    <p>Calculate the distance-time matrix <a href="views/calculate.html">here</a>
+    <h4 id="frt_step1"><script>t('#frt_step1','frt_step1')</script></h4>
+    <p><span id="frt_step1_txt"><script>t('#frt_step1_txt','frt_step1_txt')</script></span> <a href="views/upload.html" id="frt_step1_lnk"><script>t('#frt_step1_lnk','frt_step1_lnk')</script></a>
   </div>
 </div>
 
 <div class="row">
   <div class="col-md-1 col-sm-1">
-    <h1>3</h1>
+    <h1 id="frt_2"><script>t('#frt_2','frt_2')</script></h1>
   </div>
   <div class="col-md-11 col-sm-11">
-    <h4>analyse statistics</h4>
-    <p>Download and analyse the results <a href="views/analyse.html">here</a>
+    <h4 id="frt_step2"><script>t('#frt_step2','frt_step2')</script></h4>
+    <p><span id="frt_step2_txt"><script>t('#frt_step2_txt','frt_step2_txt')</script></span> <a href="views/calculate.html" id="frt_step2_lnk"><script>t('#frt_step2_lnk','frt_step2_lnk')</script></a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    <h1 id="frt_3"><script>t('#frt_3','frt_3')</script></h1>
+  </div>
+  <div class="col-md-11 col-sm-11">
+    <h4 id="frt_step3"><script>t('#frt_step3','frt_step3')</script></h4>
+    <p><span id="frt_step3_txt"><script>t('#frt_step3_txt','frt_step3_txt')</script></span> <a href="views/analyse.html" id="frt_step3_lnk"><script>t('#frt_step3_lnk','frt_step3_lnk')</script></a>
   </div>
 </div>
 
