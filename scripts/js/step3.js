@@ -93,19 +93,19 @@ function compareStats(el) {
     var c60min = data.reduce(function(p,c){if (c.counties <=60) {
       return p+c.population}
       else return p;
-      },0)*1000;
+      },0);
     var h30min = data.reduce(function(p,c){if (c.hospitals <=30) {
       return p+c.population}
       else return p;
-      },0)*1000;
+      },0);
     var b30min = data.reduce(function(p,c){if (c.banks <=30) {
       return p+c.population}
       else return p;
-      },0)*1000;
+      },0);
     var s20min = data.reduce(function(p,c){if (c.schools <=20) {
       return p+c.population}
       else return p;
-      },0)*1000;
+      },0);
     compareList.push(value)
     statList.push({file:value,total:ssPop,county:c60min,hospital:h30min,banks:b30min,school:s20min})
     createTable(statList)
@@ -130,8 +130,13 @@ function createTable(list) {
  .enter()
  .append('tr')
  .html(function(d){
-    return '<td>'+d.file
- })  
+    return '<td>'+d.file+'</td><td>'+Math.round(d.county/d.total*1000)/10+'</td><td>'+Math.round(d.hospital/d.total*1000)/10+'</td><td>'+Math.round(d.banks/d.total*1000)/10+'</td><td>'+Math.round(d.school/d.total*1000)/10+'</td><td>'
+ });  
+
+
+ d3.select('#comstats')
+ .insert("tr", ":first-child")
+ .html('<th>file</th><th>% 60m county</th><th>% 30m hospital</th><th>% 30 min bank</th><th>% 20 min school</th>')
    }
 }
 

@@ -26,7 +26,8 @@ WORKDIR=${PWD}
 
 cd $DIR
 
-mkdir tmp
+mkdir -p maps
+mkdir -p tmp
 unzip $FILE -d tmp 1>&2 
 cd tmp
 
@@ -41,7 +42,7 @@ shopt -u nocaseglob
 
 python ${WORKDIR}/../ogr2osm/ogr2osm.py "${SHAPEFILE}" -t "${TRANSLATE}" 1>&2 
 
-mkdir ../tmposm
+mkdir -p ../tmposm
 mv *.osm ../tmposm/map.osm #TODO: will only work with 1 osm file
 cp *.lua ../tmposm/.
 ln -s ${WORKDIR}/../osrm-backend/profiles/lib ../tmposm/lib
