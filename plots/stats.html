@@ -85,8 +85,8 @@ function accumulate_group(source_group) {
 }
 var chart1;
 queue()
-.defer(d3.csv, '../data/normal.csv')
-.defer(d3.csv, '../data/fast.csv')
+.defer(d3.csv, '../data/csv/Daozhen%20Gelao%20and%20Miao-1460656194106.csv')
+.defer(d3.csv, '../data/csv/Daozhen%20Gelao%20and%20Miao-1460656194106.csv')
 .await(buildGraphs)
 
 function buildGraphs(err,normal,fast) {

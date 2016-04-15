@@ -5,7 +5,7 @@ d3.json('../data/user.json',function(d){
 })
 var socket;
 function Authenticate(user,pass) {
-  var sockethost = window.location.protocol +'//'+ window.location.host.split(':')[0] + ':5000'
+  var sockethost = window.location.protocol +'//'+ window.location.host.split(':')[0] + ':50000'
   socket = io(sockethost);
   socket.on('connect', function(){
     socket.emit('authentication', {username: user, password: pass});
@@ -40,6 +40,11 @@ function Authenticate(user,pass) {
           .on('click',function(){
             selectStats(this);
           })
+
+          d3.selectAll('.compareButtons')
+          .on('click',function(){
+            compareStats(this);
+          })
       }
     });
     socket.on('finished',function(data){
@@ -64,13 +69,79 @@ function Authenticate(user,pass) {
   })
 }
 
+var compareList = [];
+var statList = [];
+function compareStats(el) {
+  if(el.checked) {
+    var value = el.value;
+    d3.csv('../data/csv/'+el.value,function(normal){
+      normal.forEach(function(d,idx) {
+      d.population  = +d.POP;
+      d.banks   = d3.round((+d.banks)/60.,0);
+      d.hospitals = d3.round((+d.hospitals)/60.,0);
+      d.schools = d3.round((+d.schools)/60.,0);
+      d.counties = d3.round((+d.counties)/60.,0);
+      d.prefectures = d3.round((+d.prefectures)/60.,0);
+      d.county= d.NAME_3;
+      d.lat = d3.round(+d.lat,6);
+      d.lon = d3.round(+d.lon,6);
+    });
+
+    var data = normal;
+
+    var ssPop = data.reduce(function(p,c){return p+c.population},0)
+    var c60min = data.reduce(function(p,c){if (c.counties <=60) {
+      return p+c.population}
+      else return p;
+      },0)*1000;
+    var h30min = data.reduce(function(p,c){if (c.hospitals <=30) {
+      return p+c.population}
+      else return p;
+      },0)*1000;
+    var b30min = data.reduce(function(p,c){if (c.banks <=30) {
+      return p+c.population}
+      else return p;
+      },0)*1000;
+    var s20min = data.reduce(function(p,c){if (c.schools <=20) {
+      return p+c.population}
+      else return p;
+      },0)*1000;
+    compareList.push(value)
+    statList.push({file:value,total:ssPop,county:c60min,hospital:h30min,banks:b30min,school:s20min})
+    createTable(statList)
+    })
+
+  }
+  else {
+    statList.splice(compareList.indexOf(el.value),1)
+    compareList.splice(compareList.indexOf(el.value),1);
+    createTable(statList)
+  }
+ 
+}
+
+function createTable(list) {
+  d3.select('#comstats').html('');
+  if(list.length>0) {
+ d3.select('#comstats')
+ //.html('<tr><th>file</th><th>% 60m county</th><th>% 30m hospital</th><th>% 30 min bank</th><th>% 20 min school</th></tr>')
+ .selectAll('tr')
+ .data(list)
+ .enter()
+ .append('tr')
+ .html(function(d){
+    return '<td>'+d.file
+ })  
+   }
+}
+
 
 function createCsvList(csv) {
       var time = csv.split('-')[csv.split('-').length-1].split('.')[0];
       var id = csv.split('-')[0];
       var date = new Date(parseInt(time));
 
-      var result = '<td>Calculation done on '+date.toLocaleString()+' for '+id +': </td><td><a href="../data/csv/'+csv+'"> download CSV file</a> </td><td> <span class="changeOSRM" name="'+csv+'"> view statistics</span></td>';
+      var result = '<td>Calculation done on '+date.toLocaleString()+' for '+id +': </td><td><a href="../data/csv/'+csv+'"> download CSV file</a> </td><td> <span class="changeOSRM" name="'+csv+'"> view statistics</span></td><td><div class="checkbox"><label><input type="checkbox" class="compareButtons" value="'+csv+'">compare</label></div></td>';
      
       return result;
 
@@ -130,7 +201,30 @@ function buildGraphs(err,normal) {
       d.lon = d3.round(+d.lon,6);
     });
 
-    data = normal;
+    var data = normal;
+
+    var ssPop = data.reduce(function(p,c){return p+c.population},0)
+    var c60min = data.reduce(function(p,c){if (c.counties <=60) {
+      return p+c.population}
+      else return p;
+      },0)*1000;
+    var h30min = data.reduce(function(p,c){if (c.hospitals <=30) {
+      return p+c.population}
+      else return p;
+      },0)*1000;
+    var b30min = data.reduce(function(p,c){if (c.banks <=30) {
+      return p+c.population}
+      else return p;
+      },0)*1000;
+    var s20min = data.reduce(function(p,c){if (c.schools <=20) {
+      return p+c.population}
+      else return p;
+      },0)*1000;
+
+    d3.select('#ssCounty').html(Math.round(c60min/ssPop)/10+' % of the population can reach a county seat by road in 60 minutes;');
+    d3.select('#ssHospital').html(Math.round(h30min/ssPop)/10+' % of the population can reach a hospital by road in 30 minutes;');
+    d3.select('#ssBank').html(Math.round(b30min/ssPop)/10+' % of the population can reach a bank by road in 30 minutes;');
+    d3.select('#ssSchool').html(Math.round(s20min/ssPop)/10+' % of the population can reach a school seat by road in 20 minutes;');
 /******************************************************
 * Step1: Create the dc.js chart objects & ling to div *
 ******************************************************/
@@ -240,6 +334,10 @@ hospitalsValue = facts.dimension(function (d) {
   var volumeByPopulationGroup = volumeByPopulation.group()
       .reduceSum(function(d) { return d.population; });
   var maxPopulation = volumeByPopulation.top(1)[0].population;
+
+
+
+
 
 
 /***************************************
