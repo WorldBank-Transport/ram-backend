@@ -368,7 +368,7 @@ hospitalsValue = facts.dimension(function (d) {
     .centerBar(true)
   .gap(56)                                            // bar width Keep increasing to get right then back off.
     .x(d3.scale.linear()
-    .domain([0, Math.min(maxHospital,200)]))
+    .domain([0, Math.min(maxHospital,175)]))
   .elasticY(true)
   .xAxis().tickFormat(function(v) {return v;});
 
@@ -380,7 +380,7 @@ hospitalsValue = facts.dimension(function (d) {
   .transitionDuration(500)
     .centerBar(true)
   .gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, maxBanks]))
+    .x(d3.scale.linear().domain([0, Math.min(maxBanks,175)]))
   .elasticY(true)
   .xAxis().tickFormat(function(v) {return v;});
 
@@ -392,7 +392,7 @@ hospitalsValue = facts.dimension(function (d) {
   .transitionDuration(500)
     .centerBar(true)
   .gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, Math.min(maxSchools,200)]))
+    .x(d3.scale.linear().domain([0, Math.min(maxSchools,175)]))
   .elasticY(true)
   .xAxis().tickFormat(function(v) {return v;});
 
@@ -404,7 +404,7 @@ hospitalsValue = facts.dimension(function (d) {
   .transitionDuration(500)
     .centerBar(true)
   .gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, Math.min(maxPrefectures,200)]))
+    .x(d3.scale.linear().domain([0, Math.min(maxPrefectures,550)]))
   .elasticY(true)
   .xAxis().tickFormat(function(v) {return v;});
 
@@ -417,7 +417,7 @@ hospitalsValue = facts.dimension(function (d) {
   .transitionDuration(500)
     .centerBar(true)
   .gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, Math.min(maxCounties,200)]))
+    .x(d3.scale.linear().domain([0, Math.min(maxCounties,350)]))
   .elasticY(true)
   .elasticX(true)
   .xAxis().tickFormat(function(v) {return v;});
@@ -430,7 +430,7 @@ hospitalsValue = facts.dimension(function (d) {
     .group(volumeByPopulationCount)
     .transitionDuration(500)
   .elasticY(true)
-    .x(d3.scale.log().domain([0, maxPopulation])) // scale and domain of the graph
+    .x(d3.scale.log().domain([1e1, maxPopulation])) // scale and domain of the graph
     .xAxis();
 
   // Counties Charts
