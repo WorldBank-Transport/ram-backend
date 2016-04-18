@@ -11,7 +11,7 @@ function Authenticate(user,pass) {
     socket.emit('authentication', {username: user, password: pass});
   });
   socket.on('unauthorized', function(err){
-    alert('not a valid username or password, please try again.');
+    alert($.i18n.prop('gnl_unauth'));
   });
   socket.on('authenticated', function() {
     socket.emit('retrieveOSRM');
@@ -24,12 +24,13 @@ function Authenticate(user,pass) {
       else if (data.socketIsUp) {
           d3.select('#logfield')
           .insert("div", ":first-child")
-          .html('connected to the server')
+          .html($.i18n.prop('gnl_connected'))
           .style({color:'green','font-weight':'bold'})
       }
       else if(data.osrm) {
-        OSRMLIST = data.osrm;
-        createOsrmList(data.osrm);
+        console.log(data.osrm)
+        OSRMLIST = data.osrm.map(function(o){return {file:o,active:false}});
+        createOsrmList(OSRMLIST);
       }
       else if(data.file) {
         d3.select('#step4')
@@ -37,12 +38,15 @@ function Authenticate(user,pass) {
 
         d3.select('#logfield')
           .insert("div", ":first-child")
-          .html('Ready for the next task')
+          .html($.i18n.prop('cal_next'))
           .style({color:'green','font-weight':'bold'})
        
         d3.select('#csvlist')
           .insert("tr", ":first-child")
           .html(createCsvList(data.file))
+      }
+      else if(data.newOsrm) {
+        highlightOsrm(data.newOsrm);
       }
     });
     socket.on('finished',function(data){
@@ -56,7 +60,7 @@ function Authenticate(user,pass) {
   socket.on('disconnect',function(){
     d3.select('#logfield')
         .insert("div", ":first-child")
-        .html('disconnected, hang on trying again in a few seconds')
+        .html($.i18n.prop('gnl_disconnected'))
         .style({color:'red','font-weight':'bold'})
     socket.off('status');
     socket.off('finished');
@@ -67,52 +71,49 @@ function Authenticate(user,pass) {
   })
 }
 
-var osrmfile = './data/OSRM-ready/map.osrm';
 
 function createOsrmList(osrmlist) {
   d3.select('#osrmfiles')
     .html('');
   d3.select('#chosenFile')
     .html('');
-  if(window.location.search.split('?').length>1)
-    osrmfile = window.location.search.split('?')[1].split('=')[1];
-  var osrmtime;
-  if(osrmfile.indexOf('maps')>-1) {
-    osrmtime = osrmfile.split('/')[3];
-  }
-  var fromList = false;
-  osrmlist.forEach(function(osrm){
-    var date = new Date(parseInt(osrm)*1000);
-    if(osrm===osrmtime) {
-      fromList = true;
-      var result = '<span class="activeOSRM">using this file: Processing done on '+date.toLocaleString()+ '</span>';
-      var pad = './data/maps/'+osrm+'/map.osrm';
-      socket.emit('setOSRM',{osrm:pad});
-      d3.select('#chosenFile')
-        .insert('div')
-        .html(result)
+
+  var osrmfile = getUrlVars()['osrm']===undefined?'./data/OSRM-ready/map.osrm':getUrlVars()['osrm'];
+
+  osrmlist.forEach(function(item){
+    var osrm = item.file;
+    if(osrm === osrmfile) {
+      if(!item.active)
+      socket.emit('setOSRM',{osrm:osrm});
+    item.active = true;
     }
-    if(isNaN(parseInt(osrm))) {
-      var result ='Default road network for the entire region  - <span class="changeOSRM">use this file</span>'
+    if(osrm.indexOf('maps')>-1) {
+      var date = new Date(parseInt(osrm.split('/')[3])*1000);
     }
-    else 
-    var result = 'Processing done on '+date.toLocaleString()+' - <span class="changeOSRM">use this file</span>';
-      
+    var active = item.active?'active':'';
+    var result = date?'<span class="'+active+'">'+$.i18n.prop('cal_osrm_file',osrm.split('/')[4], date.toLocaleString())+'</span> - <span class="changeOSRM">'+$.i18n.prop('cal_use_file')+'</span>':'<span class="'+active+'">'+$.i18n.prop('cal_default_osrm')+'</span> - <span class="changeOSRM">'+$.i18n.prop('cal_use_file')+'</span>';
     d3.select('#osrmfiles')
-      .insert("div", ":first-child")
-      .html(result)
-      .on('click',function(){setOsrm(osrm)})
-    
-  });
+        .insert("div", ":first-child")
+        .html(result)
+        .on('click',function(){setOsrm(osrm)})
+  })
+
 }
 function setOsrm(osrm) {
-  if(isNaN(parseInt(osrm))) {
-    var pad = osrm;
-  }
-  else
-    var pad = './data/maps/'+osrm+'/map.osrm';
-  window.history.pushState({},'calculate stats', 'calculate.html?osrm='+pad);
-  socket.emit('setOSRM',{osrm:pad});
+  var url = getUrlVars()['lang']===undefined?('calculate.html?osrm='+osrm):('calculate.html?osrm='+osrm+'&lang='+getUrlVars()['lang']);
+  window.history.pushState({},'calculate stats', url);
+  socket.emit('setOSRM',{osrm:osrm});
+}
+
+function highlightOsrm(osrm) {
+  OSRMLIST.forEach(function(item){
+    if(item.file===osrm) {
+      item.active = true
+    }
+    else {
+      item.active = false;
+    }
+  })
   createOsrmList(OSRMLIST);
 }
 
@@ -216,8 +217,8 @@ d3.json(provincialFile,function (data) {
 })
 
 function generateCSV (feature,geometryId) {
-
-   socket.emit('getMatrixForRegion',{feature:feature,id:new Date().getTime(),time:3600,maxSpeed:120,geometryId:feature.properties[geometryId]})
+  var osrm = OSRMLIST.filter(function(o){return o.active});
+   socket.emit('getMatrixForRegion',{feature:feature,id:new Date().getTime(),time:3600,maxSpeed:120,osrm:osrm[0].file,geometryId:feature.properties[geometryId]})
 }
 
 function createCsvList(csv) {

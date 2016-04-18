@@ -15,6 +15,7 @@ process.env.UV_THREADPOOL_SIZE=Math.floor(cpus*1.5);
 
 process.on('message', function(e) {
 	process.send({type:'status',data:'Started calculating the travel time between all villages and POIs in the given region.'});
+	console.log(e.osrm);
 	var POIfiles = e.POIs;
 	var osrm = new OSRM(e.osrm);
 	for (key in POIfiles) {

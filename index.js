@@ -84,7 +84,8 @@ POIs.counties = './data/POIs/counties.geojson';
 POIs.prefectures = './data/POIs/prefectures.geojson';
 
 var villagesFile = './data/ReadytoUse/Village_pop.geojson';
-var osrm = './data/OSRM-ready/map.osrm';
+var defaultOsrm = './data/OSRM-ready/map.osrm';
+var osrm = defaultOsrm;
 var dir = './data/';
 var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
 
@@ -144,11 +145,17 @@ function postAuthenticate(socket, data) {
   socket.on('setOSRM',function(data){
     console.log(data)
     osrm = data.osrm;
+    socket.emit('status',{newOsrm:osrm});
+    socket.emit('status',{msg:'network changed to '+osrm});
   })
   socket.on('retrieveOSRM',function(){
     var osrmfiles = fs.readdirSync(dir+'maps/');
-    osrmfiles.push(osrm);
-    socket.emit('status',{osrm:osrmfiles});
+    var osrmlist = osrmfiles.map(function(o){
+      var files = fs.readdirSync(dir+'maps/'+o);
+      return './data/maps/'+o+'/'+files[0].split('.')[0]+'.osrm'})
+    osrmlist.push(defaultOsrm);
+    console.log(osrmlist);
+    socket.emit('status',{osrm:osrmlist});
   })
   var uploader = new siofu();
   uploader.dir = dir;
@@ -222,7 +229,7 @@ function createTimeMatrix(data) {
   //tell the client how many squares there are
   io.emit('status',{id:data.id,msg:'split region in '+squares.features.length+' grid squares'})
 
-  cETA.send({data:data,squares:squares.features,POIs:POIs,villages:villagesFile,osrm:osrm});
+  cETA.send({data:data,squares:squares.features,POIs:POIs,villages:villagesFile,osrm:data.osrm});
   var remaining = squares.features.length;
   cETA.on('message',function(msg){
     if(msg.type == 'status') {

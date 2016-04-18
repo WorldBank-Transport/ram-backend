@@ -43,7 +43,7 @@ shopt -u nocaseglob
 python ${WORKDIR}/../ogr2osm/ogr2osm.py "${SHAPEFILE}" -t "${TRANSLATE}" 1>&2 
 
 mkdir -p ../tmposm
-mv *.osm ../tmposm/map.osm #TODO: will only work with 1 osm file
+mv *.osm ../tmposm/. #TODO: will only work with 1 osm file
 cp *.lua ../tmposm/.
 ln -s ${WORKDIR}/../osrm-backend/profiles/lib ../tmposm/lib
 cd ../tmposm
