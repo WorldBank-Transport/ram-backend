@@ -419,7 +419,6 @@ hospitalsValue = facts.dimension(function (d) {
   .gap(56)                                            // bar width Keep increasing to get right then back off.
     .x(d3.scale.linear().domain([0, Math.min(maxCounties,350)]))
   .elasticY(true)
-  .elasticX(true)
   .xAxis().tickFormat(function(v) {return v;});
 
   // time graph
