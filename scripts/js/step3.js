@@ -142,11 +142,14 @@ function createTable(list) {
 
 
 function createCsvList(csv) {
-      var time = csv.split('-')[csv.split('-').length-1].split('.')[0];
+       var time = csv.split('-')[1];
       var id = csv.split('-')[0];
+      if(csv.split('-')[2])
+      var nw = csv.split('-')[2].split('.')[0];
+      else nw = '';
       var date = new Date(parseInt(time));
 
-      var result = '<td>Calculation done on '+date.toLocaleString()+' for '+id +': </td><td><a href="../data/csv/'+csv+'"> download CSV file</a> </td><td> <span class="changeOSRM" name="'+csv+'"> view statistics</span></td><td><div class="checkbox"><label><input type="checkbox" class="compareButtons" value="'+csv+'">compare</label></div></td>';
+      var result = '<td>Calculation done on '+date.toLocaleString()+' for '+id +' with ' +nw +': </td><td><a href="../data/csv/'+csv+'"> download CSV file</a> </td><td> <span class="changeOSRM" name="'+csv+'"> view statistics</span></td><td><div class="checkbox"><label><input type="checkbox" class="compareButtons" value="'+csv+'">compare</label></div></td>';
      
       return result;
 
