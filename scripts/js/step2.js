@@ -215,7 +215,7 @@ d3.json(provincialFile,function (data) {
     style: defaultStyle,
     onEachFeature: function (feature, layer) {
       layer.on('click',function(e){
-        generateCSV(feature,'NAME_3');
+        generateCSV(feature,'NAME_1');
       });
       layer.on('mousemove',function(e) {
         layer.setStyle( highlightStyle)
