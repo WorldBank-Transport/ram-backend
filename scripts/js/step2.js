@@ -80,9 +80,11 @@ function createOsrmList(osrmlist) {
   if(osrmfile.indexOf('maps')>-1) {
     osrmtime = osrmfile.split('/')[3];
   }
+  var fromList = false;
   osrmlist.forEach(function(osrm){
     var date = new Date(parseInt(osrm)*1000);
     if(osrm===osrmtime) {
+      fromList = true;
       var result = '<span class="activeOSRM">using this file: Processing done on '+date.toLocaleString()+ '</span>';
       var pad = './data/maps/'+osrm+'/map.osrm';
       socket.emit('setOSRM',{osrm:pad});
@@ -90,18 +92,25 @@ function createOsrmList(osrmlist) {
         .insert('div')
         .html(result)
     }
-    
-      var result = 'Processing done on '+date.toLocaleString()+' - <span class="changeOSRM">use this file</span>';
+    if(isNaN(parseInt(osrm))) {
+      var result ='Default road network for the entire region  - <span class="changeOSRM">use this file</span>'
+    }
+    else 
+    var result = 'Processing done on '+date.toLocaleString()+' - <span class="changeOSRM">use this file</span>';
       
-      d3.select('#osrmfiles')
-        .insert("div", ":first-child")
-        .html(result)
-        .on('click',function(){setOsrm(osrm)})
+    d3.select('#osrmfiles')
+      .insert("div", ":first-child")
+      .html(result)
+      .on('click',function(){setOsrm(osrm)})
     
   });
 }
 function setOsrm(osrm) {
-  var pad = './data/maps/'+osrm+'/map.osrm';
+  if(isNaN(parseInt(osrm))) {
+    var pad = osrm;
+  }
+  else
+    var pad = './data/maps/'+osrm+'/map.osrm';
   window.history.pushState({},'calculate stats', 'calculate.html?osrm='+pad);
   socket.emit('setOSRM',{osrm:pad});
   createOsrmList(OSRMLIST);

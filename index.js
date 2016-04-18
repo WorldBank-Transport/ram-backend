@@ -147,6 +147,7 @@ function postAuthenticate(socket, data) {
   })
   socket.on('retrieveOSRM',function(){
     var osrmfiles = fs.readdirSync(dir+'maps/');
+    osrmfiles.push(osrm);
     socket.emit('status',{osrm:osrmfiles});
   })
   var uploader = new siofu();
