@@ -12,22 +12,26 @@
   <script src="../node_modules/crossfilter/crossfilter.min.js" charset="utf-8"></script>
   <script src="../node_modules/dc/dc.min.js" charset="utf-8"></script>
     <script src='../scripts/js/queue.v1.min.js' type='text/javascript'></script>
-
+    <script src="../node_modules/jquery/dist/jquery.min.js"></script>
+  <script src="../scripts/js/jquery.i18n.properties.min.js" type="text/javascript"  charset="utf-8"></script>
+  <script src="../scripts/js/util.js" type="text/javascript"  charset="utf-8"></script>
 </head>
 <body>
 <div class="container-fluid">
   <div class="page-header">
-  <h1>Rural roads accessibility <small><a href="./upload.html">upload</a>, <a href="calculate.html">calculate</a>, analyse</small></h1>
+  <h1>
+  <a href="/" id="frt_title"><script>t('#frt_title','frt_title')</script></a> <small><a href="./upload.html" id="frt_sub_upload"><script>t('#frt_sub_upload','frt_sub_upload')</script></a>, <a href="./calculate.html" id="frt_sub_calculate"><script>t('#frt_sub_calculate','frt_sub_calculate')</script></a>, <a href="./analyse.html" id="frt_sub_analyse"><script>t('#frt_sub_analyse','frt_sub_analyse')</script></a></small></h1>
+  <div id="switcher" class="pull-right clear-fix"><span id="lng_en"><script>t('#lng_en','lng_en')</script></span> <span id="lng_zh"><script>t('#lng_zh','lng_zh')</script></span></div>
 </div>
 <div class="row">
   <div class="col-md-1 col-sm-1">
-    step
+     <span id="frt_step"><script>t('#frt_step','frt_step')</script></span>
   </div>
 </div>
 
 <div class="row">
   <div class="col-md-1 col-sm-1">
-    <h1>1</h1>
+     <h1 id="frt_1"><script>t('#frt_1','frt_1')</script></h1>
   </div>
   <div class="col-md-11 col-sm-11">
     <h4>Choose a time-distance matrix</h4>
@@ -40,7 +44,7 @@
 
 <div class="row">
   <div class="col-md-1 col-sm-1">
-    <h1>2</h1>
+    <h1 id="frt_2"><script>t('#frt_2','frt_2')</script></h1>
   </div>
   <div class="col-md-11 col-sm-11">
     <h4>Summary</h4>
@@ -55,7 +59,7 @@
 </div> 
 <div class='row dc-data-count clearfix'>
 <div class="col-md-1 col-sm-1">
-    <h1>3</h1>
+    <h1 id="frt_3"><script>t('#frt_3','frt_3')</script></h1>
   </div>
     <div class='col-md-11 col-sm-11'>
         <h3><span class="filter-count"></span>
@@ -133,7 +137,7 @@
 
 <div class="row">
   <div class="col-md-1 col-sm-1">
-    <h1>4</h1>
+    <h1 id="frt_4"><script>t('#frt_4','frt_4')</script></h1>
   </div>
   <div class="col-md-11 col-sm-11">
     <h4>Status</h4>

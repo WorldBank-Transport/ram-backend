@@ -13,24 +13,24 @@ function Authenticate(user,pass) {
   uploader.addEventListener('start',function(e){
      d3.select('#logfield')
       .insert("div", ":first-child")
-      .html('Upload of file '+e.file.name+' has started')
+      .html()
   })
   uploader.addEventListener('progress',function(e){
     var progress= Math.round(e.bytesLoaded / e.file.size*100);
     if(progress > quint) {
      d3.select('#logfield')
       .insert("div", ":first-child")
-      .html(progress+'% of the file is uploaded');
+      .html($.i18n.prop('upl_progress',progress));
       quint=quint+10;
     }
   })
   uploader.addEventListener('complete',function (e) {
     d3.select('#logfield')
       .insert("div", ":first-child")
-      .html(e.file.name+' has been uploaded, starting to process....');
+      .html($.i18n.prop('upl_process',e.file.name));
     d3.select('#logfield')
       .insert("div", ":first-child")
-      .html('this might take a while')
+      .html($.i18n.prop('upl_patience'))
        .style({color:'orange','font-weight':'bold'});  
     quint = 10;
   })
@@ -38,7 +38,7 @@ function Authenticate(user,pass) {
     socket.emit('authentication', {username: user, password: pass});
   });
   socket.on('unauthorized', function(err){
-    alert('not a valid username or password, please try again.');
+    alert($.i18n.prop('gnl_unauth'));
   });
   socket.on('authenticated', function() {
     socket.on('status', function (data) {
@@ -50,7 +50,7 @@ function Authenticate(user,pass) {
       else if (data.socketIsUp) {
           d3.select('#logfield')
           .insert("div", ":first-child")
-          .html('connected to the server')
+          .html($.i18n.prop('gnl_connected'))
           .style({color:'green','font-weight':'bold'})
       }
       else if(data.result) {
@@ -74,7 +74,7 @@ function Authenticate(user,pass) {
   socket.on('disconnect',function(){
     d3.select('#logfield')
         .insert("div", ":first-child")
-        .html('disconnected, hang on trying again in a few seconds')
+        .html($.i18n.prop('gnl_disconnected'))
         .style({color:'red','font-weight':'bold'})
     socket.off('status');
     socket.off('finished');
