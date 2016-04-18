@@ -150,21 +150,37 @@ var localarea;
 var regionalarea;
 var provinialarea;
 
+
+var highlightStyle = {
+    color: '#a6bddb', 
+    weight: 2,
+    opacity: 0.6,
+    fillOpacity: 0.65,
+    fillColor: '#a6bddb'
+};
+ var defaultStyle = {
+            color: "#a6bddb",
+            weight: 1,
+            opacity: 0.6,
+            fillOpacity: 0.1,
+            fillColor: "#a6bddb"
+        };
+
 d3.json(localFile,function (data) {
   localarea = L.geoJson(data, {
-    style: function(feature){
-      return {color:'#a6bddb',weight:1}
-    },
+    style: defaultStyle,
     onEachFeature: function (feature, layer) {
       layer.on('click',function(e){
         generateCSV(feature,'NAME_3');
       });
       layer.on('mousemove',function(e) {
+        layer.setStyle( highlightStyle)
         d3.select('#countyname')
           .html(feature.properties.NAME_3)
           .style({left:(e.originalEvent.layerX+15)+'px',top:(e.originalEvent.layerY+5)+'px'})
       })
       layer.on('mouseout',function(){
+        layer.setStyle(defaultStyle);
         d3.select('#countyname')
           .html('')
       })
@@ -175,19 +191,19 @@ d3.json(localFile,function (data) {
 })
 d3.json(regionalFile,function (data) {
   regionalarea = L.geoJson(data, {
-    style: function(feature){
-      return {color:'#a6bddb',weight:1}
-    },
+    style: defaultStyle,
     onEachFeature: function (feature, layer) {
       layer.on('click',function(e){
         generateCSV(feature,'NAME_2');
       });
       layer.on('mousemove',function(e) {
+        layer.setStyle( highlightStyle)
         d3.select('#countyname')
           .html(feature.properties.NAME_2)
           .style({left:(e.originalEvent.layerX+15)+'px',top:(e.originalEvent.layerY+5)+'px'})
       })
       layer.on('mouseout',function(){
+        layer.setStyle(defaultStyle);
         d3.select('#countyname')
           .html('')
       })
@@ -196,19 +212,19 @@ d3.json(regionalFile,function (data) {
 })
 d3.json(provincialFile,function (data) {
   provinialarea = L.geoJson(data, {
-    style: function(feature){
-      return {color:'#a6bddb',weight:1}
-    },
+    style: defaultStyle,
     onEachFeature: function (feature, layer) {
       layer.on('click',function(e){
         generateCSV(feature,'NAME_3');
       });
       layer.on('mousemove',function(e) {
+        layer.setStyle( highlightStyle)
         d3.select('#countyname')
           .html(feature.properties.NAME_1)
           .style({left:(e.originalEvent.layerX+15)+'px',top:(e.originalEvent.layerY+5)+'px'})
       })
       layer.on('mouseout',function(){
+        layer.setStyle(defaultStyle);
         d3.select('#countyname')
           .html('')
       })
@@ -222,10 +238,10 @@ function generateCSV (feature,geometryId) {
 }
 
 function createCsvList(csv) {
-      var time = csv.split('-')[1].split('.')[0];
-      var id = csv.split('-')[0];
-      var date = new Date(parseInt(time));
+  var time = csv.split('-')[1].split('.')[0];
+  var id = csv.split('-')[0];
+  var date = new Date(parseInt(time));
 
-      var result = '<td>Calculation done on '+date.toLocaleString()+' for '+id +': </td><td><a href="../data/csv/'+csv+'"> download CSV file</a> </td><td> <a href="analyse.html?csv=../data/csv/'+csv+'"> view statistics</a></td>';
-      return result;
+  var result = '<td>'+$.i18n.prop("cal_done",date.toLocaleString(),id) +': </td><td><a href="../data/csv/'+csv+'"> '+$.i18n.prop("cal_download")+'</a> </td><td> <a href="analyse.html?csv=../data/csv/'+csv+'"> '+$.i18n.prop("cal_view")+'</a></td>';
+  return result;
 }
