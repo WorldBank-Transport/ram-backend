@@ -248,8 +248,10 @@ function createTimeMatrix(data) {
       console.log('timing: '+timing);
             io.emit('status',{id:data.id,msg:'timematrix has been calculated in '+timing});
             io.emit('status',{id:data.id,msg:'writing result to disk, this might take a while'});
+      var networkfile = data.osrm.split('/')[data.osrm.split('/').length-1];
+      var osrmfile = networkfile.split('.')[0];
       var print = d3.csv.format(msg.data);
-      var file = data.geometryId+'-'+data.id+'.csv';
+      var file = data.geometryId+'-'+data.id+'-'+osrmfile+'.csv';
         fs.writeFile(dir+'/csv/'+file, print, function(err){
             if(err) {
                   return console.log(err);
