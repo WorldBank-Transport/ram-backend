@@ -24,7 +24,7 @@ function Authenticate(user,pass) {
       else if (data.socketIsUp) {
           d3.select('#logfield')
           .insert("div", ":first-child")
-          .html('connected to the server')
+           .html($.i18n.prop('gnl_connected'))
           .style({color:'green','font-weight':'bold'})
       }
        else if(data.csvs) {
@@ -58,7 +58,7 @@ function Authenticate(user,pass) {
   socket.on('disconnect',function(){
     d3.select('#logfield')
         .insert("div", ":first-child")
-        .html('disconnected, hang on trying again in a few seconds')
+        .html($.i18n.prop('gnl_disconnected'))
         .style({color:'red','font-weight':'bold'})
     socket.off('status');
     socket.off('finished');
@@ -73,6 +73,7 @@ var compareList = [];
 var statList = [];
 function compareStats(el) {
   if(el.checked) {
+     d3.select('#comstep').style('display','block');
     var value = el.value;
     d3.csv('../data/csv/'+el.value,function(normal){
       normal.forEach(function(d,idx) {
@@ -136,7 +137,7 @@ function createTable(list) {
 
  d3.select('#comstats')
  .insert("tr", ":first-child")
- .html('<th>file</th><th>% 60m county</th><th>% 30m hospital</th><th>% 30 min bank</th><th>% 20 min school</th>')
+ .html('<th>'+$.i18n.prop('anl_file')+'</th><th>'+$.i18n.prop('anl_60c')+'</th><th>'+$.i18n.prop('anl_30h')+'</th><th>'+$.i18n.prop('anl_30b')+'</th><th>'+$.i18n.prop('anl_20s')+'</th>')
    }
 }
 
@@ -149,7 +150,7 @@ function createCsvList(csv) {
       else nw = '';
       var date = new Date(parseInt(time));
 
-      var result = '<td>Calculation done on '+date.toLocaleString()+' for '+id +' with ' +nw +': </td><td><a href="../data/csv/'+csv+'"> download CSV file</a> </td><td> <span class="changeOSRM" name="'+csv+'"> view statistics</span></td><td><div class="checkbox"><label><input type="checkbox" class="compareButtons" value="'+csv+'">compare</label></div></td>';
+      var result = '<td>'+$.i18n.prop('anl_csv_list',date.toLocaleString(),id,nw)+'</td><td><a href="../data/csv/'+csv+'"> '+$.i18n.prop('anl_download')+'</a> </td><td> <span class="changeOSRM" name="'+csv+'"> '+$.i18n.prop('anl_view')+'</span></td><td><div class="checkbox"><label><input type="checkbox" class="compareButtons" value="'+csv+'">'+$.i18n.prop('anl_compare')+'</label></div></td>';
      
       return result;
 
@@ -171,20 +172,24 @@ function accumulate_group(source_group) {
 function selectStats(el) {
   var file = el.attributes['name'].value;
   var pad = '../data/csv/'+file;
-  window.history.pushState({},'analyse stats', 'analyse.html?csv='+pad);
+  var url = getUrlVars()['lang']===undefined?('analyse.html?csv='+pad):('analyse.html?csv='+pad+'&lang='+getUrlVars()['lang']);
+  window.history.pushState({},'analyse stats', url);
+
   createStats(pad);
 }
 var csvfile;
-if(window.location.search.split('?').length>1) {
-    csvfile = window.location.search.split('?')[1].split('=')[1];
+if(getUrlVars()['csv']) {
+    csvfile = getUrlVars()['csv'];
     createStats(csvfile)
   }
 
 function createStats(pad) {
-  var time = pad.split('-')[pad.split('-').length-1].split('.')[0];
+  var time = pad.split('-')[1];
   var id = pad.split('-')[0].split('/')[pad.split('-')[0].split('/').length-1];
+  var nw = pad.split('-')[2].split('.')[0];
   var date = new Date(parseInt(time));
-  d3.select('#chosenFile').html('Showing statistics done on '+date.toLocaleString()+' for '+decodeURIComponent(id));
+  d3.select('#chosenFile').html($.i18n.prop('anl_statistics',date.toLocaleString(),decodeURIComponent(id),nw));
+
   d3.select('#step2').style('display','block');
 
 queue()
@@ -229,10 +234,10 @@ function buildGraphs(err,normal) {
       else return p;
       },0)*1000;
 
-    d3.select('#ssCounty').html(Math.round(c60min/ssPop)/10+' % of the population can reach a county seat by road in 60 minutes;');
-    d3.select('#ssHospital').html(Math.round(h30min/ssPop)/10+' % of the population can reach a hospital by road in 30 minutes;');
-    d3.select('#ssBank').html(Math.round(b30min/ssPop)/10+' % of the population can reach a bank by road in 30 minutes;');
-    d3.select('#ssSchool').html(Math.round(s20min/ssPop)/10+' % of the population can reach a school seat by road in 20 minutes;');
+    d3.select('#ssCounty').html($.i18n.prop('anl_sum_county',Math.round(c60min/ssPop)/10));
+    d3.select('#ssHospital').html($.i18n.prop('anl_sum_hospital',Math.round(h30min/ssPop)/10));
+    d3.select('#ssBank').html($.i18n.prop('anl_sum_bank',Math.round(b30min/ssPop)/10));
+    d3.select('#ssSchool').html($.i18n.prop('anl_sum_county',Math.round(s20min/ssPop)/10));
 /******************************************************
 * Step1: Create the dc.js chart objects & ling to div *
 ******************************************************/

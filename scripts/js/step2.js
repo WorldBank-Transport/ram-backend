@@ -240,6 +240,7 @@ function generateCSV (feature,geometryId) {
 function createCsvList(csv) {
   var time = csv.split('-')[1].split('.')[0];
   var id = csv.split('-')[0];
+  var nw = csv.split('-')[2];
   var date = new Date(parseInt(time));
 
   var result = '<td>'+$.i18n.prop("cal_done",date.toLocaleString(),id) +': </td><td><a href="../data/csv/'+csv+'"> '+$.i18n.prop("cal_download")+'</a> </td><td> <a href="analyse.html?csv=../data/csv/'+csv+'"> '+$.i18n.prop("cal_view")+'</a></td>';

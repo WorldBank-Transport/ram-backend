@@ -34,11 +34,21 @@
      <h1 id="frt_1"><script>t('#frt_1','frt_1')</script></h1>
   </div>
   <div class="col-md-11 col-sm-11">
-    <h4>Choose a time-distance matrix</h4>
+    <h4 id="anl_choose"><script>t('#anl_choose','anl_choose')</script></h4>
     <div class="csvlist"><table class="table  table-hover" id="csvlist"></table></div>
     <hr/>
-    <h3 id="chosenFile"></h3>
   </div>
+</div>
+
+<div id="comstep" style="display: none;">
+<div class="row">
+  <div class="col-md-1 col-sm-1">
+    <h1 >&nbsp;</h1>
+  </div>
+  <div class="col-md-11 col-sm-11">
+   <table id="comstats" class="table"></table>
+  </div>
+</div>
 </div>
 <div id="step2" style="display: none;">
 
@@ -47,14 +57,15 @@
     <h1 id="frt_2"><script>t('#frt_2','frt_2')</script></h1>
   </div>
   <div class="col-md-11 col-sm-11">
-    <h4>Summary</h4>
+      <h3 id="chosenFile"></h3>
+    <h4 id="anl_summary"><script>t('#anl_summary','anl_summary')</script></h4>
     <div id="sumstats">
       <div id="ssCounty"></div>
       <div id="ssHospital"></div>
       <div id="ssBank"></div>
       <div id="ssSchool"></div>
     </div>
-    <table id="comstats" class="table"></table>
+    
   </div>
 </div> 
 <div class='row dc-data-count clearfix'>
@@ -63,9 +74,9 @@
   </div>
     <div class='col-md-11 col-sm-11'>
         <h3><span class="filter-count"></span>
-            selected out of
+            <span id="anl_selected"><script>t('#anl_selected','anl_selected')</script></span>
           <span class="total-count"></span>
-           villages
+           <span id="anl_villages"><script>t('#anl_villages','anl_villages')</script></span>
         </h3>
         <hr/>
     </div>
@@ -76,20 +87,20 @@
 
 
         <div class='col-md-6 col-sm-6' id='dc-hospital-chart'>
-        <h4>Population by time to hospitals</h4>
+        <h4 id="anl_pop_hospitals"><script>t('#anl_pop_hospitals','anl_pop_hospitals')</script></h4>
         </div>
         <div class='col-md-6 col-sm-6' id='dc-bank-chart'>
-        <h4>Population by time to banks</h4>
+        <h4 id="anl_pop_banks"><script>t('#anl_pop_banks','anl_pop_banks')</script></h4>
         </div>
   
   </div>
   
   <div class='row'>
         <div class='col-md-6 col-sm-6' id='dc-counties-chart'>
-        <h4>Population by time to counties</h4>
+        <h4 id="anl_pop_counties"><script>t('#anl_pop_counties','anl_pop_counties')</script></h4>
         </div>
         <div class='col-md-6 col-sm-6' id='dc-prefectures-chart'>
-        <h4>Population by time to prefectures</h4>
+        <h4 id="anl_pop_prefectures"><script>t('#anl_pop_prefectures','anl_pop_prefectures')</script></h4>
         
     </div>
   </div>
@@ -97,10 +108,10 @@
   <div class='row'>
    
         <div class='col-md-6 col-sm-6' id='dc-schools-chart'>
-        <h4>Population by time to schools</h4>
+        <h4 id="anl_pop_schools"><script>t('#anl_pop_schools','anl_pop_schools')</script></h4>
         </div>
         <div class='col-md-6 col-sm-6' id='dc-population-chart'>
-        <h4>Villages by population</h4>
+        <h4 id="anl_pop_vil"><script>t('#anl_pop_vil','anl_pop_vil')</script></h4>
       
     </div>
   </div>
@@ -108,7 +119,7 @@
   <div class='row'>
     
         <div class='col-md-6 col-sm-6' id='dc-county-chart'>
-        <h4>Villages by County</h4>
+        <h4 id="anl_vil_county"><script>t('#anl_vil_county','anl_vil_county')</script></h4>
         </div>
   </div>
 
@@ -118,16 +129,16 @@
       <table class='table table-hover' id='dc-table-graph'>
         <thead>
           <tr class='header'>
-            <th>COUNT</th>
-            <th>NAME_2</th>
-            <th>NAME_3</th>
-            <th>NAME_4</th>
-            <th>Population</th>
-            <th>Hospitals</th>
-            <th>Schools</th>
-            <th>Banks</th>
-            <th>Counties</th>
-            <th>Prefectures</th>
+            <th id="anl_tbl_1"><script>t('#anl_tbl_1','anl_tbl_1')</script></th>
+            <th id="anl_tbl_2"><script>t('#anl_tbl_2','anl_tbl_2')</script></th>
+           <th id="anl_tbl_3"><script>t('#anl_tbl_3','anl_tbl_3')</script></th>
+            <th id="anl_tbl_4"><script>t('#anl_tbl_4','anl_tbl_4')</script></th>
+            <th id="anl_tbl_5"><script>t('#anl_tbl_5','anl_tbl_5')</script></th>
+           <th id="anl_tbl_6"><script>t('#anl_tbl_6','anl_tbl_6')</script></th>
+            <th id="anl_tbl_7"><script>t('#anl_tbl_7','anl_tbl_7')</script></th>
+           <th id="anl_tbl_8"><script>t('#anl_tbl_8','anl_tbl_8')</script></th>
+           <th id="anl_tbl_9"><script>t('#anl_tbl_9','anl_tbl_9')</script></th>
+           <th id="anl_tbl_10"><script>t('#anl_tbl_10','anl_tbl_10')</script></th>
           </tr>
         </thead>
       </table>
@@ -140,7 +151,7 @@
     <h1 id="frt_4"><script>t('#frt_4','frt_4')</script></h1>
   </div>
   <div class="col-md-11 col-sm-11">
-    <h4>Status</h4>
+    <h4 id="anl_status"><script>t('#anl_status','anl_status')</script></h4>
     <div id="logfield"></div>
     <p></p>
   </div>
