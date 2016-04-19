@@ -151,9 +151,13 @@ function postAuthenticate(socket, data) {
   })
   socket.on('retrieveOSRM',function(){
     var osrmfiles = fs.readdirSync(dir+'maps/');
-    var osrmlist = osrmfiles.map(function(o){
-      var files = fs.readdirSync(dir+'maps/'+o);
-      return './data/maps/'+o+'/'+files[0].split('.')[0]+'.osrm'})
+    var osrmlist = osrmfiles.reduce(
+      function(p,o){
+        var files = fs.readdirSync(dir+'maps/'+o);
+        if(files.length > 0) p.push('./data/maps/'+o+'/'+files[0].split('.')[0]+'.osrm')
+        return p
+      },[]
+    )
     osrmlist.push(defaultOsrm);
     console.log(osrmlist);
     socket.emit('status',{osrm:osrmlist});
