@@ -63,7 +63,7 @@ function Authenticate(user,pass) {
       }
       else if(data.users) {
         d3.select('#users')
-        .html(data.users)
+        .html($.i18n.prop('gnl_users', data.users));
       }
 
     });
