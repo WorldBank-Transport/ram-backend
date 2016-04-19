@@ -68,22 +68,28 @@
     
   </div>
 </div> 
-<div class='row dc-data-count clearfix'>
-<div class="col-md-1 col-sm-1">
+<div class='row'>
+  <div class="col-md-1 col-sm-1">
     <h1 id="frt_3"><script>t('#frt_3','frt_3')</script></h1>
   </div>
-    <div class='col-md-11 col-sm-11'>
-        <h3><span class="filter-count"></span>
-            <span id="anl_selected"><script>t('#anl_selected','anl_selected')</script></span>
-          <span class="total-count"></span>
-           <span id="anl_villages"><script>t('#anl_villages','anl_villages')</script></span>
-        </h3>
-        <hr/>
-    </div>
+  <div class='col-md-6 col-sm-5'>
+    <h3 class="dc-data-counts" ><span class="filter-count"></span>
+        <span id="anl_selected"><script>t('#anl_selected','anl_selected')</script></span>
+        <span class="total-count"></span>
+         <span id="anl_villages"><script>t('#anl_villages','anl_villages')</script></span>
+    </h3>
   </div>
+  <div class='col-md-5 col-sm-6'>
+   <h3> <form class="form-inline"><div class="form-group"><input type="text" class="form-control" id="fileName" placeholder=""><script>jQuery(document).ready(function() {         
+    $('#fileName').attr('placeholder',jQuery.i18n.prop('anl_filename'))          
+  })</script></div><div class="btn btn-default" id="anl_export"><script>t('#anl_export','anl_export')</script></div>
+</form>
+</h3>
+  </div>
+</div>
 <div class='row'>
 </div>
-  <div class='row'>
+<div class='row'>
 
 
         <div class='col-md-6 col-sm-6' id='dc-hospital-chart'>
