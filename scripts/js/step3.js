@@ -45,6 +45,10 @@ function Authenticate(user,pass) {
             compareStats(this);
         })
       }
+      else if(data.users) {
+        d3.select('#users')
+        .html(data.users)
+      }
     });
   })
 

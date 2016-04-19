@@ -51,6 +51,10 @@ function Authenticate(user,pass) {
       else if(data.newOsrm) {
         highlightOsrm(data.newOsrm);
       }
+      else if(data.users) {
+        d3.select('#users')
+        .html(data.users)
+      }
     })
   })
 

@@ -82,3 +82,15 @@ h1 {
 .active {
 	font-weight: bold;
 }
+#users {
+	color: #666;
+    margin: 10px;
+    border: solid 1px #eeeeec;
+    padding: 10px;
+    border-radius: 3px;
+}
+#users:hover {
+	text-decoration: none !important;
+	color: white;
+	cursor: default;
+}

@@ -61,6 +61,11 @@ function Authenticate(user,pass) {
           .attr('href','./calculate.html?osrm='+pad);
 
       }
+      else if(data.users) {
+        d3.select('#users')
+        .html(data.users)
+      }
+
     });
   })
 

@@ -119,11 +119,12 @@ function authenticate(socket, data, callback) {
   }
   else return callback(null, false)
 }
-
+var allClients = [];
 function postAuthenticate(socket, data) {
   var beginTime;
   socket.emit('status', {socketIsUp: true}); //tell the client it is connected
-
+  allClients.push(socket);
+  io.emit('status',{users:allClients.length})
   var files = fs.readdirSync(dir+'csv/');
   files.sort(function(a, b) {
        return fs.statSync(dir+'csv/' + a).mtime.getTime() - fs.statSync(dir+'csv/' + b).mtime.getTime();
@@ -138,6 +139,10 @@ function postAuthenticate(socket, data) {
 
   socket.on('getMatrixForRegion',createTimeMatrix);
 
+  socket.on('disconnect',function(){
+    allClients.splice(allClients.indexOf(socket),1)
+    io.emit('status',{users:allClients.length})
+  })
   socket.on('setOSRM',function(data){
     console.log(data)
     osrm = data.osrm;
