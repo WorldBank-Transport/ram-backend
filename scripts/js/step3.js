@@ -184,9 +184,41 @@ queue()
   .defer(d3.csv, pad)
   .await(buildGraphs)
 }  
- var facts,all, hospitalsValue,volumeByPopulation;
 
+d3.select('#anl_export')
+  .on('click',function(d){
+    var filename = $('#fileName').val();
+    if(filename==='') {
+      filename = 'export.csv';
+    }
+    if(filename.toLowerCase().slice(-4)!=='.csv'){
+      filename = filename + '.csv';
+    }
+    exportCSV(filename);
+  })
+function exportCSV(filename) {
+  var villages = volumeByPopulation.top(Infinity);
+  var csvFile = d3.csv.format(villages)
+  var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+  if (navigator.msSaveBlob) { // IE 10+
+    navigator.msSaveBlob(blob, filename);
+  } else {
+    var link = document.createElement("a");
+    if (link.download !== undefined) { // feature detection
+      // Browsers that support HTML5 download attribute
+      var url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
+}
+var volumeByPopulation;
 function buildGraphs(err,normal) {
+ var facts,all, hospitalsValue;
  
   normal.forEach(function(d,idx) {
     d.population  = +d.POP;
@@ -251,7 +283,7 @@ function buildGraphs(err,normal) {
 ******************************************************/
 
 // count all the facts
-  dc.dataCount(".dc-data-count")
+  dc.dataCount(".dc-data-counts")
     .dimension(facts)
     .group(all);
 
