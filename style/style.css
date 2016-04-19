@@ -68,3 +68,17 @@ h1 {
 	max-height: 300px;
 	overflow: auto;
 }
+#switcher {
+	margin-top: -30px;
+	cursor: pointer;
+	color: #337ab7;
+}
+
+#switcher span:hover {
+	color: #23527c;
+    text-decoration: underline;
+}
+
+.active {
+	font-weight: bold;
+}

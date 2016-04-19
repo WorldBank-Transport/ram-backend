@@ -1,9 +1,9 @@
-var OSRMLIST;
-var socket;
+var OSRMLIST,socket;
+
 d3.json('../data/user.json',function(d){
   Authenticate(d.user,d.pass);
 })
-var socket;
+
 function Authenticate(user,pass) {
   var sockethost = window.location.protocol +'//'+ window.location.host;
   socket = io(sockethost);
@@ -17,55 +17,47 @@ function Authenticate(user,pass) {
     socket.emit('retrieveOSRM');
     socket.on('status', function (data) {
       if(data.msg) {
-          d3.select('#logfield')
+        d3.select('#logfield')
           .insert("div", ":first-child")
-          .html(data.msg)
+          .html($.i18n.prop(data.msg,data.p0,data.p1))
       }
       else if (data.socketIsUp) {
-          d3.select('#logfield')
+        d3.select('#logfield')
           .insert("div", ":first-child")
-          .html('connected to the server')
+          .html($.i18n.prop('gnl_connected'))
           .style({color:'green','font-weight':'bold'})
       }
-       else if(data.csvs) {
-            console.log(data.csvs);
-          d3.select('#csvlist')
+      else if(data.csvs) {
+        d3.select('#csvlist')
           .selectAll("tr")
           .data(data.csvs)
           .enter()
           .insert('tr',":first-child")
           .html(createCsvList);
 
-           d3.selectAll('.changeOSRM')
+        d3.selectAll('.changeOSRM')
           .on('click',function(){
             selectStats(this);
-          })
+        })
 
-          d3.selectAll('.compareButtons')
+        d3.selectAll('.compareButtons')
           .on('click',function(){
             compareStats(this);
-          })
+        })
       }
     });
-    socket.on('finished',function(data){
-      console.log('finished');
-      if(!data||!data.type) throw('data and type are required');
-      
-    })
   })
-
 
   socket.on('disconnect',function(){
     d3.select('#logfield')
-        .insert("div", ":first-child")
-        .html('disconnected, hang on trying again in a few seconds')
-        .style({color:'red','font-weight':'bold'})
+      .insert("div", ":first-child")
+      .html($.i18n.prop('gnl_disconnected'))
+      .style({color:'red','font-weight':'bold'})
     socket.off('status');
-    socket.off('finished');
     d3.select('#osrmfiles')
-    .html('');
-      d3.select('#chosenFile')
-    .html('');
+      .html('');
+    d3.select('#chosenFile')
+      .html('');
   })
 }
 
@@ -73,6 +65,7 @@ var compareList = [];
 var statList = [];
 function compareStats(el) {
   if(el.checked) {
+    d3.select('#comstep').style('display','block');
     var value = el.value;
     d3.csv('../data/csv/'+el.value,function(normal){
       normal.forEach(function(d,idx) {
@@ -123,113 +116,114 @@ function compareStats(el) {
 function createTable(list) {
   d3.select('#comstats').html('');
   if(list.length>0) {
- d3.select('#comstats')
- //.html('<tr><th>file</th><th>% 60m county</th><th>% 30m hospital</th><th>% 30 min bank</th><th>% 20 min school</th></tr>')
- .selectAll('tr')
- .data(list)
- .enter()
- .append('tr')
- .html(function(d){
-    return '<td>'+d.file+'</td><td>'+Math.round(d.county/d.total*1000)/10+'</td><td>'+Math.round(d.hospital/d.total*1000)/10+'</td><td>'+Math.round(d.banks/d.total*1000)/10+'</td><td>'+Math.round(d.school/d.total*1000)/10+'</td><td>'
- });  
+    d3.select('#comstats')
+      .selectAll('tr')
+      .data(list)
+      .enter()
+      .append('tr')
+      .html(function(d){
+        return '<td>'+d.file+'</td><td>'+Math.round(d.county/d.total*1000)/10+'</td><td>'+Math.round(d.hospital/d.total*1000)/10+'</td><td>'+Math.round(d.banks/d.total*1000)/10+'</td><td>'+Math.round(d.school/d.total*1000)/10+'</td><td>'
+      });  
 
-
- d3.select('#comstats')
- .insert("tr", ":first-child")
- .html('<th>file</th><th>% 60m county</th><th>% 30m hospital</th><th>% 30 min bank</th><th>% 20 min school</th>')
-   }
+    d3.select('#comstats')
+      .insert("tr", ":first-child")
+      .html('<th>'+$.i18n.prop('anl_file')+'</th><th>'+$.i18n.prop('anl_60c')+'</th><th>'+$.i18n.prop('anl_30h')+'</th><th>'+$.i18n.prop('anl_30b')+'</th><th>'+$.i18n.prop('anl_20s')+'</th>')
+  }
 }
 
-
 function createCsvList(csv) {
-      var time = csv.split('-')[csv.split('-').length-1].split('.')[0];
-      var id = csv.split('-')[0];
-      var date = new Date(parseInt(time));
-
-      var result = '<td>Calculation done on '+date.toLocaleString()+' for '+id +': </td><td><a href="../data/csv/'+csv+'"> download CSV file</a> </td><td> <span class="changeOSRM" name="'+csv+'"> view statistics</span></td><td><div class="checkbox"><label><input type="checkbox" class="compareButtons" value="'+csv+'">compare</label></div></td>';
+  var time = csv.split('-')[1];
+  var id = csv.split('-')[0];
+  if(csv.split('-')[2])
+    var nw = csv.split('-')[2].split('.')[0];
+  else nw = '';
+  var date = new Date(parseInt(time));
+  var result = '<td>'+$.i18n.prop('anl_csv_list',date.toLocaleString(),id,nw)+'</td><td><a href="../data/csv/'+csv+'"> '+$.i18n.prop('anl_download')+'</a> </td><td> <span class="changeOSRM" name="'+csv+'"> '+$.i18n.prop('anl_view')+'</span></td><td><div class="checkbox"><label><input type="checkbox" class="compareButtons" value="'+csv+'">'+$.i18n.prop('anl_compare')+'</label></div></td>';
      
-      return result;
-
+  return result;
 }
 
 function accumulate_group(source_group) {
-    return {
-        all:function () {
-            var cumulate = 0;
-            var result = [];
-            return source_group.all().map(function(d) {
-                cumulate += d.value;
-                return {key:d.key, value:cumulate};
-            });
-        }
-    };
+  return {
+    all:function () {
+      var cumulate = 0;
+      var result = [];
+      return source_group.all().map(function(d) {
+        cumulate += d.value;
+        return {key:d.key, value:cumulate};
+      });
+    } 
+  };
 }
 
 function selectStats(el) {
   var file = el.attributes['name'].value;
   var pad = '../data/csv/'+file;
-  window.history.pushState({},'analyse stats', 'analyse.html?csv='+pad);
+  var url = getUrlVars()['lang']===undefined?('analyse.html?csv='+pad):('analyse.html?csv='+pad+'&lang='+getUrlVars()['lang']);
+  window.history.pushState({},'analyse stats', url);
+
   createStats(pad);
 }
+
 var csvfile;
-if(window.location.search.split('?').length>1) {
-    csvfile = window.location.search.split('?')[1].split('=')[1];
-    createStats(csvfile)
-  }
+if(getUrlVars()['csv']) {
+  csvfile = getUrlVars()['csv'];
+  createStats(csvfile)
+}
 
 function createStats(pad) {
-  var time = pad.split('-')[pad.split('-').length-1].split('.')[0];
+  var time = pad.split('-')[1];
   var id = pad.split('-')[0].split('/')[pad.split('-')[0].split('/').length-1];
+  var nw = pad.split('-')[2].split('.')[0];
   var date = new Date(parseInt(time));
-  d3.select('#chosenFile').html('Showing statistics done on '+date.toLocaleString()+' for '+decodeURIComponent(id));
+  d3.select('#chosenFile').html($.i18n.prop('anl_statistics',date.toLocaleString(),decodeURIComponent(id),nw));
+
   d3.select('#step2').style('display','block');
 
 queue()
-.defer(d3.csv, pad)
-.await(buildGraphs)
+  .defer(d3.csv, pad)
+  .await(buildGraphs)
 }  
+ var facts,all, hospitalsValue,volumeByPopulation;
 
-
-
-var facts,all, hospitalsValue,volumeByPopulation;
 function buildGraphs(err,normal) {
+ 
+  normal.forEach(function(d,idx) {
+    d.population  = +d.POP;
+    d.banks   = d3.round((+d.banks)/60.,0);
+    d.hospitals = d3.round((+d.hospitals)/60.,0);
+    d.schools = d3.round((+d.schools)/60.,0);
+    d.counties = d3.round((+d.counties)/60.,0);
+    d.prefectures = d3.round((+d.prefectures)/60.,0);
+    d.county= d.NAME_3;
+    d.lat = d3.round(+d.lat,6);
+    d.lon = d3.round(+d.lon,6);
+  });
 
-    normal.forEach(function(d,idx) {
-      d.population  = +d.POP;
-      d.banks   = d3.round((+d.banks)/60.,0);
-      d.hospitals = d3.round((+d.hospitals)/60.,0);
-      d.schools = d3.round((+d.schools)/60.,0);
-      d.counties = d3.round((+d.counties)/60.,0);
-      d.prefectures = d3.round((+d.prefectures)/60.,0);
-      d.county= d.NAME_3;
-      d.lat = d3.round(+d.lat,6);
-      d.lon = d3.round(+d.lon,6);
-    });
+  var data = normal;
 
-    var data = normal;
+  var ssPop = data.reduce(function(p,c){return p+c.population},0)
+  var c60min = data.reduce(function(p,c){if (c.counties <=60) {
+    return p+c.population}
+    else return p;
+    },0)*1000;
+  var h30min = data.reduce(function(p,c){if (c.hospitals <=30) {
+    return p+c.population}
+    else return p;
+    },0)*1000;
+  var b30min = data.reduce(function(p,c){if (c.banks <=30) {
+    return p+c.population}
+    else return p;
+    },0)*1000;
+  var s20min = data.reduce(function(p,c){if (c.schools <=20) {
+    return p+c.population}
+    else return p;
+    },0)*1000;
 
-    var ssPop = data.reduce(function(p,c){return p+c.population},0)
-    var c60min = data.reduce(function(p,c){if (c.counties <=60) {
-      return p+c.population}
-      else return p;
-      },0)*1000;
-    var h30min = data.reduce(function(p,c){if (c.hospitals <=30) {
-      return p+c.population}
-      else return p;
-      },0)*1000;
-    var b30min = data.reduce(function(p,c){if (c.banks <=30) {
-      return p+c.population}
-      else return p;
-      },0)*1000;
-    var s20min = data.reduce(function(p,c){if (c.schools <=20) {
-      return p+c.population}
-      else return p;
-      },0)*1000;
-
-    d3.select('#ssCounty').html(Math.round(c60min/ssPop)/10+' % of the population can reach a county seat by road in 60 minutes;');
-    d3.select('#ssHospital').html(Math.round(h30min/ssPop)/10+' % of the population can reach a hospital by road in 30 minutes;');
-    d3.select('#ssBank').html(Math.round(b30min/ssPop)/10+' % of the population can reach a bank by road in 30 minutes;');
-    d3.select('#ssSchool').html(Math.round(s20min/ssPop)/10+' % of the population can reach a school seat by road in 20 minutes;');
+  d3.select('#ssCounty').html($.i18n.prop('anl_sum_county',Math.round(c60min/ssPop)/10));
+  d3.select('#ssHospital').html($.i18n.prop('anl_sum_hospital',Math.round(h30min/ssPop)/10));
+  d3.select('#ssBank').html($.i18n.prop('anl_sum_bank',Math.round(b30min/ssPop)/10));
+  d3.select('#ssSchool').html($.i18n.prop('anl_sum_school',Math.round(s20min/ssPop)/10));
 /******************************************************
 * Step1: Create the dc.js chart objects & ling to div *
 ******************************************************/
@@ -257,12 +251,12 @@ function buildGraphs(err,normal) {
 ******************************************************/
 
 // count all the facts
-dc.dataCount(".dc-data-count")
-  .dimension(facts)
-  .group(all);
+  dc.dataCount(".dc-data-count")
+    .dimension(facts)
+    .group(all);
 
-// for Magnitude -> hospitals
-hospitalsValue = facts.dimension(function (d) {
+  // for Magnitude -> hospitals
+  hospitalsValue = facts.dimension(function (d) {
     return d.hospitals;       // group or filter by hospitals
   });
  
@@ -360,7 +354,7 @@ hospitalsValue = facts.dimension(function (d) {
     .centerBar(true)
   .gap(56)                                            // bar width Keep increasing to get right then back off.
     .x(d3.scale.linear()
-    .domain([0, maxHospital]))
+    .domain([0, Math.min(maxHospital,175)]))
   .elasticY(true)
   .xAxis().tickFormat(function(v) {return v;});
 
@@ -372,7 +366,7 @@ hospitalsValue = facts.dimension(function (d) {
   .transitionDuration(500)
     .centerBar(true)
   .gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, maxBanks]))
+    .x(d3.scale.linear().domain([0, Math.min(maxBanks,175)]))
   .elasticY(true)
   .xAxis().tickFormat(function(v) {return v;});
 
@@ -384,7 +378,7 @@ hospitalsValue = facts.dimension(function (d) {
   .transitionDuration(500)
     .centerBar(true)
   .gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, maxSchools]))
+    .x(d3.scale.linear().domain([0, Math.min(maxSchools,175)]))
   .elasticY(true)
   .xAxis().tickFormat(function(v) {return v;});
 
@@ -396,7 +390,7 @@ hospitalsValue = facts.dimension(function (d) {
   .transitionDuration(500)
     .centerBar(true)
   .gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, maxPrefectures]))
+    .x(d3.scale.linear().domain([0, Math.min(maxPrefectures,550)]))
   .elasticY(true)
   .xAxis().tickFormat(function(v) {return v;});
 
@@ -409,9 +403,8 @@ hospitalsValue = facts.dimension(function (d) {
   .transitionDuration(500)
     .centerBar(true)
   .gap(56)                                            // bar width Keep increasing to get right then back off.
-    .x(d3.scale.linear().domain([0, maxCounties]))
+    .x(d3.scale.linear().domain([0, Math.min(maxCounties,350)]))
   .elasticY(true)
-  .elasticX(true)
   .xAxis().tickFormat(function(v) {return v;});
 
   // time graph
@@ -422,7 +415,7 @@ hospitalsValue = facts.dimension(function (d) {
     .group(volumeByPopulationCount)
     .transitionDuration(500)
   .elasticY(true)
-    .x(d3.scale.log().domain([1e2, maxPopulation])) // scale and domain of the graph
+    .x(d3.scale.log().domain([1e1, maxPopulation])) // scale and domain of the graph
     .xAxis();
 
   // Counties Charts
