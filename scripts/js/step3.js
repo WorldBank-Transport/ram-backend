@@ -237,7 +237,7 @@ function buildGraphs(err,normal) {
     d3.select('#ssCounty').html($.i18n.prop('anl_sum_county',Math.round(c60min/ssPop)/10));
     d3.select('#ssHospital').html($.i18n.prop('anl_sum_hospital',Math.round(h30min/ssPop)/10));
     d3.select('#ssBank').html($.i18n.prop('anl_sum_bank',Math.round(b30min/ssPop)/10));
-    d3.select('#ssSchool').html($.i18n.prop('anl_sum_county',Math.round(s20min/ssPop)/10));
+    d3.select('#ssSchool').html($.i18n.prop('anl_sum_school',Math.round(s20min/ssPop)/10));
 /******************************************************
 * Step1: Create the dc.js chart objects & ling to div *
 ******************************************************/
