@@ -45,7 +45,7 @@ function Authenticate(user,pass) {
       if(data.msg) {
           d3.select('#logfield')
           .insert("div", ":first-child")
-          .html(data.msg)
+          .html($.i18n.prop(data.msg,data.p0,data.p1))
       }
       else if (data.socketIsUp) {
           d3.select('#logfield')

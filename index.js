@@ -18,12 +18,8 @@ var express = require('express'),
     siofu = require("socketio-file-upload"),
     exec = require('child_process').exec;
 
-
 //Keeping the credentials outside git
 var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
-
-//var app = express();
-
 
 
 //basic authentication stuff
@@ -46,7 +42,7 @@ var auth = function (req, res, next) {
   };
 };
 
-app.use('/', [auth, compression(), express.static(__dirname + '/',{ maxAge: 86400000 })]);
+app.use('/', [auth, compression(),express.static(__dirname + '/',{ maxAge: 86400000 })]);
 
 http.listen(parseInt(port, 10));
 console.log("Static file server running at\n  => http://localhost:" + port + "/\nCTRL + C to shutdown");
@@ -146,7 +142,7 @@ function postAuthenticate(socket, data) {
     console.log(data)
     osrm = data.osrm;
     socket.emit('status',{newOsrm:osrm});
-    socket.emit('status',{msg:'network changed to '+osrm});
+    socket.emit('status',{msg:'srv_nw_changed',p0:osrm});
   })
   socket.on('retrieveOSRM',function(){
     var osrmfiles = fs.readdirSync(dir+'maps/');
@@ -179,7 +175,7 @@ function createIsochrone(data) {
     console.warn('no data')
     return false;
   }
-  io.emit('status',{id:data.id,msg:'creating isochrones for ETAs: '+data.time})
+  io.emit('status',{id:data.id,msg:'srv_create_isochrone',p0:data.time})
 
   cISO.send({data:data,villages:villagesFile,osrm:osrm,maxSpeed:maxSpeed});
   
@@ -188,7 +184,7 @@ function createIsochrone(data) {
       console.warn(msg.data);
     }
     else if(msg.type =='done') {
-      io.emit('status',{id:data.id,msg:'finished'});
+      io.emit('status',{id:data.id,msg:'srv_finished'});
       io.emit('finished',{type:'isochrone',data:msg.data});
       cISO.disconnect();
 
@@ -219,7 +215,7 @@ function createTimeMatrix(data) {
   data.maxTime = data.maxTime || maxTime;
   data.maxSpeed = data.maxSpeed || maxSpeed;
 
-  io.emit('status',{id:data.id,msg:'creating timematrix'})
+  io.emit('status',{id:data.id,msg:'srv_creating_tm'})
 
   //split the input region in squares for parallelisation
   var box = envelope(data.feature);
@@ -227,7 +223,7 @@ function createTimeMatrix(data) {
   var squares =  squareGrid(extent,30, 'kilometers');
 
   //tell the client how many squares there are
-  io.emit('status',{id:data.id,msg:'split region in '+squares.features.length+' grid squares'})
+  io.emit('status',{id:data.id,msg:'srv_split_squares',p0:squares.features.length})
 
   cETA.send({data:data,squares:squares.features,POIs:POIs,villages:villagesFile,osrm:data.osrm});
   var remaining = squares.features.length;
@@ -238,16 +234,23 @@ function createTimeMatrix(data) {
     }
     else if(msg.type=='square') {
       remaining--;
-      io.emit('status',{id:data.id,msg:remaining+' squares remaining'});
+      io.emit('status',{id:data.id,msg:'srv_remaining_squares',p0:remaining});
     }
     else if(msg.type =='done') {
       //we are done, save as csv and send the filename
       var calculationTime = (new Date().getTime()-beginTime)/1000;
-      var timing = Math.round(calculationTime) + ' seconds';
-      if(calculationTime>60) timing = Math.round(calculationTime/60)+' minutes';
+      var timing = Math.round(calculationTime);
+      if(calculationTime>60) {
+        timing = Math.round(calculationTime/60);
+        io.emit('status',{id:data.id,msg:'srv_calculated_in_m',p0:timing});
+            
+      }
+      else {
+        io.emit('status',{id:data.id,msg:'srv_calculated_in_s',p0:timing});
+            
+      }
       console.log('timing: '+timing);
-            io.emit('status',{id:data.id,msg:'timematrix has been calculated in '+timing});
-            io.emit('status',{id:data.id,msg:'writing result to disk, this might take a while'});
+            io.emit('status',{id:data.id,msg:'srv_writing'});
       var networkfile = data.osrm.split('/')[data.osrm.split('/').length-1];
       var osrmfile = networkfile.split('.')[0];
       var print = d3.csv.format(msg.data);
@@ -257,7 +260,7 @@ function createTimeMatrix(data) {
                   return console.log(err);
                 }
         console.log('finished '+file);
-         io.emit('status',{id:data.id,msg:'finished'});
+         io.emit('status',{id:data.id,msg:'srv_finished'});
         io.emit('status',{id:data.id,type:'poilist',file:file,geometryId:data.geometryId});
         cETA.disconnect();
           });
@@ -277,7 +280,7 @@ function uploadComplete(e) {
             console.log('exec error: ' + error);
         }
         var msg = stdout + '';
-        io.emit('status',{msg:'finished preparing the data'})
+        io.emit('status',{msg:'srv_finished_preparing'})
         io.emit('status',{result:msg})
       })  
   }
