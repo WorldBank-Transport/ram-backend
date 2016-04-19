@@ -87,15 +87,15 @@ function compareStats(el) {
       return p+c.population}
       else return p;
       },0);
-    var h30min = data.reduce(function(p,c){if (c.hospitals <=30) {
+    var h30min = data.reduce(function(p,c){if (c.hospitals <=60) {
       return p+c.population}
       else return p;
       },0);
-    var b30min = data.reduce(function(p,c){if (c.banks <=30) {
+    var b30min = data.reduce(function(p,c){if (c.banks <=60) {
       return p+c.population}
       else return p;
       },0);
-    var s20min = data.reduce(function(p,c){if (c.schools <=20) {
+    var s20min = data.reduce(function(p,c){if (c.schools <=60) {
       return p+c.population}
       else return p;
       },0);
