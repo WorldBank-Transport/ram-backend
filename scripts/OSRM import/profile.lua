@@ -499,6 +499,7 @@ function way_function (way, result)
 
   -- only allow this road as start point if it not a ferry
   result.is_startpoint = result.forward_mode == mode_normal or result.backward_mode == mode_normal and highway ~= "Expressway"
+end
 
 function turn_function (angle)
   ---- compute turn penalty as angle^2, with a left/right bias

@@ -29,6 +29,7 @@ cd $DIR
 mkdir -p maps
 mkdir -p tmp
 unzip $FILE -d tmp 1>&2 
+rm $FILE
 cd tmp
 find -name "* *" -type f | rename 's/ /_/g'
 find -name "* *" -type f | rename 's/-/_/g'

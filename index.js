@@ -80,7 +80,7 @@ POIs.counties = './data/POIs/counties.geojson';
 POIs.prefectures = './data/POIs/prefectures.geojson';
 
 var villagesFile = './data/ReadytoUse/Village_pop.geojson';
-var defaultOsrm = './data/OSRM-ready/map.osrm';
+var defaultOsrm = './data/OSRM-ready/baseline.osrm';
 var osrm = defaultOsrm;
 var dir = './data/';
 var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
@@ -113,7 +113,6 @@ authio(io, {
 function authenticate(socket, data, callback) {
   var username = data.username;
   var password = data.password;
-console.log(data)
   if(username == credentials.user && password==credentials.pass){
   return callback(null, true);
   }
@@ -121,7 +120,6 @@ console.log(data)
 }
 var allClients = [];
 function postAuthenticate(socket, data) {
-  console.log(data)
   var beginTime;
   socket.emit('status', {socketIsUp: true}); //tell the client it is connected
   allClients.push(socket);
@@ -145,7 +143,6 @@ function postAuthenticate(socket, data) {
     io.emit('status',{users:allClients.length})
   })
   socket.on('setOSRM',function(data){
-    console.log(data)
     osrm = data.osrm;
     socket.emit('status',{newOsrm:osrm});
     socket.emit('status',{msg:'srv_nw_changed',p0:osrm});
@@ -160,7 +157,6 @@ function postAuthenticate(socket, data) {
       },[]
     )
     osrmlist.push(defaultOsrm);
-    console.log(osrmlist);
     socket.emit('status',{osrm:osrmlist});
   })
   var uploader = new siofu();
