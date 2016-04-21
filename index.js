@@ -80,7 +80,7 @@ POIs.counties = './data/POIs/counties.geojson';
 POIs.prefectures = './data/POIs/prefectures.geojson';
 
 var villagesFile = './data/ReadytoUse/Village_pop.geojson';
-var defaultOsrm = './data/OSRM-ready/map.osrm';
+var defaultOsrm = './data/OSRM-ready/baseline.osrm';
 var osrm = defaultOsrm;
 var dir = './data/';
 var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
