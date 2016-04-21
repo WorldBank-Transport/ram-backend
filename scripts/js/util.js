@@ -15,16 +15,20 @@ function setLang(lang) {
   var keys =getUrlVars();
   if(keys["lang"] !== undefined) {
     //we have a lang setting
-    var url = '?';
-    keys.forEach(function(key) {
-      if (key == 'lang') {
-        url = url+'&lang='+lang;
-      }
-      else if(key!==undefined&&key!=='') {
-        url = url+'&'+key+'='+getUrlVars()[key];
-      }
-    })
-    window.location.href=url;
+    console.log(keys["lang"])
+    if(lang!==keys["lang"]) {
+      var url = '?';
+      keys.forEach(function(key) {
+        if (key == 'lang') {
+          url = url+'&lang='+lang;
+        }
+        else if(key!==undefined&&key!=='') {
+          url = url+'&'+key+'='+getUrlVars()[key];
+        }
+      })
+      console.log(url)
+      window.location.href=url;
+    }
   }
   else if(window.location.href.indexOf('?')>-1) {
     // we have other parameters
