@@ -33,8 +33,8 @@ function Authenticate(user,pass) {
           .style({color:'green','font-weight':'bold'})
       }
       else if(data.osrm) {
-        OSRMLIST = data.osrm.map(function(o){return {file:o,active:false}});
         window.setTimeout(function(){
+          OSRMLIST = data.osrm.map(function(o){return {file:o,active:false}});
           createOsrmList(OSRMLIST);
         },1000)
       }
