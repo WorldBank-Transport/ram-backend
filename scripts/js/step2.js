@@ -76,7 +76,7 @@ function createOsrmList(osrmlist) {
   d3.select('#osrmfiles')
     .html('');
  
-  var osrmfile = getUrlVars()['osrm']===undefined?'./data/OSRM-ready/map.osrm':getUrlVars()['osrm'];
+  var osrmfile = getUrlVars()['osrm']===undefined?'./data/OSRM-ready/baseline.osrm':getUrlVars()['osrm'];
 
   osrmlist.forEach(function(item){
     var osrm = item.file;
@@ -98,9 +98,9 @@ function createOsrmList(osrmlist) {
 
 }
 function setOsrm(osrm) {
-  /*var url = getUrlVars()['lang']===undefined?('calculate.html?osrm='+osrm):('calculate.html?osrm='+osrm+'&lang='+getUrlVars()['lang']);
+  var url = getUrlVars()['lang']===undefined?('calculate.html?osrm='+osrm):('calculate.html?osrm='+osrm+'&lang='+getUrlVars()['lang']);
   window.history.pushState({},'calculate stats', url);
-  socket.emit('setOSRM',{osrm:osrm});*/
+  socket.emit('setOSRM',{osrm:osrm});
 }
 
 function highlightOsrm(osrm) {
