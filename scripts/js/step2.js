@@ -34,7 +34,9 @@ function Authenticate(user,pass) {
       }
       else if(data.osrm) {
         OSRMLIST = data.osrm.map(function(o){return {file:o,active:false}});
-        createOsrmList(OSRMLIST);
+        window.setTimeout(function(){
+          createOsrmList(OSRMLIST);
+        },500)
       }
       else if(data.file) {
         d3.select('#step4')
