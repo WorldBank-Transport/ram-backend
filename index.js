@@ -113,7 +113,7 @@ authio(io, {
 function authenticate(socket, data, callback) {
   var username = data.username;
   var password = data.password;
-
+console.log(data)
   if(username == credentials.user && password==credentials.pass){
   return callback(null, true);
   }
@@ -121,6 +121,7 @@ function authenticate(socket, data, callback) {
 }
 var allClients = [];
 function postAuthenticate(socket, data) {
+  console.log(data)
   var beginTime;
   socket.emit('status', {socketIsUp: true}); //tell the client it is connected
   allClients.push(socket);

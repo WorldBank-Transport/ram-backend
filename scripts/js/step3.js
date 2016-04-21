@@ -84,40 +84,43 @@ function compareStats(el) {
       d.lon = d3.round(+d.lon,6);
     });
 
-    var data = normal;
+    statList.push({file:value,data:normal});
 
-    var ssPop = data.reduce(function(p,c){return p+c.population},0)
-    var c60min = data.reduce(function(p,c){if (c.counties <=60) {
-      return p+c.population}
-      else return p;
-      },0);
-    var h30min = data.reduce(function(p,c){if (c.hospitals <=60) {
-      return p+c.population}
-      else return p;
-      },0);
-    var b30min = data.reduce(function(p,c){if (c.banks <=60) {
-      return p+c.population}
-      else return p;
-      },0);
-    var s20min = data.reduce(function(p,c){if (c.schools <=60) {
-      return p+c.population}
-      else return p;
-      },0);
     compareList.push(value)
-    statList.push({file:value,total:ssPop,county:c60min,hospital:h30min,banks:b30min,school:s20min})
-    createTable(statList)
+  //  statList.push({file:value,total:ssPop,county:c60min,hospital:h30min,banks:b30min,school:s20min})
+    createTable()
     })
 
   }
   else {
     statList.splice(compareList.indexOf(el.value),1)
     compareList.splice(compareList.indexOf(el.value),1);
-    createTable(statList)
+    createTable()
   }
  
 }
 
-function createTable(list) {
+
+d3.select('#travelTime').on('input',function(d){
+  createTable(this.value);
+})
+
+function createTable(minute) {
+  if(minute === undefined) minute = $('#travelTime').val();
+  $('#anl_slider_txt').html($.i18n.prop('anl_slider_txt',minute));
+  var list = [];
+  statList.forEach(function(item){
+    var data = item.data;
+    var value = item.file;
+    var ssPop = data.reduce(function(p,c){return p+c.population},0)
+    var cmin = data.reduce(function(p,c){return c.counties<=minute?p+c.population:p},0);
+    var hmin = data.reduce(function(p,c){return c.hospitals <=minute?p+c.population:p},0);
+    var bmin = data.reduce(function(p,c){return c.banks <=minute?p+c.population:p},0);
+    var smin = data.reduce(function(p,c){return c.schools <=minute?p+c.population:p},0);
+    list.push({file:value,total:ssPop,county:cmin,hospital:hmin,banks:bmin,school:smin})
+  })
+
+
   d3.select('#comstats').html('');
   if(list.length>0) {
     d3.select('#comstats')
@@ -183,10 +186,11 @@ function createStats(pad) {
   d3.select('#chosenFile').html($.i18n.prop('anl_statistics',date.toLocaleString(),decodeURIComponent(id),nw));
 
   d3.select('#step2').style('display','block');
-
-queue()
-  .defer(d3.csv, pad)
-  .await(buildGraphs)
+  window.setTimeout(function(){
+    queue()
+    .defer(d3.csv, pad)
+    .await(buildGraphs)
+  },1000)
 }  
 
 d3.select('#anl_export')
@@ -451,8 +455,8 @@ function buildGraphs(err,normal) {
     .group(volumeByPopulationCount)
     .transitionDuration(500)
   .elasticY(true)
-    .x(d3.scale.log().domain([1e1, maxPopulation])) // scale and domain of the graph
-    .xAxis();
+    .x(d3.scale.log().domain([10, maxPopulation])) // scale and domain of the graph
+    .xAxis().ticks(10, ",.0f").tickSize(5, 0);
 
   // Counties Charts
   isCountyChart.width(900)

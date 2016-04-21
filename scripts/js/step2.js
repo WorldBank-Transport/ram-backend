@@ -6,6 +6,7 @@ d3.json('../data/user.json',function(d){
 
 function Authenticate(user,pass) {
   var sockethost = window.location.protocol +'//'+ window.location.host;
+  console.log(sockethost)
   socket = io(sockethost);
 
   socket.on('connect', function(){
@@ -97,9 +98,9 @@ function createOsrmList(osrmlist) {
 
 }
 function setOsrm(osrm) {
-  var url = getUrlVars()['lang']===undefined?('calculate.html?osrm='+osrm):('calculate.html?osrm='+osrm+'&lang='+getUrlVars()['lang']);
+  /*var url = getUrlVars()['lang']===undefined?('calculate.html?osrm='+osrm):('calculate.html?osrm='+osrm+'&lang='+getUrlVars()['lang']);
   window.history.pushState({},'calculate stats', url);
-  socket.emit('setOSRM',{osrm:osrm});
+  socket.emit('setOSRM',{osrm:osrm});*/
 }
 
 function highlightOsrm(osrm) {
