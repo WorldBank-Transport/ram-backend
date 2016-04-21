@@ -36,7 +36,7 @@ function Authenticate(user,pass) {
         OSRMLIST = data.osrm.map(function(o){return {file:o,active:false}});
         window.setTimeout(function(){
           createOsrmList(OSRMLIST);
-        },500)
+        },1000)
       }
       else if(data.file) {
         d3.select('#step4')
