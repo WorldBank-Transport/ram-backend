@@ -51,7 +51,10 @@ speed_profile = {
 upgrade_speeds = {
   ["County"]  = 40,
   ["Township"] = 40,
-  ["Rural"] = 30
+  ["Rural"] = 30,
+  ["Expressway"] = 120,
+  ["National"] = 80,
+  ["Provincial"] = 60
 }
 
 -- surface/trackype/smoothness
@@ -347,11 +350,11 @@ function way_function (way, result)
   -- upgrade roads 
   local county = way:get_value_by_key("CountryUpgrade")
   local township = way:get_value_by_key("TownshipUpgrade")
-  if county and 1 == county then
+  if county and "1" == county then
     result.forward_speed = math.max(upgrade_speeds[highway], result.forward_speed)
     result.backward_speed = math.max(upgrade_speeds[highway], result.backward_speed)
   end
-  if township and 1 == township then
+  if township and "1" == township then
     result.forward_speed = math.max(upgrade_speeds[highway], result.forward_speed)
     result.backward_speed = math.max(upgrade_speeds[highway], result.backward_speed)
   end
