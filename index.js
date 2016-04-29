@@ -280,14 +280,50 @@ function uploadComplete(e) {
   var file = e.file.name;
   var fsplit = file.split('.');
   if(fsplit[fsplit.length-1].toLowerCase()=='zip') {
-    var cmd = './prepare.sh -f '+file+ ' -d '+dir;
-      exec(cmd,function(error,stdout,stderr){
-        if (error !== null) {
-            console.log('exec error: ' + error);
-        }
-        var msg = stdout + '';
-        io.emit('status',{msg:'srv_finished_preparing'})
-        io.emit('status',{result:msg})
-      })  
+    var cmd = './unzip.sh -f '+file+ ' -d '+dir;
+    exec(cmd,function(error,stdout,stderr){
+      if (error !== null) {
+        console.log('exec error: ' + error);
+      }
+      if(stdout.indexOf('done')>-1) {
+        io.emit('status',{msg:'srv_finished_unzipping'})
+        unzipComplete(file,dir);
+      }
+    })  
   }
+}
+
+function unzipComplete(file,dir) {
+  io.emit('status',{msg:'srv_start_ogr2osm'})
+  var cmd = './ogr2osm.sh -f '+file+ ' -d '+dir;
+  exec(cmd,function(error,stdout,stderr){
+    if (error !== null) {
+      console.log('exec error: ' + error);
+    }
+    if(stdout.indexOf('done')>-1) {
+      io.emit('status',{msg:'srv_finished_ogr2osm'})
+      ogr2osmComplete(file,dir)
+    }
+    else {
+      io.emit('status',{msg:'srv_failed_ogr2osm'})
+    }
+  })
+}
+
+function ogr2osmComplete(file,dir) {
+  io.emit('status',{msg:'srv_start_osm2osrm'})
+  var cmd = './osm2osrm.sh -f '+file+ ' -d '+dir;
+  exec(cmd,function(error,stdout,stderr){
+    if (error !== null) {
+      console.log('exec error: ' + error);
+    }
+    if(stdout.indexOf('fail')>-1) {
+      io.emit('status',{msg:'srv_failed_osm2osrm'})
+    }
+    else {
+      var msg = stdout + '';
+      io.emit('status',{msg:'srv_finished_preparing'})
+      io.emit('status',{result:msg})
+    }
+  })
 }
