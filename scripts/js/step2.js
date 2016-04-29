@@ -117,12 +117,17 @@ function highlightOsrm(osrm) {
   createOsrmList(OSRMLIST);
 }
 
-var layer = new L.StamenTileLayer("toner-lite");
+
 var map = new L.Map("map", {
   center: new L.LatLng(26.5,107.5),
   zoom: 8
 });
-map.addLayer(layer);
+    
+    
+if(L.StamenTileLayer!==undefined){
+  var layer = new L.StamenTileLayer("toner-lite");
+  map.addLayer(layer);
+}
 
 d3.select('#localLevel')
 .on('change',function(e){
