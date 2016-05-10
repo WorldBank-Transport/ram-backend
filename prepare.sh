@@ -52,16 +52,16 @@ for p in *.py; do
  TRANSLATE=${p}
 done
 shopt -u nocaseglob
-
-python ${WORKDIR}/../ogr2osm/ogr2osm.py "${SHAPEFILE}" -t "${TRANSLATE}" 1>&2 
-
+echo "ogr2osm"
+python ${WORKDIR}/../ogr2osm/ogr2osm.py "${SHAPEFILE}" -t "${TRANSLATE}"
+echo "osrm"
 mkdir -p ../tmposm
 mv *.osm ../tmposm/. #TODO: will only work with 1 osm file
 cp *.lua ../tmposm/.
 ln -s ${WORKDIR}/../osrm-backend/profiles/lib ../tmposm/lib
 cd ../tmposm
 osrm-extract *.osm 1>&2 
-osrm-prepare *.osrm 1>&2 
+osrm-contract *.osrm 1>&2 
 
 timestamp=$(date +%s)
 #clean up after ourselves
@@ -70,7 +70,7 @@ cd $DIR
 cd maps
 mkdir $timestamp
 mv ../tmposm/*.osrm* $timestamp
-
+echo "done"
 cd ..
 #TODO: remove the zip
 # rm $FILE
