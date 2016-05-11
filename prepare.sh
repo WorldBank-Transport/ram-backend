@@ -53,19 +53,19 @@ for p in *.py; do
 done
 shopt -u nocaseglob
 echo "ogr2osm"
-python ${WORKDIR}/../ogr2osm/ogr2osm.py "${SHAPEFILE}" -t "${TRANSLATE}"
+python "${WORKDIR}"/../ogr2osm/ogr2osm.py "${SHAPEFILE}" -t "${TRANSLATE}"
 echo "osrm"
 mkdir -p ../tmposm
 mv *.osm ../tmposm/. #TODO: will only work with 1 osm file
 cp *.lua ../tmposm/.
-ln -s ${WORKDIR}/../osrm-backend/profiles/lib ../tmposm/lib
+ln -s "${WORKDIR}"/../osrm-backend/profiles/lib ../tmposm/lib
 cd ../tmposm
 osrm-extract *.osm 1>&2 
 osrm-contract *.osrm 1>&2 
 
 timestamp=$(date +%s)
 #clean up after ourselves
-cd $WORKDIR
+cd "${WORKDIR}"
 cd $DIR
 cd maps
 mkdir $timestamp
@@ -77,5 +77,5 @@ cd ..
 # remove all the temp files
 rm -r tmp
 rm -r tmposm
-cd $WORKDIR
+cd "${WORKDIR}"
 ls ${DIR}maps/${timestamp}/*.osrm
