@@ -18,6 +18,33 @@ var express = require('express'),
     siofu = require("socketio-file-upload"),
     exec = require('child_process').exec;
 
+//GLOBALS
+var CONFIGURATION=false,
+    CLIENTS = [],
+    PROJECTS = {};
+
+fs.exists('./data/config.json',function(exists) {
+  if(exists){
+    CONFIGURATION=JSON.parse(fs.readFileSync('./data/config.json','utf8'));
+    var dir = './data/';
+    CONFIGURATION.forEach(function(project){
+        var uid = project.uid;
+
+        mkdirp(dir+uid, function(err) {  if(err) console.log(err) });
+        mkdirp(dir+uid+'/csv/', function(err) {  if(err) console.log(err) });
+        mkdirp(dir+uid+'/POIs/', function(err) {  if(err) console.log(err) });
+        mkdirp(dir+uid+'/baseline/', function(err) {  if(err) console.log(err) });
+        mkdirp(dir+uid+'/maps/', function(err) {  if(err) console.log(err) });
+        
+        PROJECTS[uid] = {};
+        PROJECTS[uid].POIs = {};
+        for(poi in project.pois) {
+          PROJECTS[uid].POIs[poi] = JSON.parse(fs.readFileSync('./data/'+uid+'/'+project.pois[poi],'utf8'));
+        }
+        PROJECTS[uid].villages =  JSON.parse(fs.readFileSync('./data/'+uid+'/'+project.villages,'utf8'));
+    })
+  }
+})
 //Keeping the credentials outside git
 var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
 
@@ -34,7 +61,7 @@ var auth = function (req, res, next) {
   if (!user || !user.name || !user.pass) {
     return unauthorized(res);
   };
-
+//TODO: allow for more than 1 user in credentials
   if (user.name === credentials.user && user.pass === credentials.pass) {
     return next();
   } else {
@@ -50,60 +77,6 @@ console.log("Static file server running at\n  => http://localhost:" + port + "/\
 
 
 
-/*###############################################################################
-
-CONFIGURATION
-
-POIs: For each GeoJSON with points of interest (POI), add an attribute to POIs
-and point it to the geojson on disk
-
-villagesFile: point to the geojson containing the centerpoint of the villages
-
-osrm: point to the absolute location of the osrm file of the road network
-
-dir: point to the output directory
-
-maxSpeed: the speed that will be used to define the size of the buffer around polygons
-in which to look for POIs (by multiplying the maxTime and maxSpeed)
-(typically 120km/h)
-
-maxTime: the cutoff time for the matrix: everything above that time might not be accurate
-(typically 3600s (==1 hour))
-
-*/
-
-var POIs = {}
-POIs.hospitals = './data/POIs/hospitals.geojson';
-POIs.schools = './data/POIs/schools.geojson';
-POIs.banks = './data/POIs/banks.geojson';
-POIs.counties = './data/POIs/counties.geojson';
-POIs.prefectures = './data/POIs/prefectures.geojson';
-
-var villagesFile = './data/ReadytoUse/Village_pop.geojson';
-var defaultOsrm = './data/OSRM-ready/baseline.osrm';
-var osrm = defaultOsrm;
-var dir = './data/';
-var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
-
-var maxSpeed = 120,
-  maxTime = 3600;
-
-
-//create csv output dir
-mkdirp(dir+'csv/', function(err) { 
-  if(err) console.log(err)
-});
-//create shp2osm dir
-mkdirp(dir+'shp2osm/', function(err) { 
-  if(err) console.log(err)
-});
-//create osm2osrm dir
-mkdirp(dir+'osm2osrm/', function(err) { 
-  if(err) console.log(err)
-});
-
-var villages = JSON.parse(fs.readFileSync(villagesFile, 'utf8'));
-
 authio(io, {
   authenticate: authenticate, 
   postAuthenticate: postAuthenticate,
@@ -113,57 +86,101 @@ authio(io, {
 function authenticate(socket, data, callback) {
   var username = data.username;
   var password = data.password;
+//TODO: allow for more than 1 user in credentials
   if(username == credentials.user && password==credentials.pass){
-  return callback(null, true);
+    return callback(null, true);
   }
   else return callback(null, false)
 }
-var allClients = [];
+
+
 function postAuthenticate(socket, data) {
   var beginTime;
   socket.emit('status', {socketIsUp: true}); //tell the client it is connected
-  allClients.push(socket);
-  io.emit('status',{users:allClients.length})
-  var files = fs.readdirSync(dir+'csv/');
+  CLIENTS.push(socket);
+
+  socket.on('disconnect',function(){
+    CLIENTS.splice(CLIENTS.indexOf(socket),1)
+    io.emit('status',{users:CLIENTS.length})
+  })
+
+  io.emit('status',{users:CLIENTS.length});
+  socket.emit('status',{config:CONFIGURATION});
+  if(CONFIGURATION) {
+    //there is a configuration file so we can proceed.
+  //  socket.on('getisochrone', createIsochrone); //create isochrones
+    //TODO: figure out how to move this to project dir
+    var uploader = new siofu();
+    uploader.dir = './data/'+CONFIGURATION[0].dir;
+    uploader.listen(socket);
+    uploader.on('complete',uploadComplete)
+
+    socket.on('getMatrixForRegion',createTimeMatrix);
+
+    socket.on('setOSRM',function(data){
+      var idx =getProjectIdx(data.project);
+      CONFIGURATION[idx].activeOSRM = data.osrm;
+      socket.emit('status',{newOsrm:CONFIGURATION[idx].activeOSRM,project:data.project});
+      socket.emit('status',{msg:'srv_nw_changed',p0:CONFIGURATION[idx].activeOSRM});
+    })
+
+    socket.on('retrieveOSRM',function(data){
+      var idx =getProjectIdx(data.project);
+      var dir = CONFIGURATION[idx].dir;
+      var osrmfiles = fs.readdirSync('./data/'+dir+'/maps/');
+      var osrmlist = osrmfiles.reduce(
+        function(p,o){
+          var files = fs.readdirSync('./data/'+dir+'/maps/'+o);
+          if(files.length > 0) p.push('./data/'+dir+'/maps/'+o+'/'+files[0].split('.')[0]+'.osrm')
+          return p
+        },[]
+      )
+      osrmlist.push('./data/'+dir+'/'+CONFIGURATION[idx].baseline.osrm);
+      socket.emit('status',{osrm:osrmlist,project:data.project});
+    })
+
+/*
+ var files = fs.readdirSync(dir+'csv/');
   files.sort(function(a, b) {
        return fs.statSync(dir+'csv/' + a).mtime.getTime() - fs.statSync(dir+'csv/' + b).mtime.getTime();
     });
+*/
+  }
+ 
 
-  socket.emit('status',{csvs:files}); //send the current list of csv files
-
+  
   /* triggers on the socket */
   socket.on('debug',function(data){console.log(data)}); //debug modus
 
-  socket.on('getisochrone', createIsochrone); //create isochrones
+ 
+ };
 
-  socket.on('getMatrixForRegion',createTimeMatrix);
 
-  socket.on('disconnect',function(){
-    allClients.splice(allClients.indexOf(socket),1)
-    io.emit('status',{users:allClients.length})
-  })
-  socket.on('setOSRM',function(data){
-    osrm = data.osrm;
-    socket.emit('status',{newOsrm:osrm});
-    socket.emit('status',{msg:'srv_nw_changed',p0:osrm});
-  })
-  socket.on('retrieveOSRM',function(){
-    var osrmfiles = fs.readdirSync(dir+'maps/');
-    var osrmlist = osrmfiles.reduce(
-      function(p,o){
-        var files = fs.readdirSync(dir+'maps/'+o);
-        if(files.length > 0) p.push('./data/maps/'+o+'/'+files[0].split('.')[0]+'.osrm')
-        return p
-      },[]
-    )
-    osrmlist.push(defaultOsrm);
-    socket.emit('status',{osrm:osrmlist});
-  })
-  var uploader = new siofu();
-  uploader.dir = dir;
-  uploader.listen(socket);
-  uploader.on('complete',uploadComplete)
-};
+
+
+
+
+
+
+
+function getProjectIdx(uid) {
+  var idx = -1;
+  for(var i =0, len = CONFIGURATION.length; i < len; i++){
+    if(CONFIGURATION[i].uid===uid) idx =i;
+  }
+  return idx;
+}
+
+
+
+
+
+
+
+
+
+
+
 
 /* create an isochrone
 requires:
@@ -174,7 +191,7 @@ data.res int with the resolution of the isochrone
 
 returns:
 isochrone features
-*/
+*//*
 function createIsochrone(data) {
   var cISO = fork('./scripts/node/calculateIsochrone.js');
   if(!data||!data.center) {
@@ -196,7 +213,7 @@ function createIsochrone(data) {
 
     }
   });
-}
+}*/
 
 /* create distance matrix
 requires:
@@ -212,16 +229,19 @@ location of CSV file
 */
 
 function createTimeMatrix(data) {
+  var idx =getProjectIdx(data.project);
+  var c = CONFIGURATION[idx];
+  var p = PROJECTS[data.project];
   var cETA = fork('./scripts/node/calculateETA.js');
   beginTime = new Date().getTime();
   if(!data||!data.feature) {
     console.warn('no data')
     return false;
   }
-  data.maxTime = data.maxTime || maxTime;
-  data.maxSpeed = data.maxSpeed || maxSpeed;
+  data.maxTime = data.maxTime || c.maxTime;
+  data.maxSpeed = data.maxSpeed || c.maxSpeed;
 
-  io.emit('status',{id:data.id,msg:'srv_creating_tm'})
+  io.emit('status',{id:data.id,msg:'srv_creating_tm',project:data.project})
 
   //split the input region in squares for parallelisation
   var box = envelope(data.feature);
@@ -229,18 +249,18 @@ function createTimeMatrix(data) {
   var squares =  squareGrid(extent,30, 'kilometers');
 
   //tell the client how many squares there are
-  io.emit('status',{id:data.id,msg:'srv_split_squares',p0:squares.features.length})
+  io.emit('status',{id:data.id,msg:'srv_split_squares',p0:squares.features.length,project:data.project})
 
-  cETA.send({data:data,squares:squares.features,POIs:POIs,villages:villagesFile,osrm:data.osrm});
+  cETA.send({data:data,squares:squares.features,POIs:p.POIs,villages:p.villages,osrm:c.activeOSRM,id:data.id});
   var remaining = squares.features.length;
   cETA.on('message',function(msg){
     if(msg.type == 'status') {
       console.log(msg.data);
-      io.emit('status',{id:data.id,msg:msg.data});
+      io.emit('status',{id:msg.id,msg:msg.data});
     }
     else if(msg.type=='square') {
       remaining--;
-      io.emit('status',{id:data.id,msg:'srv_remaining_squares',p0:remaining});
+      io.emit('status',{id:msg.id,msg:'srv_remaining_squares',p0:remaining});
     }
     else if(msg.type =='done') {
       //we are done, save as csv and send the filename
@@ -248,28 +268,28 @@ function createTimeMatrix(data) {
       var timing = Math.round(calculationTime);
       if(calculationTime>60) {
         timing = Math.round(calculationTime/60);
-        io.emit('status',{id:data.id,msg:'srv_calculated_in_m',p0:timing});
+        io.emit('status',{id:msg.id,msg:'srv_calculated_in_m',p0:timing});
             
       }
       else {
-        io.emit('status',{id:data.id,msg:'srv_calculated_in_s',p0:timing});
+        io.emit('status',{id:msg.id,msg:'srv_calculated_in_s',p0:timing});
             
       }
       console.log('timing: '+timing);
-            io.emit('status',{id:data.id,msg:'srv_writing'});
-      var networkfile = data.osrm.split('/')[data.osrm.split('/').length-1];
+      io.emit('status',{id:msg.id,msg:'srv_writing'});
+
+      var networkfile = msg.osrm.split('/')[msg.osrm.split('/').length-1];
       var osrmfile = networkfile.split('.')[0];
       var print = d3.csv.format(msg.data);
-      var file = data.geometryId+'-'+data.id+'-'+osrmfile+'.csv';
-        fs.writeFile(dir+'/csv/'+file, print, function(err){
-            if(err) {
-                  return console.log(err);
-                }
-        console.log('finished '+file);
-         io.emit('status',{id:data.id,msg:'srv_finished'});
-        io.emit('status',{id:data.id,type:'poilist',file:file,geometryId:data.geometryId});
+      var file = data.geometryId+'-'+msg.id+'-'+osrmfile+'.csv';
+      fs.writeFile('./data/'+c.dir+'/csv/'+file, print, function(err){
+        if(err) {
+          return console.log(err);
+        }
+        io.emit('status',{id:msg.id,msg:'srv_finished',project:data.project});
+        io.emit('status',{id:msg.id,type:'poilist',file:file,geometryId:data.geometryId,project:data.project});
         cETA.disconnect();
-          });
+      });
     }
   });
 }

@@ -18,7 +18,7 @@ function Authenticate(user,pass) {
   });
 
   socket.on('authenticated', function() {
-    socket.emit('retrieveOSRM');
+    socket.emit('retrieveOSRM',{project:"project_1463767649122"}); //TODO: SMO
 
     socket.on('status', function (data) {
       if(data.msg) {
@@ -84,7 +84,7 @@ function createOsrmList(osrmlist) {
     var osrm = item.file;
     if(osrm === osrmfile) {
       if(!item.active)
-       socket.emit('setOSRM',{osrm:osrm});
+       socket.emit('setOSRM',{osrm:osrm,project:"project_1463767649122"}); //TODO: SMO
       item.active = true;
     }
     if(osrm.indexOf('maps')>-1) {
@@ -102,7 +102,7 @@ function createOsrmList(osrmlist) {
 function setOsrm(osrm) {
   var url = getUrlVars()['lang']===undefined?('calculate.html?osrm='+osrm):('calculate.html?osrm='+osrm+'&lang='+getUrlVars()['lang']);
   window.history.pushState({},'calculate stats', url);
-  socket.emit('setOSRM',{osrm:osrm});
+  socket.emit('setOSRM',{osrm:osrm,project:"project_1463767649122"});  //TODO: SMO
 }
 
 function highlightOsrm(osrm) {
@@ -238,7 +238,7 @@ d3.json(provincialFile,function (data) {
 
 function generateCSV (feature,geometryId) {
   var osrm = OSRMLIST.filter(function(o){return o.active});
-  socket.emit('getMatrixForRegion',{feature:feature,id:new Date().getTime(),time:3600,maxSpeed:120,osrm:osrm[0].file,geometryId:feature.properties[geometryId]})
+  socket.emit('getMatrixForRegion',{feature:feature,id:new Date().getTime(),time:3600,maxSpeed:120,osrm:osrm[0].file,geometryId:feature.properties[geometryId],project:"project_1463767649122"}); //TODO: SMO
 }
 
 function createCsvList(csv) {
