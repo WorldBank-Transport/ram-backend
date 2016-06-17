@@ -54,10 +54,10 @@ function t(a,b,c){
 }
 jQuery(document).ready(function(){
   $('#lng_zh').on('click',function(){
-     window.location.href='?lang=zh';
+     setLang('zh');
   })
   $('#lng_en').on('click',function(){
-    window.location.href='?lang=en';
+    setLang('en');
   })
   $('a').on('click',function(e){
     var llang = getUrlVars()["lang"];

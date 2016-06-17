@@ -53,7 +53,7 @@ for p in *.py; do
 done
 shopt -u nocaseglob
 echo "ogr2osm"
-python "${WORKDIR}"/../ogr2osm/ogr2osm.py "${SHAPEFILE}" -t "${TRANSLATE}"
+python "${WORKDIR}"/../ogr2osm/ogr2osm.py "${SHAPEFILE}" -t "${TRANSLATE}" --positive-id
 echo "osrm"
 mkdir -p ../tmposm
 mv *.osm ../tmposm/. #TODO: will only work with 1 osm file

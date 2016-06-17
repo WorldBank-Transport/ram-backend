@@ -22,11 +22,13 @@ var express = require('express'),
 var CONFIGURATION=false,
     CLIENTS = [],
     PROJECTS = {};
+//Keeping the credentials outside git
+var credentials = JSON.parse(fs.readFileSync('./web/data/user.json','utf8'));
 
-fs.exists('./data/config.json',function(exists) {
+fs.exists('./web/data/config.json',function(exists) {
   if(exists){
-    CONFIGURATION=JSON.parse(fs.readFileSync('./data/config.json','utf8'));
-    var dir = './data/';
+    CONFIGURATION=JSON.parse(fs.readFileSync('./web/data/config.json','utf8'));
+    var dir = './web/data/';
     CONFIGURATION.forEach(function(project){
         var uid = project.uid;
 
@@ -39,14 +41,13 @@ fs.exists('./data/config.json',function(exists) {
         PROJECTS[uid] = {};
         PROJECTS[uid].POIs = {};
         for(poi in project.pois) {
-          PROJECTS[uid].POIs[poi] = JSON.parse(fs.readFileSync('./data/'+uid+'/'+project.pois[poi],'utf8'));
+          PROJECTS[uid].POIs[poi] = JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.pois[poi],'utf8'));
         }
-        PROJECTS[uid].villages =  JSON.parse(fs.readFileSync('./data/'+uid+'/'+project.villages,'utf8'));
+        PROJECTS[uid].villages =  JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.villages,'utf8'));
     })
   }
 })
-//Keeping the credentials outside git
-var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
+ 
 
 
 //basic authentication stuff
@@ -69,7 +70,7 @@ var auth = function (req, res, next) {
   };
 };
 
-app.use('/', [auth, compression(),express.static(__dirname + '/',{ maxAge: 86400000 })]);
+app.use('/', [auth, compression(),express.static(__dirname + '/web/',{ maxAge: 86400000 })]);
 
 http.listen(parseInt(port, 10));
 console.log("Static file server running at\n  => http://localhost:" + port + "/\nCTRL + C to shutdown");
@@ -105,13 +106,13 @@ function postAuthenticate(socket, data) {
   })
 
   io.emit('status',{users:CLIENTS.length});
-  socket.emit('status',{config:CONFIGURATION});
+  socket.emit('config',{config:CONFIGURATION});
   if(CONFIGURATION) {
     //there is a configuration file so we can proceed.
   //  socket.on('getisochrone', createIsochrone); //create isochrones
     //TODO: figure out how to move this to project dir
     var uploader = new siofu();
-    uploader.dir = './data/'+CONFIGURATION[0].dir;
+    uploader.dir = './web/data/'+CONFIGURATION[0].uid;
     uploader.listen(socket);
     uploader.on('complete',uploadComplete)
 
@@ -120,33 +121,44 @@ function postAuthenticate(socket, data) {
     socket.on('setOSRM',function(data){
       var idx =getProjectIdx(data.project);
       CONFIGURATION[idx].activeOSRM = data.osrm;
-      socket.emit('status',{newOsrm:CONFIGURATION[idx].activeOSRM,project:data.project});
+      socket.emit('newOsrm',{newOsrm:CONFIGURATION[idx].activeOSRM,project:data.project});
       socket.emit('status',{msg:'srv_nw_changed',p0:CONFIGURATION[idx].activeOSRM});
     })
 
     socket.on('retrieveOSRM',function(data){
       var idx =getProjectIdx(data.project);
-      var dir = CONFIGURATION[idx].dir;
-      var osrmfiles = fs.readdirSync('./data/'+dir+'/maps/');
-      var osrmlist = osrmfiles.reduce(
-        function(p,o){
-          var files = fs.readdirSync('./data/'+dir+'/maps/'+o);
-          if(files.length > 0) p.push('./data/'+dir+'/maps/'+o+'/'+files[0].split('.')[0]+'.osrm')
-          return p
-        },[]
-      )
-      osrmlist.push('./data/'+dir+'/'+CONFIGURATION[idx].baseline.osrm);
-      socket.emit('status',{osrm:osrmlist,project:data.project});
+      var dir = CONFIGURATION[idx].uid;
+      var osrmfiles = fs.readdirSync('./web/data/'+dir+'/maps/');
+      var osrmlist = [];
+      osrmfiles.forEach(function(o){
+          var files = fs.readdirSync('./web/data/'+dir+'/maps/'+o);
+          if(files.indexOf('meta.json')>-1) {
+            var meta = JSON.parse(fs.readFileSync('./web/data/'+dir+'/maps/'+o+'/meta.json'));
+            meta.dir = './web/data/'+dir+'/maps/'+o;
+            osrmlist.push(meta)
+          }
+        })
+      socket.emit('osrmList',{osrm:osrmlist,project:data.project});
     })
 
-/*
- var files = fs.readdirSync(dir+'csv/');
-  files.sort(function(a, b) {
-       return fs.statSync(dir+'csv/' + a).mtime.getTime() - fs.statSync(dir+'csv/' + b).mtime.getTime();
-    });
-*/
+    socket.on('retrieveResults',function(data){
+      var idx =getProjectIdx(data.project);
+      var dir = CONFIGURATION[idx].uid;
+      var files = fs.readdirSync('./web/data/'+dir+'/csv/');
+      var jsons = files.filter(function (d) { return d.slice(-5).toLowerCase() === ".json"   });
+      jsons.sort(function(a, b) {
+        return fs.statSync('./web/data/'+dir+'/csv/' + a).mtime.getTime() - fs.statSync('./web/data/'+dir+'/csv/' + b).mtime.getTime();
+      });
+      jsons.forEach(function (d,idx) {
+        fs.readFile('./web/data/'+dir+'/csv/'+d,function(err,data)  { 
+          if (err) throw err;
+          socket.emit('resultJson',{result:JSON.parse(data),counter:idx,project:data.project})
+        })
+      })
+    })
+
   }
- 
+  
 
   
   /* triggers on the socket */
@@ -232,6 +244,8 @@ function createTimeMatrix(data) {
   var idx =getProjectIdx(data.project);
   var c = CONFIGURATION[idx];
   var p = PROJECTS[data.project];
+  var osrm = './web/data/'+data.project+'/'+c.activeOSRM;
+  console.log(osrm);
   var cETA = fork('./scripts/node/calculateETA.js');
   beginTime = new Date().getTime();
   if(!data||!data.feature) {
@@ -251,7 +265,7 @@ function createTimeMatrix(data) {
   //tell the client how many squares there are
   io.emit('status',{id:data.id,msg:'srv_split_squares',p0:squares.features.length,project:data.project})
 
-  cETA.send({data:data,squares:squares.features,POIs:p.POIs,villages:p.villages,osrm:c.activeOSRM,id:data.id});
+  cETA.send({data:data,squares:squares.features,POIs:p.pois,villages:p.villages,osrm:osrm,id:data.id,project:data.project});
   var remaining = squares.features.length;
   cETA.on('message',function(msg){
     if(msg.type == 'status') {

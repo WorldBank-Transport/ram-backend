@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<meta charset="utf-8" lang="en">
+<head>
+<title>Rural road accessibility, project view</title>
+  <meta id='viewport' content='initial-scale=1'/>
+  <link href='https://fonts.googleapis.com/css?family=Overlock' rel='stylesheet' type='text/css'>
+  <link href='../style/style.css' rel='stylesheet' type='text/css'/>
+  <link href="../src/bootstrap/dist/css/bootstrap.min.css"  rel='stylesheet' type='text/css'/>
+  <link href="../src/leaflet/dist/leaflet.css"  rel='stylesheet' type='text/css'/>
+  <script src="../src/d3/d3.min.js" charset="utf-8"></script>
+  <script src="../src/socket.io-client/socket.io.js"></script>
+  <script src="../src/jquery/dist/jquery.min.js"></script>
+  <script src="../src/jquery.i18n.properties.min.js" type="text/javascript"  charset="utf-8"></script>
+  <script src="../src/util.js" type="text/javascript"  charset="utf-8"></script>
+  <script src="../src/leaflet/dist/leaflet.js" charset="utf-8"></script>  
+  <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
+</head>
+<body>
+<div class="container-fluid inhoud">
+  <div class="page-header">
+  <h1>
+  <span id="frt_title"><script>t('#frt_title','frt_title')</script></span></h1>
+  <div id="switcher" class="pull-right clear-fix"><span id="users"></span><span id="lng_en"><script>t('#lng_en','lng_en')</script></span> <span id="lng_zh"><script>t('#lng_zh','lng_zh')</script></span></div>
+</div>
+<div class="row">
+   <div class="col-md-2 col-sm-4">
+   <div id="projectInfo"></div>
+   </div>
+   <div class="col-md-10 col-sm-8">
+   <div id="networkFiles"></div>
+   </div>
+</div>
+
+<div class="row">
+   <div class="col-md-2 col-sm-4">
+   <div id="levelSelector"></div>
+   </div>
+   <div class="col-md-10 col-sm-8">
+   <div id="activeNetwork"></div>
+   <div id="map"></div>
+   </div>
+</div>
+
+<div class="row">
+   <div class="col-md-2 col-sm-4">
+   <div id=""></div>
+   </div>
+   <div class="col-md-10 col-sm-8">
+   <div id="results"></div>
+   </div>
+</div>
+
+</div>
+
+<div id="logfield"></div>
+ <script src="../src/project.js" type="text/javascript" charset="utf-8"></script>
+  <script src="../src/socket.js" type="text/javascript" charset="utf-8"></script>
+</body>
+</html>

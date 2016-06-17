@@ -16,12 +16,10 @@ process.env.UV_THREADPOOL_SIZE=Math.floor(cpus*1.5);
 process.on('message', function(e) {
 	process.send({type:'status',data:'srv_started',id:e.id});
 	console.log(e.osrm);
-	var POIfiles = e.POIs;
+	POIs = e.POIs;
 	var osrm = new OSRM(e.osrm);
-	for (key in POIfiles) {
-		POIs[key] = JSON.parse(fs.readFileSync(POIfiles[key],'utf8'));
-	}
-	villages = JSON.parse(fs.readFileSync(e.villages, 'utf8'));
+	
+	villages = e.villages;
 	process.send({type:'status',data:'srv_loaded_files',id:e.id});
 	var squares = e.squares;
 	var data = e.data;
