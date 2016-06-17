@@ -5,20 +5,22 @@ var RESULTS = [];
 var MAP;
 //called when the socket is authenticated
 function validSocket(socket) {
-    socket.on('config',function(c){
-        viewProject(c.config,socket);
-    });
-    socket.on('osrmList',function(data){
-        createOsrmList(data);
-    })
-    socket.on('resultJson',function(data){
-        addResult(data);
-    })
-    socket.on('newOsrm',function (data) {
-      PROJECT.activeOSRM = data.activeOSRM;
-      createActiveOsrm();
-    })
-
+  socket.on('config',function(c){
+      viewProject(c.config,socket);
+  });
+  socket.on('osrmList',function(data){
+      createOsrmList(data,socket);
+  })
+  socket.on('resultJson',function(data){
+      addResult(data);
+  })
+  socket.on('newOsrm',function (data) {
+    PROJECT.activeOSRM = data.newOsrm;
+    createActiveOsrm();
+  })
+  socket.on('removedOsrm',function(data){
+    socket.emit('retrieveOSRM',{project:project});
+  })
 }
 
 function inValidSocket(socket) {
@@ -39,24 +41,17 @@ function viewProject(json,socket) {
     }
     socket.emit('retrieveOSRM',{project:project});
     socket.emit('retrieveResults',{project:project});
+
     var pDiv = d3.select('#projectInfo').html('');
 
     pDiv.append('h2').text(PROJECT.name);
     pDiv.append('span').text('created at '+ new Date(parseInt(PROJECT.created)))
 
-    pDiv.append('h3').text('baseline network')
-    pDiv.append('span').text('created: '+ new Date(parseInt(PROJECT.baseline.created.time)))
-    pDiv.append('span').text(' by '+ PROJECT.baseline.created.user);
-
     if(PROJECT.levels && PROJECT.levels.length >0&&!CONNECTED){
         createLevelSelector(PROJECT.levels,socket);
     }
 
-    var rDiv = d3.select('#results')
-    .selectAll('div')
-    .data(RESULTS)
-    .enter()
-    .append('div');
+    
 
 
 
@@ -72,58 +67,66 @@ function createActiveOsrm() {
     .text(function (d) { return ' created at ' + new Date(parseInt(d.created.time))});
  
 }
-function changeOsrm(data) {
-  console.log(data);
+function changeOsrm(data,socket) {
+   socket.emit('setOSRM',{project:PROJECT.uid,osrm:data})
 }
-function createOsrmList(data) {
-    var nDiv = d3.select('#networkFiles').html('');
-    var div = nDiv.append('div').selectAll('div')
+
+function removeOsrm(data,socket) {
+  d3.event.stopPropagation();
+  socket.emit('removeOsrm',{project:PROJECT.uid,osrm:data})
+}
+function createOsrmList(data,socket) {
+  var nDiv = d3.select('#networkFiles').html('');
+
+  var osrmDiv = nDiv.append('div')
+    .selectAll('div')
     .data(data.osrm)
     .enter()
-    .insert('div',":first-child").attr('class','checkbox').append('label');
+    .insert('div',":first-child").attr('class','checkbox')
 
-    div.append('input')
-      .attr('type','radio')
-      .attr('class','osrmButtons')
-      .attr('name','osrm')
-      .attr('value',function(d){
-        return d.created.time;
-      })
-      .on('change',function(d){
-        changeOsrm(d)
-      })
+  var labelDiv= osrmDiv.append('label');
 
+  labelDiv.append('input')
+    .attr('type','radio')
+    .attr('class','osrmButtons')
+    .attr('name','osrm')
+    .attr('value',function(d){ return d.created.time})
+    .on('change',function(d){changeOsrm(d,socket)});
+
+  labelDiv
     .append('span')
-    .text(function (d) { return d.name});
-    div.append('span')
+    .text(function (d) {return ' '+d.name});
+
+  labelDiv.append('span')
     .text(function (d) { return ' created at ' + new Date(parseInt(d.created.time))});
-    div.append('span')
+
+  osrmDiv.append('span')
     .attr('class','btn btn-default glyphicon glyphicon-remove')
-    var baseDiv =nDiv.insert('div',':first-child').attr('class','checkbox').append('label');
-    baseDiv.append('input')
-      .attr('type','radio')
-      .attr('checked',true)
-      .attr('class','osrmButtons')
-      .attr('name','osrm')
-      .attr('value',function(d){
-        return ' baseline';
-      })
-      .on('change',function(d){
-        changeOsrm(PROJECT.baseline);
-      });
-      baseDiv
+    .on('click',function(d){removeOsrm(d,socket)})
+    
+  var baseDiv =nDiv.insert('div',':first-child').attr('class','checkbox').append('label');
+
+  baseDiv.append('input')
+    .attr('type','radio')
+    .attr('checked',true)
+    .attr('class','osrmButtons')
+    .attr('name','osrm')
+    .attr('value',function(d){return 'baseline';})
+    .on('change',function(d){changeOsrm(PROJECT.baseline,socket);});
+
+  baseDiv
     .append('span')
-    .text('baseline')
+    .text(' baseline')
     .append('span')
     .text( ' created at ' + new Date(parseInt(PROJECT.baseline.created.time)));
 
-    nDiv.insert('h2',':first-child').text('available network files:');
+  nDiv.insert('h2',':first-child').text('available network files:');
     
-
-    nDiv.append('div')
+  nDiv.append('div')
     .attr('class','btn btn-default')
     .text('add new network')    
-    createActiveOsrm();
+
+  createActiveOsrm();
 }
 
 function createLevelSelector(data,socket) {
@@ -219,10 +222,11 @@ function generateCSV (feature,geometryId,socket) {
 
 function addResult(data) {
     RESULTS[data.counter] = data.result;
-       var rDiv = d3.select('#results')
-    .selectAll('div')
-    .data(RESULTS)
-    .enter()
-    .append('div')
-    .text(function(d){return d.name})
+    
+    d3.select('#results')
+      .selectAll('div')
+      .data(RESULTS)
+      .enter()
+      .append('div')
+      .text(function(d){return d.name})
 }

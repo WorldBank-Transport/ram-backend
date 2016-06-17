@@ -16,7 +16,8 @@ var express = require('express'),
     envelope = require('turf-envelope'),
     squareGrid = require('turf-square-grid'),
     siofu = require("socketio-file-upload"),
-    exec = require('child_process').exec;
+    exec = require('child_process').exec,
+    rimraf = require('rimraf');
 
 //GLOBALS
 var CONFIGURATION=false,
@@ -122,7 +123,7 @@ function postAuthenticate(socket, data) {
       var idx =getProjectIdx(data.project);
       CONFIGURATION[idx].activeOSRM = data.osrm;
       socket.emit('newOsrm',{newOsrm:CONFIGURATION[idx].activeOSRM,project:data.project});
-      socket.emit('status',{msg:'srv_nw_changed',p0:CONFIGURATION[idx].activeOSRM});
+      socket.emit('status',{msg:'srv_nw_changed',p0:CONFIGURATION[idx].activeOSRM.name});
     })
 
     socket.on('retrieveOSRM',function(data){
@@ -139,6 +140,13 @@ function postAuthenticate(socket, data) {
           }
         })
       socket.emit('osrmList',{osrm:osrmlist,project:data.project});
+    })
+
+    socket.on('removeOsrm',function (data) {
+      rimraf(data.osrm.dir,function (d) {
+        if(err) throw err;
+        io.emit('removedOsrm')
+      })
     })
 
     socket.on('retrieveResults',function(data){
