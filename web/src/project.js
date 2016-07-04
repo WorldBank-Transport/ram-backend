@@ -1,10 +1,13 @@
 "use strict";
-var PROJECT;
-var CONNECTED = false;
-var RESULTS = [];
-var MAP;
+var PROJECT,
+   CONNECTED = false,
+   RESULTS = [],
+   MAP,
+   uploader,
+   quint=5;
 //called when the socket is authenticated
 function validSocket(socket) {
+  uploader = new SocketIOFileUpload(socket);
   socket.on('config',function(c){
       viewProject(c.config,socket);
   });
@@ -12,6 +15,7 @@ function validSocket(socket) {
       createOsrmList(data,socket);
   })
   socket.on('resultJson',function(data){
+    if(data.result !== undefined)
       addResult(data);
   })
   socket.on('newOsrm',function (data) {
@@ -19,14 +23,22 @@ function validSocket(socket) {
     createActiveOsrm();
   })
   socket.on('removedOsrm',function(data){
-    socket.emit('retrieveOSRM',{project:project});
+    socket.emit('retrieveOSRM',{project:PROJECT.uid});
   })
+  socket.on('uploadComplete',function(data){
+    socket.emit('unzip',{project:PROJECT.uid,file:data.file,osrm:PROJECT.activeOSRM})
+  })
+ 
 }
 
 function inValidSocket(socket) {
     socket.off('config');
-    socket.off('osrmList')
-    socket.off('resultJson')
+    socket.off('osrmList');
+    socket.off('resultJson');
+    socket.off('newOsrm');
+    socket.off('removedOsrm');
+    socket.off('uploadComplete');
+    uploader.destroy();
 }
 
 function viewProject(json,socket) {
@@ -51,7 +63,31 @@ function viewProject(json,socket) {
         createLevelSelector(PROJECT.levels,socket);
     }
 
-    
+    uploader.listenOnSubmit(document.getElementById("uploadButton"), document.getElementById("file_input"));
+    uploader.addEventListener('start',function(e){
+    d3.select('#logfield')
+      .insert("div", ":first-child")
+      .html()
+    })
+    uploader.addEventListener('progress',function(e){
+      var progress= Math.round(e.bytesLoaded / e.file.size*100);
+      if(progress > quint) {
+        d3.select('#logfield')
+          .insert("div", ":first-child")
+          .html($.i18n.prop('upl_progress',progress));
+        quint=quint+10;
+      }
+    })
+    uploader.addEventListener('complete',function (e) {
+      d3.select('#logfield')
+        .insert("div", ":first-child")
+        .html($.i18n.prop('upl_process',e.file.name));
+      d3.select('#logfield')
+        .insert("div", ":first-child")
+        .html($.i18n.prop('upl_patience'))
+        .style({color:'orange','font-weight':'bold'});  
+      quint = 5;
+    })
 
 
 
@@ -124,9 +160,28 @@ function createOsrmList(data,socket) {
     
   nDiv.append('div')
     .attr('class','btn btn-default')
-    .text('add new network')    
+    .text('add new network')  
+    .on('click',function(){createNewOsrm(socket)})  
 
   createActiveOsrm();
+}
+function createNewOsrm(socket) {
+   var newDiv = d3.select('#addNetwork');
+   newDiv.style('height','auto');
+   var upload = d3.select('#uploadNetwork');
+   var change = d3.select('#changeNetwork');
+
+   d3.select('#btnChangeNetwork')
+   .on('click',function (d) {
+     upload.style('height','0px');
+     change.style('height','auto');
+   })
+   d3.select('#btnUploadNetwork')
+   .on('click',function (d) {
+     change.style('height','0px');
+     upload.style('height','auto');
+   })
+
 }
 
 function createLevelSelector(data,socket) {

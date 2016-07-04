@@ -9,6 +9,7 @@
   <link href="../src/leaflet/dist/leaflet.css"  rel='stylesheet' type='text/css'/>
   <script src="../src/d3/d3.min.js" charset="utf-8"></script>
   <script src="../src/socket.io-client/socket.io.js"></script>
+  <script src="../src/socketio-file-upload/client.min.js" charset="utf-8"></script>
   <script src="../src/jquery/dist/jquery.min.js"></script>
   <script src="../src/jquery.i18n.properties.min.js" type="text/javascript"  charset="utf-8"></script>
   <script src="../src/util.js" type="text/javascript"  charset="utf-8"></script>
@@ -28,6 +29,28 @@
    </div>
    <div class="col-md-10 col-sm-8">
    <div id="networkFiles"></div>
+   </div>
+</div>
+
+<div class="row">
+   <div class="col-md-2 col-sm-4">
+   <div ></div>
+   </div>
+   <div class="col-md-10 col-sm-8">
+   <div id="addNetwork"  class="slideDown">
+   <div id="addNetworkButtons">
+     <span id="btnUploadNetwork" class="btn btn-default">Upload new network</span> or <span id="btnChangeNetwork" class="btn btn-default">Change existing network</span>
+     </div>
+     <div id="uploadNetwork" class="slideDown">
+      <p><input type="file" id="file_input" /></p>
+    <p><input class="btn btn-default pull-right" id="uploadButton" type="button"><script>jQuery(document).ready(function() {         
+    $('#uploadButton').attr('value',jQuery.i18n.prop('upl_button'))          
+  })</script></p>
+     </div>
+     <div id="changeNetwork" class="slideDown">
+     choose and change
+     </div>
+   </div>
    </div>
 </div>
 

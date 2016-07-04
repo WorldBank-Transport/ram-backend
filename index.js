@@ -113,9 +113,18 @@ function postAuthenticate(socket, data) {
   //  socket.on('getisochrone', createIsochrone); //create isochrones
     //TODO: figure out how to move this to project dir
     var uploader = new siofu();
-    uploader.dir = './web/data/'+CONFIGURATION[0].uid;
+    uploader.dir = './web/data/tmp';
     uploader.listen(socket);
-    uploader.on('complete',uploadComplete)
+    uploader.on('complete',function(e){
+      var file = e.file.name;
+      var fsplit = file.split('.');
+      if(fsplit[fsplit.length-1].toLowerCase()!='zip') {
+        socket.emit('status',{msg:'invalid zip file'})
+      }
+      else {
+       socket.emit('uploadComplete',{file:e.file.pathName});
+      }
+    })
 
     socket.on('getMatrixForRegion',createTimeMatrix);
 
@@ -143,15 +152,19 @@ function postAuthenticate(socket, data) {
     })
 
     socket.on('removeOsrm',function (data) {
-      rimraf(data.osrm.dir,function (d) {
+      var p =CONFIGURATION[getProjectIdx(data.project)];
+      if(p.activeOSRM.created.time == data.osrm.created.time){
+        p.activeOSRM = p.baseline;
+        socket.emit('newOsrm',{newOsrm:p.activeOSRM,project:data.project});
+      }
+      rimraf(data.osrm.dir,function (err) {
         if(err) throw err;
-        io.emit('removedOsrm')
+        io.emit('removedOsrm',{project:data.project})
       })
     })
 
     socket.on('retrieveResults',function(data){
-      var idx =getProjectIdx(data.project);
-      var dir = CONFIGURATION[idx].uid;
+      var dir = data.project;
       var files = fs.readdirSync('./web/data/'+dir+'/csv/');
       var jsons = files.filter(function (d) { return d.slice(-5).toLowerCase() === ".json"   });
       jsons.sort(function(a, b) {
@@ -165,6 +178,36 @@ function postAuthenticate(socket, data) {
       })
     })
 
+    socket.on('unzip',function (data) {
+      console.log('unzip')
+      var dir = './web/data/' +data.project + '/tmp_'+new Date().getTime()+'/';
+      mkdirp(dir, function(err) {  if(err) console.log(err) });
+      var cmd = './unzip.sh -f '+data.file+ ' -d '+dir;
+      exec(cmd,function(error,stdout,stderr){
+        if (error !== null) {
+          console.log('exec error: ' + error);
+        }
+        if(stdout.indexOf('shp')>-1) {
+          //we have a shapefile, proceed to ogr2osm
+          ogr2osm(dir,socket,data);
+        }
+        else if(stdout.indexOf('osm')>-1) {
+          //we have an osm file proceed to osm2osrm
+          osm2osrm(dir,socket,data);
+        }
+        else if(stdout.indexOf('profile')>-1) {
+          //we only have a profile file proceed to osm2osrm
+          profile2osrm(dir,socket,data);
+        }
+        else {
+          rimraf(dir,function (d) {
+            socket.emit('status',{project:data.project,msg:"invalid content"})
+          })
+        }
+      })  
+
+    })
+
   }
   
 
@@ -175,14 +218,6 @@ function postAuthenticate(socket, data) {
  
  };
 
-
-
-
-
-
-
-
-
 function getProjectIdx(uid) {
   var idx = -1;
   for(var i =0, len = CONFIGURATION.length; i < len; i++){
@@ -192,11 +227,70 @@ function getProjectIdx(uid) {
 }
 
 
+function ogr2osm(dir,socket,data) {
+  var cmd = './ogr2osm.sh -d '+dir;
+  exec(cmd,function(error,stdout,stderr){
+    if (error !== null) {
+      console.log('exec error: ' + error);
+    }
+    if(stdout.indexOf('done')>-1) {
+        osm2osrm(dir,socket,data)
+    }
+    else {
+      rimraf(dir,function (d) {
+        socket.emit('status',{project:data.project,msg:"convert to osm failed"})
+      })
+    }
+
+  })
+}
+
+function osm2osrm(dir,socket,data) {
+  var cmd = './osm2osrm.sh -d '+dir;
+  exec(cmd,function(error,stdout,stderr){
+    if (error !== null) {
+      console.log('exec error: ' + error);
+    }
+    if(stdout.indexOf('fail')==0) {
+        socket.emit('status',{project:data.project,msg:"convert to osrm failed"})
+    }
+    else {
+      var ls = stdout.split('\n');
+      var uid =new Date().getTime();
+      var meta = {
+        "created":{
+          "time":uid,
+          "user":"steven"
+        },
+        files: {
+          "osrm": ls[0].split('/')[1],
+          "osm": ls[1].split('/')[1],
+          "profile": ls[2].split('/')[1]
+        },
+        "name":stdout.split('/')[1].split('.')[0],
+        "uid":'map_'+uid
+      }
+      var metafile = './web/data/' +data.project +'/maps/'+ls[0].split('/')[0]+'/meta.json'
+      fs.writeFileSync(metafile,JSON.stringify(meta))
+       
+    }
+
+  })
+}
 
 
-
-
-
+function profile2osrm(dir,socket,data) {
+  var osmdir =data.osrm.dir;
+  var cmd = './profile2prepare.sh -i '+osmdir+ ' -o '+dir;
+  exec(cmd,function(error,stdout,stderr){
+    if (error !== null) {
+      console.log('exec error: ' + error);
+    }
+    if(stdout.indexOf('done')>-1) {
+      osm2osrm(dir,socket,data);
+    }
+  });
+}
 
 
 
@@ -318,7 +412,7 @@ function createTimeMatrix(data) {
 
 
 
-function uploadComplete(e) {
+function _uploadComplete(e) {
   var file = e.file.name;
   var fsplit = file.split('.');
   if(fsplit[fsplit.length-1].toLowerCase()=='zip') {
