@@ -45,8 +45,16 @@ h1 {
 }
 .slideDown{
     height: 0px;
-    transition: height 1s;
+    max-height: 0;
+    transition:  max-height 0.25s ease-out;
     overflow: hidden;
+    
+}
+
+.innerdiv {
+    background: rgba(238, 238, 236, 0.38);;
+    padding: 20px;
+    border: solid 1px #eeeeec;
 }
 #logfield {
 	width: 100%;

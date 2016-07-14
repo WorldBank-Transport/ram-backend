@@ -179,7 +179,6 @@ function postAuthenticate(socket, data) {
     })
 
     socket.on('unzip',function (data) {
-      console.log('unzip')
       var dir = './web/data/' +data.project + '/tmp_'+new Date().getTime()+'/';
       mkdirp(dir, function(err) {  if(err) console.log(err) });
       var cmd = './unzip.sh -f '+data.file+ ' -d '+dir;
@@ -272,7 +271,20 @@ function osm2osrm(dir,socket,data) {
       }
       var metafile = './web/data/' +data.project +'/maps/'+ls[0].split('/')[0]+'/meta.json'
       fs.writeFileSync(metafile,JSON.stringify(meta))
-       
+      var idx =getProjectIdx(data.project);
+      var dir = CONFIGURATION[idx].uid;
+      var osrmfiles = fs.readdirSync('./web/data/'+dir+'/maps/');
+      var osrmlist = [];
+      osrmfiles.forEach(function(o){
+          var files = fs.readdirSync('./web/data/'+dir+'/maps/'+o);
+          if(files.indexOf('meta.json')>-1) {
+            var meta = JSON.parse(fs.readFileSync('./web/data/'+dir+'/maps/'+o+'/meta.json'));
+            meta.dir = './web/data/'+dir+'/maps/'+o;
+            osrmlist.push(meta)
+          }
+        })
+      socket.emit('osrmList',{osrm:osrmlist,project:data.project});
+      socket.emit('status',{msg:"network created"})
     }
 
   })
@@ -346,7 +358,7 @@ function createTimeMatrix(data) {
   var idx =getProjectIdx(data.project);
   var c = CONFIGURATION[idx];
   var p = PROJECTS[data.project];
-  var osrm = './web/data/'+data.project+'/'+c.activeOSRM;
+  var osrm = '/home/steven/Rural-Road-Accessibility/'+c.activeOSRM.dir+'/'+c.activeOSRM.files.osrm;
   console.log(osrm);
   var cETA = fork('./scripts/node/calculateETA.js');
   beginTime = new Date().getTime();
@@ -397,69 +409,31 @@ function createTimeMatrix(data) {
       var networkfile = msg.osrm.split('/')[msg.osrm.split('/').length-1];
       var osrmfile = networkfile.split('.')[0];
       var print = d3.csv.format(msg.data);
-      var file = data.geometryId+'-'+msg.id+'-'+osrmfile+'.csv';
-      fs.writeFile('./data/'+c.dir+'/csv/'+file, print, function(err){
+      var subfile = data.geometryId+'-'+msg.id+'-'+osrmfile
+      var file = subfile+'.csv';
+      var fullpath = './web/data/'+data.project+'/csv/';
+      var meta = {
+        "created":{
+          "time":new Date().getTime(),
+          "user":"steven"
+        },
+        "name":subfile,
+        "csvfile":file
+      }
+      var metafile = fullpath+subfile+'.json';
+      fs.writeFile(metafile,JSON.stringify(meta),function(err){
+        if(err) return console.log(err);
+        io.emit('csvMetaFinished',{id:msg.id,project:data.project})
+      });
+      fs.writeFile(fullpath+file, print, function(err){
         if(err) {
           return console.log(err);
         }
         io.emit('status',{id:msg.id,msg:'srv_finished',project:data.project});
-        io.emit('status',{id:msg.id,type:'poilist',file:file,geometryId:data.geometryId,project:data.project});
+        io.emit('csvFinished',{id:msg.id,project:data.project})
         cETA.disconnect();
       });
     }
   });
 }
 
-
-
-function _uploadComplete(e) {
-  var file = e.file.name;
-  var fsplit = file.split('.');
-  if(fsplit[fsplit.length-1].toLowerCase()=='zip') {
-    var cmd = './unzip.sh -f '+file+ ' -d '+dir;
-    exec(cmd,function(error,stdout,stderr){
-      if (error !== null) {
-        console.log('exec error: ' + error);
-      }
-      if(stdout.indexOf('done')>-1) {
-        io.emit('status',{msg:'srv_finished_unzipping'})
-        unzipComplete(file,dir);
-      }
-    })  
-  }
-}
-
-function unzipComplete(file,dir) {
-  io.emit('status',{msg:'srv_start_ogr2osm'})
-  var cmd = './ogr2osm.sh -f '+file+ ' -d '+dir;
-  exec(cmd,function(error,stdout,stderr){
-    if (error !== null) {
-      console.log('exec error: ' + error);
-    }
-    if(stdout.indexOf('done')>-1) {
-      io.emit('status',{msg:'srv_finished_ogr2osm'})
-      ogr2osmComplete(file,dir)
-    }
-    else {
-      io.emit('status',{msg:'srv_failed_ogr2osm'})
-    }
-  })
-}
-
-function ogr2osmComplete(file,dir) {
-  io.emit('status',{msg:'srv_start_osm2osrm'})
-  var cmd = './osm2osrm.sh -f '+file+ ' -d '+dir;
-  exec(cmd,function(error,stdout,stderr){
-    if (error !== null) {
-      console.log('exec error: ' + error);
-    }
-    if(stdout.indexOf('fail')>-1) {
-      io.emit('status',{msg:'srv_failed_osm2osrm'})
-    }
-    else {
-      var msg = stdout + '';
-      io.emit('status',{msg:'srv_finished_preparing'})
-      io.emit('status',{result:msg})
-    }
-  })
-}

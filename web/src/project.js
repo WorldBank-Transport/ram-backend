@@ -15,8 +15,9 @@ function validSocket(socket) {
       createOsrmList(data,socket);
   })
   socket.on('resultJson',function(data){
-    if(data.result !== undefined)
+    if(data.result !== undefined){
       addResult(data);
+    }
   })
   socket.on('newOsrm',function (data) {
     PROJECT.activeOSRM = data.newOsrm;
@@ -28,7 +29,14 @@ function validSocket(socket) {
   socket.on('uploadComplete',function(data){
     socket.emit('unzip',{project:PROJECT.uid,file:data.file,osrm:PROJECT.activeOSRM})
   })
- 
+  socket.on('csvMetaFinished',function(data){
+    socket.emit('retrieveResults',{project:PROJECT.uid});
+  })
+  socket.on('csvFinished',function(data){
+    
+  })
+  d3.select('#addnetwork')
+    .on('click',function(){createNewOsrm(socket)})  
 }
 
 function inValidSocket(socket) {
@@ -38,7 +46,11 @@ function inValidSocket(socket) {
     socket.off('newOsrm');
     socket.off('removedOsrm');
     socket.off('uploadComplete');
+    socket.off('csvFinished');
+    socket.off('csvMetaFinished');
     uploader.destroy();
+    d3.select('#addnetwork')
+      .on('click',null)  
 }
 
 function viewProject(json,socket) {
@@ -65,9 +77,8 @@ function viewProject(json,socket) {
 
     uploader.listenOnSubmit(document.getElementById("uploadButton"), document.getElementById("file_input"));
     uploader.addEventListener('start',function(e){
-    d3.select('#logfield')
-      .insert("div", ":first-child")
-      .html()
+      d3.select('#addNetwork')
+      .style('height','0px');
     })
     uploader.addEventListener('progress',function(e){
       var progress= Math.round(e.bytesLoaded / e.file.size*100);
@@ -101,6 +112,11 @@ function createActiveOsrm() {
     .text(function (d) { return 'Active network: '+d.name});
   osrmDiv.append('span')
     .text(function (d) { return ' created at ' + new Date(parseInt(d.created.time))});
+
+  d3.selectAll('.osrmButtons')
+  .attr('checked',null);
+  d3.select('#cx_'+PROJECT.activeOSRM.uid)
+  .attr('checked',true)
  
 }
 function changeOsrm(data,socket) {
@@ -112,75 +128,107 @@ function removeOsrm(data,socket) {
   socket.emit('removeOsrm',{project:PROJECT.uid,osrm:data})
 }
 function createOsrmList(data,socket) {
-  var nDiv = d3.select('#networkFiles').html('');
-
-  var osrmDiv = nDiv.append('div')
-    .selectAll('div')
+  d3.select('#networkFiles').html('');
+  var row = d3.select('#networkFiles')
+    .selectAll('tr')
     .data(data.osrm)
     .enter()
-    .insert('div',":first-child").attr('class','checkbox')
+    .insert('tr',":first-child")
+    .attr('class','osrm')
+    .on('click',function (d) {changeOsrm(d,socket)})
 
-  var labelDiv= osrmDiv.append('label');
-
-  labelDiv.append('input')
+  row.append('td')
+    .append('span')
+    .attr('class','checkbox-inline')
+    .append('input')
     .attr('type','radio')
     .attr('class','osrmButtons')
     .attr('name','osrm')
+    .attr('id',function(d){return 'cx_'+d.uid})
     .attr('value',function(d){ return d.created.time})
     .on('change',function(d){changeOsrm(d,socket)});
 
-  labelDiv
-    .append('span')
-    .text(function (d) {return ' '+d.name});
+  row.append('td')
+   .text(function (d) {return ' '+d.name});
 
-  labelDiv.append('span')
+  row.append('td')
     .text(function (d) { return ' created at ' + new Date(parseInt(d.created.time))});
-
-  osrmDiv.append('span')
-    .attr('class','btn btn-default glyphicon glyphicon-remove')
+  
+  row.append('td')
+    .append('span')
+    .attr('class','btn btn-danger btn-xs glyphicon glyphicon-remove')
     .on('click',function(d){removeOsrm(d,socket)})
-    
-  var baseDiv =nDiv.insert('div',':first-child').attr('class','checkbox').append('label');
 
-  baseDiv.append('input')
+  
+    
+  var baseRow =d3.select('#networkFiles').insert('tr',':first-child')
+  .on('click',function () {
+    changeOsrm(PROJECT.baseline,socket)
+  });
+  
+  baseRow.append('td') 
+    .append('span')
+    .attr('class','checkbox-inline')
+    .append('input')
     .attr('type','radio')
-    .attr('checked',true)
     .attr('class','osrmButtons')
     .attr('name','osrm')
-    .attr('value',function(d){return 'baseline';})
-    .on('change',function(d){changeOsrm(PROJECT.baseline,socket);});
+    .attr('id',function(d){return 'cx_'+PROJECT.baseline.uid})
+    .attr('value','baseline')
+    .on('change',function(){changeOsrm(PROJECT.baseline,socket);});
 
-  baseDiv
-    .append('span')
-    .text(' baseline')
-    .append('span')
-    .text( ' created at ' + new Date(parseInt(PROJECT.baseline.created.time)));
+  baseRow.append('td')
+   .text('baseline');
 
-  nDiv.insert('h2',':first-child').text('available network files:');
+  baseRow.append('td')
+    .text(new Date(parseInt(PROJECT.baseline.created.time)));
+  
     
-  nDiv.append('div')
-    .attr('class','btn btn-default')
-    .text('add new network')  
-    .on('click',function(){createNewOsrm(socket)})  
+ 
 
   createActiveOsrm();
 }
-function createNewOsrm(socket) {
-   var newDiv = d3.select('#addNetwork');
-   newDiv.style('height','auto');
-   var upload = d3.select('#uploadNetwork');
-   var change = d3.select('#changeNetwork');
 
-   d3.select('#btnChangeNetwork')
-   .on('click',function (d) {
-     upload.style('height','0px');
-     change.style('height','auto');
-   })
-   d3.select('#btnUploadNetwork')
-   .on('click',function (d) {
-     change.style('height','0px');
-     upload.style('height','auto');
-   })
+
+  // We can attach the `fileselect` event to all file inputs on the page
+  $(document).on('change', ':file', function() {
+    var input = $(this),
+        numFiles = input.get(0).files ? input.get(0).files.length : 1,
+        label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
+    input.trigger('fileselect', [numFiles, label]);
+  });
+
+  // We can watch for our custom `fileselect` event like this
+  $(document).ready( function() {
+      $(':file').on('fileselect', function(event, numFiles, label) {
+
+          var input = $(this).parents('.input-group').find(':text'),
+              log = numFiles > 1 ? numFiles + ' files selected' : label;
+
+          if( input.length ) {
+              input.val(log);
+              $('#uploadButton')
+              .removeClass('disabled')
+
+          } else {
+              if( log ) alert(log);
+          }
+ 
+      });
+  });
+
+function createNewOsrm(socket) {
+  var newDiv = d3.select('#addNetwork');
+  if(newDiv.style('max-height') !== '0px') {
+    
+    newDiv.style('max-height','0px');
+    
+  }
+  else {
+    newDiv.style('height','auto');
+    newDiv.style('max-height','200px');
+
+  }
 
 }
 
@@ -276,12 +324,19 @@ function generateCSV (feature,geometryId,socket) {
 }
 
 function addResult(data) {
-    RESULTS[data.counter] = data.result;
-    
-    d3.select('#results')
-      .selectAll('div')
-      .data(RESULTS)
-      .enter()
-      .append('div')
-      .text(function(d){return d.name})
+  RESULTS[data.counter] = data.result;
+  console.log(data)
+  var row = d3.select('#results')
+    .selectAll('tr')
+    .data(RESULTS)
+    .enter()
+    .append('tr')
+
+  row.append('td')
+    .text(function(d){return d.name});
+  row.append('td')
+    .append('a')
+    .attr('href',function(d){ return '../web/data/'+PROJECT.uid+'/csv/'+d.csvfile})
+    .text('Download result');
+  
 }
