@@ -167,15 +167,16 @@ function postAuthenticate(socket, data) {
       var dir = data.project;
       var files = fs.readdirSync('./web/data/'+dir+'/csv/');
       var jsons = files.filter(function (d) { return d.slice(-5).toLowerCase() === ".json"   });
+      var result = [];
       jsons.sort(function(a, b) {
         return fs.statSync('./web/data/'+dir+'/csv/' + a).mtime.getTime() - fs.statSync('./web/data/'+dir+'/csv/' + b).mtime.getTime();
       });
       jsons.forEach(function (d,idx) {
-        fs.readFile('./web/data/'+dir+'/csv/'+d,function(err,data)  { 
-          if (err) throw err;
-          socket.emit('resultJson',{result:JSON.parse(data),counter:idx,project:data.project})
-        })
+        result[idx] = {result:JSON.parse(fs.readFileSync('./web/data/'+dir+'/csv/'+d)),counter:idx,project:data.project}
+          
+
       })
+      socket.emit('resultJson',result);
     })
 
     socket.on('unzip',function (data) {
@@ -358,6 +359,7 @@ function createTimeMatrix(data) {
   var idx =getProjectIdx(data.project);
   var c = CONFIGURATION[idx];
   var p = PROJECTS[data.project];
+
   var osrm = '/home/steven/Rural-Road-Accessibility/'+c.activeOSRM.dir+'/'+c.activeOSRM.files.osrm;
   console.log(osrm);
   var cETA = fork('./scripts/node/calculateETA.js');
@@ -377,9 +379,8 @@ function createTimeMatrix(data) {
   var squares =  squareGrid(extent,30, 'kilometers');
 
   //tell the client how many squares there are
-  io.emit('status',{id:data.id,msg:'srv_split_squares',p0:squares.features.length,project:data.project})
-
-  cETA.send({data:data,squares:squares.features,POIs:p.pois,villages:p.villages,osrm:osrm,id:data.id,project:data.project});
+  io.emit('status',{id:data.id,msg:'srv_split_squares',p0:squares.features.length,project:data.project})    
+  cETA.send({data:data,squares:squares.features,POIs:p.POIs,villages:p.villages,osrm:osrm,id:data.id,project:data.project});
   var remaining = squares.features.length;
   cETA.on('message',function(msg){
     if(msg.type == 'status') {
@@ -405,7 +406,7 @@ function createTimeMatrix(data) {
       }
       console.log('timing: '+timing);
       io.emit('status',{id:msg.id,msg:'srv_writing'});
-
+      console.log(msg.data);
       var networkfile = msg.osrm.split('/')[msg.osrm.split('/').length-1];
       var osrmfile = networkfile.split('.')[0];
       var print = d3.csv.format(msg.data);
