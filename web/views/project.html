@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<meta charset="utf-8" lang="en">
+<head>
+<title>Rural road accessibility, project view</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <link href='https://fonts.googleapis.com/css?family=Overlock' rel='stylesheet' type='text/css'>
+  <link href='../style/style.css' rel='stylesheet' type='text/css'/>
+  <link href="../src/bootstrap/dist/css/bootstrap.min.css"  rel='stylesheet' type='text/css'/>
+  <link href="../src/leaflet/dist/leaflet.css"  rel='stylesheet' type='text/css'/>
+  <script src="../src/d3/d3.min.js" charset="utf-8"></script>
+  <script src="../src/socket.io-client/socket.io.js"></script>
+  <script src="../src/socketio-file-upload/client.min.js" charset="utf-8"></script>
+  <script src="../src/jquery/dist/jquery.min.js"></script>
+  <script src="../src/jquery.i18n.properties.min.js" type="text/javascript"  charset="utf-8"></script>
+  <script src="../src/util.js" type="text/javascript"  charset="utf-8"></script>
+  <script src="../src/leaflet/dist/leaflet.js" charset="utf-8"></script>  
+  <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
+</head>
+<body>
+<div class="container-fluid inhoud">
+  <div class="page-header">
+  <h1>
+  <span id="frt_title"><script>t('#frt_title','frt_title')</script></span></h1>
+  <div id="switcher" class="pull-right clear-fix"><span id="users"></span><span id="lng_en"><script>t('#lng_en','lng_en')</script></span> <span id="lng_zh"><script>t('#lng_zh','lng_zh')</script></span></div>
+</div>
+
+<div class="row">
+   <div class="col-md-2 col-sm-4">
+   <div id="projectInfo"></div>
+   </div>
+   <div class="col-md-10 col-sm-8">
+     <table  class="table table-hover">
+     <caption>Available network files</caption>
+     <thead>
+       <th>active</th><th>network name</th><th>Created at</th><th>Delete</th>
+     </thead>
+     <tbody id="networkFiles"></tbody>
+
+   </table>
+
+   <div class="btn-group" role="group" >
+   <button class="btn btn-success" id="addnetwork" type="submit">Add a network</button>
+   <button class="btn btn-primary disabled" type="submit">Change a network</button>
+   </div>
+   </div>
+</div>
+
+<div class="row">
+   <div class="col-md-2 col-sm-4">
+   <div ></div>
+   </div>
+   <div class="col-md-10 col-sm-8">
+  
+  <div id="addNetwork"  class="slideDown">
+  
+  <div class="innerdiv">
+
+  <div class="input-group">
+      <label class="input-group-btn">
+          <span class="btn btn-primary">
+              Browse&hellip; <input type="file" id="file_input" style="display: none;">
+          </span>
+      </label>
+      <input type="text" class="form-control" style="cursor:not-allowed" readonly>
+      <label class="input-group-btn">
+      <input class="btn btn-success disabled "  id="uploadButton" type="button">
+      <script>jQuery(document).ready(function() {         
+        $('#uploadButton').attr('value',jQuery.i18n.prop('upl_button'))          
+       })</script>
+       </label>
+  </div>
+     </div>
+   </div>
+   </div>
+</div>
+<hr/>
+<div class="row">
+   <div class="col-md-2 col-sm-4">
+   <div id="levelSelector"></div>
+   </div>
+   <div class="col-md-10 col-sm-8">
+   <div id="activeNetwork"></div>
+   <div id="map"></div>
+   </div>
+</div>
+<hr/>
+<div class="row">
+   <div class="col-md-2 col-sm-4">
+   <div id=""></div>
+   </div>
+   <div class="col-md-10 col-sm-8">
+
+
+   <table  class="table table-hover">
+     <caption>Results</caption>
+     <thead>
+       <th>Filename</th><th>download</th><th>view</th>
+     </thead>
+     <tbody id="results"></tbody>
+
+   </table>
+   </div>
+</div>
+
+</div>
+
+<div id="logfield"></div>
+ <script src="../src/project.js" type="text/javascript" charset="utf-8"></script>
+  <script src="../src/socket.js" type="text/javascript" charset="utf-8"></script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 #!/bin/bash
 
 
+
 while [[ $# > 1 ]]
 do
 key="$1"
@@ -21,15 +22,10 @@ esac
 shift # past argument or value
 done
 
-WORKDIR=${PWD}
+unzip $FILE -d $DIR 1>&2 
 
-cd $DIR
-rm -r tmp
-mkdir -p maps
-mkdir -p tmp
-unzip $FILE -d tmp 1>&2 
 rm $FILE
-cd tmp
+cd $DIR
 find -name "* *" -type f | rename 's/ /_/g'
 find -name "* *" -type f | rename 's/-/_/g'
 
@@ -43,4 +39,34 @@ for fname in *; do
   fi
 done
 
-echo "done"
+
+
+shopt -s nocaseglob
+for f in *.shp; do 
+ [ -e "$f" ] && SHAPEFILE="yes"|| SHAPEFILE="no"
+ break;
+done
+for f in *.osm; do 
+ [ -e "$f" ] && OSM="yes"|| OSM="no"
+ break;
+done
+for f in *.lua; do 
+[ -e "$f" ] && PROFILE="yes"|| PROFILE="no"
+ break;
+done
+shopt -u nocaseglob
+
+
+if [ "$SHAPEFILE" == "yes" ];
+    then
+    echo "shp"
+
+elif [ "$OSM" == "yes" ];
+    then
+    echo "osm"
+
+elif [ "$PROFILE" == "yes"  ];
+    then
+    echo "profile"
+
+fi

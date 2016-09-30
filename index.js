@@ -16,10 +16,39 @@ var express = require('express'),
     envelope = require('turf-envelope'),
     squareGrid = require('turf-square-grid'),
     siofu = require("socketio-file-upload"),
-    exec = require('child_process').exec;
+    exec = require('child_process').exec,
+    rimraf = require('rimraf');
 
+//GLOBALS
+var CONFIGURATION=false,
+    CLIENTS = [],
+    PROJECTS = {};
 //Keeping the credentials outside git
-var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
+var credentials = JSON.parse(fs.readFileSync('./web/data/user.json','utf8'));
+
+fs.exists('./web/data/config.json',function(exists) {
+  if(exists){
+    CONFIGURATION=JSON.parse(fs.readFileSync('./web/data/config.json','utf8'));
+    var dir = './web/data/';
+    CONFIGURATION.forEach(function(project){
+        var uid = project.uid;
+
+        mkdirp(dir+uid, function(err) {  if(err) console.log(err) });
+        mkdirp(dir+uid+'/csv/', function(err) {  if(err) console.log(err) });
+        mkdirp(dir+uid+'/POIs/', function(err) {  if(err) console.log(err) });
+        mkdirp(dir+uid+'/baseline/', function(err) {  if(err) console.log(err) });
+        mkdirp(dir+uid+'/maps/', function(err) {  if(err) console.log(err) });
+        
+        PROJECTS[uid] = {};
+        PROJECTS[uid].POIs = {};
+        for(poi in project.pois) {
+          PROJECTS[uid].POIs[poi] = JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.pois[poi],'utf8'));
+        }
+        PROJECTS[uid].villages =  JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.villages,'utf8'));
+    })
+  }
+})
+ 
 
 
 //basic authentication stuff
@@ -34,7 +63,7 @@ var auth = function (req, res, next) {
   if (!user || !user.name || !user.pass) {
     return unauthorized(res);
   };
-
+//TODO: allow for more than 1 user in credentials
   if (user.name === credentials.user && user.pass === credentials.pass) {
     return next();
   } else {
@@ -42,67 +71,13 @@ var auth = function (req, res, next) {
   };
 };
 
-app.use('/', [auth, compression(),express.static(__dirname + '/',{ maxAge: 86400000 })]);
+app.use('/', [auth, compression(),express.static(__dirname + '/web/',{ maxAge: 86400000 })]);
 
 http.listen(parseInt(port, 10));
 console.log("Static file server running at\n  => http://localhost:" + port + "/\nCTRL + C to shutdown");
 
 
 
-
-/*###############################################################################
-
-CONFIGURATION
-
-POIs: For each GeoJSON with points of interest (POI), add an attribute to POIs
-and point it to the geojson on disk
-
-villagesFile: point to the geojson containing the centerpoint of the villages
-
-osrm: point to the absolute location of the osrm file of the road network
-
-dir: point to the output directory
-
-maxSpeed: the speed that will be used to define the size of the buffer around polygons
-in which to look for POIs (by multiplying the maxTime and maxSpeed)
-(typically 120km/h)
-
-maxTime: the cutoff time for the matrix: everything above that time might not be accurate
-(typically 3600s (==1 hour))
-
-*/
-
-var POIs = {}
-POIs.hospitals = './data/POIs/hospitals.geojson';
-POIs.schools = './data/POIs/schools.geojson';
-POIs.banks = './data/POIs/banks.geojson';
-POIs.counties = './data/POIs/counties.geojson';
-POIs.prefectures = './data/POIs/prefectures.geojson';
-
-var villagesFile = './data/ReadytoUse/Village_pop.geojson';
-var defaultOsrm = './data/OSRM-ready/baseline.osrm';
-var osrm = defaultOsrm;
-var dir = './data/';
-var credentials = JSON.parse(fs.readFileSync('./data/user.json','utf8'));
-
-var maxSpeed = 120,
-  maxTime = 3600;
-
-
-//create csv output dir
-mkdirp(dir+'csv/', function(err) { 
-  if(err) console.log(err)
-});
-//create shp2osm dir
-mkdirp(dir+'shp2osm/', function(err) { 
-  if(err) console.log(err)
-});
-//create osm2osrm dir
-mkdirp(dir+'osm2osrm/', function(err) { 
-  if(err) console.log(err)
-});
-
-var villages = JSON.parse(fs.readFileSync(villagesFile, 'utf8'));
 
 authio(io, {
   authenticate: authenticate, 
@@ -113,57 +88,226 @@ authio(io, {
 function authenticate(socket, data, callback) {
   var username = data.username;
   var password = data.password;
+//TODO: allow for more than 1 user in credentials
   if(username == credentials.user && password==credentials.pass){
-  return callback(null, true);
+    return callback(null, true);
   }
   else return callback(null, false)
 }
-var allClients = [];
+
+
 function postAuthenticate(socket, data) {
   var beginTime;
   socket.emit('status', {socketIsUp: true}); //tell the client it is connected
-  allClients.push(socket);
-  io.emit('status',{users:allClients.length})
-  var files = fs.readdirSync(dir+'csv/');
-  files.sort(function(a, b) {
-       return fs.statSync(dir+'csv/' + a).mtime.getTime() - fs.statSync(dir+'csv/' + b).mtime.getTime();
-    });
+  CLIENTS.push(socket);
 
-  socket.emit('status',{csvs:files}); //send the current list of csv files
+  socket.on('disconnect',function(){
+    CLIENTS.splice(CLIENTS.indexOf(socket),1)
+    io.emit('status',{users:CLIENTS.length})
+  })
 
+  io.emit('status',{users:CLIENTS.length});
+  socket.emit('config',{config:CONFIGURATION});
+  if(CONFIGURATION) {
+    //there is a configuration file so we can proceed.
+  //  socket.on('getisochrone', createIsochrone); //create isochrones
+    //TODO: figure out how to move this to project dir
+    var uploader = new siofu();
+    uploader.dir = './web/data/tmp';
+    uploader.listen(socket);
+    uploader.on('complete',function(e){
+      var file = e.file.name;
+      var fsplit = file.split('.');
+      if(fsplit[fsplit.length-1].toLowerCase()!='zip') {
+        socket.emit('status',{msg:'invalid zip file'})
+      }
+      else {
+       socket.emit('uploadComplete',{file:e.file.pathName});
+      }
+    })
+
+    socket.on('getMatrixForRegion',createTimeMatrix);
+
+    socket.on('setOSRM',function(data){
+      var idx =getProjectIdx(data.project);
+      CONFIGURATION[idx].activeOSRM = data.osrm;
+      socket.emit('newOsrm',{newOsrm:CONFIGURATION[idx].activeOSRM,project:data.project});
+      socket.emit('status',{msg:'srv_nw_changed',p0:CONFIGURATION[idx].activeOSRM.name});
+    })
+
+    socket.on('retrieveOSRM',function(data){
+      var idx =getProjectIdx(data.project);
+      var dir = CONFIGURATION[idx].uid;
+      var osrmfiles = fs.readdirSync('./web/data/'+dir+'/maps/');
+      var osrmlist = [];
+      osrmfiles.forEach(function(o){
+          var files = fs.readdirSync('./web/data/'+dir+'/maps/'+o);
+          if(files.indexOf('meta.json')>-1) {
+            var meta = JSON.parse(fs.readFileSync('./web/data/'+dir+'/maps/'+o+'/meta.json'));
+            meta.dir = './web/data/'+dir+'/maps/'+o;
+            osrmlist.push(meta)
+          }
+        })
+      socket.emit('osrmList',{osrm:osrmlist,project:data.project});
+    })
+
+    socket.on('removeOsrm',function (data) {
+      var p =CONFIGURATION[getProjectIdx(data.project)];
+      if(p.activeOSRM.created.time == data.osrm.created.time){
+        p.activeOSRM = p.baseline;
+        socket.emit('newOsrm',{newOsrm:p.activeOSRM,project:data.project});
+      }
+      rimraf(data.osrm.dir,function (err) {
+        if(err) throw err;
+        io.emit('removedOsrm',{project:data.project})
+      })
+    })
+
+    socket.on('retrieveResults',function(data){
+      var dir = data.project;
+      var files = fs.readdirSync('./web/data/'+dir+'/csv/');
+      var jsons = files.filter(function (d) { return d.slice(-5).toLowerCase() === ".json"   });
+      var result = [];
+      jsons.sort(function(a, b) {
+        return fs.statSync('./web/data/'+dir+'/csv/' + a).mtime.getTime() - fs.statSync('./web/data/'+dir+'/csv/' + b).mtime.getTime();
+      });
+      jsons.forEach(function (d,idx) {
+        result[idx] = {result:JSON.parse(fs.readFileSync('./web/data/'+dir+'/csv/'+d)),counter:idx,project:data.project}
+          
+
+      })
+      socket.emit('resultJson',result);
+    })
+
+    socket.on('unzip',function (data) {
+      var dir = './web/data/' +data.project + '/tmp_'+new Date().getTime()+'/';
+      mkdirp(dir, function(err) {  if(err) console.log(err) });
+      var cmd = './unzip.sh -f '+data.file+ ' -d '+dir;
+      exec(cmd,function(error,stdout,stderr){
+        if (error !== null) {
+          console.log('exec error: ' + error);
+        }
+        if(stdout.indexOf('shp')>-1) {
+          //we have a shapefile, proceed to ogr2osm
+          ogr2osm(dir,socket,data);
+        }
+        else if(stdout.indexOf('osm')>-1) {
+          //we have an osm file proceed to osm2osrm
+          osm2osrm(dir,socket,data);
+        }
+        else if(stdout.indexOf('profile')>-1) {
+          //we only have a profile file proceed to osm2osrm
+          profile2osrm(dir,socket,data);
+        }
+        else {
+          rimraf(dir,function (d) {
+            socket.emit('status',{project:data.project,msg:"invalid content"})
+          })
+        }
+      })  
+
+    })
+
+  }
+  
+
+  
   /* triggers on the socket */
   socket.on('debug',function(data){console.log(data)}); //debug modus
 
-  socket.on('getisochrone', createIsochrone); //create isochrones
+ 
+ };
 
-  socket.on('getMatrixForRegion',createTimeMatrix);
+function getProjectIdx(uid) {
+  var idx = -1;
+  for(var i =0, len = CONFIGURATION.length; i < len; i++){
+    if(CONFIGURATION[i].uid===uid) idx =i;
+  }
+  return idx;
+}
 
-  socket.on('disconnect',function(){
-    allClients.splice(allClients.indexOf(socket),1)
-    io.emit('status',{users:allClients.length})
+
+function ogr2osm(dir,socket,data) {
+  var cmd = './ogr2osm.sh -d '+dir;
+  exec(cmd,function(error,stdout,stderr){
+    if (error !== null) {
+      console.log('exec error: ' + error);
+    }
+    if(stdout.indexOf('done')>-1) {
+        osm2osrm(dir,socket,data)
+    }
+    else {
+      rimraf(dir,function (d) {
+        socket.emit('status',{project:data.project,msg:"convert to osm failed"})
+      })
+    }
+
   })
-  socket.on('setOSRM',function(data){
-    osrm = data.osrm;
-    socket.emit('status',{newOsrm:osrm});
-    socket.emit('status',{msg:'srv_nw_changed',p0:osrm});
+}
+
+function osm2osrm(dir,socket,data) {
+  var cmd = './osm2osrm.sh -d '+dir;
+  exec(cmd,function(error,stdout,stderr){
+    if (error !== null) {
+      console.log('exec error: ' + error);
+    }
+    if(stdout.indexOf('fail')==0) {
+        socket.emit('status',{project:data.project,msg:"convert to osrm failed"})
+    }
+    else {
+      var ls = stdout.split('\n');
+      var uid =new Date().getTime();
+      var meta = {
+        "created":{
+          "time":uid,
+          "user":"steven"
+        },
+        files: {
+          "osrm": ls[0].split('/')[1],
+          "osm": ls[1].split('/')[1],
+          "profile": ls[2].split('/')[1]
+        },
+        "name":stdout.split('/')[1].split('.')[0],
+        "uid":'map_'+uid
+      }
+      var metafile = './web/data/' +data.project +'/maps/'+ls[0].split('/')[0]+'/meta.json'
+      fs.writeFileSync(metafile,JSON.stringify(meta))
+      var idx =getProjectIdx(data.project);
+      var dir = CONFIGURATION[idx].uid;
+      var osrmfiles = fs.readdirSync('./web/data/'+dir+'/maps/');
+      var osrmlist = [];
+      osrmfiles.forEach(function(o){
+          var files = fs.readdirSync('./web/data/'+dir+'/maps/'+o);
+          if(files.indexOf('meta.json')>-1) {
+            var meta = JSON.parse(fs.readFileSync('./web/data/'+dir+'/maps/'+o+'/meta.json'));
+            meta.dir = './web/data/'+dir+'/maps/'+o;
+            osrmlist.push(meta)
+          }
+        })
+      socket.emit('osrmList',{osrm:osrmlist,project:data.project});
+      socket.emit('status',{msg:"network created"})
+    }
+
   })
-  socket.on('retrieveOSRM',function(){
-    var osrmfiles = fs.readdirSync(dir+'maps/');
-    var osrmlist = osrmfiles.reduce(
-      function(p,o){
-        var files = fs.readdirSync(dir+'maps/'+o);
-        if(files.length > 0) p.push('./data/maps/'+o+'/'+files[0].split('.')[0]+'.osrm')
-        return p
-      },[]
-    )
-    osrmlist.push(defaultOsrm);
-    socket.emit('status',{osrm:osrmlist});
-  })
-  var uploader = new siofu();
-  uploader.dir = dir;
-  uploader.listen(socket);
-  uploader.on('complete',uploadComplete)
-};
+}
+
+
+function profile2osrm(dir,socket,data) {
+  var osmdir =data.osrm.dir;
+  var cmd = './profile2prepare.sh -i '+osmdir+ ' -o '+dir;
+  exec(cmd,function(error,stdout,stderr){
+    if (error !== null) {
+      console.log('exec error: ' + error);
+    }
+    if(stdout.indexOf('done')>-1) {
+      osm2osrm(dir,socket,data);
+    }
+  });
+}
+
+
+
+
 
 /* create an isochrone
 requires:
@@ -174,7 +318,7 @@ data.res int with the resolution of the isochrone
 
 returns:
 isochrone features
-*/
+*//*
 function createIsochrone(data) {
   var cISO = fork('./scripts/node/calculateIsochrone.js');
   if(!data||!data.center) {
@@ -196,7 +340,7 @@ function createIsochrone(data) {
 
     }
   });
-}
+}*/
 
 /* create distance matrix
 requires:
@@ -212,16 +356,22 @@ location of CSV file
 */
 
 function createTimeMatrix(data) {
+  var idx =getProjectIdx(data.project);
+  var c = CONFIGURATION[idx];
+  var p = PROJECTS[data.project];
+
+  var osrm = '/home/steven/Rural-Road-Accessibility/'+c.activeOSRM.dir+'/'+c.activeOSRM.files.osrm;
+  console.log(osrm);
   var cETA = fork('./scripts/node/calculateETA.js');
   beginTime = new Date().getTime();
   if(!data||!data.feature) {
     console.warn('no data')
     return false;
   }
-  data.maxTime = data.maxTime || maxTime;
-  data.maxSpeed = data.maxSpeed || maxSpeed;
+  data.maxTime = data.maxTime || c.maxTime;
+  data.maxSpeed = data.maxSpeed || c.maxSpeed;
 
-  io.emit('status',{id:data.id,msg:'srv_creating_tm'})
+  io.emit('status',{id:data.id,msg:'srv_creating_tm',project:data.project})
 
   //split the input region in squares for parallelisation
   var box = envelope(data.feature);
@@ -229,18 +379,17 @@ function createTimeMatrix(data) {
   var squares =  squareGrid(extent,30, 'kilometers');
 
   //tell the client how many squares there are
-  io.emit('status',{id:data.id,msg:'srv_split_squares',p0:squares.features.length})
-
-  cETA.send({data:data,squares:squares.features,POIs:POIs,villages:villagesFile,osrm:data.osrm});
+  io.emit('status',{id:data.id,msg:'srv_split_squares',p0:squares.features.length,project:data.project})    
+  cETA.send({data:data,squares:squares.features,POIs:p.POIs,villages:p.villages,osrm:osrm,id:data.id,project:data.project});
   var remaining = squares.features.length;
   cETA.on('message',function(msg){
     if(msg.type == 'status') {
       console.log(msg.data);
-      io.emit('status',{id:data.id,msg:msg.data});
+      io.emit('status',{id:msg.id,msg:msg.data});
     }
     else if(msg.type=='square') {
       remaining--;
-      io.emit('status',{id:data.id,msg:'srv_remaining_squares',p0:remaining});
+      io.emit('status',{id:msg.id,msg:'srv_remaining_squares',p0:remaining});
     }
     else if(msg.type =='done') {
       //we are done, save as csv and send the filename
@@ -248,82 +397,44 @@ function createTimeMatrix(data) {
       var timing = Math.round(calculationTime);
       if(calculationTime>60) {
         timing = Math.round(calculationTime/60);
-        io.emit('status',{id:data.id,msg:'srv_calculated_in_m',p0:timing});
+        io.emit('status',{id:msg.id,msg:'srv_calculated_in_m',p0:timing});
             
       }
       else {
-        io.emit('status',{id:data.id,msg:'srv_calculated_in_s',p0:timing});
+        io.emit('status',{id:msg.id,msg:'srv_calculated_in_s',p0:timing});
             
       }
       console.log('timing: '+timing);
-            io.emit('status',{id:data.id,msg:'srv_writing'});
-      var networkfile = data.osrm.split('/')[data.osrm.split('/').length-1];
+      io.emit('status',{id:msg.id,msg:'srv_writing'});
+      console.log(msg.data);
+      var networkfile = msg.osrm.split('/')[msg.osrm.split('/').length-1];
       var osrmfile = networkfile.split('.')[0];
       var print = d3.csv.format(msg.data);
-      var file = data.geometryId+'-'+data.id+'-'+osrmfile+'.csv';
-        fs.writeFile(dir+'/csv/'+file, print, function(err){
-            if(err) {
-                  return console.log(err);
-                }
-        console.log('finished '+file);
-         io.emit('status',{id:data.id,msg:'srv_finished'});
-        io.emit('status',{id:data.id,type:'poilist',file:file,geometryId:data.geometryId});
+      var subfile = data.geometryId+'-'+msg.id+'-'+osrmfile
+      var file = subfile+'.csv';
+      var fullpath = './web/data/'+data.project+'/csv/';
+      var meta = {
+        "created":{
+          "time":new Date().getTime(),
+          "user":"steven"
+        },
+        "name":subfile,
+        "csvfile":file
+      }
+      var metafile = fullpath+subfile+'.json';
+      fs.writeFile(metafile,JSON.stringify(meta),function(err){
+        if(err) return console.log(err);
+        io.emit('csvMetaFinished',{id:msg.id,project:data.project})
+      });
+      fs.writeFile(fullpath+file, print, function(err){
+        if(err) {
+          return console.log(err);
+        }
+        io.emit('status',{id:msg.id,msg:'srv_finished',project:data.project});
+        io.emit('csvFinished',{id:msg.id,project:data.project})
         cETA.disconnect();
-          });
+      });
     }
   });
 }
 
-
-
-function uploadComplete(e) {
-  var file = e.file.name;
-  var fsplit = file.split('.');
-  if(fsplit[fsplit.length-1].toLowerCase()=='zip') {
-    var cmd = './unzip.sh -f '+file+ ' -d '+dir;
-    exec(cmd,function(error,stdout,stderr){
-      if (error !== null) {
-        console.log('exec error: ' + error);
-      }
-      if(stdout.indexOf('done')>-1) {
-        io.emit('status',{msg:'srv_finished_unzipping'})
-        unzipComplete(file,dir);
-      }
-    })  
-  }
-}
-
-function unzipComplete(file,dir) {
-  io.emit('status',{msg:'srv_start_ogr2osm'})
-  var cmd = './ogr2osm.sh -f '+file+ ' -d '+dir;
-  exec(cmd,function(error,stdout,stderr){
-    if (error !== null) {
-      console.log('exec error: ' + error);
-    }
-    if(stdout.indexOf('done')>-1) {
-      io.emit('status',{msg:'srv_finished_ogr2osm'})
-      ogr2osmComplete(file,dir)
-    }
-    else {
-      io.emit('status',{msg:'srv_failed_ogr2osm'})
-    }
-  })
-}
-
-function ogr2osmComplete(file,dir) {
-  io.emit('status',{msg:'srv_start_osm2osrm'})
-  var cmd = './osm2osrm.sh -f '+file+ ' -d '+dir;
-  exec(cmd,function(error,stdout,stderr){
-    if (error !== null) {
-      console.log('exec error: ' + error);
-    }
-    if(stdout.indexOf('fail')>-1) {
-      io.emit('status',{msg:'srv_failed_osm2osrm'})
-    }
-    else {
-      var msg = stdout + '';
-      io.emit('status',{msg:'srv_finished_preparing'})
-      io.emit('status',{result:msg})
-    }
-  })
-}

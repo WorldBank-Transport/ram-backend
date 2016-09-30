@@ -1,15 +1,12 @@
 #!/bin/bash
 
 
+
 while [[ $# > 1 ]]
 do
 key="$1"
 
 case $key in
-    -f|--file)
-    FILE="$2"
-    shift # past argument
-    ;;
     -d|--dir)
     DIR="$2"
     shift # past argument
@@ -25,29 +22,33 @@ WORKDIR=${PWD}
 
 
 cd $DIR
-cd tmp
-mkdir -p ../tmposm
-mv *.osm ../tmposm/. #TODO: will only work with 1 osm file
-cp *.lua ../tmposm/.
-ln -s ${WORKDIR}/../osrm-backend/profiles/lib ../tmposm/lib
-cd ../tmposm
+
+ln -s ${WORKDIR}/../osrm-backend/profiles/lib lib
+
 osrm-extract *.osm 1>&2 
 osrm-prepare *.osrm 1>&2 
 
 timestamp=$(date +%s)
-#clean up after ourselves
+
 cd $WORKDIR
 cd $DIR
-cd maps
+cd ../maps
+
 mkdir $timestamp
-mv ../tmposm/*.osrm* $timestamp
-cd ..
-rm -r tmp
-rm -r tmposm
 cd $WORKDIR
-if [ -f  ${DIR}maps/${timestamp}/*.osrm ]
+cd $DIR
+mv *.os* ../maps/$timestamp
+mv *.lua ../maps/$timestamp
+cd ../maps
+
+if [ -f  ${timestamp}/*.osrm ]
  then
-   ls ${DIR}maps/${timestamp}/*.osrm
+   ls ${timestamp}/*.osrm
+   ls ${timestamp}/*.osm
+   ls ${timestamp}/*.lua
 else
   echo 'fail'
 fi
+#clean up after ourselves
+cd $WORKDIR
+rm -r $DIR

@@ -1,15 +1,12 @@
 #!/bin/bash
 
 
+
 while [[ $# > 1 ]]
 do
 key="$1"
 
 case $key in
-    -f|--file)
-    FILE="$2"
-    shift # past argument
-    ;;
     -d|--dir)
     DIR="$2"
     shift # past argument
@@ -23,9 +20,7 @@ done
 
 WORKDIR=${PWD}
 
-
 cd $DIR
-cd tmp
 
 shopt -s nocaseglob
 for s in *.shp; do 

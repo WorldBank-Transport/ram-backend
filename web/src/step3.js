@@ -1,4 +1,4 @@
-var OSRMLIST,socket;
+var OSRMLIST,socket,WALKSPEED=3.6;
 
 d3.json('../data/user.json',function(d){
   Authenticate(d.user,d.pass);
@@ -74,11 +74,11 @@ function compareStats(el) {
     d3.csv('../data/csv/'+el.value,function(normal){
       normal.forEach(function(d,idx) {
       d.population  = +d.POP;
-      d.banks   = d3.round((+d.banks)/60.,0);
-      d.hospitals = d3.round((+d.hospitals)/60.,0);
-      d.schools = d3.round((+d.schools)/60.,0);
-      d.counties = d3.round((+d.counties)/60.,0);
-      d.prefectures = d3.round((+d.prefectures)/60.,0);
+      d.banks   = d3.round(((+d.banks)+(+d.nearest/WALKSPEED))/60.,0);
+      d.hospitals = d3.round(((+d.hospitals)+(+d.nearest/WALKSPEED))/60.,0);
+      d.schools = d3.round(((+d.schools)+(+d.nearest/WALKSPEED))/60.,0);
+      d.counties = d3.round(((+d.counties)+(+d.nearest/WALKSPEED))/60.,0);
+      d.prefectures = d3.round(((+d.prefectures)+(+d.nearest/WALKSPEED))/60.,0);
       d.county= d.NAME_3;
       d.lat = d3.round(+d.lat,6);
       d.lon = d3.round(+d.lon,6);
@@ -230,11 +230,11 @@ function buildGraphs(err,normal) {
  
   normal.forEach(function(d,idx) {
     d.population  = +d.POP;
-    d.banks   = d3.round((+d.banks)/60.,0);
-    d.hospitals = d3.round((+d.hospitals)/60.,0);
-    d.schools = d3.round((+d.schools)/60.,0);
-    d.counties = d3.round((+d.counties)/60.,0);
-    d.prefectures = d3.round((+d.prefectures)/60.,0);
+    d.banks   = d3.round(((+d.banks)+(+d.nearest/WALKSPEED))/60.,0);
+    d.hospitals = d3.round(((+d.hospitals)+(+d.nearest/WALKSPEED))/60.,0);
+    d.schools = d3.round(((+d.schools)+(+d.nearest/WALKSPEED))/60.,0);
+    d.counties = d3.round(((+d.counties)+(+d.nearest/WALKSPEED))/60.,0);
+    d.prefectures = d3.round(((+d.prefectures)+(+d.nearest/WALKSPEED))/60.,0);
     d.county= d.NAME_3;
     d.lat = d3.round(+d.lat,6);
     d.lon = d3.round(+d.lon,6);
