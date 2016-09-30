@@ -15,7 +15,7 @@ function validSocket(socket) {
       createOsrmList(data,socket);
   })
   socket.on('resultJson',function(data){
-    if(data.result !== undefined){
+    if(data.constructor === Array){            
       addResult(data);
     }
   })
@@ -324,19 +324,23 @@ function generateCSV (feature,geometryId,socket) {
 }
 
 function addResult(data) {
-  RESULTS[data.counter] = data.result;
-  console.log(data)
+  RESULTS = data;
+  
   var row = d3.select('#results')
     .selectAll('tr')
     .data(RESULTS)
     .enter()
-    .append('tr')
+    .insert("tr", ":first-child")
 
   row.append('td')
-    .text(function(d){return d.name});
+    .text(function(d){return d.result.name});
   row.append('td')
     .append('a')
-    .attr('href',function(d){ return '../web/data/'+PROJECT.uid+'/csv/'+d.csvfile})
+    .attr('href',function(d){ return '../data/'+PROJECT.uid+'/csv/'+d.result.csvfile})
     .text('Download result');
+  row.append('td')
+    .append('a')
+    .attr('href',function(d){ return 'result.html?project='+PROJECT.uid+'&csv='+d.result.csvfile})
+    .text('View result');
   
 }
