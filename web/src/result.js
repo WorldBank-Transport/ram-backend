@@ -3,7 +3,8 @@ var PROJECT,
    CONNECTED = false,
    RESULTS = [],
    WALKSPEED = 3.6,
-   volumeByPopulation;
+   volumeByPopulation,
+   COMPARELIST = [];
 
 function validSocket(socket) {
     socket.on('config',function(c){
@@ -75,7 +76,8 @@ function addResult(data) {
     
 }
 function compareButtons(e){
-    console.log(e)
+    var file = '../data/'+e.project+'/csv/'+e.result.csvfile;
+
 }
 
 function setActiveResult(csv) {
@@ -95,17 +97,21 @@ function setActiveResult(csv) {
     },1000)  
 } 
 
+function normaliseCsv(data) {  
+  data.forEach(function(d,idx) {
+    d.population  = +d[PROJECT.population];
+    for(var key in PROJECT.pois) {
+      d[key] = d3.round(((+d[key])+(+d.nearest/WALKSPEED))/60.,0);
+    };
+    d.lat = d3.round(+d.lat,6);
+    d.lon = d3.round(+d.lon,6);
+  });
+  return data;
+}
+
 function createStats(err,data) {
-    data.forEach(function(d,idx) {
-        d.population  = +d[PROJECT.population];
-        for(var key in PROJECT.pois) {
-            d[key] = d3.round(((+d[key])+(+d.nearest/WALKSPEED))/60.,0);
-        };
-        
-        d.lat = d3.round(+d.lat,6);
-        d.lon = d3.round(+d.lon,6);
-    });
-    var normalised = data;
+    if(err) throw err;
+    var normalised = normaliseCsv(data);
     var totalPop = normalised.reduce(function(p,c){return p+(+c[PROJECT.population])},0);
     PROJECT.stats.forEach(function(s) {
         var stat = normalised.reduce(function (p,c) { return c[s.poi]<s.minutes?p+(+c[PROJECT.population]):p;},0)*1000
