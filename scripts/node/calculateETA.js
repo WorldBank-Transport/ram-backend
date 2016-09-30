@@ -14,11 +14,9 @@ var cpus = os.cpus().length;
 process.env.UV_THREADPOOL_SIZE=Math.floor(cpus*1.5);
 
 process.on('message', function(e) {
-	process.send({type:'status',data:'srv_started',id:e.id});
-	console.log(e.osrm);
-	POIs = e.POIs;
-	var osrm = new OSRM(e.osrm);
-	
+	process.send({type:'status',data:'srv_started',id:e.id});	
+	POIs = e.POIs;	
+	var osrm = new OSRM(e.osrm);	
 	villages = e.villages;
 	process.send({type:'status',data:'srv_loaded_files',id:e.id});
 	var squares = e.squares;
@@ -148,10 +146,10 @@ process.on('message', function(e) {
 				else {
 					var submatrix = [];
 					subresult.forEach(function(item){
-	    				var key = item.poi;
+	    				var key = item.poi;	    				
 	    				item.list.forEach(function(listitem,idx){
 	    					workingSet.features[idx].properties[key] = listitem.eta;
-	    				})
+	    				})	    				
 	    			})
 					properties = workingSet.features.map(function (f) {
 	                    f.properties.lat = f.geometry.coordinates[1];
