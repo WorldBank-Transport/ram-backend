@@ -33,14 +33,15 @@
    <div id="activeResult"></div>
    </div>
    <div class="col-md-10 col-sm-8">
-   <table  class="table table-hover">
+   <table  class="table table-condensed">
      <caption>Select a result</caption>
      <thead>
-       <th>Filename</th><th>download</th><th>view</th>
+       <th>Filename</th><th>download</th><th>view</th><th>compare</th><th>delete</th>
      </thead>
      <tbody id="results"></tbody>
 
    </table>
+
    </div>
 </div>
 
@@ -53,12 +54,29 @@
    </table>
   </div>
   <div class="col-md-10 col-sm-8">
-
+  <div class="col-md-5 col-sm-5 pull-right" id="anl_slider_txt"><script>t('#anl_slider_txt','anl_slider_txt',60)</script></div><div class="col-md-6 col-sm-6"><input type="range" min="0" max="90" step="1" id="travelTime" value="60"></input>
   </div>
+  </div>
+ 
 </div>
 
 <div class="row" id="graphs">
+<div class="col-md-6 col-sm-6">
+<h3 class="dc-data-counts" ><span class="filter-count"></span>
+        <span id="anl_selected"><script>t('#anl_selected','anl_selected')</script></span>
+        <span class="total-count"></span>
+         <span id="anl_villages"><script>t('#anl_villages','anl_villages')</script></span>
+    </h3>
+</div>
+ <div class="col-md-6 col-sm-6">
 
+   <h3> <form class="form-inline"><div class="form-group"><input type="text" class="form-control" id="fileName" placeholder=""><script>jQuery(document).ready(function() {         
+    $('#fileName').attr('placeholder',jQuery.i18n.prop('anl_filename'))          
+  })</script></div><div class="btn btn-default" id="anl_export"><script>t('#anl_export','anl_export')</script></div>
+</form>
+</h3>
+  
+  </div>
 </div>
 
 

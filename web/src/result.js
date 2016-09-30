@@ -2,7 +2,8 @@
 var PROJECT,
    CONNECTED = false,
    RESULTS = [],
-   WALKSPEED = 3.6;
+   WALKSPEED = 3.6,
+   volumeByPopulation;
 
 function validSocket(socket) {
     socket.on('config',function(c){
@@ -60,7 +61,21 @@ function addResult(data) {
     .append('a')
     .attr('href',function(d){ return 'result.html?project='+PROJECT.uid+'&csv='+d.result.csvfile})
     .text('View result');
-  
+   var l = row.append('td')
+    .append('div')
+    .attr('class','checkbox-inline')
+    .append('label');
+    l.append('input')
+    .attr('class','compareButtons')
+    .attr('type','checkbox')
+    .attr('value',function (d) { return d.result.csvfile})    
+    .on('click',compareButtons);
+    l.append('span')
+    .text($.i18n.prop('anl_compare'))
+    
+}
+function compareButtons(e){
+    console.log(e)
 }
 
 function setActiveResult(csv) {
@@ -99,6 +114,7 @@ function createStats(err,data) {
 
     buildGraphs(normalised);
 }
+
 function accumulate_group(source_group) {
   return {
     all:function () {
@@ -116,11 +132,20 @@ function buildGraphs(data) {
     var facts,all;
     facts = crossfilter(data);  // Gets our 'facts' into crossfilter
     all = facts.groupAll();
+    dc.dataCount(".dc-data-counts")
+    .dimension(facts)
+    .group(all);
 
     
+
     for(var poi in PROJECT.pois) {
         var id = '#'+poi+'Chart';
-        d3.select('#graphs').append('div').attr('id',poi+'Chart');
+        d3.select('#graphs').append('div').attr('id',poi+'ChartSpace')
+        .attr('class','col-md-6 col-md-offset-0 col-sm-offset-4 col-sm-8 col-xs-12')
+        .append('h3')
+        .text(poi);
+
+        d3.select(id+'Space').append('div').attr('id',poi+'Chart');
         var chart = dc.barChart(id);    
         var value = facts.dimension(function(d){return d[poi]})
         var valueGroupSum = value.group()
@@ -141,5 +166,69 @@ function buildGraphs(data) {
             .elasticY(true)
             .xAxis().tickFormat(function(v) {return v;});
       }
+     d3.select('#graphs').append('div').attr('id','populationChartSpace')
+        .attr('class','col-md-6 col-md-offset-0 col-sm-offset-4 col-sm-8 col-xs-12')
+        .append('h3')
+        .text('Population');
+
+    d3.select('#populationChartSpace').append('div').attr('id','populationChart');
+    var populationChart = dc.barChart("#populationChart");
+    var populationDimension = facts.dimension(function (d) {
+        return d.population;
+    }); 
+    var populationGroupSum = populationDimension.group()
+        .reduceSum(function(d) { return d.population; });
+    volumeByPopulation = facts.dimension(function(d) {
+        return (d.population);
+    });
+    var volumeByPopulationCount = volumeByPopulation.group()
+    .reduceCount(function(d) { return d.population; });
+    var volumeByPopulationGroup = volumeByPopulation.group()
+      .reduceSum(function(d) { return d.population; });
+    var maxPopulation = volumeByPopulation.top(1)[0].population;
+
+    populationChart.width(480)
+        .height(150)
+        .margins({top: 10, right: 10, bottom: 20, left: 60})
+        .dimension(volumeByPopulation)
+        .group(volumeByPopulationCount)
+        .transitionDuration(500)
+        .elasticY(true)
+        .x(d3.scale.log().domain([10, maxPopulation])) // scale and domain of the graph
+        .xAxis().ticks(10, ",.0f").tickSize(5, 0);
+
+
       dc.renderAll();
+}
+d3.select('#anl_export')
+  .on('click',function(d){
+    var filename = $('#fileName').val();
+    if(filename==='') {
+      filename = 'export.csv';
+    }
+    if(filename.toLowerCase().slice(-4)!=='.csv'){
+      filename = filename + '.csv';
+    }
+    exportCSV(filename);
+  })
+
+function exportCSV(filename) {
+  var villages = volumeByPopulation.top(Infinity);
+  var csvFile = d3.csv.format(villages)
+  var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+  if (navigator.msSaveBlob) { // IE 10+
+    navigator.msSaveBlob(blob, filename);
+  } else {
+    var link = document.createElement("a");
+    if (link.download !== undefined) { // feature detection
+      // Browsers that support HTML5 download attribute
+      var url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
 }
