@@ -1,15 +1,11 @@
-# Rural-Road-Accessibility (RRA)
+ # Rural-Road-Accessibility (RRA)
 
-To start with the RRA application with the Guizhou data you need to copy various files from the shared Box folder, download the files in this repository and configure the application according to the [docs](docs/README.md).
+RRA will help you to calculate the traveltime between villages and sets of POIs. It will return a CSV file with the travel time from each village to the nearest POI of a type.
 
-The files you need from the Box folder are:
-* POIs/*
-* ReadyToUse/Village_pop.geojson
-* OSRM-Ready/*
+You need to have OSRM v5 installed on your machine: https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM also you need to have node installed. Currently this only runs on OS X or Linux (it is depending on OSRM which does not (yet) run on windows)
 
-Clone this project using git and create the directory `data` in the root of the project and copy these files, including the directory names.
+To install RRA go to the route folder, do `npm install`
 
-You also need osrm backend installed https://github.com/Project-OSRM/osrm-backend/releases/tag/v4.9.1
-https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM
+Next configure your data sources, see the example config in the docs folder
 
-sudo iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8888
+Once it is installed and properly configured start the application with `node index.js` and you can access the webinterface on http://localhost:8888
