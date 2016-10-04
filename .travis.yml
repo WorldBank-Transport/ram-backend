@@ -15,4 +15,5 @@ install:
 - npm install
 
 before_script:
+- ls -R
 - node index.js
