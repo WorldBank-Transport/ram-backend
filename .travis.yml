@@ -6,6 +6,8 @@ node_js:
 - '6.1'
 
 before_install:
+- ls
+- pwd
 - ./test/install-osrm.sh
 - ./test/prepare-test.sh
 
