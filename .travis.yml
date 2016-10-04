@@ -13,3 +13,6 @@ before_install:
 
 install:
 - npm install
+
+before_script:
+- node index.js
