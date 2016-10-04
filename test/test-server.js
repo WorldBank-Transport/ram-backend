@@ -8,7 +8,7 @@ describe("Server should respond", function() {
   var url = "http://localhost:8888/";
   var server = spawn.spawn("node", [__dirname+'index.js']);
 
-  describe("homepage", function() {
+  describe("Homepage", function() {
     it("breaks on un-authenticated", function(done) {
       request(url, function(error, response, body) {
         expect(response.statusCode).to.equal(401);
@@ -30,6 +30,5 @@ describe("Server should respond", function() {
     });
 
   });
-
 
 });
