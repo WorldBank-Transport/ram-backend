@@ -41,7 +41,7 @@ fs.exists('./web/data/config.json',function(exists) {
 
         PROJECTS[uid] = {};
         PROJECTS[uid].POIs = {};
-        for(poi in project.pois) {
+        for(var poi in project.pois) {
           PROJECTS[uid].POIs[poi] = JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.pois[poi],'utf8'));
         }
         PROJECTS[uid].villages =  JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.villages,'utf8'));
