@@ -3,7 +3,7 @@ dist: trusty
 
 language: node_js
 node_js:
-- '6.11'
+- '6.1'
 
 before_install:
 - ./test/install-osrm.sh
