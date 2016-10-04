@@ -1,0 +1,13 @@
+sudo: required
+dist: trusty
+
+language: node_js
+node_js:
+- '6.11'
+
+before_install:
+- ./test/install-osrm.sh
+- ./test/prepare-test.sh
+
+install:
+- npm install
