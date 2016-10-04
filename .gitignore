@@ -2,3 +2,5 @@ data
 node_modules
 *.*~
 *.csv
+
+*.osm
