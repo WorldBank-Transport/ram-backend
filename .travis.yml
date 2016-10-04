@@ -7,7 +7,6 @@ node_js:
 
 before_install:
 - chmod a+x ./test/*.sh
-- ./test/install-osrm.sh
 - ./test/prepare-test.sh
 
 install:
