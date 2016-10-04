@@ -7,7 +7,7 @@ node_js:
 
 before_install:
 - sudo apt-get -qq update
-- apt-get install -y osmosis
+- sudo apt-get install -y osmosis
 - chmod a+x ./test/*.sh
 - ./test/prepare-test.sh
 
