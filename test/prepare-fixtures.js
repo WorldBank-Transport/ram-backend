@@ -13,16 +13,8 @@ var dir = chaiFiles.dir;
 
 
 describe("Prepare fixtures data for testing...", function() {
-  it("extracts PBF to OSM data", function(done) {
-    this.timeout(7000);
-    var fixture_pbf=__dirname+"/fixtures/JM";
-    var fixture_osm= __dirname + "/fixtures/JM.osm" ;
-
-    expect(file(fixture_osm)).to.exist;
-    var osmosis = spawn.spawnSync('osmosis', ['--rbf', fixture_pbf, '--wx',fixture_osm]);
-    done();
-    expect(osmosis.status).to.be.equal(0);
-    expect(file(fixture_osm)).to.exist;
+  it("makes sure fixtures are there", function(done) {
+    expect(file( __dirname + "/web/data/JM.osm")).to.exist;
   });
 
   describe("Makes the OSRM data from OSM", function() {
