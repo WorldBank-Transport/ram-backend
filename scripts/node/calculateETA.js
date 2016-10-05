@@ -14,9 +14,9 @@ var cpus = os.cpus().length;
 process.env.UV_THREADPOOL_SIZE=Math.floor(cpus*1.5);
 
 process.on('message', function(e) {
-	process.send({type:'status',data:'srv_started',id:e.id});	
-	POIs = e.POIs;	
-	var osrm = new OSRM(e.osrm);	
+	process.send({type:'status',data:'srv_started',id:e.id});
+	POIs = e.POIs;
+	var osrm = new OSRM(e.osrm);
 	villages = e.villages;
 	process.send({type:'status',data:'srv_loaded_files',id:e.id});
 	var squares = e.squares;
@@ -25,24 +25,24 @@ process.on('message', function(e) {
 	var tasks = squares.map(function createTask(square,squareIdx){
 		//clip the square with the input geometry
 		var area = intersect(data.feature,square);
-					
+
 		return function task(callback) {
 			if(area===undefined) {
 				//The square doesn't intersect with the selected region, return an empty result- square level
 				process.send({type:'square',id:e.id});
 				return callback(null,[]);
 			} //THE END
-			
+
 			var workingSet = villagesInRegion(area,villages);
 			if(workingSet.features.length === 0) {
 				//There are no villages within the square, return an empty result - square level
 				process.send({type:'square',id:e.id});
 				return callback(null,[]);
 			} //THE END
-			
+
 			var poilist = [];
 			//create a list of nearby POIs for each type
-			for(key in POIs) {
+			for(var key in POIs) {
 				var poiset={features:[]};
 				var buffertime = data.maxTime;
 				while(poiset.features.length <4) {
@@ -61,12 +61,12 @@ process.on('message', function(e) {
 				return function subtask(subcallback) {
 					var results = [];
 			        var sources = workingSet.features.map(function(feat) {
-			            return [feat.geometry.coordinates[0], feat.geometry.coordinates[1]]
+			            return [feat.geometry.coordinates[0], feat.geometry.coordinates[1]];
 			        });
 			        //This should not happen :)
 			        if(sources.length ===0) throw('no sources'); //THE END
 
-			        if(poiitem.type == 'nearest') {
+			        if(poiitem.type === 'nearest') {
 			        	//calculate distance from the village to the nearest road segment
 			        	var neartasks = sources.map(function createNearTask(source,idx){
 							return function neartask(nearcallback) {
@@ -75,9 +75,9 @@ process.on('message', function(e) {
 										if (err) throw(err);
 										var neartime = res.waypoints[0].distance;
 										//Return the nearcallback (village level callback)
-										return nearcallback(null,{sourceId:idx,time:neartime})
-								})
-							}
+										return nearcallback(null,{sourceId:idx,time:neartime});
+								});
+							};
 						});
 						//Run the nearest tasks in series, they are pretty fast and otherwise will mess up the async.parallel set higherup
 						async.series(neartasks,function(err,nearresult){
@@ -85,17 +85,17 @@ process.on('message', function(e) {
 								console.warn(err);
 							}
 							else {
-								nearresult.forEach(function(nr){results[nr.sourceId] = {eta:nr.time}})
+								nearresult.forEach(function(nr){results[nr.sourceId] = {eta:nr.time};});
 								//Return the subcallback (POI level callback)
 								return subcallback(null,{poi:'nearest',list:results} );
 							}
-						})						
-			        	
+						});
+
 			        }
 			        else {
 			        	//Calculate the normal POI distances
 				        var destinations = poiitem.feature.features.map(function(feat) {
-				            return [feat.geometry.coordinates[0], feat.geometry.coordinates[1]]
+				            return [feat.geometry.coordinates[0], feat.geometry.coordinates[1]];
 				        });
 				        //This should not happen :)
 				        if(destinations.length ===0) throw('no destinations'); //THE END
@@ -108,9 +108,9 @@ process.on('message', function(e) {
 				        }*/
 			        	//OSRM v5 requires one list of coordinates and two arrays of indices
 			        	var c = sources.concat(destinations);
-			        	var s = sources.reduce(function(p,c){p.push(p.length);return p},[]);
-			        	var d = destinations.reduce(function(p,c){p.push(p.length+sources.length);return p},[]);
-			        	
+			        	var s = sources.reduce(function(p,c){p.push(p.length);return p;},[]);
+			        	var d = destinations.reduce(function(p,c){p.push(p.length+sources.length);return p;},[]);
+
 			        	osrm.table({
 			            		coordinates: c,
 			            		destinations: d,
@@ -124,10 +124,10 @@ process.on('message', function(e) {
 			                    }
 			                    if (res.durations &&
 			                        res.durations[0] && res.sources &&
-			                        res.durations[0].length == res.destinations.length) {
+			                        res.durations[0].length === res.destinations.length) {
 			                        res.durations.forEach(function(time, idx) {
 			                            results.push({
-			                                eta: time.reduce(function(prev,cur){return Math.min(prev,cur)},Infinity) //the result is in tenth of a second                                    
+			                                eta: time.reduce(function(prev,cur){return Math.min(prev,cur);},Infinity) //the result is in tenth of a second
 			                            });
 			                        });
 			                    }
@@ -136,7 +136,7 @@ process.on('message', function(e) {
 			                }
 			            );
 			        }
-				}
+				};
 			});
 			//In series, because the main async will keep track of the threadpool and adding parallel tasks here overloads it.
 			async.series(subtasks,function(err,subresult){
@@ -146,26 +146,26 @@ process.on('message', function(e) {
 				else {
 					var submatrix = [];
 					subresult.forEach(function(item){
-	    				var key = item.poi;	    				
+	    				var key = item.poi;
 	    				item.list.forEach(function(listitem,idx){
 	    					workingSet.features[idx].properties[key] = listitem.eta;
-	    				})	    				
-	    			})
+	    				});
+	    			});
 					properties = workingSet.features.map(function (f) {
 	                    f.properties.lat = f.geometry.coordinates[1];
 	                    f.properties.lon = f.geometry.coordinates[0];
-	                    return f.properties
+	                    return f.properties;
 	                });
 					properties.forEach(function(property){
 						submatrix.push(property);
-					})
+					});
 					// all poi calculations are done returning callback - square level
 					process.send({type:'square',id:e.id});
 					return callback(null,submatrix); //THE END
 				}
-			})
-		}	
-	})
+			});
+		};
+	});
 	async.parallelLimit(tasks,cpus,function(err, allresults){
 		var endresult = [];
 		allresults.forEach(function(ar){
@@ -177,7 +177,7 @@ process.on('message', function(e) {
 		process.send({type:'done',data:endresult,osrm:e.osrm,id:e.id});
 	});
 
-})
+});
 
 //helper function to retrieve the villages within the given region
 function villagesInRegion(region,villages) {
