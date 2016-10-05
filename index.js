@@ -360,7 +360,7 @@ function createTimeMatrix(data) {
   var c = CONFIGURATION[idx];
   var p = PROJECTS[data.project];
 
-  var osrm = '/home/steven/Rural-Road-Accessibility/'+c.activeOSRM.dir+'/'+c.activeOSRM.files.osrm;
+  var osrm = c.activeOSRM.dir+'/'+c.activeOSRM.files.osrm;
   console.log(osrm);
   var cETA = fork('./scripts/node/calculateETA.js');
   beginTime = new Date().getTime();
