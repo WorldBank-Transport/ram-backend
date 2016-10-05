@@ -1,21 +1,19 @@
 sudo: required
 dist: trusty
-
 language: node_js
 node_js:
 - '6.1'
-
 before_install:
 - sudo apt-get -qq update
 - sudo apt-get install -y osmosis
 - cp -r $(pwd)/test/fixtures/data $(pwd)/web/data
 - chmod a+x ./test/*.sh
-- ./test/install-osrm.sh &
-- ./test/prepare-test.sh
-
+- "./test/install-osrm.sh &"
+- "./test/prepare-test.sh"
 install:
 - npm install
-
 before_script:
-- ls -R
 - node index.js &
+notifications:
+  slack:
+    secure: ux+0rpIq1E/3Zhqm5BJJfIKaBNxh9DqBlSQnU7zn8Qev9MkBECQBtJrbdKHcrZCGNhwWbjrxVqc+kWpP9sAEAxQmpyMie3GB7kVpFr3TVqtS4SYWv3D33vmMGe9WsKKTzWUaDyRKCi4WtZSRvZFMEh3xc53EDmsA3G1LES4NaaFdP9DGrBE1OyC96sH23IC9xJQ4GV0k7GR5i/lw+AlQeRCgAu4RmiVX5ad1AD6z6HwdzYG8nRTROE/V5gkv2b4WliZL/A8c2zTMUFZFwIHJdKgqQytGh7oKB+AjyM7gBDD31EIPbhIgHmeoZuRFZmoX1S3i1qsaMNxrc6eSnKBwgt9+bbnc5J7WO5Xzbi9U67c3lDx0Fv2jsDHOqs7j2OOFGjVNDmwvNQc8I9a+X/lrGvqVy9oD6o/HVYvFXBvEsaV7aOwDk0CetB/0sVXTB0aAZ01SVztWVvW7jck0i7uBfd5GM0CTGJBIla1/wmbn26wN8J8aIQXyMkcwJRoJjptlIhq35+yrwr1dBO4F0ir+Pw4Y8TOsvzNT2cnTZ9kJNIvpf0To9LlbalIWLQc6i0/JNXzGr0BBGe2hBmYPJ3wEKyEkeJWL46NutLMDJ/KH9jUvenlpo2MPojJGXnd5rendr3CYMjsKLrnC7Z4PHB0514yf8r14TAXv3+DgDHoAOvY=

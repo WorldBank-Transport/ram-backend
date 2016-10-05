@@ -89,7 +89,7 @@ function authenticate(socket, data, callback) {
   var username = data.username;
   var password = data.password;
 //TODO: allow for more than 1 user in credentials
-  if(username == credentials.user && password==credentials.pass){
+  if(username == credentials.user && password===credentials.pass){
     return callback(null, true);
   }
   else return callback(null, false);
@@ -118,7 +118,7 @@ function postAuthenticate(socket, data) {
     uploader.on('complete',function(e){
       var file = e.file.name;
       var fsplit = file.split('.');
-      if(fsplit[fsplit.length-1].toLowerCase()!='zip') {
+      if(fsplit[fsplit.length-1].toLowerCase()!=='zip') {
         socket.emit('status',{msg:'invalid zip file'});
       }
       else {
@@ -153,7 +153,7 @@ function postAuthenticate(socket, data) {
 
     socket.on('removeOsrm',function (data) {
       var p =CONFIGURATION[getProjectIdx(data.project)];
-      if(p.activeOSRM.created.time == data.osrm.created.time){
+      if(p.activeOSRM.created.time === data.osrm.created.time){
         p.activeOSRM = p.baseline;
         socket.emit('newOsrm',{newOsrm:p.activeOSRM,project:data.project});
       }
