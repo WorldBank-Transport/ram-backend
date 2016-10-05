@@ -1,4 +1,6 @@
-data
+web/data
 node_modules
 *.*~
 *.csv
+
+*.osm
