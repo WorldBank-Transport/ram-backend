@@ -12,8 +12,7 @@ before_install:
 - "./test/prepare-test.sh"
 install:
 - npm install
-before_script:
-- node index.js &
+
 notifications:
   slack:
     on_success: change
