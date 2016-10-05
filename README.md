@@ -1,4 +1,9 @@
- # Rural-Road-Accessibility (RRA)
+ 
+[![Build status](https://travis-ci.org/WorldBank-Transport/Rural-Road-Accessibility.svg?branch=master)](https://travis-ci.org/WorldBank-Transport/Rural-Road-Accessibility/)
+[![Coverage Status](https://coveralls.io/repos/github/WorldBank-Transport/Rural-Road-Accessibility/badge.svg)](https://coveralls.io/github/WorldBank-Transport/Rural-Road-Accessibility)
+ <a href="https://codeclimate.com/github/WorldBank-Transport/Rural-Road-Accessibility"><img src="https://codeclimate.com/github/WorldBank-Transport/Rural-Road-Accessibility/badges/gpa.svg" /></a>
+ 
+#Rural-Road-Accessibility (RRA)
 
 RRA will help you to calculate the traveltime between villages and sets of POIs. It will return a CSV file with the travel time from each village to the nearest POI of a type.
 
