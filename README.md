@@ -1,6 +1,6 @@
  
- ![Build status](https://travis-ci.org/WorldBank-Transport/Rural-Road-Accessibility.svg?branch=master)
- [![Coverage Status](https://coveralls.io/repos/github/WorldBank-Transport/Rural-Road-Accessibility/badge.svg)](https://coveralls.io/github/WorldBank-Transport/Rural-Road-Accessibility)
+[![Build status](https://travis-ci.org/WorldBank-Transport/Rural-Road-Accessibility.svg?branch=master)](https://travis-ci.org/WorldBank-Transport/Rural-Road-Accessibility/)
+[![Coverage Status](https://coveralls.io/repos/github/WorldBank-Transport/Rural-Road-Accessibility/badge.svg)](https://coveralls.io/github/WorldBank-Transport/Rural-Road-Accessibility)
  
 #Rural-Road-Accessibility (RRA)
 
