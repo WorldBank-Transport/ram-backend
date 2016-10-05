@@ -1,0 +1,21 @@
+sudo: required
+dist: trusty
+
+language: node_js
+node_js:
+- '6.1'
+
+before_install:
+- sudo apt-get -qq update
+- sudo apt-get install -y osmosis
+- cp -r $(pwd)/test/fixtures/data $(pwd)/web/data
+- chmod a+x ./test/*.sh
+- ./test/install-osrm.sh &
+- ./test/prepare-test.sh
+
+install:
+- npm install
+
+before_script:
+- ls -R
+- node index.js &
