@@ -2,8 +2,6 @@
 set -x
 
 echo "Preparing fixtures data for test"
-
-cp -r $(pwd)/test/fixtures/data $(pwd)/web/data
 cd $(pwd)/web/data
 
 wget http://bretth.dev.openstreetmap.org/osmosis-build/osmosis-latest.tgz
