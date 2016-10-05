@@ -18,3 +18,5 @@ install:
 
 before_script:
 - node index.js &
+
+after_script: NODE_ENV=test `npm bin`/istanbul cover `npm bin`/_mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage
