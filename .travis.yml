@@ -11,7 +11,7 @@ before_install:
 - cp -r $(pwd)/test/fixtures/data $(pwd)/web/data
 - chmod a+x ./test/*.sh
 #- ./test/install-osrm.sh &
-#- ./test/prepare-test.sh
+- ./test/prepare-test.sh
 
 install:
 - npm install
