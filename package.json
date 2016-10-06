@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "World Bank project to assess rural road accessibility",
   "main": "index.js",
+  "engine": "node v6.1.0",
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec"
   },
@@ -19,12 +20,17 @@
     "async": "^1.5.2",
     "basic-auth": "^1.0.3",
     "bootstrap": "^3.3.6",
+    "chai": "^3.5.0",
+    "cheerio": "^0.22.0",
     "child_process": "^1.0.2",
     "compression": "^1.6.1",
     "crossfilter": "^1.3.12",
     "d3": "^3.5.15",
     "dc": "^1.7.5",
     "express": "^4.14.0",
+    "gulp": "^3.9.1",
+    "gulp-mocha": "^3.0.1",
+    "gulp-util": "^3.0.7",
     "jquery": "^2.2.4",
     "leaflet": "^0.7.7",
     "mkdirp": "^0.5.1",
@@ -45,8 +51,16 @@
     "turf-within": "^1.0.1"
   },
   "devDependencies": {
+    "blanket": "^1.2.3",
     "chai": "^3.5.0",
     "chai-files": "^1.4.0",
-    "mocha": "^3.1.0"
+    "chai-webdriver": "^1.2.0",
+    "grunt-blanket-mocha": "^0.5.0",
+    "gulp-notify": "^2.2.0",
+    "load-grunt-tasks": "^3.5.2",
+    "mocha": "^3.1.0",
+    "selenium-webdriver": "^2.53.3",
+    "sinon": "^1.17.6",
+    "sinon-chai": "^2.8.0"
   }
 }

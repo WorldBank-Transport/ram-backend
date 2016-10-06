@@ -73,9 +73,9 @@ var auth = function (req, res, next) {
 
 app.use('/', [auth, compression(),express.static(__dirname + '/web/',{ maxAge: 86400000 })]);
 
+
 http.listen(parseInt(port, 10));
 console.log("Static file server running at\n  => http://localhost:" + port + "/\nCTRL + C to shutdown");
-
 
 
 
@@ -434,13 +434,5 @@ function createTimeMatrix(data) {
         cETA.disconnect();
       });
     }
-  });
-}
-
-// app is a callback function or an express application
-module.exports = app;
-if (!module.parent) {
-  http.listen(process.env.PORT, function(){
-    console.log("Server listening on port " + app.get('port'));
   });
 }
