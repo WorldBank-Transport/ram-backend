@@ -324,7 +324,7 @@ function way_function (way, result)
   if -1 == result.forward_speed and -1 == result.backward_speed then
     return
   end
-
+  
 
   -- reduce speed on special side roads
   local sideway = way:get_value_by_key("side_road")
