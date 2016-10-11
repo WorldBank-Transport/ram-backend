@@ -11,6 +11,6 @@ cd osmosis
 tar xvfz osmosis-latest.tgz
 rm osmosis-latest.tgz
 chmod a+x bin/osmosis
-cd ../
+cd ../project_1463767649122/baseline
 
 osmosis/bin/osmosis --rbf JM.pbf --wx JM.osm

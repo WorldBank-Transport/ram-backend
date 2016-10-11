@@ -14,7 +14,7 @@ var rootDir =  __dirname + "/../";
 
 describe("Prepare fixtures data for testing...", function() {
   it("makes sure fixtures are there", function(done) {
-    expect(file( rootDir + "web/data/JM.osm")).to.exist;
+    expect(file( rootDir + "web/data/project_1463767649122/baseline/JM.osm")).to.exist;
     done();
   });
 
