@@ -8,6 +8,7 @@
       "type": "Feature",
       "id": "relation/4600632",
       "properties": {
+  "population": 100,
         "@id": "relation/4600632",
         "admin_level": "8",
         "boundary": "administrative",
@@ -75,6 +76,7 @@
       "type": "Feature",
       "id": "relation/4600633",
       "properties": {
+  "population": 100,
         "@id": "relation/4600633",
         "admin_level": "8",
         "boundary": "administrative",
@@ -158,6 +160,7 @@
       "type": "Feature",
       "id": "relation/4600634",
       "properties": {
+  "population": 100,
         "@id": "relation/4600634",
         "admin_level": "8",
         "boundary": "administrative",
@@ -225,6 +228,7 @@
       "type": "Feature",
       "id": "relation/4601906",
       "properties": {
+  "population": 100,
         "@id": "relation/4601906",
         "admin_level": "8",
         "boundary": "administrative",
@@ -292,6 +296,7 @@
       "type": "Feature",
       "id": "way/25614941",
       "properties": {
+  "population": 100,
         "@id": "way/25614941",
         "landuse": "residential",
         "name": "Albion",
@@ -433,6 +438,7 @@
       "type": "Feature",
       "id": "way/44160538",
       "properties": {
+  "population": 100,
         "@id": "way/44160538",
         "is_in": "St Ann, Jamaica",
         "landuse": "residential",
@@ -620,6 +626,7 @@
       "type": "Feature",
       "id": "way/44160544",
       "properties": {
+  "population": 100,
         "@id": "way/44160544",
         "landuse": "residential",
         "name": "Priory",
@@ -730,6 +737,7 @@
       "type": "Feature",
       "id": "way/50809432",
       "properties": {
+  "population": 100,
         "@id": "way/50809432",
         "is_in": "St Thomas, Jamaica",
         "landuse": "residential",
@@ -905,6 +913,7 @@
       "type": "Feature",
       "id": "way/197756851",
       "properties": {
+  "population": 100,
         "@id": "way/197756851",
         "landuse": "residential",
         "name": "Bath",
@@ -1026,6 +1035,7 @@
       "type": "Feature",
       "id": "way/198570898",
       "properties": {
+  "population": 100,
         "@id": "way/198570898",
         "is_in": "Portland, Jamaica",
         "landuse": "residential",
@@ -1140,6 +1150,7 @@
       "type": "Feature",
       "id": "way/200970873",
       "properties": {
+  "population": 100,
         "@id": "way/200970873",
         "landuse": "residential",
         "name": "Florence Hall Village",
@@ -1285,6 +1296,7 @@
       "type": "Feature",
       "id": "way/205674189",
       "properties": {
+  "population": 100,
         "@id": "way/205674189",
         "landuse": "residential",
         "name": "Duncans",
@@ -1406,6 +1418,7 @@
       "type": "Feature",
       "id": "way/243008390",
       "properties": {
+  "population": 100,
         "@id": "way/243008390",
         "name": "Mt. Industry",
         "place": "village"
@@ -1498,6 +1511,7 @@
       "type": "Feature",
       "id": "way/243010809",
       "properties": {
+  "population": 100,
         "@id": "way/243010809",
         "name": "Jambos Pond",
         "place": "village"
@@ -1558,6 +1572,7 @@
       "type": "Feature",
       "id": "way/243010810",
       "properties": {
+  "population": 100,
         "@id": "way/243010810",
         "name": "Long Hill",
         "place": "village"
@@ -1598,6 +1613,7 @@
       "type": "Feature",
       "id": "way/243010811",
       "properties": {
+  "population": 100,
         "@id": "way/243010811",
         "name": "Sandy Hill",
         "place": "village"
@@ -1650,6 +1666,7 @@
       "type": "Feature",
       "id": "way/243010812",
       "properties": {
+  "population": 100,
         "@id": "way/243010812",
         "name": "Sooky Gal",
         "place": "village"
@@ -1718,6 +1735,7 @@
       "type": "Feature",
       "id": "way/243010813",
       "properties": {
+  "population": 100,
         "@id": "way/243010813",
         "name": "Bamboo Corner",
         "place": "village"
@@ -1862,6 +1880,7 @@
       "type": "Feature",
       "id": "way/243010814",
       "properties": {
+  "population": 100,
         "@id": "way/243010814",
         "name": "St. Faiths",
         "place": "village"
@@ -1934,6 +1953,7 @@
       "type": "Feature",
       "id": "way/243010815",
       "properties": {
+  "population": 100,
         "@id": "way/243010815",
         "name": "Ashley",
         "place": "village"
@@ -2022,6 +2042,7 @@
       "type": "Feature",
       "id": "way/243010816",
       "properties": {
+  "population": 100,
         "@id": "way/243010816",
         "name": "Ennis",
         "place": "village"
@@ -2082,6 +2103,7 @@
       "type": "Feature",
       "id": "way/243010817",
       "properties": {
+  "population": 100,
         "@id": "way/243010817",
         "name": "Cassava River",
         "place": "village"
@@ -2166,6 +2188,7 @@
       "type": "Feature",
       "id": "way/243010818",
       "properties": {
+  "population": 100,
         "@id": "way/243010818",
         "name": "Mt. Florence",
         "place": "village"
@@ -2230,6 +2253,7 @@
       "type": "Feature",
       "id": "way/243010819",
       "properties": {
+  "population": 100,
         "@id": "way/243010819",
         "name": "Content",
         "place": "village"
@@ -2298,6 +2322,7 @@
       "type": "Feature",
       "id": "way/243010820",
       "properties": {
+  "population": 100,
         "@id": "way/243010820",
         "name": "Edward Piece",
         "place": "village"
@@ -2338,6 +2363,7 @@
       "type": "Feature",
       "id": "way/243010821",
       "properties": {
+  "population": 100,
         "@id": "way/243010821",
         "name": "Paradise",
         "place": "village"
@@ -2374,6 +2400,7 @@
       "type": "Feature",
       "id": "way/243109680",
       "properties": {
+  "population": 100,
         "@id": "way/243109680",
         "name": "Rentcombe",
         "place": "village"
@@ -2490,6 +2517,7 @@
       "type": "Feature",
       "id": "way/243109686",
       "properties": {
+  "population": 100,
         "@id": "way/243109686",
         "name": "Zion Hill",
         "place": "village"
@@ -2558,6 +2586,7 @@
       "type": "Feature",
       "id": "way/243109687",
       "properties": {
+  "population": 100,
         "@id": "way/243109687",
         "name": "Miriam Hill",
         "place": "village"
@@ -2714,6 +2743,7 @@
       "type": "Feature",
       "id": "way/243109711",
       "properties": {
+  "population": 100,
         "@id": "way/243109711",
         "name": "Mizpah",
         "place": "village"
@@ -2778,6 +2808,7 @@
       "type": "Feature",
       "id": "way/243109713",
       "properties": {
+  "population": 100,
         "@id": "way/243109713",
         "name": "Mt. Matthews",
         "place": "village"
@@ -2822,6 +2853,7 @@
       "type": "Feature",
       "id": "way/243111414",
       "properties": {
+  "population": 100,
         "@id": "way/243111414",
         "name": "Grateful Hill",
         "place": "village"
@@ -2874,6 +2906,7 @@
       "type": "Feature",
       "id": "way/243238403",
       "properties": {
+  "population": 100,
         "@id": "way/243238403",
         "name": "Silent Hill",
         "place": "village"
@@ -2914,6 +2947,7 @@
       "type": "Feature",
       "id": "way/245730916",
       "properties": {
+  "population": 100,
         "@id": "way/245730916",
         "landuse": "residential",
         "name": "Barrett Town",
@@ -2967,6 +3001,7 @@
       "type": "Feature",
       "id": "way/259491811",
       "properties": {
+  "population": 100,
         "@id": "way/259491811",
         "area": "yes",
         "name": "Mile Gully",
@@ -3020,6 +3055,7 @@
       "type": "Feature",
       "id": "way/307768300",
       "properties": {
+  "population": 100,
         "@id": "way/307768300",
         "landuse": "residential",
         "name": "Bogue Village",
@@ -3158,6 +3194,7 @@
       "type": "Feature",
       "id": "way/370602076",
       "properties": {
+  "population": 100,
         "@id": "way/370602076",
         "landuse": "residential",
         "name": "Bryans Bay",
@@ -3347,6 +3384,7 @@
       "type": "Feature",
       "id": "way/370607799",
       "properties": {
+  "population": 100,
         "@id": "way/370607799",
         "landuse": "residential",
         "name": "St Margaret's Bay",
@@ -3476,6 +3514,7 @@
       "type": "Feature",
       "id": "way/370609374",
       "properties": {
+  "population": 100,
         "@id": "way/370609374",
         "landuse": "residential",
         "name": "Hope Bay",
@@ -3629,6 +3668,7 @@
       "type": "Feature",
       "id": "way/370610578",
       "properties": {
+  "population": 100,
         "@id": "way/370610578",
         "is_in": "Portland, Jamaica",
         "landuse": "residential",
@@ -3839,6 +3879,7 @@
       "type": "Feature",
       "id": "way/370788511",
       "properties": {
+  "population": 100,
         "@id": "way/370788511",
         "landuse": "residential",
         "name": "Boscobel",
@@ -3908,6 +3949,7 @@
       "type": "Feature",
       "id": "way/370789468",
       "properties": {
+  "population": 100,
         "@id": "way/370789468",
         "landuse": "residential",
         "name": "Hart Hill",
@@ -3997,6 +4039,7 @@
       "type": "Feature",
       "id": "way/370789469",
       "properties": {
+  "population": 100,
         "@id": "way/370789469",
         "is_in": "Portland, Jamaica",
         "landuse": "residential",
@@ -4183,6 +4226,7 @@
       "type": "Feature",
       "id": "way/370790580",
       "properties": {
+  "population": 100,
         "@id": "way/370790580",
         "landuse": "residential",
         "name": "Robin's Bay",
@@ -4284,6 +4328,7 @@
       "type": "Feature",
       "id": "way/370790880",
       "properties": {
+  "population": 100,
         "@id": "way/370790880",
         "landuse": "residential",
         "name": "Galina",
@@ -4433,6 +4478,7 @@
       "type": "Feature",
       "id": "way/370791178",
       "properties": {
+  "population": 100,
         "@id": "way/370791178",
         "is_in": "St Mary, Jamaica",
         "landuse": "residential",
@@ -4551,6 +4597,7 @@
       "type": "Feature",
       "id": "way/370794304",
       "properties": {
+  "population": 100,
         "@id": "way/370794304",
         "landuse": "residential",
         "name": "White Hall",
@@ -4636,6 +4683,7 @@
       "type": "Feature",
       "id": "way/370794608",
       "properties": {
+  "population": 100,
         "@id": "way/370794608",
         "landuse": "residential",
         "name": "Trinity",
@@ -4729,6 +4777,7 @@
       "type": "Feature",
       "id": "way/370811423",
       "properties": {
+  "population": 100,
         "@id": "way/370811423",
         "landuse": "residential",
         "name": "Little Bay",
@@ -4846,6 +4895,7 @@
       "type": "Feature",
       "id": "way/370988847",
       "properties": {
+  "population": 100,
         "@id": "way/370988847",
         "is_in": "St Mary, Jamaica",
         "landuse": "residential",
@@ -5076,6 +5126,7 @@
       "type": "Feature",
       "id": "way/371253972",
       "properties": {
+  "population": 100,
         "@id": "way/371253972",
         "landuse": "residential",
         "name": "Salem",
@@ -5193,6 +5244,7 @@
       "type": "Feature",
       "id": "way/371355320",
       "properties": {
+  "population": 100,
         "@id": "way/371355320",
         "landuse": "residential",
         "name": "Rio Bueno",
@@ -5554,6 +5606,7 @@
       "type": "Feature",
       "id": "way/373071011",
       "properties": {
+  "population": 100,
         "@id": "way/373071011",
         "landuse": "residential",
         "name": "Salt Spring",
@@ -5743,6 +5796,7 @@
       "type": "Feature",
       "id": "way/373097789",
       "properties": {
+  "population": 100,
         "@id": "way/373097789",
         "name": "Hope",
         "place": "village",
@@ -5796,6 +5850,7 @@
       "type": "Feature",
       "id": "way/373097792",
       "properties": {
+  "population": 100,
         "@id": "way/373097792",
         "name": "Williamsfield",
         "place": "village",
@@ -5861,6 +5916,7 @@
       "type": "Feature",
       "id": "way/373251340",
       "properties": {
+  "population": 100,
         "@id": "way/373251340",
         "name": "Scott's Pass",
         "place": "village"
@@ -5937,6 +5993,7 @@
       "type": "Feature",
       "id": "way/373266034",
       "properties": {
+  "population": 100,
         "@id": "way/373266034",
         "is_in": "Clarendon, Jamaica",
         "name": "Toll Gate",
@@ -5995,6 +6052,7 @@
       "type": "Feature",
       "id": "way/373296269",
       "properties": {
+  "population": 100,
         "@id": "way/373296269",
         "name": "Belle Plain",
         "place": "village",
@@ -6056,6 +6114,7 @@
       "type": "Feature",
       "id": "way/373302945",
       "properties": {
+  "population": 100,
         "@id": "way/373302945",
         "name": "Osborn Store",
         "place": "village",
@@ -6113,6 +6172,7 @@
       "type": "Feature",
       "id": "way/373324664",
       "properties": {
+  "population": 100,
         "@id": "way/373324664",
         "is_in": "Clarenden,Jamaica",
         "name": "Four Paths",
@@ -6170,6 +6230,7 @@
       "type": "Feature",
       "id": "way/373905671",
       "properties": {
+  "population": 100,
         "@id": "way/373905671",
         "landuse": "residential",
         "name": "Green Island",
@@ -6383,6 +6444,7 @@
       "type": "Feature",
       "id": "way/374513966",
       "properties": {
+  "population": 100,
         "@id": "way/374513966",
         "landuse": "residential",
         "name": "Luana",
@@ -6457,6 +6519,7 @@
       "type": "Feature",
       "id": "way/374970219",
       "properties": {
+  "population": 100,
         "@id": "way/374970219",
         "landuse": "residential",
         "name": "August Town",
@@ -6755,6 +6818,7 @@
       "type": "Feature",
       "id": "node/53370352",
       "properties": {
+  "population": 100,
         "@id": "node/53370352",
         "name": "Port Royal",
         "place": "village",
@@ -6772,6 +6836,7 @@
       "type": "Feature",
       "id": "node/246080951",
       "properties": {
+  "population": 100,
         "@id": "node/246080951",
         "created_by": "JOSM",
         "name": "Belmont",
@@ -6789,6 +6854,7 @@
       "type": "Feature",
       "id": "node/290163156",
       "properties": {
+  "population": 100,
         "@id": "node/290163156",
         "is_in": "Hanover, Jamaica",
         "name": "Unity Hall",
@@ -6806,6 +6872,7 @@
       "type": "Feature",
       "id": "node/290163159",
       "properties": {
+  "population": 100,
         "@id": "node/290163159",
         "is_in": "Hanover, Jamaica",
         "name": "Hopewell",
@@ -6823,6 +6890,7 @@
       "type": "Feature",
       "id": "node/290163161",
       "properties": {
+  "population": 100,
         "@id": "node/290163161",
         "is_in": "Hanover, Jamaica",
         "name": "Elgin Town",
@@ -6840,6 +6908,7 @@
       "type": "Feature",
       "id": "node/290163164",
       "properties": {
+  "population": 100,
         "@id": "node/290163164",
         "is_in": "Hanover, Jamaica",
         "name": "Johnson Town",
@@ -6857,6 +6926,7 @@
       "type": "Feature",
       "id": "node/290163168",
       "properties": {
+  "population": 100,
         "@id": "node/290163168",
         "is_in": "Hanover, Jamaica",
         "name": "Davis Cove",
@@ -6874,6 +6944,7 @@
       "type": "Feature",
       "id": "node/290163170",
       "properties": {
+  "population": 100,
         "@id": "node/290163170",
         "is_in": "Hanover, Jamaica",
         "name": "Green Island",
@@ -6891,6 +6962,7 @@
       "type": "Feature",
       "id": "node/290802760",
       "properties": {
+  "population": 100,
         "@id": "node/290802760",
         "is_in": "St. Catherine",
         "name": "Old Harbour Bay",
@@ -6908,6 +6980,7 @@
       "type": "Feature",
       "id": "node/290802766",
       "properties": {
+  "population": 100,
         "@id": "node/290802766",
         "is_in": "St. Catherine, Jamaica",
         "name": "Port Esquivel",
@@ -6925,6 +6998,7 @@
       "type": "Feature",
       "id": "node/290802782",
       "properties": {
+  "population": 100,
         "@id": "node/290802782",
         "is_in": "Clarendon, Jamaica",
         "name": "Dawkins Pen",
@@ -6942,6 +7016,7 @@
       "type": "Feature",
       "id": "node/290803148",
       "properties": {
+  "population": 100,
         "@id": "node/290803148",
         "is_in": "Westmoreland, Jamaica",
         "name": "Whitehouse",
@@ -6959,6 +7034,7 @@
       "type": "Feature",
       "id": "node/290803151",
       "properties": {
+  "population": 100,
         "@id": "node/290803151",
         "is_in": "Westmoreland, Jamaica",
         "name": "Auchindown",
@@ -6976,6 +7052,7 @@
       "type": "Feature",
       "id": "node/300899552",
       "properties": {
+  "population": 100,
         "@id": "node/300899552",
         "is_in": "Westmoreland, Jamaica",
         "name": "Georges Plain",
@@ -6993,6 +7070,7 @@
       "type": "Feature",
       "id": "node/300899878",
       "properties": {
+  "population": 100,
         "@id": "node/300899878",
         "is_in": "Westmoreland, Jamaica",
         "name": "Glasgow",
@@ -7010,6 +7088,7 @@
       "type": "Feature",
       "id": "node/300899909",
       "properties": {
+  "population": 100,
         "@id": "node/300899909",
         "is_in": "Hanover, Jamaica",
         "name": "Kew",
@@ -7027,6 +7106,7 @@
       "type": "Feature",
       "id": "node/300899929",
       "properties": {
+  "population": 100,
         "@id": "node/300899929",
         "name": "Kingsvale",
         "place": "village"
@@ -7043,6 +7123,7 @@
       "type": "Feature",
       "id": "node/300899934",
       "properties": {
+  "population": 100,
         "@id": "node/300899934",
         "is_in": "Hanover, Jamaica",
         "name": "Lances Bay",
@@ -7060,6 +7141,7 @@
       "type": "Feature",
       "id": "node/300899935",
       "properties": {
+  "population": 100,
         "@id": "node/300899935",
         "is_in": "Hanover, Jamaica",
         "name": "Dias",
@@ -7077,6 +7159,7 @@
       "type": "Feature",
       "id": "node/301634739",
       "properties": {
+  "population": 100,
         "@id": "node/301634739",
         "is_in": "Hanover, Jamaica",
         "name": "Middlesex",
@@ -7094,6 +7177,7 @@
       "type": "Feature",
       "id": "node/302639425",
       "properties": {
+  "population": 100,
         "@id": "node/302639425",
         "is_in": "Westmoreland, Jamaica",
         "name": "Grange Hill",
@@ -7111,6 +7195,7 @@
       "type": "Feature",
       "id": "node/302639552",
       "properties": {
+  "population": 100,
         "@id": "node/302639552",
         "is_in": "Westmoreland, Jamaica",
         "name": "Kings Valley",
@@ -7128,6 +7213,7 @@
       "type": "Feature",
       "id": "node/302639558",
       "properties": {
+  "population": 100,
         "@id": "node/302639558",
         "is_in": "Westmoreland, Jamaica",
         "name": "Town Head",
@@ -7145,6 +7231,7 @@
       "type": "Feature",
       "id": "node/302639559",
       "properties": {
+  "population": 100,
         "@id": "node/302639559",
         "is_in": "Westmoreland, Jamaica",
         "name": "Truro Gate",
@@ -7162,6 +7249,7 @@
       "type": "Feature",
       "id": "node/306444893",
       "properties": {
+  "population": 100,
         "@id": "node/306444893",
         "alt_name": "Golden Grove, SA",
         "is_in": "St. Thomas, Jamaica",
@@ -7180,6 +7268,7 @@
       "type": "Feature",
       "id": "node/306444988",
       "properties": {
+  "population": 100,
         "@id": "node/306444988",
         "is_in": "St. Mary, Jamaica",
         "name": "White River",
@@ -7197,6 +7286,7 @@
       "type": "Feature",
       "id": "node/306444989",
       "properties": {
+  "population": 100,
         "@id": "node/306444989",
         "is_in": "St. Mary, Jamaica",
         "name": "Frankfort",
@@ -7214,6 +7304,7 @@
       "type": "Feature",
       "id": "node/306444994",
       "properties": {
+  "population": 100,
         "@id": "node/306444994",
         "is_in": "Portland, Jamaica",
         "name": "Drapers",
@@ -7231,6 +7322,7 @@
       "type": "Feature",
       "id": "node/306445094",
       "properties": {
+  "population": 100,
         "@id": "node/306445094",
         "is_in": "St. Thomas, Jamaica",
         "name": "Grants Pen",
@@ -7248,6 +7340,7 @@
       "type": "Feature",
       "id": "node/306445095",
       "properties": {
+  "population": 100,
         "@id": "node/306445095",
         "is_in": "St. Thomas, Jamaica",
         "name": "Port Morant",
@@ -7266,6 +7359,7 @@
       "type": "Feature",
       "id": "node/307991945",
       "properties": {
+  "population": 100,
         "@id": "node/307991945",
         "is_in": "St. Elizabeth, Jamaica",
         "name": "New Holland",
@@ -7283,6 +7377,7 @@
       "type": "Feature",
       "id": "node/307991950",
       "properties": {
+  "population": 100,
         "@id": "node/307991950",
         "is_in": "St. Elizabeth, Jamaica",
         "name": "Lacovia",
@@ -7300,6 +7395,7 @@
       "type": "Feature",
       "id": "node/307991968",
       "properties": {
+  "population": 100,
         "@id": "node/307991968",
         "is_in": "St. Elizabeth, Jamaica",
         "name": "Middle Quarters",
@@ -7317,6 +7413,7 @@
       "type": "Feature",
       "id": "node/307991972",
       "properties": {
+  "population": 100,
         "@id": "node/307991972",
         "is_in": "St. Elizabeth, Jamaica",
         "name": "Luana",
@@ -7334,6 +7431,7 @@
       "type": "Feature",
       "id": "node/307991975",
       "properties": {
+  "population": 100,
         "@id": "node/307991975",
         "name": "Baptist",
         "place": "village"
@@ -7350,6 +7448,7 @@
       "type": "Feature",
       "id": "node/309714746",
       "properties": {
+  "population": 100,
         "@id": "node/309714746",
         "is_in": "Clarendon, Jamaica",
         "name": "Clarendon Park",
@@ -7367,6 +7466,7 @@
       "type": "Feature",
       "id": "node/309714750",
       "properties": {
+  "population": 100,
         "@id": "node/309714750",
         "is_in": "Clarendon, Jamaica",
         "name": "Curatoe Hill",
@@ -7384,6 +7484,7 @@
       "type": "Feature",
       "id": "node/309714803",
       "properties": {
+  "population": 100,
         "@id": "node/309714803",
         "is_in": "Clarendon, Jamaica",
         "name": "Whitney Turn",
@@ -7401,6 +7502,7 @@
       "type": "Feature",
       "id": "node/309714869",
       "properties": {
+  "population": 100,
         "@id": "node/309714869",
         "is_in": "St. Elizabeth, Jamaica",
         "name": "Pepper",
@@ -7418,6 +7520,7 @@
       "type": "Feature",
       "id": "node/309714884",
       "properties": {
+  "population": 100,
         "@id": "node/309714884",
         "is_in": "Clarendon, Jamaica",
         "name": "Spur Tree",
@@ -7435,6 +7538,7 @@
       "type": "Feature",
       "id": "node/309714888",
       "properties": {
+  "population": 100,
         "@id": "node/309714888",
         "is_in": "St. Elizabeth, Jamaica",
         "name": "Wilton",
@@ -7452,6 +7556,7 @@
       "type": "Feature",
       "id": "node/309715173",
       "properties": {
+  "population": 100,
         "@id": "node/309715173",
         "is_in": "St. Elizabeth, Jamaica",
         "name": "Cambridge",
@@ -7469,6 +7574,7 @@
       "type": "Feature",
       "id": "node/309715178",
       "properties": {
+  "population": 100,
         "@id": "node/309715178",
         "is_in": "St. Elizabeth, Jamaica",
         "name": "Sandy Ground",
@@ -7486,6 +7592,7 @@
       "type": "Feature",
       "id": "node/309715181",
       "properties": {
+  "population": 100,
         "@id": "node/309715181",
         "alt_name": "Ferris Corner",
         "name": "Ferris Cross",
@@ -7503,6 +7610,7 @@
       "type": "Feature",
       "id": "node/309715188",
       "properties": {
+  "population": 100,
         "@id": "node/309715188",
         "is_in": "St. Elizabeth, Jamaica",
         "name": "Crawford",
@@ -7520,6 +7628,7 @@
       "type": "Feature",
       "id": "node/309715195",
       "properties": {
+  "population": 100,
         "@id": "node/309715195",
         "is_in": "Westmoreland, Jamaica",
         "name": "Bluefields",
@@ -7537,6 +7646,7 @@
       "type": "Feature",
       "id": "node/331501419",
       "properties": {
+  "population": 100,
         "@id": "node/331501419",
         "is_in": "St. Mary, Jamaica",
         "name": "Chovey",
@@ -7554,6 +7664,7 @@
       "type": "Feature",
       "id": "node/332059901",
       "properties": {
+  "population": 100,
         "@id": "node/332059901",
         "is_in": "Hanover, Jamaica",
         "name": "Harding Hall",
@@ -7571,6 +7682,7 @@
       "type": "Feature",
       "id": "node/636787852",
       "properties": {
+  "population": 100,
         "@id": "node/636787852",
         "name": "Accompong",
         "note": "Position approx",
@@ -7589,6 +7701,7 @@
       "type": "Feature",
       "id": "node/818347790",
       "properties": {
+  "population": 100,
         "@id": "node/818347790",
         "name": "Hellshire",
         "place": "village",
@@ -7606,6 +7719,7 @@
       "type": "Feature",
       "id": "node/838967198",
       "properties": {
+  "population": 100,
         "@id": "node/838967198",
         "name": "Fern Hill",
         "place": "village"
@@ -7622,6 +7736,7 @@
       "type": "Feature",
       "id": "node/838967311",
       "properties": {
+  "population": 100,
         "@id": "node/838967311",
         "name": "San San",
         "place": "village"
@@ -7638,6 +7753,7 @@
       "type": "Feature",
       "id": "node/838967332",
       "properties": {
+  "population": 100,
         "@id": "node/838967332",
         "name": "Fairy Hill",
         "place": "village"
@@ -7654,6 +7770,7 @@
       "type": "Feature",
       "id": "node/838967448",
       "properties": {
+  "population": 100,
         "@id": "node/838967448",
         "name": "Long Bay",
         "place": "village"
@@ -7670,6 +7787,7 @@
       "type": "Feature",
       "id": "node/973324813",
       "properties": {
+  "population": 100,
         "@id": "node/973324813",
         "is_in": "St. Thomas, Jamaica",
         "name": "Orange Walk",
@@ -7687,6 +7805,7 @@
       "type": "Feature",
       "id": "node/974287162",
       "properties": {
+  "population": 100,
         "@id": "node/974287162",
         "is_in": "St. Thomas, Jamaica",
         "name": "Jesnas Corner",
@@ -7704,6 +7823,7 @@
       "type": "Feature",
       "id": "node/974287180",
       "properties": {
+  "population": 100,
         "@id": "node/974287180",
         "is_in": "St. Thomas, Jamaica",
         "name": "Bottom Dalvey",
@@ -7721,6 +7841,7 @@
       "type": "Feature",
       "id": "node/974287183",
       "properties": {
+  "population": 100,
         "@id": "node/974287183",
         "is_in": "St. Thomas, Jamaica",
         "name": "Top House Dalvey",
@@ -7738,6 +7859,7 @@
       "type": "Feature",
       "id": "node/974287187",
       "properties": {
+  "population": 100,
         "@id": "node/974287187",
         "is_in": "St. Thomas, Jamaica",
         "name": "Hampton Court",
@@ -7755,6 +7877,7 @@
       "type": "Feature",
       "id": "node/974287190",
       "properties": {
+  "population": 100,
         "@id": "node/974287190",
         "is_in": "St. Thomas, Jamaica",
         "name": "Duckendfield",
@@ -7772,6 +7895,7 @@
       "type": "Feature",
       "id": "node/974287192",
       "properties": {
+  "population": 100,
         "@id": "node/974287192",
         "is_in": "St. Thomas, Jamaica",
         "name": "Duckendfield Hilltop",
@@ -7789,6 +7913,7 @@
       "type": "Feature",
       "id": "node/974287218",
       "properties": {
+  "population": 100,
         "@id": "node/974287218",
         "is_in": "St. Thomas, Jamaica",
         "name": "Cheswick",
@@ -7806,6 +7931,7 @@
       "type": "Feature",
       "id": "node/974287221",
       "properties": {
+  "population": 100,
         "@id": "node/974287221",
         "is_in": "St. Thomas, Jamaica",
         "name": "Dalvey Square",
@@ -7823,6 +7949,7 @@
       "type": "Feature",
       "id": "node/974293660",
       "properties": {
+  "population": 100,
         "@id": "node/974293660",
         "is_in": "St. Thomas, Jamaica",
         "name": "Stokes Hall",
@@ -7840,6 +7967,7 @@
       "type": "Feature",
       "id": "node/974300722",
       "properties": {
+  "population": 100,
         "@id": "node/974300722",
         "is_in": "St. Thomas, Jamaica",
         "name": "Arcadia",
@@ -7857,6 +7985,7 @@
       "type": "Feature",
       "id": "node/1338118013",
       "properties": {
+  "population": 100,
         "@id": "node/1338118013",
         "name": "Sandy Bay",
         "place": "village"
@@ -7873,6 +8002,7 @@
       "type": "Feature",
       "id": "node/2079622642",
       "properties": {
+  "population": 100,
         "@id": "node/2079622642",
         "name": "Shotover",
         "place": "village"
@@ -7889,6 +8019,7 @@
       "type": "Feature",
       "id": "node/2630160349",
       "properties": {
+  "population": 100,
         "@id": "node/2630160349",
         "name": "Malvern",
         "place": "village"
@@ -7905,6 +8036,7 @@
       "type": "Feature",
       "id": "node/2936625973",
       "properties": {
+  "population": 100,
         "@id": "node/2936625973",
         "place": "village"
       },
@@ -7920,6 +8052,7 @@
       "type": "Feature",
       "id": "node/2936626030",
       "properties": {
+  "population": 100,
         "@id": "node/2936626030",
         "place": "village"
       },
@@ -7935,6 +8068,7 @@
       "type": "Feature",
       "id": "node/2937739044",
       "properties": {
+  "population": 100,
         "@id": "node/2937739044",
         "name": "Colgate",
         "place": "village"
@@ -7951,6 +8085,7 @@
       "type": "Feature",
       "id": "node/3126227601",
       "properties": {
+  "population": 100,
         "@id": "node/3126227601",
         "name": "Gordon Town",
         "place": "village"
@@ -7967,6 +8102,7 @@
       "type": "Feature",
       "id": "node/3201267865",
       "properties": {
+  "population": 100,
         "@id": "node/3201267865",
         "name": "Nine Mile",
         "place": "village",
@@ -7985,6 +8121,7 @@
       "type": "Feature",
       "id": "node/3205840916",
       "properties": {
+  "population": 100,
         "@id": "node/3205840916",
         "name": "Moore Town",
         "place": "village"
@@ -8001,6 +8138,7 @@
       "type": "Feature",
       "id": "node/3239873152",
       "properties": {
+  "population": 100,
         "@id": "node/3239873152",
         "name": "Troy",
         "place": "village"
@@ -8017,6 +8155,7 @@
       "type": "Feature",
       "id": "node/3240137441",
       "properties": {
+  "population": 100,
         "@id": "node/3240137441",
         "name": "Clark's Town",
         "place": "village"
@@ -8033,6 +8172,7 @@
       "type": "Feature",
       "id": "node/3246092083",
       "properties": {
+  "population": 100,
         "@id": "node/3246092083",
         "name": "Balaclava",
         "place": "village"
@@ -8049,6 +8189,7 @@
       "type": "Feature",
       "id": "node/3246855659",
       "properties": {
+  "population": 100,
         "@id": "node/3246855659",
         "name": "Junction",
         "place": "village"
@@ -8065,6 +8206,7 @@
       "type": "Feature",
       "id": "node/3249324882",
       "properties": {
+  "population": 100,
         "@id": "node/3249324882",
         "name": "New Market",
         "place": "village"
@@ -8081,9 +8223,10 @@
       "type": "Feature",
       "id": "node/3356937893",
       "properties": {
+  "population": 100,
         "@id": "node/3356937893",
         "name": "Seaforth",
-        "place": "village",
+          "place": "village",
         "@relations": [
           {
             "role": "label",
@@ -8110,6 +8253,7 @@
       "type": "Feature",
       "id": "node/3356984257",
       "properties": {
+  "population": 100,
         "@id": "node/3356984257",
         "name": "Hillside",
         "place": "village",
@@ -8139,6 +8283,7 @@
       "type": "Feature",
       "id": "node/3356984258",
       "properties": {
+  "population": 100,
         "@id": "node/3356984258",
         "name": "Trinity Ville",
         "place": "village",
@@ -8168,6 +8313,7 @@
       "type": "Feature",
       "id": "node/3356994293",
       "properties": {
+  "population": 100,
         "@id": "node/3356994293",
         "name": "Danvers Pen",
         "place": "village"
@@ -8184,6 +8330,7 @@
       "type": "Feature",
       "id": "node/3356994294",
       "properties": {
+  "population": 100,
         "@id": "node/3356994294",
         "name": "Easington",
         "place": "village"
@@ -8200,6 +8347,7 @@
       "type": "Feature",
       "id": "node/3356994296",
       "properties": {
+  "population": 100,
         "@id": "node/3356994296",
         "name": "Llandewey",
         "place": "village"
@@ -8216,6 +8364,7 @@
       "type": "Feature",
       "id": "node/3356994297",
       "properties": {
+  "population": 100,
         "@id": "node/3356994297",
         "name": "Louden Hill",
         "place": "village"
@@ -8232,6 +8381,7 @@
       "type": "Feature",
       "id": "node/3356994299",
       "properties": {
+  "population": 100,
         "@id": "node/3356994299",
         "name": "Ramble",
         "place": "village",
@@ -8261,6 +8411,7 @@
       "type": "Feature",
       "id": "node/3356994301",
       "properties": {
+  "population": 100,
         "@id": "node/3356994301",
         "name": "South Haven",
         "place": "village"
@@ -8277,6 +8428,7 @@
       "type": "Feature",
       "id": "node/3356997526",
       "properties": {
+  "population": 100,
         "@id": "node/3356997526",
         "name": "Bull Bay",
         "place": "village"
@@ -8293,6 +8445,7 @@
       "type": "Feature",
       "id": "node/3356997528",
       "properties": {
+  "population": 100,
         "@id": "node/3356997528",
         "name": "Eleven Mile",
         "place": "village"
@@ -8309,6 +8462,7 @@
       "type": "Feature",
       "id": "node/3357012385",
       "properties": {
+  "population": 100,
         "@id": "node/3357012385",
         "name": "Arntally",
         "place": "village"
@@ -8325,6 +8479,7 @@
       "type": "Feature",
       "id": "node/3357012386",
       "properties": {
+  "population": 100,
         "@id": "node/3357012386",
         "name": "Belvedere",
         "place": "village"
@@ -8341,6 +8496,7 @@
       "type": "Feature",
       "id": "node/3357012387",
       "properties": {
+  "population": 100,
         "@id": "node/3357012387",
         "name": "Church Corner",
         "place": "village"
@@ -8357,6 +8513,7 @@
       "type": "Feature",
       "id": "node/3357012388",
       "properties": {
+  "population": 100,
         "@id": "node/3357012388",
         "name": "Duhaney Pen",
         "place": "village"
@@ -8373,6 +8530,7 @@
       "type": "Feature",
       "id": "node/3357012390",
       "properties": {
+  "population": 100,
         "@id": "node/3357012390",
         "name": "Hagley Gap",
         "place": "village"
@@ -8389,6 +8547,7 @@
       "type": "Feature",
       "id": "node/3357012391",
       "properties": {
+  "population": 100,
         "@id": "node/3357012391",
         "name": "Hill Top",
         "place": "village"
@@ -8405,6 +8564,7 @@
       "type": "Feature",
       "id": "node/3357012392",
       "properties": {
+  "population": 100,
         "@id": "node/3357012392",
         "name": "Land Top",
         "place": "village"
@@ -8421,6 +8581,7 @@
       "type": "Feature",
       "id": "node/3357015896",
       "properties": {
+  "population": 100,
         "@id": "node/3357015896",
         "name": "Middleton",
         "place": "village"
@@ -8437,6 +8598,7 @@
       "type": "Feature",
       "id": "node/3357015897",
       "properties": {
+  "population": 100,
         "@id": "node/3357015897",
         "name": "Penlyne Castle",
         "place": "village"
@@ -8453,6 +8615,7 @@
       "type": "Feature",
       "id": "node/3357015899",
       "properties": {
+  "population": 100,
         "@id": "node/3357015899",
         "name": "Pera",
         "place": "village"
@@ -8469,6 +8632,7 @@
       "type": "Feature",
       "id": "node/3357015900",
       "properties": {
+  "population": 100,
         "@id": "node/3357015900",
         "name": "Port Morant",
         "place": "village"
@@ -8485,6 +8649,7 @@
       "type": "Feature",
       "id": "node/3357015901",
       "properties": {
+  "population": 100,
         "@id": "node/3357015901",
         "name": "Prospect",
         "place": "village"
@@ -8501,6 +8666,7 @@
       "type": "Feature",
       "id": "node/3357015904",
       "properties": {
+  "population": 100,
         "@id": "node/3357015904",
         "name": "Spring Garden",
         "place": "village"
@@ -8517,6 +8683,7 @@
       "type": "Feature",
       "id": "node/3358450873",
       "properties": {
+  "population": 100,
         "@id": "node/3358450873",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8536,6 +8703,7 @@
       "type": "Feature",
       "id": "node/3358450874",
       "properties": {
+  "population": 100,
         "@id": "node/3358450874",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8555,6 +8723,7 @@
       "type": "Feature",
       "id": "node/3358450875",
       "properties": {
+  "population": 100,
         "@id": "node/3358450875",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8574,6 +8743,7 @@
       "type": "Feature",
       "id": "node/3358450876",
       "properties": {
+  "population": 100,
         "@id": "node/3358450876",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8593,6 +8763,7 @@
       "type": "Feature",
       "id": "node/3358450877",
       "properties": {
+  "population": 100,
         "@id": "node/3358450877",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8612,6 +8783,7 @@
       "type": "Feature",
       "id": "node/3358450878",
       "properties": {
+  "population": 100,
         "@id": "node/3358450878",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8631,6 +8803,7 @@
       "type": "Feature",
       "id": "node/3358450879",
       "properties": {
+  "population": 100,
         "@id": "node/3358450879",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8650,6 +8823,7 @@
       "type": "Feature",
       "id": "node/3358450880",
       "properties": {
+  "population": 100,
         "@id": "node/3358450880",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8669,6 +8843,7 @@
       "type": "Feature",
       "id": "node/3358450881",
       "properties": {
+  "population": 100,
         "@id": "node/3358450881",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8688,6 +8863,7 @@
       "type": "Feature",
       "id": "node/3358450882",
       "properties": {
+  "population": 100,
         "@id": "node/3358450882",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8707,6 +8883,7 @@
       "type": "Feature",
       "id": "node/3358450883",
       "properties": {
+  "population": 100,
         "@id": "node/3358450883",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8726,6 +8903,7 @@
       "type": "Feature",
       "id": "node/3358450884",
       "properties": {
+  "population": 100,
         "@id": "node/3358450884",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8745,6 +8923,7 @@
       "type": "Feature",
       "id": "node/3358584989",
       "properties": {
+  "population": 100,
         "@id": "node/3358584989",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8764,6 +8943,7 @@
       "type": "Feature",
       "id": "node/3358584990",
       "properties": {
+  "population": 100,
         "@id": "node/3358584990",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8783,6 +8963,7 @@
       "type": "Feature",
       "id": "node/3358584992",
       "properties": {
+  "population": 100,
         "@id": "node/3358584992",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8802,6 +8983,8 @@
       "type": "Feature",
       "id": "node/3358584994",
       "properties": {
+  "population": 100,
+        "population": 100,
         "@id": "node/3358584994",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8821,6 +9004,7 @@
       "type": "Feature",
       "id": "node/3358584995",
       "properties": {
+  "population": 100,
         "@id": "node/3358584995",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8840,6 +9024,7 @@
       "type": "Feature",
       "id": "node/3358584997",
       "properties": {
+  "population": 100,
         "@id": "node/3358584997",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8859,6 +9044,7 @@
       "type": "Feature",
       "id": "node/3358585001",
       "properties": {
+  "population": 100,
         "@id": "node/3358585001",
         "admin_level": "8",
         "geonames:feature_code": "PPL",
@@ -8878,6 +9064,7 @@
       "type": "Feature",
       "id": "node/3396985817",
       "properties": {
+  "population": 100,
         "@id": "node/3396985817",
         "name": "Mavis Bank",
         "place": "village"
@@ -8894,6 +9081,7 @@
       "type": "Feature",
       "id": "node/3462635715",
       "properties": {
+  "population": 100,
         "@id": "node/3462635715",
         "name": "Sherwood Content",
         "place": "village"
@@ -8910,6 +9098,7 @@
       "type": "Feature",
       "id": "node/3538830723",
       "properties": {
+  "population": 100,
         "@id": "node/3538830723",
         "name": "Chapelton",
         "place": "village"
@@ -8926,6 +9115,7 @@
       "type": "Feature",
       "id": "node/3559598745",
       "properties": {
+  "population": 100,
         "@id": "node/3559598745",
         "name": "Rickett's River",
         "place": "village"
@@ -8942,6 +9132,7 @@
       "type": "Feature",
       "id": "node/3595108131",
       "properties": {
+  "population": 100,
         "@id": "node/3595108131",
         "name": "Gravel Hill",
         "place": "village"
@@ -8958,6 +9149,7 @@
       "type": "Feature",
       "id": "node/3634097229",
       "properties": {
+  "population": 100,
         "@id": "node/3634097229",
         "name": "Bamboo",
         "place": "village"
@@ -8974,6 +9166,7 @@
       "type": "Feature",
       "id": "node/3662497457",
       "properties": {
+  "population": 100,
         "@id": "node/3662497457",
         "name": "Lime Hall",
         "place": "village"
@@ -8990,6 +9183,7 @@
       "type": "Feature",
       "id": "node/3707332152",
       "properties": {
+  "population": 100,
         "@id": "node/3707332152",
         "name": "Duck Pond",
         "place": "village"
@@ -9006,6 +9200,7 @@
       "type": "Feature",
       "id": "node/3707409358",
       "properties": {
+  "population": 100,
         "@id": "node/3707409358",
         "name": "Contrivance",
         "place": "village"
@@ -9022,6 +9217,7 @@
       "type": "Feature",
       "id": "node/3721456695",
       "properties": {
+  "population": 100,
         "@id": "node/3721456695",
         "name": "Jackson Town",
         "place": "village"
@@ -9038,6 +9234,7 @@
       "type": "Feature",
       "id": "node/3767940198",
       "properties": {
+  "population": 100,
         "@id": "node/3767940198",
         "name": "Barrett Town",
         "place": "village"
@@ -9054,6 +9251,7 @@
       "type": "Feature",
       "id": "node/3767940200",
       "properties": {
+  "population": 100,
         "@id": "node/3767940200",
         "name": "Florence Hall Village",
         "place": "village"
@@ -9070,6 +9268,7 @@
       "type": "Feature",
       "id": "node/3767940201",
       "properties": {
+  "population": 100,
         "@id": "node/3767940201",
         "name": "Duncans",
         "place": "village"
@@ -9086,6 +9285,7 @@
       "type": "Feature",
       "id": "node/3767940202",
       "properties": {
+  "population": 100,
         "@id": "node/3767940202",
         "name": "Rio Bueno",
         "place": "village"
@@ -9102,6 +9302,7 @@
       "type": "Feature",
       "id": "node/3767970369",
       "properties": {
+  "population": 100,
         "@id": "node/3767970369",
         "name": "Salem",
         "place": "village"
@@ -9118,6 +9319,7 @@
       "type": "Feature",
       "id": "node/3767970370",
       "properties": {
+  "population": 100,
         "@id": "node/3767970370",
         "name": "Priory",
         "place": "village"
@@ -9134,6 +9336,7 @@
       "type": "Feature",
       "id": "node/3767970371",
       "properties": {
+  "population": 100,
         "@id": "node/3767970371",
         "name": "St Ann's Bay",
         "place": "village"
@@ -9150,6 +9353,7 @@
       "type": "Feature",
       "id": "node/3767997588",
       "properties": {
+  "population": 100,
         "@id": "node/3767997588",
         "name": "Rio Nuevo",
         "place": "village"
@@ -9166,6 +9370,7 @@
       "type": "Feature",
       "id": "node/3767997589",
       "properties": {
+  "population": 100,
         "@id": "node/3767997589",
         "name": "Boscobel",
         "place": "village"
@@ -9182,6 +9387,7 @@
       "type": "Feature",
       "id": "node/3767997590",
       "properties": {
+  "population": 100,
         "@id": "node/3767997590",
         "name": "Oracabessa",
         "place": "village"
@@ -9198,6 +9404,7 @@
       "type": "Feature",
       "id": "node/3767997591",
       "properties": {
+  "population": 100,
         "@id": "node/3767997591",
         "name": "Galina",
         "place": "village"
@@ -9214,6 +9421,7 @@
       "type": "Feature",
       "id": "node/3767997594",
       "properties": {
+  "population": 100,
         "@id": "node/3767997594",
         "name": "Trinity",
         "place": "village"
@@ -9230,6 +9438,7 @@
       "type": "Feature",
       "id": "node/3767997595",
       "properties": {
+  "population": 100,
         "@id": "node/3767997595",
         "name": "White Hall",
         "place": "village"
@@ -9246,6 +9455,7 @@
       "type": "Feature",
       "id": "node/3767997597",
       "properties": {
+  "population": 100,
         "@id": "node/3767997597",
         "name": "Windsor Castle",
         "place": "village"
@@ -9262,6 +9472,7 @@
       "type": "Feature",
       "id": "node/3767997598",
       "properties": {
+  "population": 100,
         "@id": "node/3767997598",
         "name": "Hart Hill",
         "place": "village"
@@ -9278,6 +9489,7 @@
       "type": "Feature",
       "id": "node/3767997600",
       "properties": {
+  "population": 100,
         "@id": "node/3767997600",
         "name": "Orange Bay",
         "place": "village"
@@ -9294,6 +9506,7 @@
       "type": "Feature",
       "id": "node/3768068693",
       "properties": {
+  "population": 100,
         "@id": "node/3768068693",
         "name": "Hope Bay",
         "place": "village"
@@ -9310,6 +9523,7 @@
       "type": "Feature",
       "id": "node/3768068694",
       "properties": {
+  "population": 100,
         "@id": "node/3768068694",
         "name": "St Margaret's Bay",
         "place": "village"
@@ -9326,6 +9540,7 @@
       "type": "Feature",
       "id": "node/3768068695",
       "properties": {
+  "population": 100,
         "@id": "node/3768068695",
         "name": "Burlington",
         "place": "village"
@@ -9342,6 +9557,7 @@
       "type": "Feature",
       "id": "node/3768068696",
       "properties": {
+  "population": 100,
         "@id": "node/3768068696",
         "name": "Bryan's Bay",
         "place": "village"
@@ -9358,6 +9574,7 @@
       "type": "Feature",
       "id": "node/3776971566",
       "properties": {
+  "population": 100,
         "@id": "node/3776971566",
         "name": "Little London",
         "place": "village"
@@ -9374,6 +9591,7 @@
       "type": "Feature",
       "id": "node/3776971567",
       "properties": {
+  "population": 100,
         "@id": "node/3776971567",
         "name": "New Hope",
         "place": "village"
@@ -9390,6 +9608,7 @@
       "type": "Feature",
       "id": "node/3788497249",
       "properties": {
+  "population": 100,
         "@id": "node/3788497249",
         "name": "Albion",
         "place": "village"
@@ -9406,6 +9625,7 @@
       "type": "Feature",
       "id": "node/3789201278",
       "properties": {
+  "population": 100,
         "@id": "node/3789201278",
         "name": "Yallahs",
         "place": "village"
@@ -9422,6 +9642,7 @@
       "type": "Feature",
       "id": "node/3821191243",
       "properties": {
+  "population": 100,
         "@id": "node/3821191243",
         "name": "Guys Hill",
         "place": "village"
@@ -9438,6 +9659,7 @@
       "type": "Feature",
       "id": "node/3889746118",
       "properties": {
+  "population": 100,
         "@id": "node/3889746118",
         "name": "Kellits",
         "place": "village"
@@ -9454,6 +9676,7 @@
       "type": "Feature",
       "id": "node/3889776930",
       "properties": {
+  "population": 100,
         "@id": "node/3889776930",
         "name": "Lluidas Vale",
         "place": "village"
@@ -9470,6 +9693,7 @@
       "type": "Feature",
       "id": "node/3907034117",
       "properties": {
+  "population": 100,
         "@id": "node/3907034117",
         "name": "Ewarton",
         "place": "village"
@@ -9486,6 +9710,7 @@
       "type": "Feature",
       "id": "node/3908325220",
       "properties": {
+  "population": 100,
         "@id": "node/3908325220",
         "name": "Brandon Hill",
         "place": "village"
@@ -9502,6 +9727,7 @@
       "type": "Feature",
       "id": "node/3915405157",
       "properties": {
+  "population": 100,
         "@id": "node/3915405157",
         "name": "Beeston Spring",
         "place": "village"
@@ -9518,6 +9744,7 @@
       "type": "Feature",
       "id": "node/4251430015",
       "properties": {
+  "population": 100,
         "@id": "node/4251430015",
         "name": "Mt Lebanus",
         "place": "village"
@@ -9534,6 +9761,7 @@
       "type": "Feature",
       "id": "node/4257772448",
       "properties": {
+  "population": 100,
         "@id": "node/4257772448",
         "name": "Mt Vernon",
         "place": "village"
@@ -9550,6 +9778,7 @@
       "type": "Feature",
       "id": "node/4272434857",
       "properties": {
+  "population": 100,
         "@id": "node/4272434857",
         "name": "Georgia",
         "place": "village",
@@ -9567,6 +9796,7 @@
       "type": "Feature",
       "id": "node/4384743365",
       "properties": {
+  "population": 100,
         "@id": "node/4384743365",
         "name": "Lime Tree Lane",
         "place": "village"
@@ -9583,6 +9813,7 @@
       "type": "Feature",
       "id": "node/3356994299",
       "properties": {
+  "population": 100,
         "@id": "node/3356994299",
         "@relations": [
           {
@@ -9610,6 +9841,7 @@
       "type": "Feature",
       "id": "node/3356937893",
       "properties": {
+  "population": 100,
         "@id": "node/3356937893",
         "@relations": [
           {
@@ -9637,6 +9869,7 @@
       "type": "Feature",
       "id": "node/3356984258",
       "properties": {
+  "population": 100,
         "@id": "node/3356984258",
         "@relations": [
           {
@@ -9664,6 +9897,7 @@
       "type": "Feature",
       "id": "node/3356984257",
       "properties": {
+  "population": 100,
         "@id": "node/3356984257",
         "@relations": [
           {
