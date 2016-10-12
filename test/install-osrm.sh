@@ -13,3 +13,6 @@ cd osrm-backend/build
 cmake ..
 make
 sudo make install
+
+pkg-config libosrm --variable=prefix
+npm install osrm --build-from-source
