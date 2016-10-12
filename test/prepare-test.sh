@@ -16,6 +16,5 @@ cd ../project_1463767649122/baseline
 
 rm *.os*m *.log
 $osrm_dir/osmosis --rbf JM.pbf --wx JM.osm
-wait
 osrm-extract JM.osm
 osrm-contract JM.osrm
