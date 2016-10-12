@@ -414,7 +414,7 @@ function createTimeMatrix(data) {
       var meta = {
         "created":{
           "time":new Date().getTime(),
-          "user":"steven"
+          "user":credentials.user
         },
         "name":subfile,
         "csvfile":file
