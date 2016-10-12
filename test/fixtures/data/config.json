@@ -43,9 +43,9 @@
        "name": "baseline",
         "dir": "./web/data/project_1463767649122/baseline",
         "files": {
-                "osm": "baseline.osm",
+                "osm": "JM.osm",
                 "profile": "profile.lua",
-                "osrm": "baseline.osrm"
+                "osrm": "JM.osrm"
         },
         "created": {
             "time":1463767649122,
