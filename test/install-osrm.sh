@@ -2,6 +2,7 @@
 set -x
 
 echo "Installing osrm-backend dependencies..."
+sudo apt-get install cmake libblkid-dev e2fslibs-dev libboost-all-dev libaudit-dev
 sudo apt-get install build-essential git cmake pkg-config \
 libbz2-dev libstxxl-dev libstxxl1 libxml2-dev \
 libzip-dev libboost-all-dev lua5.2 liblua5.2-0-dev libluabind-dev libtbb-dev
