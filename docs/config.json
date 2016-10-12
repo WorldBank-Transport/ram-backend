@@ -8,8 +8,8 @@
         "counties": "POIs/counties.geojson",
         "prefectures": "POIs/prefectures.geojson"
     },
-    "population" : "POP",
-    "stats": [        
+    "population" : "population",
+    "stats": [
         { "poi": "counties", "minutes": 60 },
         { "poi": "hospitals", "minutes": 30 },
         { "poi": "banks", "minutes": 30 },
