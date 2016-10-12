@@ -14,4 +14,7 @@ chmod a+x bin/osmosis
 osrm_dir=$(pwd)/bin
 cd ../project_1463767649122/baseline
 
+rm *.os*m *.log
 $osrm_dir/osmosis --rbf JM.pbf --wx JM.osm
+osrm-extract JM.osm
+osrm-contract JM.osrm
