@@ -295,6 +295,11 @@ function addLevel(json, map,socket) {
                MAP.removeLayer(layer)
             });
         d.area.addTo(MAP)
+        d.area.bindTooltip(          
+          function(f){
+          var ele = d3.selectAll('#levelSelector>div>label>input').filter(function(d,i){return this.checked}).data();
+          return f.feature.properties[ele[0].geometryId]
+        }).openTooltip();
        });
 
 
@@ -311,7 +316,12 @@ function addLevel(json, map,socket) {
             if(!layer._url)
                MAP.removeLayer(layer)
             });
+
         d.area.addTo(MAP)
+        d.area.bindTooltip(function(f){
+          var ele = d3.selectAll('#levelSelector>div>label>input').filter(function(d,i){return this.checked}).data();
+          return f.feature.properties[ele[0].geometryId]
+        }).openTooltip();
       }
       CONNECTED =true;
     })

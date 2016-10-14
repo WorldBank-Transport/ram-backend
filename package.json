@@ -26,7 +26,7 @@
     "dc": "^1.7.5",
     "express": "^4.14.0",
     "jquery": "^2.2.4",
-    "leaflet": "^0.7.7",
+    "leaflet": "^1.0",
     "mkdirp": "^0.5.1",
     "osrm": "^5",
     "osrm-isochrone": "^2.0.0",
