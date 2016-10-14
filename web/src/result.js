@@ -180,18 +180,6 @@ if(minute === undefined) minute = +$('#travelTime').val();
         return d.poi;
       })
   });
-
-   
-/*
-
-      .html(function(d){
-        return '<td>'+d.file+'</td><td>'+Math.round(d.county/d.total*1000)/10+'</td><td>'+Math.round(d.hospital/d.total*1000)/10+'</td><td>'+Math.round(d.banks/d.total*1000)/10+'</td><td>'+Math.round(d.school/d.total*1000)/10+'</td><td>'
-      });  
-
-    d3.select('#statcomp')
-      .insert("tr", ":first-child")
-      .html('<th>'+$.i18n.prop('anl_file')+'</th><th>'+$.i18n.prop('anl_60c')+'</th><th>'+$.i18n.prop('anl_30h')+'</th><th>'+$.i18n.prop('anl_30b')+'</th><th>'+$.i18n.prop('anl_20s')+'</th>')
-      */
   }
 }
 
