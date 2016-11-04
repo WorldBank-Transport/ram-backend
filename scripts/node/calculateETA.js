@@ -2,11 +2,12 @@
     async = require('async'),
     os = require('os'),
     fs = require('fs'),
-    intersect = require('turf-intersect'),
-    within = require('turf-within'),
-	point = require('turf-point'),
-	buffer = require('turf-buffer'),
-	featurecollection = require('turf-featurecollection');
+    turf = require('@turf/turf')
+    intersect = require('@turf/intersect'),
+    within = require('@turf/within'),
+	point = require('@turf/turf').point,
+	buffer = require('@turf/buffer'),
+	featurecollection = require('@turf/turf').featureCollection;
 
 var POIs = {};
 var villages;
