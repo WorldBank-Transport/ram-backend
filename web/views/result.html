@@ -20,9 +20,9 @@
 <body>
 <div class="container-fluid inhoud">
   <div class="page-header">
-  <h1>
+  <h2>
   <a href="/"><img src="../style/logo.png"/></a>
-  <span id="frt_title"><script>t('#frt_title','frt_title')</script></span></h1>
+  <small><a href="" id="frt_sub_project"><script>t('#frt_sub_project','frt_sub_project')</script></a>, <span id="frt_sub_result"><script>t('#frt_sub_result','frt_sub_result')</script></span></small></h2>
   <div id="switcher" class="pull-right clear-fix"><span id="users"></span><span id="lng_en"><script>t('#lng_en','lng_en')</script></span> <span id="lng_zh"><script>t('#lng_zh','lng_zh')</script></span></div>
 </div>
 
@@ -56,6 +56,14 @@
   </div>
   <div class="col-md-10 col-sm-8">
   <div class="col-md-5 col-sm-5 pull-right" id="anl_slider_txt"><script>t('#anl_slider_txt','anl_slider_txt',60)</script></div><div class="col-md-6 col-sm-6"><input type="range" min="0" max="90" step="1" id="travelTime" value="60"></input>
+  </div>
+  <div class="col-md-10 col-sm-8">
+  <table  class="table table-hover">
+     <caption>Statistics comparison</caption>   
+     <thead id="statcomphead"></thead> 
+     <tbody id="statcomp"></tbody>
+
+   </table>
   </div>
   </div>
  

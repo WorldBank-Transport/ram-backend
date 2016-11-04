@@ -74,5 +74,9 @@ jQuery(document).ready(function(){
     window.location.href=url;
     return false;
   })
-}); 
 
+  $('#frt_sub_result').attr('href','/views/result.html?project='+getUrlVars()["project"])
+
+  $('#frt_sub_project').attr('href','/views/project.html?project='+getUrlVars()["project"])
+
+}); 

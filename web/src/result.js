@@ -4,7 +4,8 @@ var PROJECT,
    RESULTS = [],
    WALKSPEED = 3.6,
    volumeByPopulation,
-   COMPARELIST = [];
+   COMPARELIST = [],
+   COMPARECOUNTER = [];
 
 function validSocket(socket) {
     socket.on('config',function(c){
@@ -12,7 +13,6 @@ function validSocket(socket) {
     });
     socket.on('resultJson',function(data){
         if(data.constructor === Array){
-            console.log(data)
           addResult(data);
         }
     })
@@ -70,14 +70,27 @@ function addResult(data) {
     .attr('class','compareButtons')
     .attr('type','checkbox')
     .attr('value',function (d) { return d.result.csvfile})    
-    .on('click',compareButtons);
+    .on('click',function(d){compareButtons(this,d)});
     l.append('span')
     .text($.i18n.prop('anl_compare'))
     
 }
-function compareButtons(e){
-    var file = '../data/'+e.project+'/csv/'+e.result.csvfile;
-
+function compareButtons(e,c){
+  var file = '../data/'+c.project+'/csv/'+c.result.csvfile;
+  if(e.checked) {
+    d3.csv(file,function(data){
+      var normal = normaliseCsv(data);
+      COMPARELIST.push({file:file,data:normal,uid:c.result.created.time,name:c.result.name})
+      COMPARECOUNTER.push(c.result.created.time);
+      createCompareTable();
+    })
+  }   
+  else {
+    COMPARELIST.splice(COMPARECOUNTER.indexOf(c.result.created.time),1);
+    COMPARECOUNTER.splice(COMPARECOUNTER.indexOf(c.result.created.time),1);
+    createCompareTable();
+  }
+  
 }
 
 function setActiveResult(csv) {
@@ -119,6 +132,55 @@ function createStats(err,data) {
     })
 
     buildGraphs(normalised);
+}
+
+d3.select('#travelTime').on('input',function(d){
+  createCompareTable(this.value);
+})
+function createCompareTable(minute){
+if(minute === undefined) minute = +$('#travelTime').val();
+  $('#anl_slider_txt').html($.i18n.prop('anl_slider_txt',minute));
+  var list = [];
+  COMPARELIST.forEach(function(item){
+    var listitem = {};
+    var data = item.data;
+    listitem.name = item.name;
+    listitem.total = data.reduce(function(p,c){return p+c.population},0)
+    PROJECT.stats.forEach(function(d){
+      listitem[d.poi] = data.reduce(function(p,c){
+        return c[d.poi]<=minute?p+c.population:p
+      },0);
+    })
+    list.push(listitem)
+  })
+
+
+  d3.select('#statcomp').html('');
+  d3.select('#statcomphead').html('');
+  if(list.length>0) {
+  var head = d3.select('#statcomphead');
+  head.append('th').text('file');
+  var row = d3.select('#statcomp')
+    .selectAll('tr')
+    .data(list)
+    .enter()
+    .insert("tr")
+
+  row.append('td')
+    .text(function(d){
+      return d.name
+    });
+  PROJECT.stats.forEach(function(d){
+    row.append('td')
+      .text(function(a) {
+        return Math.round(+a[d.poi]/a.total*1000)/10
+      })
+    head.append('th')
+      .text(function(a) {
+        return d.poi;
+      })
+  });
+  }
 }
 
 function accumulate_group(source_group) {

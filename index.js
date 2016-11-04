@@ -382,7 +382,6 @@ function createTimeMatrix(data) {
   var remaining = squares.features.length;
   cETA.on('message',function(msg){
     if(msg.type == 'status') {
-      console.log(msg.data);
       io.emit('status',{id:msg.id,msg:msg.data});
     }
     else if(msg.type=='square') {
@@ -404,7 +403,6 @@ function createTimeMatrix(data) {
       }
       console.log('timing: '+timing);
       io.emit('status',{id:msg.id,msg:'srv_writing'});
-      console.log(msg.data);
       var networkfile = msg.osrm.split('/')[msg.osrm.split('/').length-1];
       var osrmfile = networkfile.split('.')[0];
       var print = d3.csv.format(msg.data);
