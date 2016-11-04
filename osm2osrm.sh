@@ -26,7 +26,7 @@ cd $DIR
 ln -s ${WORKDIR}/../osrm-backend/profiles/lib lib
 
 osrm-extract *.osm 1>&2 
-osrm-prepare *.osrm 1>&2 
+osrm-contract *.osrm 1>&2 
 
 timestamp=$(date +%s)
 
