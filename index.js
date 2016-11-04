@@ -115,8 +115,10 @@ function postAuthenticate(socket, data) {
     var uploader = new siofu();
     uploader.dir = './web/data/tmp';
     uploader.listen(socket);
+    uploader.on('progress',progress);
     uploader.on('complete',function(e){
-      var file = e.file.name;
+      var files = e.file.pathName.split('/');
+      var file = files[files.length-1];
       var fsplit = file.split('.');
       if(fsplit[fsplit.length-1].toLowerCase()!=='zip') {
         socket.emit('status',{msg:'invalid zip file'});
@@ -125,6 +127,8 @@ function postAuthenticate(socket, data) {
        socket.emit('uploadComplete',{file:e.file.pathName});
       }
     });
+
+   
 
     socket.on('getMatrixForRegion',createTimeMatrix);
 
@@ -229,6 +233,7 @@ function getProjectIdx(uid) {
 
 function ogr2osm(dir,socket,data) {
   var cmd = './ogr2osm.sh -d '+dir;
+  console.log(cmd)
   exec(cmd,function(error,stdout,stderr){
     if (error !== null) {
       console.log('exec error: ' + error);
@@ -304,42 +309,6 @@ function profile2osrm(dir,socket,data) {
   });
 }
 
-
-
-
-
-/* create an isochrone
-requires:
-data.center [lon,lat]
-data.id ID of the run (timestamp)
-data.time int with isochrone time in seconds
-data.res int with the resolution of the isochrone
-
-returns:
-isochrone features
-*//*
-function createIsochrone(data) {
-  var cISO = fork('./scripts/node/calculateIsochrone.js');
-  if(!data||!data.center) {
-    console.warn('no data')
-    return false;
-  }
-  io.emit('status',{id:data.id,msg:'srv_create_isochrone',p0:data.time})
-
-  cISO.send({data:data,villages:villagesFile,osrm:osrm,maxSpeed:maxSpeed});
-
-  cISO.on('message',function(msg){
-    if(msg.type == 'error') {
-      console.warn(msg.data);
-    }
-    else if(msg.type =='done') {
-      io.emit('status',{id:data.id,msg:'srv_finished'});
-      io.emit('finished',{type:'isochrone',data:msg.data});
-      cISO.disconnect();
-
-    }
-  });
-}*/
 
 /* create distance matrix
 requires:
@@ -432,4 +401,12 @@ function createTimeMatrix(data) {
       });
     }
   });
+}
+
+
+function progress(e) {
+  var total = e.file.size;
+  var prog = e.file.bytesLoaded;
+  var progF = Math.round(prog/total*1000)/10;
+  if(progF%10==0)   io.emit('status',{msg:'upl_progress',p0:progF});
 }
