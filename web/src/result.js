@@ -2,10 +2,11 @@
 var PROJECT,
    CONNECTED = false,
    RESULTS = [],
-   WALKSPEED = 3.6,
+   WALKSPEED = 1,
    volumeByPopulation,
    COMPARELIST = [],
-   COMPARECOUNTER = [];
+   COMPARECOUNTER = [],
+   DATA = [];
 
 function validSocket(socket) {
     socket.on('config',function(c){
@@ -78,9 +79,8 @@ function addResult(data) {
 function compareButtons(e,c){
   var file = '../data/'+c.project+'/csv/'+c.result.csvfile;
   if(e.checked) {
-    d3.csv(file,function(data){
-      var normal = normaliseCsv(data);
-      COMPARELIST.push({file:file,data:normal,uid:c.result.created.time,name:c.result.name})
+    d3.csv(file,function(data){      
+      COMPARELIST.push({file:file,data:data,uid:c.result.created.time,name:c.result.name})
       COMPARECOUNTER.push(c.result.created.time);
       createCompareTable();
     })
@@ -113,8 +113,15 @@ function setActiveResult(csv) {
 function normaliseCsv(data) {  
   data.forEach(function(d,idx) {
     d.population  = +d[PROJECT.population];
+    d.nearest = +d.nearest;
     for(var key in PROJECT.pois) {
-      d[key] = d3.round(((+d[key])+(+d.nearest/WALKSPEED))/60.,0);
+      d[key] = d3.round(
+        (
+          ((+d[key])/60)
+          +
+          (d.nearest/1000/WALKSPEED*60.)
+        )
+      ,0);
     };
     d.lat = d3.round(+d.lat,6);
     d.lon = d3.round(+d.lon,6);
@@ -124,62 +131,72 @@ function normaliseCsv(data) {
 
 function createStats(err,data) {
     if(err) throw err;
-    var normalised = normaliseCsv(data);
+    if(data === undefined) data = DATA;
+    else DATA=data;
+    var normalised = normaliseCsv(data);    
     var totalPop = normalised.reduce(function(p,c){return p+(+c[PROJECT.population])},0);
+    d3.select('#statsum').html('');
     PROJECT.stats.forEach(function(s) {
-        var stat = normalised.reduce(function (p,c) { return c[s.poi]<s.minutes?p+(+c[PROJECT.population]):p;},0)*1000
+        var stat = normalised.reduce(function (p,c) { 
+          return c[s.poi]<s.minutes?p+(+c[PROJECT.population]):p;
+        },0)*1000;
         d3.select('#statsum').append('tr').append('td').text(Math.round(stat/totalPop)/10+'% of the population can reach '+s.poi +' in '+s.minutes +' minutes')
     })
-
     buildGraphs(normalised);
 }
 
 d3.select('#travelTime').on('input',function(d){
   createCompareTable(this.value);
 })
+d3.select('#walkSpeed').on('input',function(d){
+  WALKSPEED = this.value;
+  $('#wlk_slider_txt').html($.i18n.prop('wlk_slider_txt',WALKSPEED));
+  createStats();
+  createCompareTable();
+})
+
 function createCompareTable(minute){
 if(minute === undefined) minute = +$('#travelTime').val();
   $('#anl_slider_txt').html($.i18n.prop('anl_slider_txt',minute));
   var list = [];
   COMPARELIST.forEach(function(item){
     var listitem = {};
-    var data = item.data;
+    var data = normaliseCsv(item.data);
     listitem.name = item.name;
     listitem.total = data.reduce(function(p,c){return p+c.population},0)
     PROJECT.stats.forEach(function(d){
       listitem[d.poi] = data.reduce(function(p,c){
-        return c[d.poi]<=minute?p+c.population:p
+        return d3.round((c[d.poi]),0)<minute?p+c.population:p
       },0);
     })
     list.push(listitem)
   })
 
-
   d3.select('#statcomp').html('');
   d3.select('#statcomphead').html('');
   if(list.length>0) {
-  var head = d3.select('#statcomphead');
-  head.append('th').text('file');
-  var row = d3.select('#statcomp')
-    .selectAll('tr')
-    .data(list)
-    .enter()
-    .insert("tr")
+    var head = d3.select('#statcomphead');
+    head.append('th').text('file');
+    var row = d3.select('#statcomp')
+      .selectAll('tr')
+      .data(list)
+      .enter()
+      .insert("tr")
 
-  row.append('td')
-    .text(function(d){
-      return d.name
-    });
-  PROJECT.stats.forEach(function(d){
     row.append('td')
-      .text(function(a) {
-        return Math.round(+a[d.poi]/a.total*1000)/10
-      })
-    head.append('th')
-      .text(function(a) {
-        return d.poi;
-      })
-  });
+      .text(function(d){
+        return d.name
+      });
+    PROJECT.stats.forEach(function(d){
+      row.append('td')
+        .text(function(a) {
+          return d3.round(+a[d.poi]/a.total*1000,0)/10
+        })
+      head.append('th')
+        .text(function(a) {
+          return d.poi;
+        })
+    });
   }
 }
 
@@ -197,6 +214,7 @@ function accumulate_group(source_group) {
 }
 
 function buildGraphs(data) {
+  d3.select('#graphs').html('');
     var facts,all;
     facts = crossfilter(data);  // Gets our 'facts' into crossfilter
     all = facts.groupAll();
