@@ -80,6 +80,7 @@ function compareButtons(e,c){
   var file = '../data/'+c.project+'/csv/'+c.result.csvfile;
   if(e.checked) {
     d3.csv(file,function(data){      
+      console.log(data[0])
       COMPARELIST.push({file:file,data:data,uid:c.result.created.time,name:c.result.name})
       COMPARECOUNTER.push(c.result.created.time);
       createCompareTable();
@@ -110,12 +111,12 @@ function setActiveResult(csv) {
     },1000)  
 } 
 
-function normaliseCsv(data) {  
+function normaliseCsv(data) { 
   data.forEach(function(d,idx) {
     d.population  = +d[PROJECT.population];
     d.nearest = +d.nearest;
     for(var key in PROJECT.pois) {
-      d[key] = d3.round(
+      d[key+'-nm'] = d3.round(
         (
           ((+d[key])/60)
           +
@@ -138,7 +139,7 @@ function createStats(err,data) {
     d3.select('#statsum').html('');
     PROJECT.stats.forEach(function(s) {
         var stat = normalised.reduce(function (p,c) { 
-          return c[s.poi]<s.minutes?p+(+c[PROJECT.population]):p;
+          return c[s.poi+'-nm']<s.minutes?p+(+c[PROJECT.population]):p;
         },0)*1000;
         d3.select('#statsum').append('tr').append('td').text(Math.round(stat/totalPop)/10+'% of the population can reach '+s.poi +' in '+s.minutes +' minutes')
     })
@@ -161,19 +162,22 @@ if(minute === undefined) minute = +$('#travelTime').val();
   var list = [];
   COMPARELIST.forEach(function(item){
     var listitem = {};
-    var data = normaliseCsv(item.data);
+    var normalised = normaliseCsv(item.data);
     listitem.name = item.name;
-    listitem.total = data.reduce(function(p,c){return p+c.population},0)
+    listitem.total = normalised.reduce(function(p,c){return p+c.population},0)
     PROJECT.stats.forEach(function(d){
-      listitem[d.poi] = data.reduce(function(p,c){
-        return d3.round((c[d.poi]),0)<minute?p+c.population:p
+      
+      listitem[d.poi] = normalised.reduce(function(p,c){
+        return c[d.poi+'-nm']<minute?p+c.population:p
       },0);
     })
+    console.log(listitem)
     list.push(listitem)
   })
 
   d3.select('#statcomp').html('');
   d3.select('#statcomphead').html('');
+  console.log(list)
   if(list.length>0) {
     var head = d3.select('#statcomphead');
     head.append('th').text('file');
@@ -224,12 +228,13 @@ function buildGraphs(data) {
 
     
 
-    for(var poi in PROJECT.pois) {
+    for(var p in PROJECT.pois) {
+       var poi = p+'-nm';
         var id = '#'+poi+'Chart';
         d3.select('#graphs').append('div').attr('id',poi+'ChartSpace')
         .attr('class','col-md-6 col-md-offset-0 col-sm-offset-4 col-sm-8 col-xs-12')
         .append('h3')
-        .text(poi);
+        .text(p);
 
         d3.select(id+'Space').append('div').attr('id',poi+'Chart');
         var chart = dc.barChart(id);    
