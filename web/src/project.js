@@ -116,7 +116,7 @@ function createActiveOsrm() {
   d3.selectAll('.osrmButtons')
   .attr('checked',null);
   d3.select('#cx_'+PROJECT.activeOSRM.uid)
-  .attr('checked',true)
+  .attr('checked',"checked")
  
 }
 function changeOsrm(data,socket) {

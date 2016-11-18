@@ -5,7 +5,13 @@
  
 #Rural-Road-Accessibility (RRA)
 
-RRA will help you to calculate the traveltime between villages and sets of POIs. It will return a CSV file with the travel time from each village to the nearest POI of a type.
+RRA calculates the traveltime between villages and sets of POIs. It returns a CSV file with the travel time from each village to the nearest POI of a type. Built to allow planning scenarions (add/remove road, road upgrade/downgrade).
+
+Can run fully on OSM data, or user data. Internally is a modullar wrapper that prepares the input data if available, calls OSRM and visualizes the results.
+
+#How to run RRA
+
+Evenutally we want a docker image. For now you need to install each dependency:
 
 You need to have OSRM v5 installed on your machine: https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM also you need to have node installed. Currently this only runs on OS X or Linux (it is depending on OSRM which does not (yet) run on windows)
 
