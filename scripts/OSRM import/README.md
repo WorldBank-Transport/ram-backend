@@ -1,13 +1,13 @@
 ### Importing .osm file into OSRM
 
-Download and build the [osrm-backend](https://github.com/Project-OSRM/osrm-backend). Link the profile and profile-lib directory in the osrm-backend build directory
+Download and build the [osrm-backend](https://github.com/Project-OSRM/osrm-backend). Link the RRA profile, and profile-lib directory of osrm-backend into the build directory
 
 ```
 ln -s profile.lua ~/osrm-backend/build/profile.lua
-ln -s ~/osrm-backend/lib/ ~/osrm-backend/build/lib/
+ln -s ~/osrm-backend/profiles/lib/ ~/osrm-backend/build/lib/
 ```
 
-copy or link the osm file in the build directory and make sure it is named map.osm 
+copy or link the osm file in the build directory and make sure it is named map.osm
 
 Create a .stxxl file which fits your computer configuration. See the [wiki](https://github.com/Project-OSRM/osrm-backend/wiki/Running-OSRM) for more details. Not stated on the wiki is the 'memory' access_method. This is the fastest method but obviously requires enough memory to do the whole process in memory. This is the .stxxl file I have used on a 3GB linux machine with the 700MB Guizhou OSM file:
 
