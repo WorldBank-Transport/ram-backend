@@ -2,7 +2,7 @@ sudo: required
 dist: trusty
 language: node_js
 node_js:
-- '6.1'
+- '4.1.1'
 before_install:
 - sudo apt-get -qq update
 - sudo apt-get install -y osmosis
@@ -12,8 +12,7 @@ before_install:
 - "./test/prepare-test.sh"
 install:
 - npm install
-before_script:
-- node index.js &
+
 notifications:
   slack:
     on_success: change

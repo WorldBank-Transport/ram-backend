@@ -73,9 +73,9 @@ var auth = function (req, res, next) {
 
 app.use('/', [auth, compression(),express.static(__dirname + '/web/',{ maxAge: 86400000 })]);
 
+
 http.listen(parseInt(port, 10));
 console.log("Static file server running at\n  => http://localhost:" + port + "/\nCTRL + C to shutdown");
-
 
 
 
