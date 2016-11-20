@@ -5,9 +5,9 @@
     turf = require('@turf/turf')
     intersect = require('@turf/intersect'),
     within = require('@turf/within'),
-	point = require('@turf/turf').point,
-	buffer = require('@turf/buffer'),
-	featurecollection = require('@turf/turf').featureCollection;
+	  point = require('@turf/turf').point,
+	  buffer = require('@turf/buffer'),
+	  featurecollection = require('@turf/turf').featureCollection;
 
 var POIs = {};
 var villages;
@@ -189,6 +189,7 @@ function villagesInRegion(region,villages) {
 
 //helper function to retrieve pois of type 'poi' within a buffer around region
 function poisInBuffer(feature,time,speed,poi) {
+  console.log("feature",feature,"time",time,"speed",speed,"poi",poi);
 	var length = (time/3600)*speed;
 	var geom = featurecollection([buffer(feature,length,'kilometers')]);
 	var result = within(poi,geom);
