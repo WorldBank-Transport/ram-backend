@@ -152,3 +152,17 @@ path {
     fill: #eeeeec;
 }
 
+.edit-key {
+    display:none;
+}
+
+.key-0 {
+    display:block;
+}
+.removed {
+    text-decoration: line-through;
+    opacity: 0.5;
+}
+.changed {
+    box-shadow: 0px 0px 10px orange;
+}
