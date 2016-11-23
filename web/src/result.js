@@ -16,34 +16,34 @@ function validSocket(socket) {
         if(data.constructor === Array){
           addResult(data);
         }
-    })
+    });
 }
 function inValidSocket(socket) {
-    socket.off('config');    
-    socket.off('resultJson');    
+    socket.off('config');
+    socket.off('resultJson');
 }
 
 function viewProject(json,socket) {
-    var project = getUrlVars()['project'];
-    PROJECT = json.filter(function (d) { return d.uid === project })[0];
+    var project = getUrlVars().project;
+    PROJECT = json.filter(function (d) { return d.uid === project; })[0];
     if(PROJECT===undefined) {
         if(json.length>0){
             PROJECT = json[0];
             project = PROJECT.uid;
         }
         else throw 'no project defined';
-    }    
+    }
     socket.emit('retrieveResults',{project:project});
 
     var pDiv = d3.select('#projectInfo').html('');
 
     pDiv.append('h2').text(PROJECT.name);
-    pDiv.append('span').text('created at '+ new Date(parseInt(PROJECT.created)))
+    pDiv.append('span').text('created at '+ new Date(parseInt(PROJECT.created)));
 
 }
 
 function addResult(data) {
-  var csv = getUrlVars()['csv'];
+  var csv = getUrlVars().csv;
   if(csv)  setActiveResult(csv);
   RESULTS = data;
 
@@ -51,17 +51,17 @@ function addResult(data) {
     .selectAll('tr')
     .data(RESULTS)
     .enter()
-    .insert("tr", ":first-child")
+    .insert("tr", ":first-child");
 
   row.append('td')
-    .text(function(d){return d.result.name});
+    .text(function(d){return d.result.name;});
   row.append('td')
     .append('a')
-    .attr('href',function(d){ return '../data/'+PROJECT.uid+'/csv/'+d.result.csvfile})
+    .attr('href',function(d){ return '../data/'+PROJECT.uid+'/csv/'+d.result.csvfile;})
     .text('Download result');
   row.append('td')
     .append('a')
-    .attr('href',function(d){ return 'result.html?project='+PROJECT.uid+'&csv='+d.result.csvfile})
+    .attr('href',function(d){ return 'result.html?project='+PROJECT.uid+'&csv='+d.result.csvfile;})
     .text('View result');
    var l = row.append('td')
     .append('div')
@@ -70,28 +70,28 @@ function addResult(data) {
     l.append('input')
     .attr('class','compareButtons')
     .attr('type','checkbox')
-    .attr('value',function (d) { return d.result.csvfile})    
-    .on('click',function(d){compareButtons(this,d)});
+    .attr('value',function (d) { return d.result.csvfile;})
+    .on('click',function(d){compareButtons(this,d);});
     l.append('span')
     .text($.i18n.prop('anl_compare'))
-    
+
 }
 function compareButtons(e,c){
   var file = '../data/'+c.project+'/csv/'+c.result.csvfile;
   if(e.checked) {
-    d3.csv(file,function(data){      
-      console.log(data[0])
-      COMPARELIST.push({file:file,data:data,uid:c.result.created.time,name:c.result.name})
+    d3.csv(file,function(data){
+      console.log(data[0]);
+      COMPARELIST.push({file:file,data:data,uid:c.result.created.time,name:c.result.name});
       COMPARECOUNTER.push(c.result.created.time);
       createCompareTable();
-    })
-  }   
+    });
+  }
   else {
     COMPARELIST.splice(COMPARECOUNTER.indexOf(c.result.created.time),1);
     COMPARECOUNTER.splice(COMPARECOUNTER.indexOf(c.result.created.time),1);
     createCompareTable();
   }
-  
+
 }
 
 function setActiveResult(csv) {
@@ -107,11 +107,11 @@ function setActiveResult(csv) {
     window.setTimeout(function(){
         queue()
         .defer(d3.csv, file)
-        .await(createStats)
-    },1000)  
-} 
+        .await(createStats);
+    },1000);
+}
 
-function normaliseCsv(data) { 
+function normaliseCsv(data) {
   data.forEach(function(d,idx) {
     d.population  = +d[PROJECT.population];
     d.nearest = +d.nearest;
@@ -120,7 +120,7 @@ function normaliseCsv(data) {
         (
           ((+d[key])/60)
           +
-          (d.nearest/1000/WALKSPEED*60.)
+          (d.nearest/1000/WALKSPEED*60.0)
         )
       ,0);
     };
@@ -134,15 +134,18 @@ function createStats(err,data) {
     if(err) throw err;
     if(data === undefined) data = DATA;
     else DATA=data;
-    var normalised = normaliseCsv(data);    
+    var normalised = normaliseCsv(data);
     var totalPop = normalised.reduce(function(p,c){return p+(+c[PROJECT.population])},0);
     d3.select('#statsum').html('');
-    PROJECT.stats.forEach(function(s) {
-        var stat = normalised.reduce(function (p,c) { 
+    if(PROJECT.stats !== undefined) {
+      PROJECT.stats.forEach(function(s) {
+        var stat = normalised.reduce(function (p,c) {
           return c[s.poi+'-nm']<s.minutes?p+(+c[PROJECT.population]):p;
         },0)*1000;
-        d3.select('#statsum').append('tr').append('td').text(Math.round(stat/totalPop)/10+'% of the population can reach '+s.poi +' in '+s.minutes +' minutes')
-    })
+        d3.select('#statsum').append('tr').append('td').text(Math.round(stat/totalPop)/10+'% of the population can reach '+s.poi +' in '+s.minutes +' minutes');
+    });} else {
+      d3.select('#statsum').append('tr').append('td').text("ERROR: No statistics found.");}
+
     buildGraphs(normalised);
 }
 
@@ -164,20 +167,19 @@ if(minute === undefined) minute = +$('#travelTime').val();
     var listitem = {};
     var normalised = normaliseCsv(item.data);
     listitem.name = item.name;
-    listitem.total = normalised.reduce(function(p,c){return p+c.population},0)
+    listitem.total = normalised.reduce(function(p,c){return p+c.population;},0);
     PROJECT.stats.forEach(function(d){
-      
+
       listitem[d.poi] = normalised.reduce(function(p,c){
-        return c[d.poi+'-nm']<minute?p+c.population:p
+        return c[d.poi+'-nm']<minute?p+c.population:p;
       },0);
-    })
+    });
     console.log(listitem)
     list.push(listitem)
-  })
+  });
 
   d3.select('#statcomp').html('');
   d3.select('#statcomphead').html('');
-  console.log(list)
   if(list.length>0) {
     var head = d3.select('#statcomphead');
     head.append('th').text('file');
@@ -185,21 +187,21 @@ if(minute === undefined) minute = +$('#travelTime').val();
       .selectAll('tr')
       .data(list)
       .enter()
-      .insert("tr")
+      .insert("tr");
 
     row.append('td')
       .text(function(d){
-        return d.name
+        return d.name;
       });
     PROJECT.stats.forEach(function(d){
       row.append('td')
         .text(function(a) {
-          return d3.round(+a[d.poi]/a.total*1000,0)/10
-        })
+          return d3.round(+a[d.poi]/a.total*1000,0)/10;
+        });
       head.append('th')
         .text(function(a) {
           return d.poi;
-        })
+        });
     });
   }
 }
@@ -213,7 +215,7 @@ function accumulate_group(source_group) {
         cumulate += d.value;
         return {key:d.key, value:cumulate};
       });
-    } 
+    }
   };
 }
 
@@ -226,7 +228,7 @@ function buildGraphs(data) {
     .dimension(facts)
     .group(all);
 
-    
+
 
     for(var p in PROJECT.pois) {
        var poi = p+'-nm';
@@ -237,13 +239,13 @@ function buildGraphs(data) {
         .text(p);
 
         d3.select(id+'Space').append('div').attr('id',poi+'Chart');
-        var chart = dc.barChart(id);    
-        var value = facts.dimension(function(d){return d[poi]})
+        var chart = dc.barChart(id);
+        var value = facts.dimension(function(d){return d[poi];});
         var valueGroupSum = value.group()
-            .reduceSum(function(d) { return d[PROJECT.population]; }); 
-        
+            .reduceSum(function(d) { return d[PROJECT.population]; });
+
         var valueGroupCount = value.group()
-            .reduceCount(function(d) { return d[poi]; }) // counts the number of the facts by hospitals
+            .reduceCount(function(d) { return d[poi]; }); // counts the number of the facts by hospitals
         var max = value.top(1)[0][poi];
         chart.width(480)
             .height(150)
@@ -266,7 +268,7 @@ function buildGraphs(data) {
     var populationChart = dc.barChart("#populationChart");
     var populationDimension = facts.dimension(function (d) {
         return d.population;
-    }); 
+    });
     var populationGroupSum = populationDimension.group()
         .reduceSum(function(d) { return d.population; });
     volumeByPopulation = facts.dimension(function(d) {
@@ -301,11 +303,11 @@ d3.select('#anl_export')
       filename = filename + '.csv';
     }
     exportCSV(filename);
-  })
+  });
 
 function exportCSV(filename) {
   var villages = volumeByPopulation.top(Infinity);
-  var csvFile = d3.csv.format(villages)
+  var csvFile = d3.csv.format(villages);
   var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
   if (navigator.msSaveBlob) { // IE 10+
     navigator.msSaveBlob(blob, filename);
