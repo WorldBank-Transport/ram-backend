@@ -11,7 +11,7 @@
     "type": "git",
     "url": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility.git"
   },
-  "author": "Steven M. Ottens",
+  "author": "See contributors on repo.",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility/issues"
@@ -21,7 +21,6 @@
     "async": "^1.5.2",
     "basic-auth": "^1.0.3",
     "bootstrap": "^3.3.6",
-    "chai": "^3.5.0",
     "cheerio": "^0.22.0",
     "child_process": "^1.0.2",
     "compression": "^1.6.1",
