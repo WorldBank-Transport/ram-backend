@@ -17,6 +17,7 @@ var express = require('express'),
     squareGrid = require('@turf/square-grid'),
     siofu = require("socketio-file-upload"),
     exec = require('child_process').exec,
+    centroid = require('@turf/centroid'),
     rimraf = require('rimraf');
 
 //GLOBALS
@@ -43,12 +44,16 @@ fs.exists('./web/data/config.json',function(exists) {
         PROJECTS[uid].POIs = {};
         for(var poi in project.pois) {
           PROJECTS[uid].POIs[poi] = JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.pois[poi],'utf8'));
+          //Convert polygons to its centroids
+          PROJECTS[uid].POIs[poi]=centroid(PROJECTS[uid].POIs[poi]);
         }
         PROJECTS[uid].villages =  JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.villages,'utf8'));
+        //Convert polygons to its centroids
+        PROJECTS[uid].villages=centroid(PROJECTS[uid].villages);
+
     });
   }
 });
-
 
 
 //basic authentication stuff
@@ -128,7 +133,7 @@ function postAuthenticate(socket, data) {
       }
     });
 
-   
+
 
     socket.on('getMatrixForRegion',createTimeMatrix);
 
@@ -328,7 +333,7 @@ function createTimeMatrix(data) {
   var c = CONFIGURATION[idx];
   var p = PROJECTS[data.project];
   var osrm = __dirname+"/"+c.activeOSRM.dir+'/'+c.activeOSRM.files.osrm;
-  console.log(osrm);
+  console.log("Location of OSRM: ",osrm);
   var cETA = fork('./scripts/node/calculateETA.js');
   beginTime = new Date().getTime();
   if(!data||!data.feature) {
