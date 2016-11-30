@@ -1,6 +1,6 @@
 [{
     "name": "Jamaica",
-    "villages": "villages.geojson",
+    "villages": "villages-all-points.geojson",
     "pois": {
         "hospitals": "POIs/hospitals.geojson",
         "schools":  "POIs/schools.geojson",
