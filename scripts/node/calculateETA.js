@@ -35,6 +35,7 @@ process.on('message', function(e) {
 			} //THE END
 
 			var workingSet = villagesInRegion(area,villages);
+
 			if(workingSet.features.length === 0) {
 				//There are no villages within the square, return an empty result - square level
 				process.send({type:'square',id:e.id});
@@ -182,16 +183,18 @@ process.on('message', function(e) {
 
 //helper function to retrieve the villages within the given region
 function villagesInRegion(region,villages) {
-	var fc = featurecollection([region]);
-	var result = within(villages,fc);
+	var fcr = featurecollection([region]);
+  var fcv = featurecollection([villages]);
+  var result = within(fcv,fcr);
 	return result;
 }
 
 //helper function to retrieve pois of type 'poi' within a buffer around region
 function poisInBuffer(feature,time,speed,poi) {
-  console.log("feature",feature,"time",time,"speed",speed,"poi",poi);
+  var fcf = featurecollection([feature]);
+  var fcp = featurecollection([poi]);
 	var length = (time/3600)*speed;
-	var geom = featurecollection([buffer(feature,length,'kilometers')]);
-	var result = within(poi,geom);
+	var geom = featurecollection([buffer(fcf,length,'kilometers')]);
+	var result = within(fcp,geom);
 	return result;
 }
