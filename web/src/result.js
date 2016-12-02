@@ -49,9 +49,9 @@ function addResult(data,socket) {
 
   var row = d3.select('#results')
     .selectAll('tr')
-    .data(RESULTS)
+    .data(RESULTS,function(d) { return d.result.created.time; })
     .enter()
-    .insert("tr", ":first-child");
+    .insert("tr");
 
   row.append('td')
     .text(function(d){return d.result.name;});
@@ -80,12 +80,28 @@ function addResult(data,socket) {
     .on('click',function(d){removeResult(d,socket)});
 
   d3.select('#results').selectAll('tr')
-    .data(RESULTS).exit().remove();
+    .data(RESULTS,function(d) { return d.result.created.time; }).exit().remove();
+
+d3.select('#results').selectAll('tr')
+   .sort(function(a,b){
+      if(a.result.created.time > b.result.created.time) {
+        return -1;
+      }
+      if(a.result.created.time < b.result.created.time) {
+        return 1;
+      }
+      return 0;
+    });
 
 }
 function removeResult(data,socket) {
   d3.event.stopPropagation();
+  console.log('remove')
   socket.emit('removeResult',{project:PROJECT.uid,result:data.result})
+  COMPARELIST.splice(COMPARECOUNTER.indexOf(data.result.created.time),1);
+  COMPARECOUNTER.splice(COMPARECOUNTER.indexOf(data.result.created.time),1);
+  createCompareTable();
+ 
 }
 function compareButtons(e,c){
   var file = '../data/'+c.project+'/csv/'+c.result.csvfile;
