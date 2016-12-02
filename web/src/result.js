@@ -82,8 +82,8 @@ function addResult(data,socket) {
   d3.select('#results').selectAll('tr')
     .data(RESULTS,function(d) { return d.result.created.time; }).exit().remove();
 
-d3.select('#results').selectAll('tr')
-   .sort(function(a,b){
+  d3.select('#results').selectAll('tr')
+    .sort(function(a,b){
       if(a.result.created.time > b.result.created.time) {
         return -1;
       }
@@ -95,8 +95,7 @@ d3.select('#results').selectAll('tr')
 
 }
 function removeResult(data,socket) {
-  d3.event.stopPropagation();
-  console.log('remove')
+  d3.event.stopPropagation();  
   socket.emit('removeResult',{project:PROJECT.uid,result:data.result})
   COMPARELIST.splice(COMPARECOUNTER.indexOf(data.result.created.time),1);
   COMPARECOUNTER.splice(COMPARECOUNTER.indexOf(data.result.created.time),1);

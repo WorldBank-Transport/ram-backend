@@ -4,7 +4,7 @@ d3.json('../data/user.json',function(d){
 
 function authenticate(user,pass) {
   var sockethost = window.location.protocol +'//'+ window.location.host;
-  socket = io(sockethost);
+  var socket = io(sockethost);
   socket.on('connect', function(){
     socket.emit('authentication', {username: user, password: pass});
   });

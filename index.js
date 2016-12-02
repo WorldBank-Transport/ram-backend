@@ -26,30 +26,36 @@ var CONFIGURATION=false,
 //Keeping the credentials outside git
 var credentials = JSON.parse(fs.readFileSync('./web/data/user.json','utf8'));
 
-fs.exists('./web/data/config.json',function(exists) {
-  if(exists){
-    CONFIGURATION=JSON.parse(fs.readFileSync('./web/data/config.json','utf8'));
-    var dir = './web/data/';
-    CONFIGURATION.forEach(function(project){
-        var uid = project.uid;
-
-        mkdirp(dir+uid, function(err) {  if(err) console.log(err); });
-        mkdirp(dir+uid+'/csv/', function(err) {  if(err) console.log(err); });
-        mkdirp(dir+uid+'/POIs/', function(err) {  if(err) console.log(err); });
-        mkdirp(dir+uid+'/baseline/', function(err) {  if(err) console.log(err); });
-        mkdirp(dir+uid+'/maps/', function(err) {  if(err) console.log(err); });
-
-        PROJECTS[uid] = {};
-        PROJECTS[uid].POIs = {};
-        for(var poi in project.pois) {
-          PROJECTS[uid].POIs[poi] = JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.pois[poi],'utf8'));
-        }
-        PROJECTS[uid].villages =  JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.villages,'utf8'));
-    });
-  }
-});
 
 
+var loadConfig = function(){
+  fs.exists('./web/data/config.json',function(exists) {
+    if(exists){
+      CONFIGURATION=JSON.parse(fs.readFileSync('./web/data/config.json','utf8'));
+      PROJECTS = {};
+      var dir = './web/data/';
+      CONFIGURATION.forEach(function(project){
+          var uid = project.uid;
+
+          mkdirp(dir+uid, function(err) {  if(err) console.log(err); });
+          mkdirp(dir+uid+'/csv/', function(err) {  if(err) console.log(err); });
+          mkdirp(dir+uid+'/POIs/', function(err) {  if(err) console.log(err); });
+          mkdirp(dir+uid+'/baseline/', function(err) {  if(err) console.log(err); });
+          mkdirp(dir+uid+'/maps/', function(err) {  if(err) console.log(err); });
+
+          PROJECTS[uid] = {};
+          PROJECTS[uid].POIs = {};
+          for(var poi in project.pois) {
+            PROJECTS[uid].POIs[poi] = JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.pois[poi],'utf8'));
+          }
+          PROJECTS[uid].villages =  JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.villages,'utf8'));
+      });
+      io.emit('newConfig',{config:CONFIGURATION});
+    }
+  });
+}
+
+loadConfig();
 
 //basic authentication stuff
 var auth = function (req, res, next) {
@@ -117,15 +123,37 @@ function postAuthenticate(socket, data) {
     uploader.listen(socket);
     uploader.on('progress',progress);
     uploader.on('complete',function(e){
-      console.log(e.file.meta.type);
       var files = e.file.pathName.split('/');
       var file = files[files.length-1];
       var fsplit = file.split('.');
-      if(fsplit[fsplit.length-1].toLowerCase()!=='zip') {
-        socket.emit('status',{msg:'invalid zip file'});
+      if(e.file.meta&&e.file.meta.type==='poi') {
+        
+        if((fsplit[fsplit.length-1].toLowerCase()==='json')||(fsplit[fsplit.length-1].toLowerCase()==='geojson')) {
+          socket.emit('poiUploadComplete',{file:e.file.pathName});
+        }
+        else {
+          socket.emit('poiPlaced',{project:data.project,success:false})
+          socket.emit('status',{msg:'invalid (geo)json file'});
+          
+        }
+      }
+      else if (e.file.meta&&e.file.meta.type==='level') {
+        if((fsplit[fsplit.length-1].toLowerCase()==='json')||(fsplit[fsplit.length-1].toLowerCase()==='geojson')) {
+          socket.emit('levelUploadComplete',{file:e.file.pathName});
+        }
+        else {
+          socket.emit('levelPlaced',{project:data.project,success:false})
+          socket.emit('status',{msg:'invalid (geo)json file'});
+          
+        }
       }
       else {
-       socket.emit('uploadComplete',{file:e.file.pathName});
+        if(fsplit[fsplit.length-1].toLowerCase()!=='zip') {
+          socket.emit('status',{msg:'invalid zip file'});
+        }
+        else {
+         socket.emit('uploadComplete',{file:e.file.pathName});
+        }
       }
     });
 
@@ -210,6 +238,53 @@ function postAuthenticate(socket, data) {
 
     });
 
+    socket.on('newPoi',function(data){
+      var dir  = createProjectFolders(data.project)+ '/POIs/';
+      var cmd = 'mv '+data.file+ '  '+dir;
+      
+      exec(cmd,function(error,stdout,stderr){
+         if (error !== null) {
+          console.log('exec error: ' + error);
+          socket.emit('poiPlaced',{project:data.project,success:false})
+        }
+        else {
+          socket.emit('poiPlaced',{project:data.project,success:true,file:data.file})
+        }
+      })
+    });
+    socket.on('newLevel',function(data){
+      var dir  = createProjectFolders(data.project);
+      var cmd = 'mv '+data.file+ '  '+dir;
+      
+      exec(cmd,function(error,stdout,stderr){
+         if (error !== null) {
+          console.log('exec error: ' + error);
+          socket.emit('levelPlaced',{project:data.project,success:false})
+        }
+        else {
+          socket.emit('levelPlaced',{project:data.project,success:true,file:data.file})
+        }
+      })
+    });
+    socket.on('cancelConfig',function(data) {
+      var dir = './web/data/'+data.project;
+       rimraf(dir,function (d) {
+        socket.emit('status',{project:data.project,msg:"config is canceled"});
+      });
+    })
+    socket.on('updateConfig',function(data) {
+      var config = data.config;
+      var nieuw = true;
+      CONFIGURATION.forEach(function(d,idx) {
+        if(d.uid === config.uid) {
+          nieuw = false
+          CONFIGURATION[idx] = config;
+          }
+      });
+      if(nieuw) CONFIGURATION.push(config);
+      fs.writeFileSync('./web/data/config.json',JSON.stringify(CONFIGURATION));
+      loadConfig();      
+    })
   }
 
 
@@ -219,6 +294,16 @@ function postAuthenticate(socket, data) {
 
 
  }
+
+function createProjectFolders(uid) {
+  var dir = './web/data/'+uid;
+  mkdirp(dir, function(err) {  if(err) console.log(err); });
+  mkdirp(dir+'/csv/', function(err) {  if(err) console.log(err); });
+  mkdirp(dir+'/POIs/', function(err) {  if(err) console.log(err); });
+  mkdirp(dir+'/baseline/', function(err) {  if(err) console.log(err); });
+  mkdirp(dir+'/maps/', function(err) {  if(err) console.log(err); });
+  return dir;
+}
 function retrieveResults(data,socket) {
   var dir = data.project;
   var files = fs.readdirSync('./web/data/'+dir+'/csv/');
@@ -243,7 +328,6 @@ function getProjectIdx(uid) {
 
 function ogr2osm(dir,socket,data) {
   var cmd = './ogr2osm.sh -d '+dir;
-  console.log(cmd)
   exec(cmd,function(error,stdout,stderr){
     if (error !== null) {
       console.log('exec error: ' + error);
@@ -338,7 +422,6 @@ function createTimeMatrix(data) {
   var c = CONFIGURATION[idx];
   var p = PROJECTS[data.project];
   var osrm = __dirname+"/"+c.activeOSRM.dir+'/'+c.activeOSRM.files.osrm;
-  console.log(osrm);
   var cETA = fork('./scripts/node/calculateETA.js');
   beginTime = new Date().getTime();
   if(!data||!data.feature) {
@@ -380,7 +463,6 @@ function createTimeMatrix(data) {
         io.emit('status',{id:msg.id,msg:'srv_calculated_in_s',p0:timing});
 
       }
-      console.log('timing: '+timing);
       io.emit('status',{id:msg.id,msg:'srv_writing'});
       var networkfile = msg.osrm.split('/')[msg.osrm.split('/').length-1];
       var osrmfile = networkfile.split('.')[0];
