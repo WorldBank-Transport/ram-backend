@@ -117,6 +117,7 @@ function postAuthenticate(socket, data) {
     uploader.listen(socket);
     uploader.on('progress',progress);
     uploader.on('complete',function(e){
+      console.log(e.file.meta.type);
       var files = e.file.pathName.split('/');
       var file = files[files.length-1];
       var fsplit = file.split('.');
@@ -167,20 +168,17 @@ function postAuthenticate(socket, data) {
       });
     });
 
+    socket.on('removeResult',function (data) {
+      var csvfile = './web/data/'+data.project+'/csv/'+data.result.csvfile;
+      var files = csvfile.slice(0,-3)+'*';
+      rimraf(files,function (err) {
+        if(err) throw err;
+        retrieveResults(data,io);
+      });
+    });
+
     socket.on('retrieveResults',function(data){
-      var dir = data.project;
-      var files = fs.readdirSync('./web/data/'+dir+'/csv/');
-      var jsons = files.filter(function (d) { return d.slice(-5).toLowerCase() === ".json";   });
-      var result = [];
-      jsons.sort(function(a, b) {
-        return fs.statSync('./web/data/'+dir+'/csv/' + a).mtime.getTime() - fs.statSync('./web/data/'+dir+'/csv/' + b).mtime.getTime();
-      });
-      jsons.forEach(function (d,idx) {
-        result[idx] = {result:JSON.parse(fs.readFileSync('./web/data/'+dir+'/csv/'+d)),counter:idx,project:data.project};
-
-
-      });
-      socket.emit('resultJson',result);
+      retrieveResults(data,socket);
     });
 
     socket.on('unzip',function (data) {
@@ -221,7 +219,19 @@ function postAuthenticate(socket, data) {
 
 
  }
-
+function retrieveResults(data,socket) {
+  var dir = data.project;
+  var files = fs.readdirSync('./web/data/'+dir+'/csv/');
+  var jsons = files.filter(function (d) { return d.slice(-5).toLowerCase() === ".json";   });
+  var result = [];
+  jsons.sort(function(a, b) {
+    return fs.statSync('./web/data/'+dir+'/csv/' + a).mtime.getTime() - fs.statSync('./web/data/'+dir+'/csv/' + b).mtime.getTime();
+  });
+  jsons.forEach(function (d,idx) {
+    result[idx] = {result:JSON.parse(fs.readFileSync('./web/data/'+dir+'/csv/'+d)),counter:idx,project:data.project};
+  });
+  socket.emit('resultJson',result);
+}
 function getProjectIdx(uid) {
   var idx = -1;
   for(var i =0, len = CONFIGURATION.length; i < len; i++){

@@ -14,7 +14,7 @@ function validSocket(socket) {
     });
     socket.on('resultJson',function(data){
         if(data.constructor === Array){
-          addResult(data);
+          addResult(data,socket);
         }
     });
 }
@@ -42,7 +42,7 @@ function viewProject(json,socket) {
 
 }
 
-function addResult(data) {
+function addResult(data,socket) {
   var csv = getUrlVars().csv;
   if(csv)  setActiveResult(csv);
   RESULTS = data;
@@ -73,8 +73,19 @@ function addResult(data) {
     .attr('value',function (d) { return d.result.csvfile;})
     .on('click',function(d){compareButtons(this,d);});
     l.append('span')
-    .text($.i18n.prop('anl_compare'))
+    .text($.i18n.prop('anl_compare'));
+     row.append('td')
+    .append('span')
+    .attr('class','btn btn-danger btn-xs glyphicon glyphicon-remove')
+    .on('click',function(d){removeResult(d,socket)});
 
+  d3.select('#results').selectAll('tr')
+    .data(RESULTS).exit().remove();
+
+}
+function removeResult(data,socket) {
+  d3.event.stopPropagation();
+  socket.emit('removeResult',{project:PROJECT.uid,result:data.result})
 }
 function compareButtons(e,c){
   var file = '../data/'+c.project+'/csv/'+c.result.csvfile;
