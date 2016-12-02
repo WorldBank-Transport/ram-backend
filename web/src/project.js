@@ -131,9 +131,10 @@ function createOsrmList(data,socket) {
   d3.select('#networkFiles').html('');
   var row = d3.select('#networkFiles')
     .selectAll('tr')
-    .data(data.osrm)
+    .data(data.osrm,function(d) { 
+      return d.created.time; })
     .enter()
-    .insert('tr',":first-child")
+    .insert('tr')
     .attr('class','osrm')
     .on('click',function (d) {changeOsrm(d,socket)})
 
@@ -159,8 +160,24 @@ function createOsrmList(data,socket) {
     .attr('class','btn btn-danger btn-xs glyphicon glyphicon-remove')
     .on('click',function(d){removeOsrm(d,socket)})
 
+  d3.select('#networkFiles')
+    .selectAll('tr')
+    .data(data.osrm,function(d) { 
+      return d.created.time; })
+    .exit().remove();
   
-    
+  d3.select('#networkFiles').selectAll('tr')
+    .sort(function(a,b){
+      if(a.created.time > b.created.time) {
+        return -1;
+      }
+      if(a.created.time < b.created.time) {
+        return 1;
+      }
+      return 0;
+    });
+
+
   var baseRow =d3.select('#networkFiles').insert('tr',':first-child')
   .on('click',function () {
     changeOsrm(PROJECT.baseline,socket)
