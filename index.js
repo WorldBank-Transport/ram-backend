@@ -126,27 +126,70 @@ function postAuthenticate(socket, data) {
       var files = e.file.pathName.split('/');
       var file = files[files.length-1];
       var fsplit = file.split('.');
-      if(e.file.meta&&e.file.meta.type==='poi') {
-        
-        if((fsplit[fsplit.length-1].toLowerCase()==='json')||(fsplit[fsplit.length-1].toLowerCase()==='geojson')) {
-          socket.emit('poiUploadComplete',{file:e.file.pathName});
+      if(e.file.meta) {
+        switch(e.file.meta.type) {
+          case 'poi':
+            if((fsplit[fsplit.length-1].toLowerCase()==='json')||(fsplit[fsplit.length-1].toLowerCase()==='geojson')) {
+              socket.emit('poiUploadComplete',{file:e.file.pathName});
+            }
+            else {
+              socket.emit('poiPlaced',{project:data.project,success:false})
+              socket.emit('status',{msg:'invalid (geo)json file'});
+              
+            }
+          break;
+          case 'level':
+            if((fsplit[fsplit.length-1].toLowerCase()==='json')||(fsplit[fsplit.length-1].toLowerCase()==='geojson')) {
+              socket.emit('levelUploadComplete',{file:e.file.pathName});
+            }
+            else {
+              socket.emit('levelPlaced',{project:data.project,success:false})
+              socket.emit('status',{msg:'invalid (geo)json file'});
+            }
+          break;
+          case 'osm':
+            if((fsplit[fsplit.length-1].toLowerCase()==='osm')||(fsplit[fsplit.length-1].toLowerCase()==='pbf')) {
+              socket.emit('osmUploadComplete',{file:e.file.pathName});
+            }
+            else {
+              socket.emit('osmPlaced',{project:data.project,success:false})
+              socket.emit('status',{msg:'invalid osm file'});
+            }
+          break;
+          case 'profile':
+            if((fsplit[fsplit.length-1].toLowerCase()==='lua')) {
+              socket.emit('profileUploadComplete',{file:e.file.pathName});
+            }
+            else {
+              socket.emit('profilePlaced',{project:data.project,success:false})
+              socket.emit('status',{msg:'invalid lua file'});
+            }
+          break;
+          case 'villages':
+            if((fsplit[fsplit.length-1].toLowerCase()==='json')||(fsplit[fsplit.length-1].toLowerCase()==='geojson')) {
+              socket.emit('villagesUploadComplete',{file:e.file.pathName});
+            }
+            else {
+              socket.emit('villagesPlaced',{project:data.project,success:false})
+              socket.emit('status',{msg:'invalid (geo)json file'});
+            }
+          break;
+          case 'thumbnail':
+            if((fsplit[fsplit.length-1].toLowerCase()==='json')||(fsplit[fsplit.length-1].toLowerCase()==='geojson')) {
+              socket.emit('thumbnailUploadComplete',{file:e.file.pathName});
+            }
+            else {
+              socket.emit('thumbnailPlaced',{project:data.project,success:false})
+              socket.emit('status',{msg:'invalid (geo)json file'});
+            }
+          break;
+          default:
+          console.log('unknown type: '+e.file.meta.type)
+          console.log(e);
+          break
         }
-        else {
-          socket.emit('poiPlaced',{project:data.project,success:false})
-          socket.emit('status',{msg:'invalid (geo)json file'});
-          
-        }
-      }
-      else if (e.file.meta&&e.file.meta.type==='level') {
-        if((fsplit[fsplit.length-1].toLowerCase()==='json')||(fsplit[fsplit.length-1].toLowerCase()==='geojson')) {
-          socket.emit('levelUploadComplete',{file:e.file.pathName});
-        }
-        else {
-          socket.emit('levelPlaced',{project:data.project,success:false})
-          socket.emit('status',{msg:'invalid (geo)json file'});
-          
-        }
-      }
+
+      }      
       else {
         if(fsplit[fsplit.length-1].toLowerCase()!=='zip') {
           socket.emit('status',{msg:'invalid zip file'});
@@ -157,7 +200,33 @@ function postAuthenticate(socket, data) {
       }
     });
 
-   
+    // ADMIN stuff
+    socket.on('getConfig',function(){
+      //retrieve the config file + all project directories
+      var data = {}
+      data.conf=JSON.parse(fs.readFileSync('./web/data/config.json','utf8'));
+      var projects = fs.readdirSync('./web/data/');
+      var projList = [];
+      projects.forEach(function(p){
+        if(p.split('_')[0]==='project') {
+          projList.push(p)
+        }
+      })
+      data.projects = projList;
+      socket.emit('configList',{data:data});
+    })   
+
+    socket.on('removeProject',function(data){
+      var dir = './web/data/' + data.project
+      rimraf(dir,function (err) {
+        if(err) throw err;
+        io.emit('projectsRemoved')
+      });
+    })
+
+
+    //\\ ADMIN stuff
+
 
     socket.on('getMatrixForRegion',createTimeMatrix);
 
@@ -266,6 +335,63 @@ function postAuthenticate(socket, data) {
         }
       })
     });
+    socket.on('newOsm',function(data){
+      var dir  = createProjectFolders(data.project)+'/baseline/';
+      var cmd = 'mv '+data.file+ '  '+dir;
+      
+      exec(cmd,function(error,stdout,stderr){
+         if (error !== null) {
+          console.log('exec error: ' + error);
+          socket.emit('osmPlaced',{project:data.project,success:false})
+        }
+        else {
+          socket.emit('osmPlaced',{project:data.project,success:true,file:data.file})
+        }
+      })
+    });
+    socket.on('newProfile',function(data){
+      var dir  = createProjectFolders(data.project)+'/baseline/';
+      var cmd = 'mv '+data.file+ '  '+dir;
+      
+      exec(cmd,function(error,stdout,stderr){
+         if (error !== null) {
+          console.log('exec error: ' + error);
+          socket.emit('profilePlaced',{project:data.project,success:false})
+        }
+        else {
+          socket.emit('profilePlaced',{project:data.project,success:true,file:data.file})
+        }
+      })
+    });
+    socket.on('newVillages',function(data){
+      var dir  = createProjectFolders(data.project);
+      var cmd = 'mv '+data.file+ '  '+dir;
+      
+      exec(cmd,function(error,stdout,stderr){
+         if (error !== null) {
+          console.log('exec error: ' + error);
+          socket.emit('villagesPlaced',{project:data.project,success:false})
+        }
+        else {
+          socket.emit('villagesPlaced',{project:data.project,success:true,file:data.file})
+        }
+      })
+    });
+    socket.on('newThumbnail',function(data){
+      var dir  = createProjectFolders(data.project);
+      var cmd = 'mv '+data.file+ '  '+dir;
+      
+      exec(cmd,function(error,stdout,stderr){
+         if (error !== null) {
+          console.log('exec error: ' + error);
+          socket.emit('thumbnailPlaced',{project:data.project,success:false})
+        }
+        else {
+          socket.emit('thumbnailPlaced',{project:data.project,success:true,file:data.file})
+        }
+      })
+    });
+
     socket.on('cancelConfig',function(data) {
       var dir = './web/data/'+data.project;
        rimraf(dir,function (d) {
