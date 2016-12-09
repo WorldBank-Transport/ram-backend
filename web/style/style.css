@@ -34,6 +34,10 @@ background: white;
 h1 {
 	font-size: large;
 }
+#projectList {
+    max-height: 400px;
+    overflow:auto;
+}
 #map {
  	margin: 0px;
  	border: solid 1px #444;

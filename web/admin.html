@@ -24,6 +24,7 @@
   <div id="switcher" class="pull-right clear-fix"><span id="users"></span><span id="lng_en"><script>t('#lng_en','lng_en')</script></span> <span id="lng_zh"><script>t('#lng_zh','lng_zh')</script></span></div>
 </div>
 <div class="row">
+<div id="projectList"> 
  <table  class="table table-condensed">
      <caption>Projects on the server</caption>
      <thead>
@@ -32,6 +33,132 @@
      <tbody id="configList"></tbody>
 
    </table>
+</div>
+<button type="button" class="btn btn-success" id="newProject">New project</button>
+</div>
+<div class="row" id="projectEdit">
+
+  <table  class="table table-condensed">
+     <caption>General project settings</caption>
+     <thead>
+       <th>Setting</th><th>value</th><th></th>
+     </thead>
+     <tbody id="generalSettings"></tbody>
+     <tr>
+      <td>Project name</td><td> <input type="text" class="form-control" id="newProjectName" placeholder="Name"></td>
+     </tr>
+      <tr>
+      <td>Population Attribute</td><td>
+    <input type="text" class="form-control" id="newPopulationAttribute" placeholder="population"></td>
+     </tr>
+     <tr>
+     <td>Maximum travelspeed</td><td><input type="number" class="form-control" id="newMaxSpeed" value="120"></td><td>km/h</td>
+     </tr>
+     <tr>
+     <td>Maximum traveltime</td><td><input type="number" class="form-control" id="newMaxtime" value="3600"></td><td>seconds</td>
+     </tr>
+     <tr><td>Baseline OSM file</td><td><input type="text" class="form-control" readonly id="osmFileName" placeholder="Name"></td><td><div class="input-group" id="profileInput">
+          <label class="input-group-btn">
+            <span class="btn btn-primary">
+              Browse&hellip; <input type="file" id="newProfileFile" style="display: none;">
+            </span>
+          </label>
+          
+         </div></td></tr>
+     <tr><td>Baseline Profile file</td><td><input type="text" class="form-control" readonly id="profileFileName" placeholder="Name"></td><td><div class="input-group" id="profileInput">
+          <label class="input-group-btn">
+            <span class="btn btn-primary">
+              Browse&hellip; <input type="file" id="newProfileFile" style="display: none;">
+            </span>
+          </label>
+         
+         </div></td></tr>
+     <tr><td>Villages file</td><td><input type="text" class="form-control" readonly id="villagesFileName" placeholder="Name"></td><td><div class="input-group" id="profileInput">
+          <label class="input-group-btn">
+            <span class="btn btn-primary">
+              Browse&hellip; <input type="file" id="newProfileFile" style="display: none;">
+            </span>
+          </label>
+          
+         </div></td></tr>
+     <tr><td>Thumbnail file</td><td><input type="text" class="form-control" readonly id="thumbnailFileName" placeholder="Name"></td><td><div class="input-group" id="profileInput">
+          <label class="input-group-btn">
+            <span class="btn btn-primary">
+              Browse&hellip; <input type="file" id="newProfileFile" style="display: none;">
+            </span>
+          </label>
+          
+         </div></td></tr>
+   </table>
+
+  <table  class="table table-condensed">
+     <caption>Points of interest settings</caption>
+     <thead>
+       <th>PoI name</th><th>filename</th><th></th>
+     </thead>
+     <tbody id="poiSettings"></tbody>
+     <tfoot>
+      <tr id="poiInput">
+        <td><input type="text" class="form-control" id="newPOIname" pattern="[a-zA-Z][a-zA-Z0-9]*" required placeholder="POI name"></td>
+        <td><div class="input-group">
+          <label class="input-group-btn">
+            <span class="btn btn-primary">
+              Browse&hellip; <input required type="file" id="newPoiFile" style="display: none;">
+            </span>
+          </label>
+          <input type="text" class="form-control" required style="cursor:not-allowed" readonly placeholder="Select a file">
+        </div>
+        </td>
+        <td><input class="btn btn-success"  type="button" value="Add POI" onclick="uploadPoi(this)"></td>
+        </tr>
+      </tfoot>
+   </table>
+
+ 
+
+  <table  class="table table-condensed">
+     <caption>Statistics settings</caption>
+     <thead>
+       <th>PoI name</th><th># minutes</th>
+     </thead>
+     <tbody id="statisticalSettings"></tbody>
+      <tfoot>
+        <td><input type="text" class="form-control" required pattern="[a-zA-Z][a-zA-Z0-9]*" placeholder="POI"></td>
+        <td><input type="number" class="form-control" required placeholder="60" value="60"></td>
+        <td><input class="btn btn-success" type="button" value="Add Statistics" onclick="addStatistics(this)"></td>
+      </tfoot>
+   </table>
+
+  <table  class="table table-condensed">
+     <caption>Administrative boundary settings</caption>
+     <thead>
+       <th>Level name</th><th>Geometry ID</th><th>filename</th><th>remove</th>
+     </thead>
+     <tbody id="levelSettings"></tbody>
+      <tfoot>
+      <tr id="levelInput">
+        <td><input type="text" class="form-control" id="newLevelName" placeholder="Level name"></td>
+        <td><input type="text" class="form-control" id="newLevelGeom" placeholder="Geometry ID"></td>
+        <td>
+         <div class="input-group">
+          <label class="input-group-btn">
+            <span class="btn btn-primary">
+              Browse&hellip; <input type="file" id="newLevelFile" style="display: none;">
+            </span>
+          </label>
+          <input type="text" class="form-control" style="cursor:not-allowed" readonly>
+        </div>
+        </td>
+        <td><input class="btn btn-success"  type="button" value="Add Level" onclick="uploadLevel(this)"></td>
+        </tr>
+        </tfoot>
+   </table>
+   <div class="form-group">    
+   <div class="btn-group" role="group" aria-label="...">
+  <button type="button" class="btn btn-danger" id="cancelConfig">Cancel</button>
+  <button type="button" class="btn btn-success  disabled" id="saveConfig" onclick="saveConf(this)">Save config</button>
+</div>
+    </div>
 </div>
 </div>
 <div id="logfield"></div>
