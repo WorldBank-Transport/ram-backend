@@ -4,17 +4,17 @@
 <title>Rural accessibility map, project view</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <link href='https://fonts.googleapis.com/css?family=Overlock' rel='stylesheet' type='text/css'>
-  
+
   <link href="../src/bootstrap/dist/css/bootstrap.min.css"  rel='stylesheet' type='text/css'/>
   <link href="../src/leaflet/dist/leaflet.css"  rel='stylesheet' type='text/css'/>
   <link href='../style/style.css' rel='stylesheet' type='text/css'/>
   <script src="../src/d3/d3.min.js" charset="utf-8"></script>
-  <script src="../src/socket.io-client/socket.io.js"></script>
+  <script src="../src/socket.io-client/dist/socket.io.min.js"></script>
   <script src="../src/socketio-file-upload/client.min.js" charset="utf-8"></script>
   <script src="../src/jquery/dist/jquery.min.js"></script>
   <script src="../src/jquery.i18n.properties.min.js" type="text/javascript"  charset="utf-8"></script>
   <script src="../src/util.js" type="text/javascript"  charset="utf-8"></script>
-  <script src="../src/leaflet/dist/leaflet.js" charset="utf-8"></script>  
+  <script src="../src/leaflet/dist/leaflet.js" charset="utf-8"></script>
   <script type="text/javascript" src="http://maps.stamen.com/js/tile.stamen.js?v1.3.0"></script>
 </head>
 <body>
@@ -45,10 +45,10 @@
    <button class="btn btn-primary disabled" type="submit">Change a network</button>
    </div>
    </div>
-   
+
    <div class="col-sm-offset-4 col-md-offset-2 col-md-10 col-sm-8 left-border">
      <div id="addNetwork"  class="slideDown">
-  
+
   <div class="innerdiv">
 
   <div class="input-group">
@@ -60,8 +60,8 @@
       <input type="text" class="form-control" style="cursor:not-allowed" readonly>
       <label class="input-group-btn">
       <input class="btn btn-success disabled "  id="uploadButton" type="button">
-      <script>jQuery(document).ready(function() {         
-        $('#uploadButton').attr('value',jQuery.i18n.prop('upl_button'))          
+      <script>jQuery(document).ready(function() {
+        $('#uploadButton').attr('value',jQuery.i18n.prop('upl_button'))
        })</script>
        </label>
   </div>

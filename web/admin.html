@@ -3,17 +3,17 @@
 <head>
 <title>Rural accessibility map, result view</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <link href='https://fonts.googleapis.com/css?family=Overlock' rel='stylesheet' type='text/css'>  
+  <link href='https://fonts.googleapis.com/css?family=Overlock' rel='stylesheet' type='text/css'>
   <link href="./src/bootstrap/dist/css/bootstrap.min.css"  rel='stylesheet' type='text/css'/>
   <link href='./style/style.css' rel='stylesheet' type='text/css'/>
   <script src="./src/d3/d3.min.js" charset="utf-8"></script>
   <script src='./src/queue.v1.min.js' type='text/javascript'></script>
-  <script src="./src/socket.io-client/socket.io.js"></script>
+  <script src="./src/socket.io-client/dist/socket.io.min.js"></script>
   <script src="./src/socketio-file-upload/client.min.js" charset="utf-8"></script>
   <script src="./src/jquery/dist/jquery.min.js"></script>
   <script src="./src/jquery.i18n.properties.min.js" type="text/javascript"  charset="utf-8"></script>
   <script src="./src/util.js" type="text/javascript"  charset="utf-8"></script>
-  
+
 </head>
 <body>
 <div class="container-fluid inhoud">
@@ -24,7 +24,7 @@
   <div id="switcher" class="pull-right clear-fix"><span id="users"></span><span id="lng_en"><script>t('#lng_en','lng_en')</script></span> <span id="lng_zh"><script>t('#lng_zh','lng_zh')</script></span></div>
 </div>
 <div class="row">
-<div id="projectList"> 
+<div id="projectList">
  <table  class="table table-condensed">
      <caption>Projects on the server</caption>
      <thead>
@@ -63,7 +63,7 @@
               Browse&hellip; <input type="file" id="newProfileFile" style="display: none;">
             </span>
           </label>
-          
+
          </div></td></tr>
      <tr><td>Baseline Profile file</td><td><input type="text" class="form-control" readonly id="profileFileName" placeholder="Name"></td><td><div class="input-group" id="profileInput">
           <label class="input-group-btn">
@@ -71,7 +71,7 @@
               Browse&hellip; <input type="file" id="newProfileFile" style="display: none;">
             </span>
           </label>
-         
+
          </div></td></tr>
      <tr><td>Villages file</td><td><input type="text" class="form-control" readonly id="villagesFileName" placeholder="Name"></td><td><div class="input-group" id="profileInput">
           <label class="input-group-btn">
@@ -79,7 +79,7 @@
               Browse&hellip; <input type="file" id="newProfileFile" style="display: none;">
             </span>
           </label>
-          
+
          </div></td></tr>
      <tr><td>Thumbnail file</td><td><input type="text" class="form-control" readonly id="thumbnailFileName" placeholder="Name"></td><td><div class="input-group" id="profileInput">
           <label class="input-group-btn">
@@ -87,7 +87,7 @@
               Browse&hellip; <input type="file" id="newProfileFile" style="display: none;">
             </span>
           </label>
-          
+
          </div></td></tr>
    </table>
 
@@ -114,7 +114,7 @@
       </tfoot>
    </table>
 
- 
+
 
   <table  class="table table-condensed">
      <caption>Statistics settings</caption>
@@ -153,7 +153,7 @@
         </tr>
         </tfoot>
    </table>
-   <div class="form-group">    
+   <div class="form-group">
    <div class="btn-group" role="group" aria-label="...">
   <button type="button" class="btn btn-danger" id="cancelConfig">Cancel</button>
   <button type="button" class="btn btn-success  disabled" id="saveConfig" onclick="saveConf(this)">Save config</button>
