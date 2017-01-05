@@ -29,3 +29,23 @@ The main webclient startingpoint is `web/index.html` which reads the config.json
 view or download the results. 
 * `web/views/result.html` which shows a list of available result files, which the user can compare, analyse and filter using crossfilter.js and download subsets
 of the main result file. 
+
+There are afew bash helper scripts that get called by index.js to do some transformations:
+* `ogr2osm.sh` to transform shapefiles to OSM XML files, it requires a shapefile and a translation file eg. `scripts/Shapefile to OSM/guihou.py` 
+* `osm2osrm.sh` to transform OSM files to OSRM files, it requires an OSM file and a profile file eg. `scripts/OSRM import/profile.lua`
+* `profile2prepare.sh` to transform an already uploaded OSM file to OSRM
+* `unzip.sh` to unpack a zipfile and do a simple check to see what kind of files are in it and what the next step should be
+
+Work is currently being done to create an administrator interface to manage projects and create new projects. This interface can be accessed via `web/admin.html`
+
+# The main files in more detail
+
+## index.js
+
+## CalculteETA.js
+
+## project.html
+
+## result.html
+
+## admin.html
