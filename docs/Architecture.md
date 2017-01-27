@@ -48,7 +48,7 @@ regions and view or download the results.
 the user can compare, analyse and filter using crossfilter.js and download 
 subsets of the main result file. 
 
-There are afew bash helper scripts that get called by index.js to do some 
+There are a few bash helper scripts that get called by index.js to do some 
 transformations:
 * `ogr2osm.sh` to transform shapefiles to OSM XML files, it requires a 
 shapefile and a translation file eg. `scripts/Shapefile to OSM/guihou.py` 
@@ -79,6 +79,12 @@ The most important authorization/authentication is handled with socketio-auth si
 
 This means that the system is *not* (yet) highly secure
 
+### postAuthenticate
+
+Most of the magic happens here, once a client has been authenticated it will
+be added to the pool of connected clients, if the client disconnects it will
+be removed from the pool and the pool will be informed thus.
+
 ### uploader
 
 This function is most in flux currently. Originally the idea was to upload a zipfile with a shapefile, translation file and a profile file, check if it was a zipfile (by checking the extension) and pass it on to a bash script that would generate the required OSRM file. This turned into a zipfile with either the original 3 filetypes, or an OSM file and with profile file or just a profile file. Depending on the content of the zipfile different bash scripts should be called.
@@ -88,8 +94,6 @@ However the administration interface requires a number of different files to get
 When uploading a file it is nice to keep track of the progress. However the socketio uploader *client* keeps track of loading the file into memory, not the actual upload which gives counterintuitive results on slower uploads. As such the better way is to keep track of the data received on the serverside. This is done with the `progress` function.
 
 Once the upload has finished a message is sent back to the client with the filename and the type of file. This is especially useful for the admin interface which requires this information to generate a config file.
-
-### postAuthenticate
 
 socket
 createTimeMatrix
