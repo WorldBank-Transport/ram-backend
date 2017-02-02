@@ -35,9 +35,12 @@ process.on('message', function(e) {
 			} //THE END
 
 			var workingSet = villagesInRegion(area,villages);
-
+      console.log("Area: "+ JSON.stringify(area))
+      console.log("Villages: "+ JSON.stringify(villages))
+      console.log("Interset: "+ JSON.stringify(workingSet))
 			if(workingSet.features.length === 0) {
 				//There are no villages within the square, return an empty result - square level
+        console.log("No villages within batch");
 				process.send({type:'square',id:e.id});
 				return callback(null,[]);
 			} //THE END
@@ -175,7 +178,7 @@ process.on('message', function(e) {
 				endresult.push(r);
 			});
 		});
-		console.log('done');
+		console.log('OSRM async. Calculation done');
 		process.send({type:'done',data:endresult,osrm:e.osrm,id:e.id});
 	});
 
@@ -183,9 +186,13 @@ process.on('message', function(e) {
 
 //helper function to retrieve the villages within the given region
 function villagesInRegion(region,villages) {
-	var fcr = featurecollection([region]);
-  var fcv = featurecollection([villages]);
+  var fcv = featurecollection(villages);
+  var fcr = featurecollection([region]);
+  console.log("region: "+JSON.stringify(fcr));
+  console.log("villages: "+JSON.stringify(fcv));
   var result = within(fcv,fcr);
+  console.log("result: "+JSON.stringify(result));
+  console.log(result.features.length+" villages in batch.");
 	return result;
 }
 
