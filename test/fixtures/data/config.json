@@ -6,7 +6,7 @@
         "schools":  "POIs/schools.geojson",
         "banks": "POIs/banks.geojson"
     },
-    "population" : "POP",
+    "population" : "population",
     "stats": [
         { "poi": "counties", "minutes": 60 },
         { "poi": "hospitals", "minutes": 30 },
