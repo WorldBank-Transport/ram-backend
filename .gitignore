@@ -6,3 +6,4 @@ node_modules
 *.osrm*
 *.osm
 csv/
+.DS_Store
