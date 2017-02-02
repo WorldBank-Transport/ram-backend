@@ -45,15 +45,26 @@ fs.exists('./web/data/config.json',function(exists) {
         for(var poi in project.pois) {
           PROJECTS[uid].POIs[poi] = JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.pois[poi],'utf8'));
           //Convert polygons to its centroids
-          PROJECTS[uid].POIs[poi]=centroid(PROJECTS[uid].POIs[poi]);
+          PROJECTS[uid].POIs[poi]=perFeatureCentroid(PROJECTS[uid].POIs[poi]);
         }
         PROJECTS[uid].villages =  JSON.parse(fs.readFileSync('./web/data/'+uid+'/'+project.villages,'utf8'));
         //Convert polygons to its centroids
-        PROJECTS[uid].villages=centroid(PROJECTS[uid].villages);
+        PROJECTS[uid].villages=perFeatureCentroid(PROJECTS[uid].villages);
 
     });
   }
 });
+
+function perFeatureCentroid(FCcentroids){
+  //modify in place a Feature collection and iterate its members replacing polygons for its centroids
+  for (var i = 0; i < FCcentroids.features.length; i++) {
+    var a=JSON.stringify(FCcentroids.features[i]);
+    FCcentroids.features[i].geometry=centroid(FCcentroids.features[i]).geometry;
+    var b=JSON.stringify(FCcentroids.features[i]);
+    if (a!=b)  {console.log(i+" before: "+a+"after:"+b)};
+  }
+  return FCcentroids;
+}
 
 
 //basic authentication stuff
