@@ -1,0 +1,14 @@
+language: node_js
+node_js:
+- '6'
+
+env:
+  global:
+
+cache:
+  apt: true
+  directories:
+  - node_modules
+
+script:
+  - npm test
