@@ -45,8 +45,9 @@ exports.register = function (server, options, next) {
     }
 
     // Make sure route matches and we're not exclude based on format
-    if ((routes.indexOf(request.route.path) !== -1 || routes[0] === '*') &&
-      excludeFormats.indexOf(request.query.format) === -1) {
+    const { path, method } = request.route;
+    const whitelistRoute = routes[0] === '*' || !!routes.find(o => o.route === path && o.methods.indexOf(method.toUpperCase()) !== -1);
+    if (whitelistRoute && excludeFormats.indexOf(request.query.format) === -1) {
       if (_.has(request.response.source, name)) {
         request.response.source[name] = _.merge(request.response.source[name], meta);
       } else {
