@@ -1,5 +1,4 @@
 'use strict';
-import config from '../config';
 
 module.exports = function (hapiServer, cb) {
   hapiServer.register([
@@ -38,6 +37,7 @@ module.exports = function (hapiServer, cb) {
       options: {
         limit: 100,
         routes: [
+          '/projects'
         ]
       }
     }
