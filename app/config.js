@@ -23,6 +23,7 @@ config.connection.port = process.env.PORT || config.connection.port;
 config.connection.host = process.env.HOST || config.connection.host;
 
 config.db = process.env.DB_CONNECTION || config.db;
+config.dbTest = process.env.DB_TEST_CONNECTION || config.dbTest;
 
 config.baseDir = __dirname;
 
