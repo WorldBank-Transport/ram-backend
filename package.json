@@ -7,7 +7,7 @@
   "scripts": {
     "setupdb": "node fixtures/",
     "lint": "eslint app/ test/ --ext .js",
-    "test": "export SM_ENV=test && mocha --recursive --require babel-register",
+    "test": "export DS_ENV=test && mocha --recursive --require babel-register",
     "start": "node index.js",
     "nodemon": "nodemon index.js",
     "postinstall": "[ -f app/config/local.js ] || echo 'module.exports = {};' > app/config/local.js"

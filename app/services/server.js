@@ -12,7 +12,7 @@ module.exports = function (options) {
         cors: true
       }
     },
-    debug: config.debug ? {
+    debug: config.debug && process.env.DS_ENV !== 'test' ? {
       log: [ 'error' ],
       request: [ 'error', 'received', 'response' ]
     } : false
