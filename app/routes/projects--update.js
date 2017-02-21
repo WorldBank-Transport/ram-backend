@@ -2,7 +2,7 @@
 import Joi from 'joi';
 import Boom from 'boom';
 
-import db from '../services/db';
+import db from '../db/';
 
 module.exports = [
   {
@@ -32,7 +32,10 @@ module.exports = [
       .returning('*')
       .update(update)
       .where('id', request.params.projId)
-      .then(reply)
+      .then(res => res.length
+        ? reply(res[0])
+        : reply(Boom.notFound('Project not found'))
+      )
       .catch(err => {
         if (err.constraint === 'projects_name_unique') {
           return reply(Boom.conflict(`Project name already in use: ${data.name}`));

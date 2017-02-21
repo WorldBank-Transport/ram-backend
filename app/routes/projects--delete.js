@@ -2,7 +2,7 @@
 import Joi from 'joi';
 import Boom from 'boom';
 
-import db from '../services/db';
+import db from '../db/';
 
 module.exports = [
   {
@@ -21,13 +21,10 @@ module.exports = [
       db('projects')
         .where('id', id)
         .del()
-        .then(res => {
-          if (res > 0) {
-            return reply({statusCode: 200, message: 'Project deleted'});
-          } else {
-            return reply(Boom.notFound('Project not found'));
-          }
-        })
+        .then(res => res > 0
+          ? reply({statusCode: 200, message: 'Project deleted'})
+          : reply(Boom.notFound('Project not found'))
+        )
         .catch(err => {
           console.error(err);
           return reply(Boom.badImplementation(err));

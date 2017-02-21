@@ -2,7 +2,7 @@
 import Joi from 'joi';
 import Boom from 'boom';
 
-import db from '../services/db';
+import db from '../db/';
 
 module.exports = [
   {
@@ -25,7 +25,7 @@ module.exports = [
       db('projects')
       .returning('*')
       .insert(Object.assign({}, data, timestamps))
-      .then(reply)
+      .then(res => reply(res[0]))
       .catch(err => {
         if (err.constraint === 'projects_name_unique') {
           return reply(Boom.conflict(`Project name already in use: ${data.name}`));
