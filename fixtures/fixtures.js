@@ -1,5 +1,5 @@
 'use strict';
-import db from '../app/services/db';
+import db from '../app/db/';
 import { setupStructure } from '../app/db/structure';
 
 //
