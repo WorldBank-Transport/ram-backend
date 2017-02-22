@@ -27,12 +27,12 @@ npm install
 Install the docker container with the database:
 ```
 docker run --name rra-postgis \
-  -e POSTGRES_PASSWORD=rra \
-  -e POSTGRES_USER=rra \
-  -e POSTGRES_DB=rra \
-  -p 5432:5432 \
-  -d \
-  mdillon/postgis
+-e "POSTGRES_PASSWORD=rra" \
+-e "POSTGRES_USER=rra" \
+-e "POSTGRES_DB=rra" \
+-p 5432:5432 \
+-d \
+mdillon/postgis
 ```
 
 Once the container is installed use `docker stop rra-postgis` to stop it and `docker start rra-postgis` to start it again.
