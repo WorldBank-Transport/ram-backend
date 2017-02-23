@@ -1,5 +1,4 @@
 'use strict';
-import Boom from 'boom';
 
 module.exports = [
   {

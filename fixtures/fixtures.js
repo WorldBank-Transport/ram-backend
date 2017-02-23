@@ -1,38 +1,6 @@
 'use strict';
-
-import db from '../app/services/db';
-
-function dropProjects () {
-  console.log('Dropping table: projects');
-  return db.schema.dropTableIfExists('projects');
-}
-
-function dropScenarios () {
-  console.log('Dropping table: scenarios');
-  return db.schema.dropTableIfExists('scenarios');
-}
-
-function createProjectsTable () {
-  console.log('Creating table: projects');
-  return db.schema.createTable('projects', function (table) {
-    table.increments();
-    table.string('name');
-    table.text('description');
-    table.timestamps();
-  });
-}
-
-function createScenarioTable () {
-  console.log('Creating table: scenarios');
-  return db.schema.createTable('scenarios', function (table) {
-    table.increments();
-    table.string('name');
-    table.text('description');
-    table.integer('project_id').unsigned();
-    table.foreign('project_id').references('projects.id');
-    table.timestamps();
-  });
-}
+import db from '../app/db/';
+import { setupStructure } from '../app/db/structure';
 
 //
 // Data Insertion
@@ -54,7 +22,10 @@ function insertProjects () {
       created_at: (new Date()),
       updated_at: (new Date())
     }
-  ]);
+  ])
+  // Inserting a value for the auto increment column does not move the internal
+  // sequence pointer, therefore we need to do it manually.
+  .then(() => db.raw('ALTER SEQUENCE projects_id_seq RESTART WITH 3;'));
 }
 
 function insertScenarios () {
@@ -76,14 +47,10 @@ function insertScenarios () {
       created_at: (new Date()),
       updated_at: (new Date())
     }
-  ]);
-}
-
-function setupStructure () {
-  return dropScenarios()
-  .then(() => dropProjects())
-  .then(() => createProjectsTable())
-  .then(() => createScenarioTable());
+  ])
+  // Inserting a value for the auto increment column does not move the internal
+  // sequence pointer, therefore we need to do it manually.
+  .then(() => db.raw('ALTER SEQUENCE scenarios_id_seq RESTART WITH 3;'));
 }
 
 function addData () {

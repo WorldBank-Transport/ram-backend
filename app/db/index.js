@@ -5,5 +5,5 @@ import config from '../config';
 
 export default knex({
   client: 'pg',
-  connection: config.db
+  connection: process.env.DS_ENV === 'test' ? config.dbTest : config.db
 });

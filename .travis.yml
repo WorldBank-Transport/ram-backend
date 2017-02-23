@@ -1,14 +1,26 @@
+dist: trusty
+sudo: required
 language: node_js
 node_js:
 - '6'
 
 env:
   global:
+    DB_TEST_CONNECTION="postgresql://postgres@localhost:5432/travis_ci_test"
 
 cache:
   apt: true
   directories:
   - node_modules
+
+addons:
+  postgresql: "9.6"
+
+services:
+  - postgresql
+
+before_script:
+  - psql -c 'create database travis_ci_test;' -U postgres
 
 script:
   - npm test
