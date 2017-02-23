@@ -1,0 +1,23 @@
+version: '2'
+services:
+  rra-postgis:
+    image: mdillon/postgis
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: rra
+      POSTGRES_USER: rra
+      POSTGRES_DB: rra
+    volumes:
+      - ./setup/create-test-db.sh:/docker-entrypoint-initdb.d/create-test-db.sh
+  rra-minio:
+    image: "minio/minio"
+    ports:
+      - "9000:9000"
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: miniostorageengine
+    # volumes:
+    #   - /guts/projects/rra/minio-stuff/export:/export
+    #   - /guts/projects/rra/minio-stuff/config:/root/.minio
+    command: server /export

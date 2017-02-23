@@ -25,6 +25,10 @@ config.connection.host = process.env.HOST || config.connection.host;
 config.db = process.env.DB_CONNECTION || config.db;
 config.dbTest = process.env.DB_TEST_CONNECTION || config.dbTest;
 
+config.storage.engine = process.env.STORAGE_ENGINE || config.storage.engine;
+config.storage.accessKey = process.env.STORAGE_ACCESS_KEY || config.storage.accessKey;
+config.storage.secretKey = process.env.STORAGE_SECRET_KEY || config.storage.secretKey;
+
 config.baseDir = __dirname;
 
 module.exports = config;

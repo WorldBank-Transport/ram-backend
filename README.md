@@ -8,7 +8,7 @@ The steps below will walk you through setting up your own instance of the rra.
 To set up the development environment for this website, you'll need to install the following on your system:
 
 - [Node](http://nodejs.org/) v6.x (To manage multiple node versions we recommend [nvm](https://github.com/creationix/nvm))
-- [Docker](https://www.docker.com/products/docker)
+- [Docker](https://www.docker.com/products/docker) and [Docker Compose](https://docs.docker.com/compose/install/)
 
 ### Install Application Dependencies
 
@@ -24,18 +24,29 @@ Install Node modules:
 npm install
 ```
 
-Install the docker container with the database:
+Start the docker containers:
 ```
-docker run --name rra-postgis \
--e "POSTGRES_PASSWORD=rra" \
--e "POSTGRES_USER=rra" \
--e "POSTGRES_DB=rra" \
--p 5432:5432 \
--d \
-mdillon/postgis
+docker-compose up
+```
+Stop the docker containers with:
+```
+docker-compose stop
 ```
 
-Once the container is installed use `docker stop rra-postgis` to stop it and `docker start rra-postgis` to start it again.
+The containers will store the information within themselves. If the container is deleted all the information will be lost.
+When using the application locally [Minio](https://minio.io/) is used as cloud storage to simulate S3. It's interface will be available at `http://localhost:9000`.
+
+### Setup
+Both the database and the local storage need some setup.
+```
+npm run setup
+```
+Will prepare all the needed tables for the database and the bucket for storage.
+
+If data fixtures are needed for development run the following command instead:
+```
+npm run setup -- --data
+```
 
 ### Usage
 
@@ -55,6 +66,10 @@ The following options must be set: (The used file will depend on the context)
   - `connection.host` - The host. (mostly cosmetic. Default to 0.0.0.0). [PORT]
   - `connection.port` - The port where the app runs. (Default 4000). [HOST]
   - `db` - The database connection string. [DB_CONNECTION]
+  - `dbTest` - The database connection string for testing. [DB_TEST_CONNECTION]
+  - `storage.engine` - The storage engine to use. Either `minio` or `s3`. [STORAGE_ENGINE]
+  - `storage.accessKey` - Access key for the storage. [STORAGE_ACCESS_KEY]
+  - `storage.secretKey` - Secret key for storage. [STORAGE_SECRET_KEY]
 
 Example:
 ``` 
@@ -63,7 +78,13 @@ module.exports = {
     host: '0.0.0.0',
     port: 4000
   },
-  db: 'postgresql://rra:rra@localhost:5432/rra'
+  db: 'postgresql://rra:rra@localhost:5432/rra',
+  dbTest: 'postgresql://rratest:rratest@localhost:5432/rratest',
+  storage: {
+    engine: 'minio',
+    accessKey: 'minio',
+    secretKey: 'miniostorageengine'
+  }
 };
 ```
 
@@ -78,12 +99,3 @@ This command starts the server with `nodemon` which watches files and restarts w
 npm start
 ```
 Starts the app without file watching
-
-## Fixtures
-To setup the database with dummy data run:
-
-```
-npm run setupdb
-```
-
-Note: This will remove the database and import the dummy data again.

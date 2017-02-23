@@ -1,6 +1,5 @@
 'use strict';
-import db from '../app/db/';
-import { setupStructure } from '../app/db/structure';
+import db from '../../app/db/';
 
 //
 // Data Insertion
@@ -53,14 +52,7 @@ function insertScenarios () {
   .then(() => db.raw('ALTER SEQUENCE scenarios_id_seq RESTART WITH 3;'));
 }
 
-function addData () {
+export function addData () {
   return insertProjects()
     .then(() => insertScenarios());
 }
-
-setupStructure()
-  .then(() => addData())
-  .then(res => {
-    console.log('done');
-    db.destroy();
-  });

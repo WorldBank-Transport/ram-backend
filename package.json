@@ -5,11 +5,11 @@
   "repository": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility",
   "main": "index.js",
   "scripts": {
-    "setupdb": "node fixtures/",
+    "setup": "node setup/",
     "lint": "eslint app/ test/ --ext .js",
     "test": "export DS_ENV=test && mocha --recursive --require babel-register",
     "start": "node index.js",
-    "nodemon": "nodemon index.js",
+    "nodemon": "nodemon --watch app index.js",
     "postinstall": "[ -f app/config/local.js ] || echo 'module.exports = {};' > app/config/local.js"
   },
   "engines": {
@@ -31,6 +31,7 @@
     "joi": "^10.0.0",
     "knex": "^0.12.7",
     "lodash": "^4.17.0",
+    "minio": "^3.1.1",
     "pg": "^6.1.2"
   },
   "devDependencies": {
