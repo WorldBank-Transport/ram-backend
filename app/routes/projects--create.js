@@ -18,13 +18,14 @@ module.exports = [
     },
     handler: (request, reply) => {
       const data = request.payload;
-      const timestamps = {
+      const base = {
+        status: 'pending',
         created_at: (new Date()),
         updated_at: (new Date())
       };
       db('projects')
       .returning('*')
-      .insert(Object.assign({}, data, timestamps))
+      .insert(Object.assign({}, data, base))
       .then(res => reply(res[0]))
       .catch(err => {
         if (err.constraint === 'projects_name_unique') {

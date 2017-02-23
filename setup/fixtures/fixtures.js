@@ -11,6 +11,7 @@ function insertProjects () {
       id: 1,
       name: 'Project 1',
       description: 'Sample project no 1',
+      status: 'pending',
       created_at: (new Date()),
       updated_at: (new Date())
     },
@@ -18,6 +19,7 @@ function insertProjects () {
       id: 2,
       name: 'Project 2',
       description: 'Sample project no 2',
+      status: 'pending',
       created_at: (new Date()),
       updated_at: (new Date())
     }

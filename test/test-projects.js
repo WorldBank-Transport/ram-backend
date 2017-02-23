@@ -32,6 +32,7 @@ describe('projects', function () {
             id: 1,
             name: 'Project 1',
             description: 'Sample project no 1',
+            status: 'pending',
             created_at: (new Date()),
             updated_at: (new Date())
           },
@@ -39,6 +40,7 @@ describe('projects', function () {
             id: 2,
             name: 'Project 2',
             description: 'Sample project no 2',
+            status: 'pending',
             created_at: (new Date()),
             updated_at: (new Date())
           },
@@ -46,6 +48,7 @@ describe('projects', function () {
             id: 3,
             name: 'Project to delete',
             description: 'Sample project',
+            status: 'pending',
             created_at: (new Date()),
             updated_at: (new Date())
           },
@@ -53,6 +56,7 @@ describe('projects', function () {
             id: 4,
             name: 'Project to update',
             description: 'Sample project',
+            status: 'pending',
             created_at: '2017-02-21T00:00:00.000Z',
             updated_at: '2017-02-21T00:00:00.000Z'
           }
@@ -88,6 +92,7 @@ describe('projects', function () {
         var result = res.result;
         assert.equal(result.meta.found, 4);
         assert.equal(result.results[0].id, 2);
+        assert.equal(result.results[0].status, 'pending');
         assert.equal(result.results[0].name, 'Project 2');
       });
     });
@@ -161,6 +166,7 @@ describe('projects', function () {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
         assert.equal(result.name, 'Project created');
+        assert.equal(result.status, 'pending');
         assert.equal(result.description, null);
       });
     });

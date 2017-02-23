@@ -17,6 +17,7 @@ export function createProjectsTable () {
     table.increments('id').primary();
     table.string('name');
     table.text('description');
+    table.string('status');
     table.timestamps();
 
     table.unique('name');
@@ -29,6 +30,7 @@ export function createScenarioTable () {
     table.increments('id').primary();
     table.string('name');
     table.text('description');
+    table.string('status');
     table.integer('project_id').unsigned();
     table.foreign('project_id').references('projects.id');
     table.timestamps();
