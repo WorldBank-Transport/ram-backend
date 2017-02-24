@@ -34,17 +34,17 @@ function insertScenarios () {
   return db.batchInsert('scenarios', [
     {
       id: 1,
-      name: 'Scenario 1',
-      description: 'Sample scenario for project 1',
+      name: 'Main scenario',
+      description: null,
       project_id: 1,
       created_at: (new Date()),
       updated_at: (new Date())
     },
     {
       id: 2,
-      name: 'Scenario 2',
-      description: 'Sample scenario for project 1',
-      project_id: 1,
+      name: 'Main scenario',
+      description: null,
+      project_id: 2,
       created_at: (new Date()),
       updated_at: (new Date())
     }

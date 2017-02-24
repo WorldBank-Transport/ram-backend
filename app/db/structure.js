@@ -11,6 +11,16 @@ export function dropScenarios () {
   return db.schema.dropTableIfExists('scenarios');
 }
 
+export function dropProjectsFiles () {
+  console.log('Dropping table: projects_files');
+  return db.schema.dropTableIfExists('projects_files');
+}
+
+export function dropScenariosFiles () {
+  console.log('Dropping table: scenarios_files');
+  return db.schema.dropTableIfExists('scenarios_files');
+}
+
 export function createProjectsTable () {
   console.log('Creating table: projects');
   return db.schema.createTable('projects', table => {
@@ -24,7 +34,7 @@ export function createProjectsTable () {
   });
 }
 
-export function createScenarioTable () {
+export function createScenariosTable () {
   console.log('Creating table: scenarios');
   return db.schema.createTable('scenarios', table => {
     table.increments('id').primary();
@@ -39,9 +49,41 @@ export function createScenarioTable () {
   });
 }
 
+export function createProjectsFilesTable () {
+  console.log('Creating table: projects_files');
+  return db.schema.createTable('projects_files', table => {
+    table.increments('id').primary();
+    table.string('name');
+    table.string('type');
+    table.string('path');
+    table.integer('project_id').unsigned();
+    table.foreign('project_id').references('projects.id');
+    table.timestamps();
+  });
+}
+
+export function createScenariosFilesTable () {
+  console.log('Creating table: scenarios_files');
+  return db.schema.createTable('scenarios_files', table => {
+    table.increments('id').primary();
+    table.string('name');
+    table.string('type');
+    table.string('path');
+    table.integer('project_id').unsigned();
+    table.foreign('project_id').references('projects.id');
+    table.integer('scenario_id').unsigned();
+    table.foreign('scenario_id').references('scenarios.id');
+    table.timestamps();
+  });
+}
+
 export function setupStructure () {
-  return dropScenarios()
+  return dropScenariosFiles()
+  .then(() => dropProjectsFiles())
+  .then(() => dropScenarios())
   .then(() => dropProjects())
   .then(() => createProjectsTable())
-  .then(() => createScenarioTable());
+  .then(() => createScenariosTable())
+  .then(() => createProjectsFilesTable())
+  .then(() => createScenariosFilesTable());
 }
