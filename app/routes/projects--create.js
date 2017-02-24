@@ -23,10 +23,25 @@ module.exports = [
         created_at: (new Date()),
         updated_at: (new Date())
       };
+
       db('projects')
       .returning('*')
       .insert(Object.assign({}, data, base))
-      .then(res => reply(res[0]))
+      .then(res => {
+        const projectData = res[0];
+
+        // Create first scenario. This is needed to store the related files.
+        db('scenarios')
+        .insert({
+          name: 'Main scenario',
+          project_id: projectData.id,
+          status: 'pending',
+          created_at: (new Date()),
+          updated_at: (new Date())
+        })
+        .then(() => reply(projectData))
+        .catch(err => reply(Boom.badImplementation(err)));
+      })
       .catch(err => {
         if (err.constraint === 'projects_name_unique') {
           return reply(Boom.conflict(`Project name already in use: ${data.name}`));
