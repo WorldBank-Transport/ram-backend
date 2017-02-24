@@ -3,14 +3,27 @@ import { setupStructure as setupDb } from '../app/db/structure';
 import { setupStructure as setupS3 } from '../app/s3/structure';
 import { addData } from './fixtures/fixtures';
 
-var setup = setupDb()
-  .then(() => setupS3());
+const arg = (a) => process.argv.indexOf(a) !== -1;
+var fns = [];
 
-if (process.argv.indexOf('--data') !== -1) {
-  setup = setup.then(() => addData());
+if (arg('--data')) {
+  fns.push(() => setupDb());
+  fns.push(() => addData());
+} else if (arg('--db')) {
+  fns.push(() => setupDb());
 }
 
-setup
+if (arg('--s3')) {
+  fns.push(() => setupS3());
+}
+
+// No specifics. Do not setup data.
+if (!fns.length) {
+  fns.push(() => setupDb());
+  fns.push(() => setupS3());
+}
+
+PromiseSerial(fns)
 .then(res => {
   console.log('done');
   process.exit(0);
@@ -19,3 +32,11 @@ setup
   console.log(err);
   process.exit(1);
 });
+
+function PromiseSerial (promisesFn) {
+  var result = Promise.resolve();
+  promisesFn.forEach(fn => {
+    result = result.then(fn);
+  });
+  return result;
+}

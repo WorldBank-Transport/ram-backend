@@ -41,11 +41,16 @@ Both the database and the local storage need some setup.
 ```
 npm run setup
 ```
-Will prepare all the needed tables for the database and the bucket for storage.
+Will prepare all the needed tables for the database and the bucket for storage. Both the database and the bucket will be removed and created anew.
 
-If data fixtures are needed for development run the following command instead:
+Other available options:
+- `--db` - Sets up database structure
+- `--data` - Sets up database and data fixtures
+- `--s3` - Sets up the storage bucket.
+
+Full setup with fixtures example:
 ```
-npm run setup -- --data
+npm run setup -- --data --s3
 ```
 
 ### Usage
