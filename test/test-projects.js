@@ -3,7 +3,16 @@ import { assert } from 'chai';
 
 import Server from '../app/services/server';
 import db from '../app/db';
-import { dropProjects, createProjectsTable } from '../app/db/structure';
+import {
+  dropScenariosFiles,
+  dropProjectsFiles,
+  dropScenarios,
+  dropProjects,
+  createProjectsTable,
+  createScenariosTable,
+  createProjectsFilesTable,
+  createScenariosFilesTable
+} from '../app/db/structure';
 
 var options = {
   connection: {port: 2000, host: '0.0.0.0'}
@@ -24,8 +33,14 @@ describe('projects', function () {
   });
 
   before(function (done) {
-    dropProjects()
+    dropScenariosFiles()
+      .then(() => dropProjectsFiles())
+      .then(() => dropScenarios())
+      .then(() => dropProjects())
       .then(() => createProjectsTable())
+      .then(() => createScenariosTable())
+      .then(() => createProjectsFilesTable())
+      .then(() => createScenariosFilesTable())
       .then(() => {
         const projects = [
           {

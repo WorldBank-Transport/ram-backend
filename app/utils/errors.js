@@ -2,7 +2,6 @@
 import nodeUtils from 'util';
 
 export function ProjectNotFoundError (message = 'Project not found', extra) {
-  console.log('this', this);
   Error.captureStackTrace && Error.captureStackTrace(this, this.constructor);
   this.name = this.constructor.name;
   this.message = message;
