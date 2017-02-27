@@ -1,8 +1,11 @@
 'use strict';
 import Joi from 'joi';
 import Boom from 'boom';
+import Promise from 'bluebird';
 
 import db from '../db/';
+import { removeFile } from '../s3/utils';
+import { ProjectNotFoundError } from '../utils/errors';
 
 module.exports = [
   {
@@ -16,19 +19,44 @@ module.exports = [
       }
     },
     handler: (request, reply) => {
-      // TODO: Delete all scenarios, when the parent project gets deleted.
       const id = request.params.projId;
-      db('projects')
-        .where('id', id)
-        .del()
-        .then(res => res > 0
-          ? reply({statusCode: 200, message: 'Project deleted'})
-          : reply(Boom.notFound('Project not found'))
+      db.transaction(trx => {
+        // Store the files to delete later. Not super clean but better than
+        // just passing the files down all the promises.
+        let allFiles;
+        return Promise.all([
+          trx.select('*').from('projects_files').where('project_id', id),
+          trx.select('*').from('scenarios_files').where('project_id', id)
+        ])
+        .then(files => { allFiles = files; })
+        // Delete files from tables. Needs to be done first because of the
+        // foreign keys.
+        .then(() => Promise.all([
+          trx.delete().from('projects_files').where('project_id', id),
+          trx.delete().from('scenarios_files').where('project_id', id)
+        ]))
+        .then(() => trx.delete().from('scenarios').where('project_id', id))
+        .then(() => trx
+          .delete()
+          .from('projects')
+          .where('id', id)
+          .then(res => {
+            if (res <= 0) {
+              throw new ProjectNotFoundError('Project not found');
+            }
+          })
         )
-        .catch(err => {
-          console.error(err);
-          return reply(Boom.badImplementation(err));
+        .then(() => {
+          let flat = allFiles.reduce((files, acc) => acc.concat(files), []);
+          return Promise.map(flat, f => removeFile(f.path));
         });
+      })
+      .then(() => reply({statusCode: 200, message: 'Project deleted'}))
+      .catch(ProjectNotFoundError, () => reply(Boom.notFound('Project not found')))
+      .catch(err => {
+        console.log('err', err);
+        reply(Boom.badImplementation(err));
+      });
     }
   }
 ];
