@@ -72,8 +72,8 @@ module.exports = [
             console.log('err', err);
           });
         })
-        .catch(ProjectNotFoundError, () => reply(Boom.notFound('Project not found')))
-        .catch(FileExistsError, () => reply(Boom.conflict('File already exists.')))
+        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
+        .catch(FileExistsError, e => reply(Boom.conflict(e.message)))
         .catch(err => {
           console.log('err', err);
           reply(Boom.badImplementation(err));
@@ -154,9 +154,9 @@ module.exports = [
             console.log('err', err);
           });
         })
-        .catch(ProjectNotFoundError, () => reply(Boom.notFound('Project not found')))
-        .catch(ScenarioNotFoundError, () => reply(Boom.notFound('Scenario not found')))
-        .catch(FileExistsError, () => reply(Boom.conflict('File already exists.')))
+        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
+        .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
+        .catch(FileExistsError, e => reply(Boom.conflict(e.message)))
         .catch(err => {
           console.log('err', err);
           reply(Boom.badImplementation(err));
@@ -187,7 +187,7 @@ module.exports = [
         .then(res => {
           if (!res.length) throw new ProjectNotFoundError();
           let data = res[0];
-          if (data.status !== 'pending') throw new ProjectStatusError();
+          if (data.status !== 'pending') throw new ProjectStatusError('Project no longer in the setup phase. Files can not be removed');
           if (data.file_id === null) throw new FileNotFoundError();
 
           return db('projects_files')
@@ -196,9 +196,9 @@ module.exports = [
             .then(() => removeFile(data.path));
         })
         .then(() => reply({statusCode: 200, message: 'File deleted'}))
-        .catch(ProjectNotFoundError, () => reply(Boom.notFound('Project not found')))
-        .catch(ProjectStatusError, () => reply(Boom.badRequest('Project no longer in the setup phase. Files can not be removed')))
-        .catch(FileNotFoundError, () => reply(Boom.notFound('File not found.')))
+        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
+        .catch(ProjectStatusError, e => reply(Boom.badRequest(e.message)))
+        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(err => {
           console.log('err', err);
           reply(Boom.badImplementation(err));
@@ -235,7 +235,7 @@ module.exports = [
           if (!res.length) throw new ScenarioNotFoundError();
           let data = res[0];
           if (data.project_id === null) throw new ProjectNotFoundError();
-          if (data.project_status !== 'pending') throw new ProjectStatusError();
+          if (data.project_status !== 'pending') throw new ProjectStatusError('Project no longer in the setup phase. Files can not be removed');
           if (data.file_id === null) throw new FileNotFoundError();
 
           return db('scenarios_files')
@@ -244,10 +244,10 @@ module.exports = [
             .then(() => removeFile(data.file_path));
         })
         .then(() => reply({statusCode: 200, message: 'File deleted'}))
-        .catch(ScenarioNotFoundError, () => reply(Boom.notFound('Scenario not found')))
-        .catch(ProjectNotFoundError, () => reply(Boom.notFound('Project not found')))
-        .catch(ProjectStatusError, () => reply(Boom.badRequest('Project no longer in the setup phase. Files can not be removed')))
-        .catch(FileNotFoundError, () => reply(Boom.notFound('File not found.')))
+        .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
+        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
+        .catch(ProjectStatusError, e => reply(Boom.badRequest(e.message)))
+        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(err => {
           console.log('err', err);
           reply(Boom.badImplementation(err));
