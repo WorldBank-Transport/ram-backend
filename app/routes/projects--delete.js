@@ -42,7 +42,7 @@ module.exports = [
           .where('id', id)
           .then(res => {
             if (res <= 0) {
-              throw new ProjectNotFoundError('Project not found');
+              throw new ProjectNotFoundError();
             }
           })
         )
