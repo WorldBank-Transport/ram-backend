@@ -37,6 +37,7 @@ function insertScenarios () {
       name: 'Main scenario',
       description: null,
       project_id: 1,
+      status: 'pending',
       created_at: (new Date()),
       updated_at: (new Date())
     },
@@ -45,6 +46,7 @@ function insertScenarios () {
       name: 'Main scenario',
       description: null,
       project_id: 2,
+      status: 'pending',
       created_at: (new Date()),
       updated_at: (new Date())
     }
