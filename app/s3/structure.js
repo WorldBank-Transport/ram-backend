@@ -1,8 +1,9 @@
 'use strict';
 import s3 from './';
+import config from '../config';
 
-const BUCKET = 'rra';
-const REGION = 'us-east-1';
+const BUCKET = config.storage.bucket;
+const REGION = config.storage.region;
 
 export function emptyBucket (bucket) {
   return new Promise((resolve, reject) => {
@@ -51,9 +52,9 @@ export function setupStructure () {
     .then(() => createBucket(BUCKET, REGION));
 }
 
-function removeObject (bucket, key) {
+export function removeObject (bucket, name) {
   return new Promise((resolve, reject) => {
-    s3.removeObject(bucket, key, err => {
+    s3.removeObject(bucket, name, err => {
       if (err) {
         return reject(err);
       }

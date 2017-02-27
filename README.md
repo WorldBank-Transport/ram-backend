@@ -75,6 +75,8 @@ The following options must be set: (The used file will depend on the context)
   - `storage.engine` - The storage engine to use. Either `minio` or `s3`. [STORAGE_ENGINE]
   - `storage.accessKey` - Access key for the storage. [STORAGE_ACCESS_KEY]
   - `storage.secretKey` - Secret key for storage. [STORAGE_SECRET_KEY]
+  - `storage.bucket` - Secret key for storage. [STORAGE_BUCKET]
+  - `storage.region` - Secret key for storage. [STORAGE_REGION]
 
 Example:
 ``` 
@@ -88,7 +90,9 @@ module.exports = {
   storage: {
     engine: 'minio',
     accessKey: 'minio',
-    secretKey: 'miniostorageengine'
+    secretKey: 'miniostorageengine',
+    bucket: 'rra',
+    region: 'us-east-1'
   }
 };
 ```

@@ -10,6 +10,8 @@ module.exports = {
   storage: {
     engine: null,
     accessKey: null,
-    secretKey: null
+    secretKey: null,
+    bucket: null,
+    region: null
   }
 };
