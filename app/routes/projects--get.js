@@ -1,8 +1,10 @@
 'use strict';
 import Joi from 'joi';
 import Boom from 'boom';
+import Promise from 'bluebird';
 
 import db from '../db/';
+import { ProjectNotFoundError } from '../utils/errors';
 
 module.exports = [
   {
@@ -17,8 +19,11 @@ module.exports = [
         db.select('*').from('projects').offset(offset).limit(limit)
       ]).then(res => {
         const [count, projects] = res;
-        request.count = parseInt(count[0].count);
-        reply(projects);
+        return Promise.map(projects, p => attachProjectFiles(p))
+          .then(projects => {
+            request.count = parseInt(count[0].count);
+            reply(projects);
+          });
       });
     }
   },
@@ -33,11 +38,30 @@ module.exports = [
       }
     },
     handler: (request, reply) => {
-      db.select('*').from('projects').where('id', request.params.projId)
-      .then(res => res.length
-        ? reply(res[0])
-        : reply(Boom.notFound('Project not found'))
-      );
+      db.select('*')
+        .from('projects')
+        .where('id', request.params.projId)
+        .then(projects => {
+          if (!projects.length) throw new ProjectNotFoundError();
+          return projects[0];
+        })
+        .then(project => attachProjectFiles(project))
+        .then(project => reply(project))
+        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
+        .catch(err => {
+          console.log('err', err);
+          reply(Boom.badImplementation(err));
+        });
     }
   }
 ];
+
+function attachProjectFiles (project) {
+  return db.select('id', 'name', 'type', 'path', 'created_at')
+    .from('projects_files')
+    .where('project_id', project.id)
+    .then(files => {
+      project.files = files || [];
+      return project;
+    });
+}
