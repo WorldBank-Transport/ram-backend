@@ -19,3 +19,6 @@ nodeUtils.inherits(ScenarioNotFoundError, ExtendableError);
 
 export function FileExistsError (message, extra) {}
 nodeUtils.inherits(FileExistsError, ExtendableError);
+
+export function FileNotFoundError (message, extra) {}
+nodeUtils.inherits(FileNotFoundError, ExtendableError);

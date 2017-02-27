@@ -1,11 +1,10 @@
 'use strict';
 import Joi from 'joi';
 import Boom from 'boom';
-import Promise from 'bluebird';
 
 import db from '../db/';
-import s3 from '../s3/';
-import { ProjectNotFoundError, ScenarioNotFoundError, FileExistsError } from '../utils/errors';
+import { getPresignedUrl, listenForFile, removeFile } from '../s3/utils';
+import { ProjectNotFoundError, ScenarioNotFoundError, FileExistsError, FileNotFoundError } from '../utils/errors';
 
 module.exports = [
   {
@@ -157,26 +156,70 @@ module.exports = [
           reply(Boom.badImplementation(err));
         });
     }
+  },
+
+  {
+    path: '/projects/{projId}/files/{fileId}',
+    method: 'DELETE',
+    config: {
+      validate: {
+        query: {
+        }
+      }
+    },
+    handler: (request, reply) => {
+      db('projects_files')
+        .returning('*')
+        .where('id', request.params.fileId)
+        .where('project_id', request.params.projId)
+        .then(res => {
+          if (!res.length) throw new FileNotFoundError('File not found');
+          let file = res[0];
+
+          return db('projects_files')
+            .where('id', file.id)
+            .del()
+            .then(() => removeFile(file.path));
+        })
+        .then(() => reply({statusCode: 200, message: 'File deleted'}))
+        .catch(FileNotFoundError, () => reply(Boom.notFound('File not found.')))
+        .catch(err => {
+          console.log('err', err);
+          reply(Boom.badImplementation(err));
+        });
+    }
+  },
+
+  {
+    path: '/projects/{projId}/scenarios/{scId}/files/{fileId}',
+    method: 'DELETE',
+    config: {
+      validate: {
+        query: {
+        }
+      }
+    },
+    handler: (request, reply) => {
+      db('scenarios_files')
+        .returning('*')
+        .where('id', request.params.fileId)
+        .where('scenario_id', request.params.scId)
+        .where('project_id', request.params.projId)
+        .then(res => {
+          if (!res.length) throw new FileNotFoundError('File not found');
+          let file = res[0];
+
+          return db('scenarios_files')
+            .where('id', file.id)
+            .del()
+            .then(() => removeFile(file.path));
+        })
+        .then(() => reply({statusCode: 200, message: 'File deleted'}))
+        .catch(FileNotFoundError, () => reply(Boom.notFound('File not found.')))
+        .catch(err => {
+          console.log('err', err);
+          reply(Boom.badImplementation(err));
+        });
+    }
   }
 ];
-
-function getPresignedUrl (file) {
-  return new Promise((resolve, reject) => {
-    s3.presignedPutObject('rra', file, 24 * 60 * 60, function (err, presignedUrl) {
-      if (err) {
-        return reject(err);
-      }
-      return resolve(presignedUrl);
-    });
-  });
-}
-
-function listenForFile (file) {
-  return new Promise((resolve, reject) => {
-    var listener = s3.listenBucketNotification('rra', file, '', ['s3:ObjectCreated:*']);
-    listener.on('notification', function (record) {
-      listener.stop();
-      return resolve(record);
-    });
-  });
-}
