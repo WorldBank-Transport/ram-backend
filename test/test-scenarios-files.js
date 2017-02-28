@@ -165,4 +165,90 @@ describe('Scenario files', function () {
       });
     });
   });
+
+  describe('GET /projects/{projId}/scenarios/{scId}/upload', function () {
+    before(function (done) {
+      db.insert({
+        id: 999,
+        name: 'Scenario 999',
+        description: 'Scenario no 999',
+        status: 'pending',
+        project_id: 2,
+        created_at: (new Date()),
+        updated_at: (new Date())
+      }).into('scenarios')
+
+      .then(() => db.insert({
+        id: 888,
+        name: 'road-network_000000',
+        type: 'road-network',
+        path: 'scenario-999/road-network_000000',
+        project_id: 2,
+        scenario_id: 999
+      }).into('scenarios_files'))
+
+      .then(() => done());
+    });
+
+    it('should error when type is not provided', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/300/scenarios/300/upload'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.match(res.result.message, /["type" is required]/);
+      });
+    });
+
+    it('should error when type is invalid', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/300/scenarios/300/upload?type=invalid'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.match(res.result.message, /\["type" must be one of \[road-network, poi\]\]/);
+      });
+    });
+
+    it('should return 404 for project not found', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/300/scenarios/300/upload?type=road-network'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'Project not found');
+      });
+    });
+
+    it('should return 404 for scenario not found', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/2/scenarios/300/upload?type=road-network'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'Scenario not found');
+      });
+    });
+
+    it('should return 409 when the file already exists', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/2/scenarios/999/upload?type=road-network'
+      }).then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        assert.equal(res.result.message, 'File already exists');
+      });
+    });
+
+    it('should return presigned url', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/2/scenarios/999/upload?type=poi'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.match(res.result.fileName, /^poi_[0-9]+$/);
+        assert.match(res.result.presignedUrl, /scenario-999\/poi_[0-9]+/);
+      });
+    });
+  });
 });

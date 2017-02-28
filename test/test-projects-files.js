@@ -154,4 +154,78 @@ describe('Project files', function () {
       });
     });
   });
+
+  describe('GET /projects/{projId}/upload', function () {
+    before(function (done) {
+      db.insert({
+        id: 999,
+        name: 'Project 999',
+        description: 'Sample project no 999',
+        status: 'pending',
+        created_at: (new Date()),
+        updated_at: (new Date())
+      }).into('projects')
+
+      .then(() => db.insert({
+        id: 888,
+        name: 'profile_000000',
+        type: 'profile',
+        path: 'project-999/profile_000000',
+        project_id: 999
+      }).into('projects_files'))
+
+      .then(() => done());
+    });
+
+    it('should error when type is not provided', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/300/upload'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.match(res.result.message, /["type" is required]/);
+      });
+    });
+
+    it('should error when type is invalid', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/300/upload?type=invalid'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.match(res.result.message, /\["type" must be one of \[profile, villages, admin-bounds\]\]/);
+      });
+    });
+
+    it('should return 404 for project not found', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/300/upload?type=profile'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'Project not found');
+      });
+    });
+
+    it('should return 409 when the file already exists', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/999/upload?type=profile'
+      }).then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        assert.equal(res.result.message, 'File already exists');
+      });
+    });
+
+    it('should return presigned url', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/999/upload?type=villages'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.match(res.result.fileName, /^villages_[0-9]+$/);
+        assert.match(res.result.presignedUrl, /project-999\/villages_[0-9]+/);
+      });
+    });
+  });
 });
