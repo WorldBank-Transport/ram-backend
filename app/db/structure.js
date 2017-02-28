@@ -2,7 +2,7 @@
 import db from './';
 import config from '../config';
 
-const DEBUG = config;
+const DEBUG = config.debug;
 
 export function dropProjects () {
   DEBUG && console.log('Dropping table: projects');

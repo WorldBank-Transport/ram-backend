@@ -7,7 +7,7 @@
   "scripts": {
     "setup": "DEBUG=true node setup/",
     "lint": "eslint app/ test/ --ext .js",
-    "test": "export DS_ENV=test && mocha test/test-* --require babel-register",
+    "test": "DS_ENV=test DEBUG=false mocha test/test-* --require babel-register",
     "start": "node index.js",
     "nodemon": "nodemon --watch app index.js",
     "postinstall": "[ -f app/config/local.js ] || echo 'module.exports = {};' > app/config/local.js"

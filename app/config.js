@@ -18,7 +18,7 @@ try {
 }
 
 // Overrides by ENV variables:
-config.debug = process.env.DEBUG || config.debug;
+config.debug = process.env.DEBUG !== undefined ? (process.env.DEBUG.toLowerCase() === 'true') : config.debug;
 config.connection.port = process.env.PORT || config.connection.port;
 config.connection.host = process.env.HOST || config.connection.host;
 
