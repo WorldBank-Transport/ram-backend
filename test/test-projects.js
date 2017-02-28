@@ -27,11 +27,7 @@ before(function (done) {
   });
 });
 
-describe('projects', function () {
-  after(function () {
-    db.destroy();
-  });
-
+describe('Projects', function () {
   before(function (done) {
     dropScenariosFiles()
       .then(() => dropProjectsFiles())
@@ -77,12 +73,12 @@ describe('projects', function () {
           }
         ];
 
-        db.batchInsert('projects', projects)
-        // Inserting a value for the auto increment column does not move the internal
-        // sequence pointer, therefore we need to do it manually.
-        .then(() => db.raw(`ALTER SEQUENCE projects_id_seq RESTART WITH ${projects.length + 1};`))
-        .then(() => done());
-      });
+        return db.batchInsert('projects', projects)
+          // Inserting a value for the auto increment column does not move the internal
+          // sequence pointer, therefore we need to do it manually.
+          .then(() => db.raw(`ALTER SEQUENCE projects_id_seq RESTART WITH ${projects.length + 1};`));
+      })
+      .then(() => done());
   });
 
   describe('GET /projects', function () {
@@ -136,6 +132,44 @@ describe('projects', function () {
   });
 
   describe('DELETE /projects/{projId}', function () {
+    before(function (done) {
+      // Insert an entry on every table to ensure delete works.
+      // Use just the needed fields.
+      db.insert({
+        id: 99999,
+        name: 'project delete',
+        description: 'project delete',
+        status: 'pending'
+      }).into('projects')
+
+      .then(() => db.insert({
+        id: 88888,
+        name: 'scenario delete',
+        description: 'scenario delete',
+        status: 'pending',
+        project_id: 99999
+      }).into('scenarios'))
+
+      .then(() => db.insert({
+        id: 777,
+        name: 'profile_000000',
+        type: 'profile',
+        path: 'project-99999/profile_000000',
+        project_id: 99999
+      }).into('projects_files'))
+
+      .then(() => db.insert({
+        id: 666,
+        name: 'road-network_000000',
+        type: 'road-network',
+        path: 'scenario-88888/road-network_000000',
+        project_id: 99999,
+        scenario_id: 88888
+      }).into('scenarios_files'))
+
+      .then(() => done());
+    });
+
     it('should return not found when deleting non existent project', function () {
       return instance.injectThen({
         method: 'DELETE',
@@ -152,6 +186,38 @@ describe('projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.equal(res.result.message, 'Project deleted');
+      });
+    });
+
+    it('should delete a project and all related scenarios and files', function () {
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/99999'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.message, 'Project deleted');
+
+        return db.select('*')
+          .from('scenarios')
+          .where('project_id', 99999)
+          .then(scenarios => {
+            assert.equal(scenarios.length, 0);
+            return;
+          })
+          .then(() => db.select('*')
+            .from('projects_files')
+            .where('project_id', 99999)
+            .then(files => {
+              assert.equal(files.length, 0);
+            })
+          )
+          .then(() => db.select('*')
+            .from('scenarios_files')
+            .where('project_id', 99999)
+            .then(files => {
+              assert.equal(files.length, 0);
+            })
+          );
       });
     });
   });
@@ -313,6 +379,28 @@ describe('projects', function () {
         assert.equal(result.name, 'updated name');
         assert.equal(result.description, 'updated description');
         assert.notEqual(result.created_at, result.updated_at);
+      });
+    });
+  });
+
+  describe('other', function () {
+    it('should create a pending scenario in the database', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects',
+        payload: {
+          name: 'A new project'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+
+        return db.select('*')
+          .from('scenarios')
+          .where('project_id', res.result.id)
+          .then(scenarios => {
+            assert.equal(scenarios.length, 1);
+            assert.equal(scenarios[0].status, 'pending');
+          });
       });
     });
   });
