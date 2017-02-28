@@ -13,7 +13,8 @@ module.exports = [
     config: {
       validate: {
         params: {
-          projId: Joi.number()
+          projId: Joi.number(),
+          fileId: Joi.number()
         }
       }
     },
@@ -37,7 +38,7 @@ module.exports = [
           return db('projects_files')
             .where('id', data.file_id)
             .del()
-            .then(() => removeFile(data.path));
+            .then(() => removeFile(data.file_path));
         })
         .then(() => reply({statusCode: 200, message: 'File deleted'}))
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))

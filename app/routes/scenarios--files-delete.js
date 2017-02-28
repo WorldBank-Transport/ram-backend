@@ -19,7 +19,8 @@ module.exports = [
       validate: {
         params: {
           projId: Joi.number(),
-          scId: Joi.number()
+          scId: Joi.number(),
+          fileId: Joi.number()
         }
       }
     },
