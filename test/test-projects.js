@@ -13,6 +13,7 @@ import {
   createProjectsFilesTable,
   createScenariosFilesTable
 } from '../app/db/structure';
+import { fixMeUp, projectPendingWithFiles } from './utils/data';
 
 var options = {
   connection: {port: 2000, host: '0.0.0.0'}
@@ -37,47 +38,7 @@ describe('Projects', function () {
       .then(() => createScenariosTable())
       .then(() => createProjectsFilesTable())
       .then(() => createScenariosFilesTable())
-      .then(() => {
-        const projects = [
-          {
-            id: 1,
-            name: 'Project 1',
-            description: 'Sample project no 1',
-            status: 'pending',
-            created_at: (new Date()),
-            updated_at: (new Date())
-          },
-          {
-            id: 2,
-            name: 'Project 2',
-            description: 'Sample project no 2',
-            status: 'pending',
-            created_at: (new Date()),
-            updated_at: (new Date())
-          },
-          {
-            id: 3,
-            name: 'Project to delete',
-            description: 'Sample project',
-            status: 'pending',
-            created_at: (new Date()),
-            updated_at: (new Date())
-          },
-          {
-            id: 4,
-            name: 'Project to update',
-            description: 'Sample project',
-            status: 'pending',
-            created_at: '2017-02-21T00:00:00.000Z',
-            updated_at: '2017-02-21T00:00:00.000Z'
-          }
-        ];
-
-        return db.batchInsert('projects', projects)
-          // Inserting a value for the auto increment column does not move the internal
-          // sequence pointer, therefore we need to do it manually.
-          .then(() => db.raw(`ALTER SEQUENCE projects_id_seq RESTART WITH ${projects.length + 1};`));
-      })
+      .then(() => fixMeUp())
       .then(() => done());
   });
 
@@ -89,8 +50,8 @@ describe('Projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
-        assert.equal(result.meta.found, 4);
-        assert.equal(result.results[0].name, 'Project 1');
+        assert.equal(result.meta.found, 7);
+        assert.equal(result.results[0].name, 'Project 1000');
       });
     });
 
@@ -101,10 +62,10 @@ describe('Projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
-        assert.equal(result.meta.found, 4);
-        assert.equal(result.results[0].id, 2);
+        assert.equal(result.meta.found, 7);
+        assert.equal(result.results[0].id, 1002);
         assert.equal(result.results[0].status, 'pending');
-        assert.equal(result.results[0].name, 'Project 2');
+        assert.equal(result.results[0].name, 'Project 1002');
       });
     });
   });
@@ -113,7 +74,7 @@ describe('Projects', function () {
     it('should return not found when getting non existent project', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/10'
+        url: '/projects/300'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
       });
@@ -122,11 +83,11 @@ describe('Projects', function () {
     it('should return the correct project', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1'
+        url: '/projects/1000'
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
-        assert.equal(res.result.id, 1);
-        assert.equal(res.result.name, 'Project 1');
+        assert.equal(res.result.id, 1000);
+        assert.equal(res.result.name, 'Project 1000');
       });
     });
   });
@@ -135,38 +96,7 @@ describe('Projects', function () {
     before(function (done) {
       // Insert an entry on every table to ensure delete works.
       // Use just the needed fields.
-      db.insert({
-        id: 99999,
-        name: 'project delete',
-        description: 'project delete',
-        status: 'pending'
-      }).into('projects')
-
-      .then(() => db.insert({
-        id: 88888,
-        name: 'scenario delete',
-        description: 'scenario delete',
-        status: 'pending',
-        project_id: 99999
-      }).into('scenarios'))
-
-      .then(() => db.insert({
-        id: 777,
-        name: 'profile_000000',
-        type: 'profile',
-        path: 'project-99999/profile_000000',
-        project_id: 99999
-      }).into('projects_files'))
-
-      .then(() => db.insert({
-        id: 666,
-        name: 'road-network_000000',
-        type: 'road-network',
-        path: 'scenario-88888/road-network_000000',
-        project_id: 99999,
-        scenario_id: 88888
-      }).into('scenarios_files'))
-
+      projectPendingWithFiles(99999)
       .then(() => done());
     });
 
@@ -176,16 +106,6 @@ describe('Projects', function () {
         url: '/projects/10'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
-      });
-    });
-
-    it('should delete a project', function () {
-      return instance.injectThen({
-        method: 'DELETE',
-        url: '/projects/3'
-      }).then(res => {
-        assert.equal(res.statusCode, 200, 'Status code is 200');
-        assert.equal(res.result.message, 'Project deleted');
       });
     });
 
@@ -298,21 +218,21 @@ describe('Projects', function () {
     it('should return a conflict when setting a name that already exists', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
-          name: 'Project 1'
+          name: 'Project 1100'
         }
       }).then(res => {
         assert.equal(res.statusCode, 409, 'Status code is 409');
         var result = res.result;
-        assert.equal(result.message, 'Project name already in use: Project 1');
+        assert.equal(result.message, 'Project name already in use: Project 1100');
       });
     });
 
     it('should not accept an empty name', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
           name: ''
         }
@@ -326,7 +246,7 @@ describe('Projects', function () {
     it('should change the project name', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
           name: 'New name'
         }
@@ -340,7 +260,7 @@ describe('Projects', function () {
     it('should not accept an empty description', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
           description: ''
         }
@@ -354,7 +274,7 @@ describe('Projects', function () {
     it('should accept a null description', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
           description: null
         }
@@ -368,7 +288,7 @@ describe('Projects', function () {
     it('should update all values', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
           name: 'updated name',
           description: 'updated description'
