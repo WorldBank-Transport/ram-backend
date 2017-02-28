@@ -19,7 +19,7 @@ module.exports = [
           projId: Joi.number()
         },
         query: {
-          type: Joi.valid('profile', 'villages', 'admin-bounds')
+          type: Joi.valid('profile', 'villages', 'admin-bounds').required()
         }
       }
     },
@@ -63,14 +63,14 @@ module.exports = [
           };
 
           db('projects_files')
-          .returning('*')
-          .insert(data)
-          .then(res => {
-            console.log('res', res);
-          })
-          .catch(err => {
-            console.log('err', err);
-          });
+            .returning('*')
+            .insert(data)
+            .then(res => {
+              console.log('res', res);
+            })
+            .catch(err => {
+              console.log('err', err);
+            });
         })
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(FileExistsError, e => reply(Boom.conflict(e.message)))

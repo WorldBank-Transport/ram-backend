@@ -20,7 +20,7 @@ module.exports = [
           scId: Joi.number()
         },
         query: {
-          type: Joi.valid('road-network', 'poi')
+          type: Joi.valid('road-network', 'poi').required()
         }
       }
     },
@@ -46,7 +46,7 @@ module.exports = [
             .andOn(db.raw('scenarios.id = :scId', {scId}));
         })
         .leftJoin('scenarios_files', function () {
-          this.on('scenarios.id', '=', 'scenarios_files.project_id')
+          this.on('scenarios.id', '=', 'scenarios_files.scenario_id')
             .andOn(db.raw('scenarios_files.type = :type', {type}));
         })
         .where('projects.id', projId)
@@ -78,14 +78,14 @@ module.exports = [
           };
 
           db('scenarios_files')
-          .returning('*')
-          .insert(data)
-          .then(res => {
-            console.log('res', res);
-          })
-          .catch(err => {
-            console.log('err', err);
-          });
+            .returning('*')
+            .insert(data)
+            .then(res => {
+              console.log('res', res);
+            })
+            .catch(err => {
+              console.log('err', err);
+            });
         })
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
