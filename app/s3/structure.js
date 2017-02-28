@@ -2,6 +2,7 @@
 import s3 from './';
 import config from '../config';
 
+const DEBUG = config;
 const BUCKET = config.storage.bucket;
 const REGION = config.storage.region;
 
@@ -36,12 +37,12 @@ export function createBucket (bucket, region) {
     s3.makeBucket(bucket, region, err => {
       if (err) {
         if (err.code === 'BucketAlreadyOwnedByYou') {
-          console.log(`Bucket ${bucket} already exists`);
+          DEBUG && console.log(`Bucket ${bucket} already exists`);
         } else {
           return reject(err);
         }
       }
-      console.log(`Bucket ${bucket} created`);
+      DEBUG && console.log(`Bucket ${bucket} created`);
       return resolve({bucket, region});
     });
   });
@@ -68,12 +69,12 @@ function removeBucket (bucket) {
     s3.removeBucket(bucket, err => {
       if (err) {
         if (err.code === 'NoSuchBucket') {
-          console.log(`Bucket ${bucket} does not exist. Skipping deletion`);
+          DEBUG && console.log(`Bucket ${bucket} does not exist. Skipping deletion`);
         } else {
           return reject(err);
         }
       }
-      console.log(`Bucket ${bucket} deleted`);
+      DEBUG && console.log(`Bucket ${bucket} deleted`);
       return resolve();
     });
   });

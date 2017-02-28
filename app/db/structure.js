@@ -1,28 +1,31 @@
 'use strict';
 import db from './';
+import config from '../config';
+
+const DEBUG = config;
 
 export function dropProjects () {
-  console.log('Dropping table: projects');
+  DEBUG && console.log('Dropping table: projects');
   return db.schema.dropTableIfExists('projects');
 }
 
 export function dropScenarios () {
-  console.log('Dropping table: scenarios');
+  DEBUG && console.log('Dropping table: scenarios');
   return db.schema.dropTableIfExists('scenarios');
 }
 
 export function dropProjectsFiles () {
-  console.log('Dropping table: projects_files');
+  DEBUG && console.log('Dropping table: projects_files');
   return db.schema.dropTableIfExists('projects_files');
 }
 
 export function dropScenariosFiles () {
-  console.log('Dropping table: scenarios_files');
+  DEBUG && console.log('Dropping table: scenarios_files');
   return db.schema.dropTableIfExists('scenarios_files');
 }
 
 export function createProjectsTable () {
-  console.log('Creating table: projects');
+  DEBUG && console.log('Creating table: projects');
   return db.schema.createTable('projects', table => {
     table.increments('id').primary();
     table.string('name');
@@ -35,7 +38,7 @@ export function createProjectsTable () {
 }
 
 export function createScenariosTable () {
-  console.log('Creating table: scenarios');
+  DEBUG && console.log('Creating table: scenarios');
   return db.schema.createTable('scenarios', table => {
     table.increments('id').primary();
     table.string('name');
@@ -50,7 +53,7 @@ export function createScenariosTable () {
 }
 
 export function createProjectsFilesTable () {
-  console.log('Creating table: projects_files');
+  DEBUG && console.log('Creating table: projects_files');
   return db.schema.createTable('projects_files', table => {
     table.increments('id').primary();
     table.string('name');
@@ -63,7 +66,7 @@ export function createProjectsFilesTable () {
 }
 
 export function createScenariosFilesTable () {
-  console.log('Creating table: scenarios_files');
+  DEBUG && console.log('Creating table: scenarios_files');
   return db.schema.createTable('scenarios_files', table => {
     table.increments('id').primary();
     table.string('name');
