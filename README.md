@@ -72,11 +72,18 @@ The following options must be set: (The used file will depend on the context)
   - `connection.port` - The port where the app runs. (Default 4000). [HOST]
   - `db` - The database connection string. [DB_CONNECTION]
   - `dbTest` - The database connection string for testing. [DB_TEST_CONNECTION]
+  - `storage` - Object with storage related settings. Has to be s3 compatible.
   - `storage.engine` - The storage engine to use. Either `minio` or `s3`. [STORAGE_ENGINE]
   - `storage.accessKey` - Access key for the storage. [STORAGE_ACCESS_KEY]
   - `storage.secretKey` - Secret key for storage. [STORAGE_SECRET_KEY]
   - `storage.bucket` - Secret key for storage. [STORAGE_BUCKET]
   - `storage.region` - Secret key for storage. [STORAGE_REGION]
+  - `storageTest` - Object with storage related settings, used for testing. Has to be s3 compatible.
+  - `storageTest.engine` - The storage engine to use. Either `minio` or `s3`. [STORAGE_TEST_ENGINE]
+  - `storageTest.accessKey` - Access key for the storage. [STORAGE_TEST_ACCESS_KEY]
+  - `storageTest.secretKey` - Secret key for storage. [STORAGE_TEST_SECRET_KEY]
+  - `storageTest.bucket` - Secret key for storage. [STORAGE_TEST_BUCKET]
+  - `storageTest.region` - Secret key for storage. [STORAGE_TEST_REGION]
 
 Example:
 ``` 
@@ -92,6 +99,13 @@ module.exports = {
     accessKey: 'minio',
     secretKey: 'miniostorageengine',
     bucket: 'rra',
+    region: 'us-east-1'
+  },
+  storageTest: {
+    engine: 'minio',
+    accessKey: 'minio',
+    secretKey: 'miniostorageengine',
+    bucket: 'rra-test',
     region: 'us-east-1'
   }
 };

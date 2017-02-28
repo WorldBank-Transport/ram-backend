@@ -22,3 +22,6 @@ switch (engine) {
 }
 
 export default minioClient;
+
+export const bucket = process.env.DS_ENV === 'test' ? config.storageTest.bucket : config.storage.bucket;
+export const region = process.env.DS_ENV === 'test' ? config.storageTest.region : config.storage.region;

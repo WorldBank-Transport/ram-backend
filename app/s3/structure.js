@@ -1,10 +1,10 @@
 'use strict';
-import s3 from './';
+import s3, { bucket, region } from './';
 import config from '../config';
 
 const DEBUG = config.debug;
-const BUCKET = config.storage.bucket;
-const REGION = config.storage.region;
+const BUCKET = bucket;
+const REGION = region;
 
 export function emptyBucket (bucket) {
   return new Promise((resolve, reject) => {

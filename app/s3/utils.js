@@ -1,11 +1,10 @@
 'use strict';
-import s3 from './';
+import s3, { bucket } from './';
 import { removeObject } from './structure';
-import config from '../config';
 
 export function getPresignedUrl (file) {
   return new Promise((resolve, reject) => {
-    s3.presignedPutObject(config.storage.bucket, file, 24 * 60 * 60, (err, presignedUrl) => {
+    s3.presignedPutObject(bucket, file, 24 * 60 * 60, (err, presignedUrl) => {
       if (err) {
         return reject(err);
       }
@@ -16,7 +15,7 @@ export function getPresignedUrl (file) {
 
 export function listenForFile (file) {
   return new Promise((resolve, reject) => {
-    var listener = s3.listenBucketNotification(config.storage.bucket, file, '', ['s3:ObjectCreated:*']);
+    var listener = s3.listenBucketNotification(bucket, file, '', ['s3:ObjectCreated:*']);
     listener.on('notification', record => {
       listener.stop();
       return resolve(record);
@@ -26,5 +25,5 @@ export function listenForFile (file) {
 
 // Proxy of removeObject function, assuming the bucket.
 export function removeFile (file) {
-  return removeObject(config.storage.bucket, file);
+  return removeObject(bucket, file);
 }

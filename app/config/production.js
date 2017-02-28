@@ -13,5 +13,12 @@ module.exports = {
     secretKey: null,
     bucket: null,
     region: null
+  },
+  storageTest: {
+    engine: null,
+    accessKey: null,
+    secretKey: null,
+    bucket: null,
+    region: null
   }
 };
