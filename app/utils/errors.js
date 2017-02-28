@@ -1,42 +1,37 @@
 'use strict';
-import nodeUtils from 'util';
+import ExtendableError from 'es6-error';
 
-export function ProjectNotFoundError (message = 'Project not found', extra) {
-  Error.captureStackTrace && Error.captureStackTrace(this, this.constructor);
-  this.name = this.constructor.name;
-  this.message = message;
-  this.extra = extra;
+export class ProjectNotFoundError extends ExtendableError {
+  constructor (message = 'Project not found', extra) {
+    super(message);
+    this.extra = extra;
+  }
 }
-nodeUtils.inherits(ProjectNotFoundError, Error);
 
-export function ScenarioNotFoundError (message = 'Scenario not found', extra) {
-  Error.captureStackTrace && Error.captureStackTrace(this, this.constructor);
-  this.name = this.constructor.name;
-  this.message = message;
-  this.extra = extra;
+export class ScenarioNotFoundError extends ExtendableError {
+  constructor (message = 'Scenario not found', extra) {
+    super(message);
+    this.extra = extra;
+  }
 }
-nodeUtils.inherits(ScenarioNotFoundError, Error);
 
-export function FileNotFoundError (message = 'File not found', extra) {
-  Error.captureStackTrace && Error.captureStackTrace(this, this.constructor);
-  this.name = this.constructor.name;
-  this.message = message;
-  this.extra = extra;
+export class FileNotFoundError extends ExtendableError {
+  constructor (message = 'File not found', extra) {
+    super(message);
+    this.extra = extra;
+  }
 }
-nodeUtils.inherits(FileNotFoundError, Error);
 
-export function FileExistsError (message = 'File already exists', extra) {
-  Error.captureStackTrace && Error.captureStackTrace(this, this.constructor);
-  this.name = this.constructor.name;
-  this.message = message;
-  this.extra = extra;
+export class FileExistsError extends ExtendableError {
+  constructor (message = 'File already exists', extra) {
+    super(message);
+    this.extra = extra;
+  }
 }
-nodeUtils.inherits(FileExistsError, Error);
 
-export function ProjectStatusError (message, extra) {
-  Error.captureStackTrace && Error.captureStackTrace(this, this.constructor);
-  this.name = this.constructor.name;
-  this.message = message;
-  this.extra = extra;
+export class ProjectStatusError extends ExtendableError {
+  constructor (message, extra) {
+    super(message);
+    this.extra = extra;
+  }
 }
-nodeUtils.inherits(ProjectStatusError, Error);
