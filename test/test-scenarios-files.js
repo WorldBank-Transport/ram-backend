@@ -1,5 +1,8 @@
 'use strict';
 import { assert } from 'chai';
+import request from 'request';
+import fs from 'fs';
+import Promise from 'bluebird';
 
 import Server from '../app/services/server';
 import db from '../app/db';
@@ -173,6 +176,74 @@ describe('Scenario files', function () {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.match(res.result.fileName, /^poi_[0-9]+$/);
         assert.match(res.result.presignedUrl, /scenario-1000\/poi_[0-9]+/);
+      });
+    });
+  });
+
+  describe('File upload end-to-end', function () {
+    // This tests the full file upload process:
+    // - Getting the presigned url.
+    // - Uploading the file.
+    // - Checking that the database was updated.
+    it('should upload a file', function () {
+      this.slow(150);
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/upload?type=poi'
+
+      // Get url.
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.match(res.result.fileName, /^poi_[0-9]+$/);
+        assert.match(res.result.presignedUrl, /scenario-1000\/poi_[0-9]+/);
+
+        return res.result.presignedUrl;
+      })
+
+      // Upload file.
+      .then(presignedUrl => {
+        let reqPromise = new Promise((resolve, reject) => {
+          let req = request.put(presignedUrl, (err, resp, body) => {
+            if (err) return reject(err);
+            return resolve();
+          });
+          let form = req.form();
+          form.append('file', fs.createReadStream('./test/utils/test-file'));
+        });
+
+        return reqPromise;
+      })
+
+      // Wait...
+      // The server is listening for the s3 notification. We have to give it
+      // time to resolve...
+      // So, try up to 3 times to check that the data is in the db.
+      .then(() => {
+        return new Promise((resolve, reject) => {
+          let tries = 3;
+          const retry = (delay, err) => {
+            if (--tries === 0) return reject(err);
+            setTimeout(() => fn(delay * 2), delay);
+          };
+
+          const fn = (delay) => {
+            db.select('*')
+              .from('scenarios_files')
+              .where('project_id', 1000)
+              .where('scenario_id', 1000)
+              .where('type', 'poi')
+              .then(files => {
+                assert.equal(files.length, 1);
+                assert.equal(files[0].project_id, 1000);
+                assert.match(files[0].name, /^poi_[0-9]+$/);
+                assert.match(files[0].path, /scenario-1000\/poi_[0-9]+/);
+                resolve();
+              })
+              .catch((err) => retry(delay, err));
+          };
+
+          fn(10);
+        });
       });
     });
   });
