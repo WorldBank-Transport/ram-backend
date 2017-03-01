@@ -5,5 +5,20 @@ module.exports = {
     host: '0.0.0.0',
     port: 4000
   },
-  db: null
+  db: null,
+  dbTest: null,
+  storage: {
+    engine: null,
+    accessKey: null,
+    secretKey: null,
+    bucket: null,
+    region: null
+  },
+  storageTest: {
+    engine: null,
+    accessKey: null,
+    secretKey: null,
+    bucket: null,
+    region: null
+  }
 };

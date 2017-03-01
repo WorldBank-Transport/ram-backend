@@ -3,7 +3,17 @@ import { assert } from 'chai';
 
 import Server from '../app/services/server';
 import db from '../app/db';
-import { dropProjects, createProjectsTable } from '../app/db/structure';
+import {
+  dropScenariosFiles,
+  dropProjectsFiles,
+  dropScenarios,
+  dropProjects,
+  createProjectsTable,
+  createScenariosTable,
+  createProjectsFilesTable,
+  createScenariosFilesTable
+} from '../app/db/structure';
+import { fixMeUp, projectPendingWithFiles } from './utils/data';
 
 var options = {
   connection: {port: 2000, host: '0.0.0.0'}
@@ -18,52 +28,18 @@ before(function (done) {
   });
 });
 
-describe('projects', function () {
-  after(function () {
-    db.destroy();
-  });
-
+describe('Projects', function () {
   before(function (done) {
-    dropProjects()
+    dropScenariosFiles()
+      .then(() => dropProjectsFiles())
+      .then(() => dropScenarios())
+      .then(() => dropProjects())
       .then(() => createProjectsTable())
-      .then(() => {
-        const projects = [
-          {
-            id: 1,
-            name: 'Project 1',
-            description: 'Sample project no 1',
-            created_at: (new Date()),
-            updated_at: (new Date())
-          },
-          {
-            id: 2,
-            name: 'Project 2',
-            description: 'Sample project no 2',
-            created_at: (new Date()),
-            updated_at: (new Date())
-          },
-          {
-            id: 3,
-            name: 'Project to delete',
-            description: 'Sample project',
-            created_at: (new Date()),
-            updated_at: (new Date())
-          },
-          {
-            id: 4,
-            name: 'Project to update',
-            description: 'Sample project',
-            created_at: '2017-02-21T00:00:00.000Z',
-            updated_at: '2017-02-21T00:00:00.000Z'
-          }
-        ];
-
-        db.batchInsert('projects', projects)
-        // Inserting a value for the auto increment column does not move the internal
-        // sequence pointer, therefore we need to do it manually.
-        .then(() => db.raw(`ALTER SEQUENCE projects_id_seq RESTART WITH ${projects.length + 1};`))
-        .then(() => done());
-      });
+      .then(() => createScenariosTable())
+      .then(() => createProjectsFilesTable())
+      .then(() => createScenariosFilesTable())
+      .then(() => fixMeUp())
+      .then(() => done());
   });
 
   describe('GET /projects', function () {
@@ -74,8 +50,8 @@ describe('projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
-        assert.equal(result.meta.found, 4);
-        assert.equal(result.results[0].name, 'Project 1');
+        assert.equal(result.meta.found, 7);
+        assert.equal(result.results[0].name, 'Project 1000');
       });
     });
 
@@ -86,9 +62,10 @@ describe('projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
-        assert.equal(result.meta.found, 4);
-        assert.equal(result.results[0].id, 2);
-        assert.equal(result.results[0].name, 'Project 2');
+        assert.equal(result.meta.found, 7);
+        assert.equal(result.results[0].id, 1002);
+        assert.equal(result.results[0].status, 'pending');
+        assert.equal(result.results[0].name, 'Project 1002');
       });
     });
   });
@@ -97,7 +74,7 @@ describe('projects', function () {
     it('should return not found when getting non existent project', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/10'
+        url: '/projects/300'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
       });
@@ -106,16 +83,23 @@ describe('projects', function () {
     it('should return the correct project', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1'
+        url: '/projects/1000'
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
-        assert.equal(res.result.id, 1);
-        assert.equal(res.result.name, 'Project 1');
+        assert.equal(res.result.id, 1000);
+        assert.equal(res.result.name, 'Project 1000');
       });
     });
   });
 
   describe('DELETE /projects/{projId}', function () {
+    before(function (done) {
+      // Insert an entry on every table to ensure delete works.
+      // Use just the needed fields.
+      projectPendingWithFiles(99999)
+      .then(() => done());
+    });
+
     it('should return not found when deleting non existent project', function () {
       return instance.injectThen({
         method: 'DELETE',
@@ -125,13 +109,35 @@ describe('projects', function () {
       });
     });
 
-    it('should delete a project', function () {
+    it('should delete a project and all related scenarios and files', function () {
       return instance.injectThen({
         method: 'DELETE',
-        url: '/projects/3'
+        url: '/projects/99999'
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.equal(res.result.message, 'Project deleted');
+
+        return db.select('*')
+          .from('scenarios')
+          .where('project_id', 99999)
+          .then(scenarios => {
+            assert.equal(scenarios.length, 0);
+            return;
+          })
+          .then(() => db.select('*')
+            .from('projects_files')
+            .where('project_id', 99999)
+            .then(files => {
+              assert.equal(files.length, 0);
+            })
+          )
+          .then(() => db.select('*')
+            .from('scenarios_files')
+            .where('project_id', 99999)
+            .then(files => {
+              assert.equal(files.length, 0);
+            })
+          );
       });
     });
   });
@@ -161,6 +167,7 @@ describe('projects', function () {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
         assert.equal(result.name, 'Project created');
+        assert.equal(result.status, 'pending');
         assert.equal(result.description, null);
       });
     });
@@ -211,21 +218,21 @@ describe('projects', function () {
     it('should return a conflict when setting a name that already exists', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
-          name: 'Project 1'
+          name: 'Project 1100'
         }
       }).then(res => {
         assert.equal(res.statusCode, 409, 'Status code is 409');
         var result = res.result;
-        assert.equal(result.message, 'Project name already in use: Project 1');
+        assert.equal(result.message, 'Project name already in use: Project 1100');
       });
     });
 
     it('should not accept an empty name', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
           name: ''
         }
@@ -239,7 +246,7 @@ describe('projects', function () {
     it('should change the project name', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
           name: 'New name'
         }
@@ -253,7 +260,7 @@ describe('projects', function () {
     it('should not accept an empty description', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
           description: ''
         }
@@ -267,7 +274,7 @@ describe('projects', function () {
     it('should accept a null description', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
           description: null
         }
@@ -281,7 +288,7 @@ describe('projects', function () {
     it('should update all values', function () {
       return instance.injectThen({
         method: 'PATCH',
-        url: '/projects/4',
+        url: '/projects/1000',
         payload: {
           name: 'updated name',
           description: 'updated description'
@@ -292,6 +299,28 @@ describe('projects', function () {
         assert.equal(result.name, 'updated name');
         assert.equal(result.description, 'updated description');
         assert.notEqual(result.created_at, result.updated_at);
+      });
+    });
+  });
+
+  describe('other', function () {
+    it('should create a pending scenario in the database', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects',
+        payload: {
+          name: 'A new project'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+
+        return db.select('*')
+          .from('scenarios')
+          .where('project_id', res.result.id)
+          .then(scenarios => {
+            assert.equal(scenarios.length, 1);
+            assert.equal(scenarios[0].status, 'pending');
+          });
       });
     });
   });
