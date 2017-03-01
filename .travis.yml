@@ -22,6 +22,7 @@ services:
 before_script:
   - sudo /etc/init.d/postgresql stop
   - docker-compose up -d
+  - DS_ENV=test npm run setup -- --db --bucket
 
 script:
   - npm test
