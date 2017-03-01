@@ -8,7 +8,7 @@ The steps below will walk you through setting up your own instance of the rra.
 To set up the development environment for this website, you'll need to install the following on your system:
 
 - [Node](http://nodejs.org/) v6.x (To manage multiple node versions we recommend [nvm](https://github.com/creationix/nvm))
-- [Docker](https://www.docker.com/products/docker) and [Docker Compose](https://docs.docker.com/compose/install/)
+- [Docker](https://www.docker.com/products/docker) and [Docker Compose](https://docs.docker.com/compose/install/) v1.10.0
 
 ### Install Application Dependencies
 
@@ -24,9 +24,9 @@ Install Node modules:
 npm install
 ```
 
-Start the docker containers:
+Start the docker containers in the background:
 ```
-docker-compose up
+docker-compose up -d
 ```
 Stop the docker containers with:
 ```
@@ -37,7 +37,7 @@ The containers will store the information within themselves. If the container is
 When using the application locally [Minio](https://minio.io/) is used as cloud storage to simulate S3. It's interface will be available at `http://localhost:9000`.
 
 ### Setup
-Both the database and the local storage need some setup.
+Both the database and the local storage need some setup. Before running the setup add the appropriate values to the config files. (See section below)
 ```
 npm run setup
 ```
