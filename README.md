@@ -34,7 +34,7 @@ docker-compose stop
 ```
 
 The containers will store the information within themselves. If the container is deleted all the information will be lost.
-When using the application locally [Minio](https://minio.io/) is used as cloud storage to simulate S3. It's interface will be available at `http://localhost:9000`.
+[Minio](https://minio.io) can be used to store the files locally as an alternative to AWS S3. This is particularly useful for local development. Its interface will be available at `http://localhost:9000`.
 
 ### Setup
 Both the database and the local storage need some setup. Before running the setup add the appropriate values to the config files. (See section below)
