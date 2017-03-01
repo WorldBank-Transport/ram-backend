@@ -39,9 +39,9 @@ The containers will store the information within themselves. If the container is
 ### Setup
 Both the database and the local storage need some setup. Before running the setup add the appropriate values to the config files. (See section below)
 ```
-npm run setup
+npm run setup -- --db --bucket
 ```
-Will prepare all the needed tables for the database and the bucket for storage. Both the database and the bucket will be removed and created anew.
+Will prepare all the needed tables for the database and the bucket for storage. Both the database and the bucket will be removed and created anew. **Data will be lost.**
 
 Other available options:
 - `--data` - Sets up database and data fixtures. If the data fixtures are not needed use `--db` instead.

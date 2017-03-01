@@ -17,10 +17,16 @@ if (arg('--bucket')) {
   fns.push(() => setupS3());
 }
 
-// No specifics. Do not setup data.
+// No flags. Abort.
 if (!fns.length) {
-  fns.push(() => setupDb());
-  fns.push(() => setupS3());
+  console.log('Options:');
+  console.log('  --data', '     Sets up database and data fixtures.');
+  console.log('  --db', '       Sets up database without data fixtures.');
+  console.log('  --bucket', '   Sets up bucket for file storage.');
+  console.log('');
+  console.log('WARNING: The commands are destructive. Data will be lost.');
+  console.log('');
+  process.exit(0);
 }
 
 PromiseSerial(fns)
