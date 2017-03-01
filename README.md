@@ -44,19 +44,19 @@ npm run setup
 Will prepare all the needed tables for the database and the bucket for storage. Both the database and the bucket will be removed and created anew.
 
 Other available options:
-- `--db` - Sets up database structure
-- `--data` - Sets up database and data fixtures
-- `--s3` - Sets up the storage bucket.
+- `--data` - Sets up database and data fixtures. If the data fixtures are not needed use `--db` instead.
+- `--bucket` - Sets up the storage bucket.
 
 Full setup with fixtures example:
+*(The `--` is important and can't be omitted)*
 ```
-npm run setup -- --data --s3
+npm run setup -- --data --bucket
 ```
 
 ### Usage
 
 #### Config files
-All the config files can be found in `app/assets/scripts/config`.
+All the config files can be found in `app/config`.
 After installing the projects there will be 3 main files:
   - `local.js` - Used only for local development. On production this file should not exist or be empty.
   - `staging.js`

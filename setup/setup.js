@@ -13,7 +13,7 @@ if (arg('--data')) {
   fns.push(() => setupDb());
 }
 
-if (arg('--s3')) {
+if (arg('--bucket')) {
   fns.push(() => setupS3());
 }
 
