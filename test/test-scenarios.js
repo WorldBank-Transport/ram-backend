@@ -27,7 +27,7 @@ before(function (done) {
   });
 });
 
-describe('Projects', function () {
+describe('Scenarios', function () {
   before(function (done) {
     dropScenariosFiles()
       .then(() => dropProjectsFiles())
