@@ -3,7 +3,7 @@ import * as Minio from 'minio';
 import config from '../config';
 
 var minioClient;
-const { engine, accessKey, secretKey } = config.storage;
+const { engine, accessKey, secretKey } = process.env.DS_ENV === 'test' ? config.storageTest : config.storage;
 
 switch (engine) {
   case 'minio':
