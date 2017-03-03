@@ -16,7 +16,7 @@ module.exports = [
 
       Promise.all([
         db('projects').count('id'),
-        db.select('*').from('projects').offset(offset).limit(limit)
+        db.select('*').from('projects').orderBy('created_at').offset(offset).limit(limit)
       ]).then(res => {
         const [count, projects] = res;
         return Promise.map(projects, p => attachProjectFiles(p))
@@ -41,6 +41,7 @@ module.exports = [
       db.select('*')
         .from('projects')
         .where('id', request.params.projId)
+        .orderBy('created_at')
         .then(projects => {
           if (!projects.length) throw new ProjectNotFoundError();
           return projects[0];

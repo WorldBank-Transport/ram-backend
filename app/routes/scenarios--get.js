@@ -32,7 +32,7 @@ module.exports = [
 
       Promise.all([
         db('scenarios').where('project_id', request.params.projId).count('id'),
-        db.select('*').from('scenarios').where('project_id', request.params.projId).offset(offset).limit(limit)
+        db.select('*').from('scenarios').where('project_id', request.params.projId).orderBy('created_at').offset(offset).limit(limit)
       ]).then(res => {
         const [count, scenarios] = res;
         return Promise.map(scenarios, s => attachScenarioFiles(s))
@@ -81,6 +81,7 @@ function singleScenarioHandler (request, reply) {
     .from('scenarios')
     .where('id', request.params.scId)
     .where('project_id', request.params.projId)
+    .orderBy('created_at')
     .then(scenarios => {
       if (!scenarios.length) throw new ScenarioNotFoundError();
       return scenarios[0];
