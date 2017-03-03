@@ -74,12 +74,16 @@ The following options must be set: (The used file will depend on the context)
   - `db` - The database connection string. [DB_CONNECTION]
   - `dbTest` - The database connection string for testing. [DB_TEST_CONNECTION]
   - `storage` - Object with storage related settings. Has to be s3 compatible.
+  - `storage.host` - The host to use. (Default 0.0.0.0). [STORAGE_HOST]
+  - `storage.port` - The port to use. (Default 0.0.0.0). [STORAGE_PORT]
   - `storage.engine` - The storage engine to use. Either `minio` or `s3`. [STORAGE_ENGINE]
   - `storage.accessKey` - Access key for the storage. [STORAGE_ACCESS_KEY]
   - `storage.secretKey` - Secret key for storage. [STORAGE_SECRET_KEY]
   - `storage.bucket` - Secret key for storage. [STORAGE_BUCKET]
   - `storage.region` - Secret key for storage. [STORAGE_REGION]
   - `storageTest` - Object with storage related settings, used for testing. Has to be s3 compatible.
+  - `storageTest.host` - The host to use. (Default 0.0.0.0). [STORAGE_TEST_HOST]
+  - `storageTest.port` - The port to use. (Default 0.0.0.0). [STORAGE_TEST_PORT]
   - `storageTest.engine` - The storage engine to use. Either `minio` or `s3`. [STORAGE_TEST_ENGINE]
   - `storageTest.accessKey` - Access key for the storage. [STORAGE_TEST_ACCESS_KEY]
   - `storageTest.secretKey` - Secret key for storage. [STORAGE_TEST_SECRET_KEY]
@@ -96,6 +100,8 @@ module.exports = {
   db: 'postgresql://rra:rra@localhost:5432/rra',
   dbTest: 'postgresql://rratest:rratest@localhost:5432/rratest',
   storage: {
+    host: '0.0.0.0',
+    port: 9000,
     engine: 'minio',
     accessKey: 'minio',
     secretKey: 'miniostorageengine',
@@ -103,6 +109,8 @@ module.exports = {
     region: 'us-east-1'
   },
   storageTest: {
+    host: '0.0.0.0',
+    port: 9000,
     engine: 'minio',
     accessKey: 'minio',
     secretKey: 'miniostorageengine',

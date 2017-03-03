@@ -3,13 +3,13 @@ import * as Minio from 'minio';
 import config from '../config';
 
 var minioClient;
-const { engine, accessKey, secretKey } = process.env.DS_ENV === 'test' ? config.storageTest : config.storage;
+const { host, port, engine, accessKey, secretKey } = process.env.DS_ENV === 'test' ? config.storageTest : config.storage;
 
 switch (engine) {
   case 'minio':
     minioClient = new Minio.Client({
-      endPoint: 'localhost',
-      port: 9000,
+      endPoint: host,
+      port: port,
       secure: false,
       accessKey: accessKey,
       secretKey: secretKey

@@ -8,6 +8,8 @@ module.exports = {
   db: null,
   dbTest: null,
   storage: {
+    host: null,
+    port: 9000,
     engine: null,
     accessKey: null,
     secretKey: null,
@@ -15,6 +17,8 @@ module.exports = {
     region: null
   },
   storageTest: {
+    host: null,
+    port: 9000,
     engine: null,
     accessKey: null,
     secretKey: null,
