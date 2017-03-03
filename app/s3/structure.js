@@ -79,3 +79,14 @@ function removeBucket (bucket) {
     });
   });
 }
+
+export function putObjectFromFile (bucket, name, filepath) {
+  return new Promise((resolve, reject) => {
+    s3.fPutObject(bucket, name, filepath, 'application/octet-stream', (err, etag) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(etag);
+    });
+  });
+}

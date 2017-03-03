@@ -1,7 +1,14 @@
 'use strict';
-import db from '../../app/db';
-import _ from 'lodash';
 import Promise from 'bluebird';
+import _ from 'lodash';
+import path from 'path';
+
+import db from '../../app/db';
+import { bucket } from '../../app/s3/';
+import { putObjectFromFile } from '../../app/s3/structure';
+
+const FILE = path.join(__dirname, 'test-file');
+const FILE_SCENARIO_1200 = path.join(__dirname, 'test-file-scenario-1200');
 
 // Project in pending state with one scenario.
 export function project1000 () {
@@ -64,6 +71,7 @@ export function project1001 () {
     'created_at': '2017-02-28T12:10:34.430Z',
     'updated_at': '2017-02-28T12:10:34.430Z'
   }))
+  .then(() => putObjectFromFile(bucket, 'project-1001/profile_000000', FILE))
   .then(() => scenario({
     'id': 1001,
     'name': 'Main scenario',
@@ -82,7 +90,8 @@ export function project1001 () {
     'scenario_id': 1001,
     'created_at': '2017-02-28T12:10:34.430Z',
     'updated_at': '2017-02-28T12:10:34.430Z'
-  }));
+  }))
+  .then(() => putObjectFromFile(bucket, 'scenario-1001/poi_000000', FILE));
 }
 
 // Project 1003 in pending state with one scenario and a villages file
@@ -104,6 +113,7 @@ export function project1003 () {
     'created_at': '2017-02-28T12:10:34.430Z',
     'updated_at': '2017-02-28T12:10:34.430Z'
   }))
+  .then(() => putObjectFromFile(bucket, 'project-1003/villages_000000', FILE))
   .then(() => scenario({
     'id': 1003,
     'name': 'Main scenario 1003',
@@ -122,7 +132,8 @@ export function project1003 () {
     'scenario_id': 1003,
     'created_at': '2017-02-28T12:10:34.430Z',
     'updated_at': '2017-02-28T12:10:34.430Z'
-  }));
+  }))
+  .then(() => putObjectFromFile(bucket, 'scenario-1003/road-network_000000', FILE));
 }
 
 // Project 1004 in pending state with one scenarios and all files
@@ -164,6 +175,9 @@ export function project1004 () {
       'updated_at': '2017-02-28T12:10:34.430Z'
     }
   ]))
+  .then(() => putObjectFromFile(bucket, 'project-1004/profile_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'project-1004/villages_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'project-1004/admin-bounds_000000', FILE))
   .then(() => scenario({
     'id': 1004,
     'name': 'Main scenario 1004',
@@ -194,7 +208,9 @@ export function project1004 () {
       'created_at': '2017-02-28T12:10:34.430Z',
       'updated_at': '2017-02-28T12:10:34.430Z'
     }
-  ]));
+  ]))
+  .then(() => putObjectFromFile(bucket, 'scenario-1004/road-network_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'scenario-1004/poi_000000', FILE));
 }
 
 // Project 1100 in active state with one scenarios and all files
@@ -236,6 +252,9 @@ export function project1100 () {
       'updated_at': '2017-02-28T12:10:34.430Z'
     }
   ]))
+  .then(() => putObjectFromFile(bucket, 'project-1100/profile_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'project-1100/villages_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'project-1100/admin-bounds_000000', FILE))
   .then(() => scenario({
     'id': 1100,
     'name': 'Main scenario 1100',
@@ -266,7 +285,9 @@ export function project1100 () {
       'created_at': '2017-02-28T12:10:34.430Z',
       'updated_at': '2017-02-28T12:10:34.430Z'
     }
-  ]));
+  ]))
+  .then(() => putObjectFromFile(bucket, 'scenario-1100/road-network_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'scenario-1100/poi_000000', FILE));
 }
 
 // Project 1200 in active state with 2 scenarios
@@ -308,6 +329,9 @@ export function project1200 () {
       'updated_at': '2017-02-28T12:10:34.430Z'
     }
   ]))
+  .then(() => putObjectFromFile(bucket, 'project-1200/profile_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'project-1200/villages_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'project-1200/admin-bounds_000000', FILE))
   .then(() => scenario([
     {
       'id': 1200,
@@ -369,7 +393,11 @@ export function project1200 () {
       'created_at': '2017-02-28T12:10:34.430Z',
       'updated_at': '2017-02-28T12:10:34.430Z'
     }
-  ]));
+  ]))
+  .then(() => putObjectFromFile(bucket, 'scenario-1200/road-network_000000', FILE_SCENARIO_1200))
+  .then(() => putObjectFromFile(bucket, 'scenario-1200/poi_000000', FILE_SCENARIO_1200))
+  .then(() => putObjectFromFile(bucket, 'scenario-1201/road-network_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'scenario-1201/poi_000000', FILE));
 }
 
 //
@@ -452,6 +480,7 @@ export function projectPendingWithFiles (id) {
     'created_at': '2017-02-28T12:10:34.430Z',
     'updated_at': '2017-02-28T12:10:34.430Z'
   }))
+  .then(() => putObjectFromFile(bucket, `project-${id}/profile_000000`, FILE))
   .then(() => scenario({
     'id': id,
     'name': `Scenario ${id}`,
@@ -470,5 +499,6 @@ export function projectPendingWithFiles (id) {
     'scenario_id': id,
     'created_at': '2017-02-28T12:10:34.430Z',
     'updated_at': '2017-02-28T12:10:34.430Z'
-  }));
+  }))
+  .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE));
 }

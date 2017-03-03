@@ -44,13 +44,14 @@ npm run setup -- --db --bucket
 Will prepare all the needed tables for the database and the bucket for storage. Both the database and the bucket will be removed and created anew. **Data will be lost.**
 
 Other available options:
-- `--data` - Sets up database and data fixtures. If the data fixtures are not needed use `--db` instead.
+- `--db` - Sets up the db structure.
 - `--bucket` - Sets up the storage bucket.
+- `--data` - Sets up database and data fixtures. This also sets up the db and bucket, so it's not needed to be used with the previous commands.
 
 Full setup with fixtures example:
 *(The `--` is important and can't be omitted)*
 ```
-npm run setup -- --data --bucket
+npm run setup -- --data
 ```
 
 ### Usage

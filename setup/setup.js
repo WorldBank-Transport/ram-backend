@@ -8,13 +8,15 @@ var fns = [];
 
 if (arg('--data')) {
   fns.push(() => setupDb());
-  fns.push(() => addData());
-} else if (arg('--db')) {
-  fns.push(() => setupDb());
-}
-
-if (arg('--bucket')) {
   fns.push(() => setupS3());
+  fns.push(() => addData());
+} else {
+  if (arg('--db')) {
+    fns.push(() => setupDb());
+  }
+  if (arg('--bucket')) {
+    fns.push(() => setupS3());
+  }
 }
 
 // No flags. Abort.
