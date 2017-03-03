@@ -49,10 +49,10 @@ module.exports = [
         })
         .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(err => {
-          console.log('err', err);
           if (err.code === 'NoSuchKey') {
-            return reply(Boom.notFound('File not found in storage bucket.'));
+            return reply(Boom.notFound('File not found in storage bucket'));
           }
+          console.log('err', err);
           reply(Boom.badImplementation(err));
         });
     }
