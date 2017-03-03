@@ -98,7 +98,6 @@ describe('Project files', function () {
         method: 'DELETE',
         url: '/projects/1003/files/10030001'
       }).then(res => {
-        console.log('res', res.result);
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.equal(res.result.message, 'File deleted');
 

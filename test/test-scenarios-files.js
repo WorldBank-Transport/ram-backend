@@ -180,6 +180,96 @@ describe('Scenario files', function () {
     });
   });
 
+  describe('GET /projects/{projId}/scenarios/0/upload', function () {
+    before(function (done) {
+      // Add a new scenario for project 1000.
+      // It won't be possible to have a pending project with 2 scenarios
+      // but this is just for the sake of testing.
+      db.insert({
+        id: 1000999,
+        name: 'Additional scenario project 1000',
+        description: '',
+        status: 'pending',
+        project_id: 1000,
+        created_at: '2017-02-28T12:10:34.430Z',
+        updated_at: '2017-02-28T12:10:34.430Z'
+      })
+      .into('scenarios')
+      .then(() => done());
+    });
+
+    after(function (done) {
+      // Cleanup.
+      db('scenarios')
+        .where('id', 1000999)
+        .del()
+        .then(() => done());
+    });
+
+    it('should return 404 for project not found', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/300/scenarios/0/upload?type=road-network'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'Project not found');
+      });
+    });
+
+    it('should return presigned url assuming main scenario', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/0/upload?type=poi'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.match(res.result.fileName, /^poi_[0-9]+$/);
+        assert.match(res.result.presignedUrl, /scenario-1000\/poi_[0-9]+/);
+      });
+    });
+  });
+
+  describe('DELETE /projects/{projId}/scenarios/0/files/{fileId}', function () {
+    before(function (done) {
+      db.insert({
+        id: 10000002,
+        name: 'road-network_000000',
+        type: 'road-network',
+        path: 'project-1000/road-network_000000',
+        project_id: 1000,
+        scenario_id: 1000
+      })
+      .into('scenarios_files')
+      .then(() => done());
+    });
+
+    it('should return 404 for project not found', function () {
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/300/scenarios/0/files/10000002'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'Project not found');
+      });
+    });
+
+    it('should delete the file assuming main scenario', function () {
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/1000/scenarios/0/files/10000002'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.message, 'File deleted');
+
+        return db.select('*')
+          .from('scenarios_files')
+          .where('id', 10000002)
+          .then(files => {
+            assert.equal(files.length, 0);
+          });
+      });
+    });
+  });
+
   describe('File upload end-to-end', function () {
     // This tests the full file upload process:
     // - Getting the presigned url.

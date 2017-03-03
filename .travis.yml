@@ -1,26 +1,29 @@
-dist: trusty
-sudo: required
 language: node_js
 node_js:
 - '6'
 
 env:
   global:
-    DB_TEST_CONNECTION="postgresql://postgres@localhost:5432/travis_ci_test"
+    DB_TEST_CONNECTION: "postgresql://rratest:rratest@localhost:5432/rratest"
+    STORAGE_TEST_ENGINE: "minio"
+    STORAGE_TEST_ACCESS_KEY: "minio"
+    STORAGE_TEST_SECRET_KEY: "miniostorageengine"
+    STORAGE_TEST_BUCKET: "rra-test"
+    STORAGE_TEST_REGION: "us-east-1"
 
 cache:
   apt: true
   directories:
   - node_modules
 
-addons:
-  postgresql: "9.6"
-
 services:
-  - postgresql
+  - docker
 
 before_script:
-  - psql -c 'create database travis_ci_test;' -U postgres
+  - sudo /etc/init.d/postgresql stop
+  - docker-compose up -d
+  - sleep 10 # Wait for the docker container with db to be up
+  - DS_ENV=test npm run setup -- --db --bucket
 
 script:
   - npm test
