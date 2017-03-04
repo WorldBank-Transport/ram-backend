@@ -27,3 +27,15 @@ export function listenForFile (file) {
 export function removeFile (file) {
   return removeObject(bucket, file);
 }
+
+// Get file.
+export function getFile (file) {
+  return new Promise((resolve, reject) => {
+    s3.getObject(bucket, file, (err, dataStream) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(dataStream);
+    });
+  });
+}

@@ -164,6 +164,94 @@ describe('Project files', function () {
     });
   });
 
+  describe('GET /projects/{projId}/files/{fileId}/download', function () {
+    before(function (done) {
+      // Add one file without an s3 representation.
+      db.insert({
+        'id': 10030001,
+        'name': 'profile_000000',
+        'type': 'profile',
+        'path': 'project-1003/profile_000000',
+        'project_id': 1003,
+        'created_at': '2017-02-28T12:10:34.430Z',
+        'updated_at': '2017-02-28T12:10:34.430Z'
+      })
+      .into('projects_files')
+      .then(() => done());
+    });
+
+    after(function (done) {
+      // cleanup
+      db('projects_files')
+        .where('id', 10030001)
+        .del()
+      .then(() => done());
+    });
+
+    it('should return 404 when a project is not found', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/300/files/1/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'File not found');
+      });
+    });
+
+    it('should return 404 when a file is not found', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1003/files/1/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'File not found');
+      });
+    });
+
+    it('should return 404 when a file is not found on s3', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1003/files/10030001/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'File not found in storage bucket');
+      });
+    });
+
+    it('should download a profile file', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1004/files/1004/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 200);
+        assert.match(res.headers['content-type'], /text\/x-lua/);
+        assert.match(res.headers['content-disposition'], /profile_000000/);
+      });
+    });
+
+    it('should download a villages file', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1004/files/1005/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 200);
+        assert.match(res.headers['content-type'], /application\/json/);
+        assert.match(res.headers['content-disposition'], /villages_000000/);
+      });
+    });
+
+    it('should download a admin bounds file', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1004/files/1006/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 200);
+        assert.match(res.headers['content-type'], /application\/json/);
+        assert.match(res.headers['content-disposition'], /admin-bounds_000000/);
+      });
+    });
+  });
+
   describe('File upload end-to-end', function () {
     // This tests the full file upload process:
     // - Getting the presigned url.

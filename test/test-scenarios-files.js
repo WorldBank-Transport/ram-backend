@@ -51,7 +51,7 @@ describe('Scenario files', function () {
         id: 10000001,
         name: 'road-network_000000',
         type: 'road-network',
-        path: 'project-1000/road-network_000000',
+        path: 'scenario-1000/road-network_000000',
         project_id: 1000,
         scenario_id: 1000
       })
@@ -176,6 +176,92 @@ describe('Scenario files', function () {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.match(res.result.fileName, /^poi_[0-9]+$/);
         assert.match(res.result.presignedUrl, /scenario-1000\/poi_[0-9]+/);
+      });
+    });
+  });
+
+  describe('GET /projects/{projId}/scenarios/{scId}/files/{fileId}/download', function () {
+    before(function (done) {
+      // Add one file without an s3 representation.
+      db.insert({
+        id: 10000001,
+        name: 'road-network_000000',
+        type: 'road-network',
+        path: 'scenario-1000/road-network_000000',
+        project_id: 1000,
+        scenario_id: 1000
+      })
+      .into('scenarios_files')
+      .then(() => done());
+    });
+
+    after(function (done) {
+      // cleanup
+      db('scenarios_files')
+        .where('id', 10030001)
+        .del()
+      .then(() => done());
+    });
+
+    it('should return 404 when a project is not found', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/300/scenarios/1000/files/1/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'File not found');
+      });
+    });
+
+    it('should return 404 when a scenario is not found', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/300/files/1/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'File not found');
+      });
+    });
+
+    it('should return 404 when a file is not found', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1003/scenarios/1003/files/1/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'File not found');
+      });
+    });
+
+    it('should return 404 when a file is not found on s3', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/files/10000001/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'File not found in storage bucket');
+      });
+    });
+
+    it('should download a road-network file', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1004/scenarios/1004/files/1004/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 200);
+        assert.match(res.headers['content-type'], /application\/xml/);
+        assert.match(res.headers['content-disposition'], /road-network_000000/);
+      });
+    });
+
+    it('should download a poi file', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1004/scenarios/1004/files/1005/download'
+      }).then(res => {
+        assert.equal(res.statusCode, 200);
+        assert.match(res.headers['content-type'], /application\/json/);
+        assert.match(res.headers['content-disposition'], /poi_000000/);
       });
     });
   });
