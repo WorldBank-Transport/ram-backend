@@ -111,11 +111,11 @@ describe('Project files', function () {
     });
   });
 
-  describe('GET /projects/{projId}/upload', function () {
+  describe('POST /projects/{projId}/files', function () {
     it('should error when type is not provided', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/upload'
+        method: 'POST',
+        url: '/projects/1000/files'
       }).then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         assert.match(res.result.message, /["type" is required]/);
@@ -124,8 +124,11 @@ describe('Project files', function () {
 
     it('should error when type is invalid', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/upload?type=invalid'
+        method: 'POST',
+        url: '/projects/1000/files',
+        payload: {
+          type: 'invalid'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         assert.match(res.result.message, /\["type" must be one of \[profile, villages, admin-bounds\]\]/);
@@ -134,8 +137,11 @@ describe('Project files', function () {
 
     it('should return 404 for project not found', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/300/upload?type=profile'
+        method: 'POST',
+        url: '/projects/300/files',
+        payload: {
+          type: 'profile'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'Project not found');
@@ -144,8 +150,11 @@ describe('Project files', function () {
 
     it('should return 409 when the file already exists', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1200/upload?type=profile'
+        method: 'POST',
+        url: '/projects/1200/files',
+        payload: {
+          type: 'profile'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 409, 'Status code is 409');
         assert.equal(res.result.message, 'File already exists');
@@ -154,8 +163,11 @@ describe('Project files', function () {
 
     it('should return presigned url', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/upload?type=villages'
+        method: 'POST',
+        url: '/projects/1000/files',
+        payload: {
+          type: 'villages'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.match(res.result.fileName, /^villages_[0-9]+$/);
@@ -164,7 +176,7 @@ describe('Project files', function () {
     });
   });
 
-  describe('GET /projects/{projId}/files/{fileId}/download', function () {
+  describe('GET /projects/{projId}/files/{fileId}?download=true', function () {
     before(function (done) {
       // Add one file without an s3 representation.
       db.insert({
@@ -188,10 +200,20 @@ describe('Project files', function () {
       .then(() => done());
     });
 
+    it('should return 400 when download flag not true', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/files/1?download=false'
+      }).then(res => {
+        assert.equal(res.statusCode, 501, 'Status code is 404');
+        assert.equal(res.result.message, 'Query parameter "download" missing');
+      });
+    });
+
     it('should return 404 when a project is not found', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/300/files/1/download'
+        url: '/projects/300/files/1?download=true'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'File not found');
@@ -201,7 +223,7 @@ describe('Project files', function () {
     it('should return 404 when a file is not found', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1003/files/1/download'
+        url: '/projects/1003/files/1?download=true'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'File not found');
@@ -211,7 +233,7 @@ describe('Project files', function () {
     it('should return 404 when a file is not found on s3', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1003/files/10030001/download'
+        url: '/projects/1003/files/10030001?download=true'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'File not found in storage bucket');
@@ -221,7 +243,7 @@ describe('Project files', function () {
     it('should download a profile file', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1004/files/1004/download'
+        url: '/projects/1004/files/1004?download=true'
       }).then(res => {
         assert.equal(res.statusCode, 200);
         assert.match(res.headers['content-type'], /text\/x-lua/);
@@ -232,7 +254,7 @@ describe('Project files', function () {
     it('should download a villages file', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1004/files/1005/download'
+        url: '/projects/1004/files/1005?download=true'
       }).then(res => {
         assert.equal(res.statusCode, 200);
         assert.match(res.headers['content-type'], /application\/json/);
@@ -243,7 +265,7 @@ describe('Project files', function () {
     it('should download a admin bounds file', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1004/files/1006/download'
+        url: '/projects/1004/files/1006?download=true'
       }).then(res => {
         assert.equal(res.statusCode, 200);
         assert.match(res.headers['content-type'], /application\/json/);
@@ -260,8 +282,11 @@ describe('Project files', function () {
     it('should upload a file', function () {
       this.slow(150);
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/upload?type=villages'
+        method: 'POST',
+        url: '/projects/1000/files',
+        payload: {
+          type: 'villages'
+        }
 
       // Get url.
       }).then(res => {
