@@ -8,7 +8,7 @@ import { FileNotFoundError } from '../utils/errors';
 
 module.exports = [
   {
-    path: '/projects/{projId}/scenarios/{scId}/files/{fileId}/download',
+    path: '/projects/{projId}/scenarios/{scId}/files/{fileId}',
     method: 'GET',
     config: {
       validate: {
@@ -16,10 +16,17 @@ module.exports = [
           projId: Joi.number(),
           scId: Joi.number(),
           fileId: Joi.number()
+        },
+        query: {
+          download: Joi.boolean().truthy('true').falsy('false')
         }
       }
     },
     handler: (request, reply) => {
+      if (!request.query.download) {
+        return reply(Boom.notImplemented('Query parameter "download" missing'));
+      }
+
       db('scenarios_files')
         .select('*')
         .where('id', request.params.fileId)
