@@ -19,7 +19,7 @@ module.exports = [
         db.select('*').from('projects').orderBy('created_at').offset(offset).limit(limit)
       ]).then(res => {
         const [count, projects] = res;
-        return Promise.map(projects, p => attachProjectFiles(p))
+        return Promise.map(projects, p => attachProjectFiles(p).then(p => attachScenarioCount(p)))
           .then(projects => {
             request.count = parseInt(count[0].count);
             reply(projects);
@@ -47,6 +47,7 @@ module.exports = [
           return projects[0];
         })
         .then(project => attachProjectFiles(project))
+        .then(project => attachScenarioCount(project))
         .then(project => reply(project))
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(err => {
@@ -63,6 +64,16 @@ function attachProjectFiles (project) {
     .where('project_id', project.id)
     .then(files => {
       project.files = files || [];
+      return project;
+    });
+}
+
+function attachScenarioCount (project) {
+  return db('scenarios')
+    .count('id')
+    .where('project_id', project.id)
+    .then(count => {
+      project.scenarioCount = parseInt(count[0].count);
       return project;
     });
 }

@@ -68,6 +68,17 @@ describe('Projects', function () {
         assert.equal(result.results[0].name, 'Project 1002');
       });
     });
+
+    it('should include the scenario count for a project', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.results[0].id, 1000);
+        assert.equal(res.result.results[0].scenarioCount, 1);
+      });
+    });
   });
 
   describe('GET /projects/{projId}', function () {
@@ -88,6 +99,17 @@ describe('Projects', function () {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.equal(res.result.id, 1000);
         assert.equal(res.result.name, 'Project 1000');
+      });
+    });
+
+    it('should include the scenario count for an individual project', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1200'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.id, 1200);
+        assert.equal(res.result.scenarioCount, 2);
       });
     });
   });
