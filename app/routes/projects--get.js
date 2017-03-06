@@ -47,6 +47,27 @@ module.exports = [
           return projects[0];
         })
         .then(project => attachProjectFiles(project))
+        .then(project => {
+          // Check if a project is ready to move out of the setup phase.
+          // Get 1st scenario files.
+          return db('scenarios_files')
+            .where('project_id', project.id)
+            .where('scenario_id', function () {
+              this.select('id')
+                .from('scenarios')
+                .where('project_id', project.id)
+                .orderBy('created_at')
+                .limit(1);
+            }).then(scenarioFiles => {
+              // For a file to be ready it need 5 files:
+              // - 3 on the project
+              // - 2 on the ghost scenario.
+              // There's no need for file type validation because it's all
+              // done on file upload.
+              project.readyToEndSetup = scenarioFiles.length === 2 && project.files.length === 3;
+              return project;
+            });
+        })
         .then(project => attachScenarioCount(project))
         .then(project => reply(project))
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
