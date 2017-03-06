@@ -11,20 +11,20 @@ import { ProjectNotFoundError, FileExistsError } from '../utils/errors';
 // completion to insert it in the database.
 module.exports = [
   {
-    path: '/projects/{projId}/upload',
-    method: 'GET',
+    path: '/projects/{projId}/files',
+    method: 'POST',
     config: {
       validate: {
         params: {
           projId: Joi.number()
         },
-        query: {
+        payload: {
           type: Joi.valid('profile', 'villages', 'admin-bounds').required()
         }
       }
     },
     handler: (request, reply) => {
-      const type = request.query.type;
+      const type = request.payload.type;
       const projId = parseInt(request.params.projId);
 
       const fileName = `${type}_${Date.now()}`;

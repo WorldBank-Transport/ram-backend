@@ -117,11 +117,14 @@ describe('Scenario files', function () {
     });
   });
 
-  describe('GET /projects/{projId}/scenarios/{scId}/upload', function () {
+  describe('POST /projects/{projId}/scenarios/{scId}/files', function () {
     it('should error when type is not provided', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/scenarios/1000/upload'
+        method: 'POST',
+        url: '/projects/1000/scenarios/1000/files',
+        payload: {
+          type: 'invalid'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         assert.match(res.result.message, /["type" is required]/);
@@ -130,8 +133,11 @@ describe('Scenario files', function () {
 
     it('should error when type is invalid', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/scenarios/1000/upload?type=invalid'
+        method: 'POST',
+        url: '/projects/1000/scenarios/1000/files',
+        payload: {
+          type: 'invalid'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         assert.match(res.result.message, /\["type" must be one of \[road-network, poi\]\]/);
@@ -140,8 +146,11 @@ describe('Scenario files', function () {
 
     it('should return 404 for project not found', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/300/scenarios/1000/upload?type=road-network'
+        method: 'POST',
+        url: '/projects/300/scenarios/1000/files',
+        payload: {
+          type: 'road-network'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'Project not found');
@@ -150,8 +159,11 @@ describe('Scenario files', function () {
 
     it('should return 404 for scenario not found', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/scenarios/300/upload?type=road-network'
+        method: 'POST',
+        url: '/projects/1000/scenarios/300/files',
+        payload: {
+          type: 'road-network'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'Scenario not found');
@@ -160,8 +172,11 @@ describe('Scenario files', function () {
 
     it('should return 409 when the file already exists', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1003/scenarios/1003/upload?type=road-network'
+        method: 'POST',
+        url: '/projects/1003/scenarios/1003/files',
+        payload: {
+          type: 'road-network'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 409, 'Status code is 409');
         assert.equal(res.result.message, 'File already exists');
@@ -170,8 +185,11 @@ describe('Scenario files', function () {
 
     it('should return presigned url', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/scenarios/1000/upload?type=poi'
+        method: 'POST',
+        url: '/projects/1000/scenarios/1000/files',
+        payload: {
+          type: 'poi'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.match(res.result.fileName, /^poi_[0-9]+$/);
@@ -266,7 +284,7 @@ describe('Scenario files', function () {
     });
   });
 
-  describe('GET /projects/{projId}/scenarios/0/upload', function () {
+  describe('POST /projects/{projId}/scenarios/0/files', function () {
     before(function (done) {
       // Add a new scenario for project 1000.
       // It won't be possible to have a pending project with 2 scenarios
@@ -294,8 +312,11 @@ describe('Scenario files', function () {
 
     it('should return 404 for project not found', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/300/scenarios/0/upload?type=road-network'
+        method: 'POST',
+        url: '/projects/300/scenarios/0/files',
+        payload: {
+          type: 'road-network'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'Project not found');
@@ -304,8 +325,11 @@ describe('Scenario files', function () {
 
     it('should return presigned url assuming main scenario', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/scenarios/0/upload?type=poi'
+        method: 'POST',
+        url: '/projects/1000/scenarios/0/files',
+        payload: {
+          type: 'poi'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.match(res.result.fileName, /^poi_[0-9]+$/);
@@ -364,9 +388,11 @@ describe('Scenario files', function () {
     it('should upload a file', function () {
       this.slow(150);
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/scenarios/1000/upload?type=poi'
-
+        method: 'POST',
+        url: '/projects/1000/scenarios/1000/files',
+        payload: {
+          type: 'poi'
+        }
       // Get url.
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');

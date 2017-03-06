@@ -111,11 +111,11 @@ describe('Project files', function () {
     });
   });
 
-  describe('GET /projects/{projId}/upload', function () {
+  describe('POST /projects/{projId}/files', function () {
     it('should error when type is not provided', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/upload'
+        method: 'POST',
+        url: '/projects/1000/files'
       }).then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         assert.match(res.result.message, /["type" is required]/);
@@ -124,8 +124,11 @@ describe('Project files', function () {
 
     it('should error when type is invalid', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/upload?type=invalid'
+        method: 'POST',
+        url: '/projects/1000/files',
+        payload: {
+          type: 'invalid'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         assert.match(res.result.message, /\["type" must be one of \[profile, villages, admin-bounds\]\]/);
@@ -134,8 +137,11 @@ describe('Project files', function () {
 
     it('should return 404 for project not found', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/300/upload?type=profile'
+        method: 'POST',
+        url: '/projects/300/files',
+        payload: {
+          type: 'profile'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'Project not found');
@@ -144,8 +150,11 @@ describe('Project files', function () {
 
     it('should return 409 when the file already exists', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1200/upload?type=profile'
+        method: 'POST',
+        url: '/projects/1200/files',
+        payload: {
+          type: 'profile'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 409, 'Status code is 409');
         assert.equal(res.result.message, 'File already exists');
@@ -154,8 +163,11 @@ describe('Project files', function () {
 
     it('should return presigned url', function () {
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/upload?type=villages'
+        method: 'POST',
+        url: '/projects/1000/files',
+        payload: {
+          type: 'villages'
+        }
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.match(res.result.fileName, /^villages_[0-9]+$/);
@@ -260,8 +272,11 @@ describe('Project files', function () {
     it('should upload a file', function () {
       this.slow(150);
       return instance.injectThen({
-        method: 'GET',
-        url: '/projects/1000/upload?type=villages'
+        method: 'POST',
+        url: '/projects/1000/files',
+        payload: {
+          type: 'villages'
+        }
 
       // Get url.
       }).then(res => {

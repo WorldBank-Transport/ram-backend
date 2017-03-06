@@ -12,7 +12,7 @@ const routeConfig = {
       projId: Joi.number(),
       scId: Joi.number()
     },
-    query: {
+    payload: {
       type: Joi.valid('road-network', 'poi').required()
     }
   }
@@ -28,8 +28,8 @@ module.exports = [
     // created, so this assumption is safe.
     // Doing this allows us to avoid multiple request to figure out what the
     // id of the main scenario is. Specially helpful when setting up the project.
-    path: '/projects/{projId}/scenarios/0/upload',
-    method: 'GET',
+    path: '/projects/{projId}/scenarios/0/files',
+    method: 'POST',
     config: routeConfig,
     handler: (request, reply) => {
       db('scenarios')
@@ -53,15 +53,15 @@ module.exports = [
     }
   },
   {
-    path: '/projects/{projId}/scenarios/{scId}/upload',
-    method: 'GET',
+    path: '/projects/{projId}/scenarios/{scId}/files',
+    method: 'POST',
     config: routeConfig,
     handler: scenarioFileUploadHAndler
   }
 ];
 
 function scenarioFileUploadHAndler (request, reply) {
-  const type = request.query.type;
+  const type = request.payload.type;
   const projId = parseInt(request.params.projId);
   const scId = parseInt(request.params.scId);
 
