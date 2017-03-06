@@ -101,3 +101,4 @@ tmp
 .tmp
 dist
 .nyc_output
+docker-compose-generated.yml

@@ -46,6 +46,7 @@
     "inject-then": "^2.0.8",
     "mocha": "^3.2.0",
     "nodemon": "^1.11.0",
-    "request": "^2.79.0"
+    "request": "^2.79.0",
+    "yamljs": "^0.2.8"
   }
 }
