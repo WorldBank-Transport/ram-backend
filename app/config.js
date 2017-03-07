@@ -26,7 +26,7 @@ config.db = process.env.DB_CONNECTION || config.db;
 config.dbTest = process.env.DB_TEST_CONNECTION || config.dbTest;
 
 config.storage.host = process.env.STORAGE_HOST || config.storage.host;
-config.storage.port = process.env.STORAGE_PORT || config.storage.port;
+config.storage.port = parseInt(process.env.STORAGE_PORT) || config.storage.port;
 config.storage.engine = process.env.STORAGE_ENGINE || config.storage.engine;
 config.storage.accessKey = process.env.STORAGE_ACCESS_KEY || config.storage.accessKey;
 config.storage.secretKey = process.env.STORAGE_SECRET_KEY || config.storage.secretKey;
@@ -34,7 +34,7 @@ config.storage.bucket = process.env.STORAGE_BUCKET || config.storage.bucket;
 config.storage.region = process.env.STORAGE_REGION || config.storage.region;
 
 config.storageTest.host = process.env.STORAGE_TEST_HOST || config.storageTest.host;
-config.storageTest.port = process.env.STORAGE_TEST_PORT || config.storageTest.port;
+config.storageTest.port = parseInt(process.env.STORAGE_TEST_PORT) || config.storageTest.port;
 config.storageTest.engine = process.env.STORAGE_TEST_ENGINE || config.storageTest.engine;
 config.storageTest.accessKey = process.env.STORAGE_TEST_ACCESS_KEY || config.storageTest.accessKey;
 config.storageTest.secretKey = process.env.STORAGE_TEST_SECRET_KEY || config.storageTest.secretKey;
