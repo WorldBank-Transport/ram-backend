@@ -35,3 +35,10 @@ export class ProjectStatusError extends ExtendableError {
     this.extra = extra;
   }
 }
+
+export class DataConflictError extends ExtendableError {
+  constructor (message, extra) {
+    super(message);
+    this.extra = extra;
+  }
+}
