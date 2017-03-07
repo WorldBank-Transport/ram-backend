@@ -19,7 +19,7 @@ module.exports = [
         db.select('*').from('projects').orderBy('created_at').offset(offset).limit(limit)
       ]).then(res => {
         const [count, projects] = res;
-        return Promise.map(projects, p => attachProjectFiles(p))
+        return Promise.map(projects, p => attachProjectFiles(p).then(p => attachScenarioCount(p)))
           .then(projects => {
             request.count = parseInt(count[0].count);
             reply(projects);
@@ -47,6 +47,28 @@ module.exports = [
           return projects[0];
         })
         .then(project => attachProjectFiles(project))
+        .then(project => {
+          // Check if a project is ready to move out of the setup phase.
+          // Get 1st scenario files.
+          return db('scenarios_files')
+            .where('project_id', project.id)
+            .where('scenario_id', function () {
+              this.select('id')
+                .from('scenarios')
+                .where('project_id', project.id)
+                .orderBy('created_at')
+                .limit(1);
+            }).then(scenarioFiles => {
+              // For a file to be ready it need 5 files:
+              // - 3 on the project
+              // - 2 on the ghost scenario.
+              // There's no need for file type validation because it's all
+              // done on file upload.
+              project.readyToEndSetup = scenarioFiles.length === 2 && project.files.length === 3;
+              return project;
+            });
+        })
+        .then(project => attachScenarioCount(project))
         .then(project => reply(project))
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(err => {
@@ -63,6 +85,16 @@ function attachProjectFiles (project) {
     .where('project_id', project.id)
     .then(files => {
       project.files = files || [];
+      return project;
+    });
+}
+
+function attachScenarioCount (project) {
+  return db('scenarios')
+    .count('id')
+    .where('project_id', project.id)
+    .then(count => {
+      project.scenarioCount = parseInt(count[0].count);
       return project;
     });
 }

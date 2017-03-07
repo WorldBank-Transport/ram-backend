@@ -68,6 +68,27 @@ describe('Projects', function () {
         assert.equal(result.results[0].name, 'Project 1002');
       });
     });
+
+    it('should include the scenario count for a project', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.results[0].id, 1000);
+        assert.equal(res.result.results[0].scenarioCount, 1);
+      });
+    });
+
+    it('should not include readyToEndSetup flag', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(typeof res.result.results[0].readyToEndSetup, 'undefined');
+      });
+    });
   });
 
   describe('GET /projects/{projId}', function () {
@@ -88,6 +109,48 @@ describe('Projects', function () {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.equal(res.result.id, 1000);
         assert.equal(res.result.name, 'Project 1000');
+      });
+    });
+
+    it('should include the scenario count for an individual project', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1200'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.id, 1200);
+        assert.equal(res.result.scenarioCount, 2);
+      });
+    });
+
+    it('should include readyToEndSetup flag with false', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.readyToEndSetup, false);
+      });
+    });
+
+    it('should include readyToEndSetup flag with true', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1004'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.readyToEndSetup, true);
+      });
+    });
+
+    it('should include readyToEndSetup flag with true even for active project', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1200'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.status, 'active');
+        assert.equal(res.result.readyToEndSetup, true);
       });
     });
   });
