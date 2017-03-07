@@ -13,7 +13,7 @@ import {
   createProjectsFilesTable,
   createScenariosFilesTable
 } from '../app/db/structure';
-import { fixMeUp, projectPendingWithFiles } from './utils/data';
+import { fixMeUp, projectPendingWithFiles, projectPendingWithAllFiles } from './utils/data';
 
 var options = {
   connection: {port: 2000, host: '0.0.0.0'}
@@ -361,7 +361,119 @@ describe('Projects', function () {
         var result = res.result;
         assert.equal(result.name, 'updated name');
         assert.equal(result.description, 'updated description');
+        assert.equal((new Date(result.created_at)).toISOString(), '2017-02-01T12:00:01.000Z');
         assert.notEqual(result.created_at, result.updated_at);
+      });
+    });
+  });
+
+  describe('POST /projects/{projId}/finish-setup', function () {
+    before(function (done) {
+      // Needed for test: "should update project and scenario with name and description"
+      projectPendingWithAllFiles(19999)
+        .then(() => done());
+    });
+
+    it('should return a conflict when finishing setup for an active project', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1200/finish-setup',
+        payload: {
+          scenarioName: 'Main scenario'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        var result = res.result;
+        assert.equal(result.message, 'Project setup already completed');
+      });
+    });
+
+    it('should return a conflict when finishing setup for a project not ready', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/finish-setup',
+        payload: {
+          scenarioName: 'Main scenario'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        var result = res.result;
+        assert.equal(result.message, 'Project preconditions to finish setup not met');
+      });
+    });
+
+    it('should return 404 when finishing setup for a non existent project', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/300/finish-setup',
+        payload: {
+          scenarioName: 'Main scenario'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        var result = res.result;
+        assert.equal(result.message, 'Project not found');
+      });
+    });
+
+    it('should update project and scenario with name', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1004/finish-setup',
+        payload: {
+          scenarioName: 'Main scenario'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        assert.equal(result.message, 'Project setup finished');
+
+        // Check the db for updates.
+        return Promise.all([
+          db('projects')
+            .where('id', 1004)
+            .then(proj => {
+              assert.equal(proj[0].status, 'active');
+            }),
+          db('scenarios')
+            .where('project_id', 1004)
+            .then(scenario => {
+              assert.equal(scenario[0].status, 'active');
+              assert.equal(scenario[0].name, 'Main scenario');
+              assert.equal(scenario[0].description, '');
+            })
+        ]);
+      });
+    });
+
+    it('should update project and scenario with name and description', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/19999/finish-setup',
+        payload: {
+          scenarioName: 'Main scenario updated',
+          scenarioDescription: 'Main scenario description'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        assert.equal(result.message, 'Project setup finished');
+
+        // Check the db for updates.
+        return Promise.all([
+          db('projects')
+            .where('id', 19999)
+            .then(proj => {
+              assert.equal(proj[0].status, 'active');
+            }),
+          db('scenarios')
+            .where('project_id', 19999)
+            .then(scenario => {
+              assert.equal(scenario[0].status, 'active');
+              assert.equal(scenario[0].name, 'Main scenario updated');
+              assert.equal(scenario[0].description, 'Main scenario description');
+            })
+        ]);
       });
     });
   });

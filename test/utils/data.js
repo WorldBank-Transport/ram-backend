@@ -502,3 +502,80 @@ export function projectPendingWithFiles (id) {
   }))
   .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE));
 }
+
+// Insert a project, a scenario, and all files.
+export function projectPendingWithAllFiles (id) {
+  return project({
+    'id': id,
+    'name': `Full project ${id}`,
+    'description': 'Project in pending state with one scenario and a profile file',
+    'status': 'pending',
+    'created_at': '2017-02-01T12:00:00.000Z',
+    'updated_at': '2017-02-01T12:00:00.000Z'
+  })
+  .then(() => projectFile([
+    {
+      'id': id,
+      'name': 'profile_000000',
+      'type': 'profile',
+      'path': `project-${id}/profile_000000`,
+      'project_id': id,
+      'created_at': '2017-02-01T12:00:07.000Z',
+      'updated_at': '2017-02-01T12:00:07.000Z'
+    },
+    {
+      'id': id + 1,
+      'name': 'villages_000000',
+      'type': 'villages',
+      'path': `project-${id}/villages_000000`,
+      'project_id': id,
+      'created_at': '2017-02-01T12:00:07.000Z',
+      'updated_at': '2017-02-01T12:00:07.000Z'
+    },
+    {
+      'id': id + 2,
+      'name': 'admin-bounds_000000',
+      'type': 'admin-bounds',
+      'path': `project-${id}/admin-bounds_000000`,
+      'project_id': id,
+      'created_at': '2017-02-01T12:00:07.000Z',
+      'updated_at': '2017-02-01T12:00:07.000Z'
+    }
+  ]))
+  .then(() => putObjectFromFile(bucket, `project-${id}/profile_000000`, FILE))
+  .then(() => putObjectFromFile(bucket, `project-${id}/villages_000000`, FILE))
+  .then(() => putObjectFromFile(bucket, `project-${id}/admin-bounds_000000`, FILE))
+  .then(() => scenario({
+    'id': id,
+    'name': `Scenario ${id}`,
+    'description': `Ghost scenario ${id} created when the project ${id} was created. Has a poi file`,
+    'status': 'pending',
+    'project_id': id,
+    'created_at': '2017-02-01T12:00:00.000Z',
+    'updated_at': '2017-02-01T12:00:00.000Z'
+  }))
+  .then(() => scenarioFile([
+    {
+      'id': id,
+      'name': 'road-network_000000',
+      'type': 'road-network',
+      'path': `scenario-${id}/road-network_000000`,
+      'project_id': id,
+      'scenario_id': id,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    },
+    {
+      'id': id + 1,
+      'name': 'poi_000000',
+      'type': 'poi',
+      'path': `scenario-${id}/poi_000000`,
+      'project_id': id,
+      'scenario_id': id,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    }
+  ]))
+  .then(() => putObjectFromFile(bucket, `scenario-${id}/road-network_000000`, FILE))
+  .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE));
+}
