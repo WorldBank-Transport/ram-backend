@@ -1,0 +1,24 @@
+rra-postgis:
+  image: mdillon/postgis
+  ports:
+    - 5432:5432
+  environment:
+    POSTGRES_PASSWORD: rra
+    POSTGRES_USER: rra
+    POSTGRES_DB: rra
+rra-minio:
+  image: minio/minio
+  ports:
+    - 9000:9000
+  environment:
+    MINIO_ACCESS_KEY: minio
+    MINIO_SECRET_KEY: miniostorageengine
+  command: server /export
+rra-api:
+  image: wbtransport/rra-api
+  ports:
+    - 4000:4000
+  command: node index.js
+  links:
+    - rra-postgis
+    - rra-minio

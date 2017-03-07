@@ -101,3 +101,4 @@ tmp
 .tmp
 dist
 .nyc_output
+ecs-task-definition-generated.yml

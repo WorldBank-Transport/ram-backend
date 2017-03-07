@@ -74,12 +74,16 @@ The following options must be set: (The used file will depend on the context)
   - `db` - The database connection string. [DB_CONNECTION]
   - `dbTest` - The database connection string for testing. [DB_TEST_CONNECTION]
   - `storage` - Object with storage related settings. Has to be s3 compatible.
+  - `storage.host` - The host to use. (Default 0.0.0.0). [STORAGE_HOST]
+  - `storage.port` - The port to use. (Default 0.0.0.0). [STORAGE_PORT]
   - `storage.engine` - The storage engine to use. Either `minio` or `s3`. [STORAGE_ENGINE]
   - `storage.accessKey` - Access key for the storage. [STORAGE_ACCESS_KEY]
   - `storage.secretKey` - Secret key for storage. [STORAGE_SECRET_KEY]
   - `storage.bucket` - Secret key for storage. [STORAGE_BUCKET]
   - `storage.region` - Secret key for storage. [STORAGE_REGION]
   - `storageTest` - Object with storage related settings, used for testing. Has to be s3 compatible.
+  - `storageTest.host` - The host to use. (Default 0.0.0.0). [STORAGE_TEST_HOST]
+  - `storageTest.port` - The port to use. (Default 0.0.0.0). [STORAGE_TEST_PORT]
   - `storageTest.engine` - The storage engine to use. Either `minio` or `s3`. [STORAGE_TEST_ENGINE]
   - `storageTest.accessKey` - Access key for the storage. [STORAGE_TEST_ACCESS_KEY]
   - `storageTest.secretKey` - Secret key for storage. [STORAGE_TEST_SECRET_KEY]
@@ -96,6 +100,8 @@ module.exports = {
   db: 'postgresql://rra:rra@localhost:5432/rra',
   dbTest: 'postgresql://rratest:rratest@localhost:5432/rratest',
   storage: {
+    host: '0.0.0.0',
+    port: 9000,
     engine: 'minio',
     accessKey: 'minio',
     secretKey: 'miniostorageengine',
@@ -103,6 +109,8 @@ module.exports = {
     region: 'us-east-1'
   },
   storageTest: {
+    host: '0.0.0.0',
+    port: 9000,
     engine: 'minio',
     accessKey: 'minio',
     secretKey: 'miniostorageengine',
@@ -123,3 +131,35 @@ This command starts the server with `nodemon` which watches files and restarts w
 npm start
 ```
 Starts the app without file watching
+
+### Deployment
+Travis is set up to deploy the backend to an AWS ECS Cluster whenever a PR is merged into the `develop` or `master` branch of the project. This triggers a deploy of the API, the database, and the Minio bucket.
+
+#### Setting up deployment
+Follow these steps to set up a deployment to an ECS Cluster:
+
+1. [Create an ECS Cluster](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/create_cluster.html) on AWS  
+  - the current setup requires one EC2 instance and has been tested on a `t2.medium`
+  - associate a Key Pair to the instance
+2. Modify the Travis config with your AWS credentials  
+  - `AWS_ECS_CLUSTER` = the cluster you created in step 1
+  - `AWS_REGION`
+  - `AWS_ACCESS_KEY_ID`
+  - `AWS_SECRET_ACCESS_KEY` - use `travis encrypt AWS_SECRET_ACCESS_KEY=[secretKey]` to [generate an encrypted key](https://docs.travis-ci.com/user/encryption-keys/)
+3. SSH into the machine with your Key Pair to set up the basic database structure  
+  - run `docker ps` and to find the Container ID of `rra-api`
+  - run `docker exec [container_id] npm run setup -- --db --bucket`
+
+This should set up the basic cluster that Travis can push the backend to.
+
+#### Disabling a deployment
+To disable a particular deployment, you can remove it from the deploy block from `.travis.yml`.
+
+```
+deploy:
+  - provider: script
+    skip_cleanup: true
+    script: .build_scripts/deploy.sh
+    on:
+      branch: ${STABLE_BRANCH}
+```
