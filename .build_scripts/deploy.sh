@@ -35,7 +35,7 @@ echo "Configuring ECS client"
 ecs-cli configure --region $AWS_REGION --access-key $AWS_ACCESS_KEY_ID --secret-key $AWS_SECRET_ACCESS_KEY --cluster $ECS_CLUSTER
 
 echo "Stopping current ECS task"
-ecs-cli compose --verbose --project-name rra-backend --file docker-compose-generated.yml service stop
+ecs-cli compose --verbose --project-name rra-backend --file ecs-task-definition-generated.yml service stop
 
 echo "Deploying to ECS"
-ecs-cli compose --verbose --project-name rra-backend --file docker-compose-generated.yml service up
+ecs-cli compose --verbose --project-name rra-backend --file ecs-task-definition-generated.yml service up

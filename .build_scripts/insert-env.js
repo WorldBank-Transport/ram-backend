@@ -1,7 +1,7 @@
 'use strict'
 
-const input = 'docker-compose-deploy.yml'
-const output = 'docker-compose-generated.yml'
+const input = 'ecs-task-definition.yml'
+const output = 'ecs-task-definition-generated.yml'
 
 console.info('Generating ECS compatible YAML.')
 

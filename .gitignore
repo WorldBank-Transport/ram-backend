@@ -101,4 +101,4 @@ tmp
 .tmp
 dist
 .nyc_output
-docker-compose-generated.yml
+ecs-task-definition-generated.yml
