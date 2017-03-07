@@ -36,6 +36,7 @@ module.exports = [
           name: 'Main scenario',
           project_id: projectData.id,
           status: 'pending',
+          master: true,
           created_at: (new Date()),
           updated_at: (new Date())
         })

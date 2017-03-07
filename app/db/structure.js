@@ -44,6 +44,7 @@ export function createScenariosTable () {
     table.string('name');
     table.text('description');
     table.string('status');
+    table.boolean('master').defaultTo(false);
     table.integer('project_id').unsigned();
     table.foreign('project_id').references('projects.id');
     table.timestamps();

@@ -35,34 +35,27 @@ module.exports = [
           return project;
         })
         .then(project => {
-          // Main scenario id.
-          return db.select('id')
-            .from('scenarios')
-            .where('project_id', project.id)
-            .orderBy('created_at')
-            .limit(1)
-            .then(res => db.transaction(function (trx) {
-              let scenarioId = res[0].id;
+          return db.transaction(function (trx) {
+            let {scenarioName, scenarioDescription} = request.payload;
 
-              let {scenarioName, scenarioDescription} = request.payload;
-
-              return Promise.all([
-                trx('projects')
-                  .update({
-                    updated_at: (new Date()),
-                    status: 'active'
-                  })
-                  .where('id', project.id),
-                trx('scenarios')
-                  .update({
-                    name: scenarioName,
-                    description: typeof scenarioDescription === 'undefined' ? '' : scenarioDescription,
-                    updated_at: (new Date()),
-                    status: 'active'
-                  })
-                  .where('id', scenarioId)
-              ]);
-            }));
+            return Promise.all([
+              trx('projects')
+                .update({
+                  updated_at: (new Date()),
+                  status: 'active'
+                })
+                .where('id', project.id),
+              trx('scenarios')
+                .update({
+                  name: scenarioName,
+                  description: typeof scenarioDescription === 'undefined' ? '' : scenarioDescription,
+                  updated_at: (new Date()),
+                  status: 'active'
+                })
+                .where('project_id', project.id)
+                .where('master', true)
+            ]);
+          });
         })
         .then(() => reply({statusCode: 200, message: 'Project setup finished'}))
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))

@@ -26,6 +26,7 @@ export function project1000 () {
     'description': 'Ghost scenario created when the project was created',
     'status': 'pending',
     'project_id': 1000,
+    'master': true,
     'created_at': '2017-02-01T12:00:01.000Z',
     'updated_at': '2017-02-01T12:00:01.000Z'
   }));
@@ -47,6 +48,7 @@ export function project1002 () {
     'description': 'Ghost scenario 1002 created when the project 1002 was created',
     'status': 'pending',
     'project_id': 1002,
+    'master': true,
     'created_at': '2017-02-01T12:00:02.000Z',
     'updated_at': '2017-02-01T12:00:02.000Z'
   }));
@@ -78,6 +80,7 @@ export function project1001 () {
     'description': 'Ghost scenario created when the project was created. Has a poi file',
     'status': 'pending',
     'project_id': 1001,
+    'master': true,
     'created_at': '2017-02-01T12:00:03.000Z',
     'updated_at': '2017-02-01T12:00:03.000Z'
   }))
@@ -120,6 +123,7 @@ export function project1003 () {
     'description': 'Ghost scenario 1003 created when the project 1003 was created. Has a road-network file',
     'status': 'pending',
     'project_id': 1003,
+    'master': true,
     'created_at': '2017-02-01T12:00:04.000Z',
     'updated_at': '2017-02-01T12:00:04.000Z'
   }))
@@ -184,6 +188,7 @@ export function project1004 () {
     'description': 'Ghost scenario 1004 created when the project 1004 was created. Has all files',
     'status': 'pending',
     'project_id': 1004,
+    'master': true,
     'created_at': '2017-02-01T12:00:05.000Z',
     'updated_at': '2017-02-01T12:00:05.000Z'
   }))
@@ -261,6 +266,7 @@ export function project1100 () {
     'description': 'Scenario 1100 created when the project 1100 was created. Has all files',
     'status': 'active',
     'project_id': 1100,
+    'master': true,
     'created_at': '2017-02-01T12:00:06.000Z',
     'updated_at': '2017-02-01T12:00:06.000Z'
   }))
@@ -339,6 +345,7 @@ export function project1200 () {
       'description': 'Scenario 1200 created when the project 1200 was created',
       'status': 'active',
       'project_id': 1200,
+      'master': true,
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
     },
@@ -348,6 +355,7 @@ export function project1200 () {
       'description': 'Scenario 1201 created when the project 1200 was created',
       'status': 'active',
       'project_id': 1200,
+      'master': false,
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
     }
@@ -456,6 +464,7 @@ export function projectBarebones (id) {
     'description': 'Ghost scenario created when the project was created.',
     'status': 'pending',
     'project_id': id,
+    'master': true,
     'created_at': '2017-02-01T12:00:00.000Z',
     'updated_at': '2017-02-01T12:00:00.000Z'
   }));
@@ -487,6 +496,7 @@ export function projectPendingWithFiles (id) {
     'description': `Ghost scenario ${id} created when the project ${id} was created. Has a poi file`,
     'status': 'pending',
     'project_id': id,
+    'master': true,
     'created_at': '2017-02-01T12:00:00.000Z',
     'updated_at': '2017-02-01T12:00:00.000Z'
   }))
@@ -551,6 +561,7 @@ export function projectPendingWithAllFiles (id) {
     'description': `Ghost scenario ${id} created when the project ${id} was created. Has a poi file`,
     'status': 'pending',
     'project_id': id,
+    'master': true,
     'created_at': '2017-02-01T12:00:00.000Z',
     'updated_at': '2017-02-01T12:00:00.000Z'
   }))
