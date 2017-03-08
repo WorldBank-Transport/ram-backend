@@ -13,6 +13,7 @@ import {
   createScenariosFilesTable
 } from '../app/db/structure';
 import { fixMeUp } from './utils/data';
+import db from '../app/db';
 
 var options = {
   connection: {port: 2000, host: '0.0.0.0'}
@@ -108,6 +109,94 @@ describe('Scenarios', function () {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.equal(res.result.id, 1200);
         assert.equal(res.result.name, 'Main scenario 1200');
+      });
+    });
+  });
+
+  describe('DELETE /projects/{projId}/scenarios/{scId}', function () {
+    before(function (done) {
+      // Add another scenario to project 1200.
+      let id = 9999;
+      db
+        .insert({
+          'id': id,
+          'name': `Scenario ${id}`,
+          'description': `Ghost scenario ${id} created when the project ${id} was created. Has a poi file`,
+          'status': 'active',
+          'project_id': 1200,
+          'master': false,
+          'created_at': '2017-02-01T12:00:00.000Z',
+          'updated_at': '2017-02-01T12:00:00.000Z'
+        })
+        .into('scenarios')
+        .then(() => db
+          .insert({
+            'id': id,
+            'name': 'poi_000000',
+            'type': 'poi',
+            'path': `scenario-${id}/poi_000000`,
+            'project_id': 1200,
+            'scenario_id': id,
+            'created_at': '2017-02-01T12:00:06.000Z',
+            'updated_at': '2017-02-01T12:00:06.000Z'
+          })
+          .into('scenarios_files')
+        )
+        .then(() => done());
+    });
+
+    it('should return not found when deleting non existent project', function () {
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/1000/scenarios/300'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'Scenario not found');
+      });
+    });
+
+    it('should return not found when deleting non existent scenario', function () {
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/1000/scenarios/300'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'Scenario not found');
+      });
+    });
+
+    it('should return a conflict when deleting the master scenario', function () {
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/1000/scenarios/1000'
+      }).then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        assert.equal(res.result.message, 'The master scenario of a project can not be deleted');
+      });
+    });
+
+    it('should delete scenario', function () {
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/1200/scenarios/9999'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.message, 'Scenario deleted');
+
+        return db.select('*')
+          .from('scenarios')
+          .where('id', 9999)
+          .then(scenarios => {
+            assert.equal(scenarios.length, 0);
+            return;
+          })
+          .then(() => db.select('*')
+            .from('scenarios_files')
+            .where('scenario_id', 9999)
+            .then(files => {
+              assert.equal(files.length, 0);
+            })
+          );
       });
     });
   });
