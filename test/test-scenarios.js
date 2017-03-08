@@ -200,4 +200,105 @@ describe('Scenarios', function () {
       });
     });
   });
+
+  describe('PATCH /projects/{projId}/scenarios/{scId}', function () {
+    it('should return not found when patching a non existent scenatio', function () {
+      return instance.injectThen({
+        method: 'PATCH',
+        url: '/projects/1000/scenarios/300',
+        payload: {
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+      });
+    });
+
+    it('should return a conflict when setting a name that already exists for another scenario of the same project', function () {
+      return instance.injectThen({
+        method: 'PATCH',
+        url: '/projects/1200/scenarios/1201',
+        payload: {
+          name: 'Main scenario 1200'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        var result = res.result;
+        assert.equal(result.message, 'Scenario name already in use for this project: Main scenario 1200');
+      });
+    });
+
+    it('should not accept an empty name', function () {
+      return instance.injectThen({
+        method: 'PATCH',
+        url: '/projects/1000/scenarios/1000',
+        payload: {
+          name: ''
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /["name" is not allowed to be empty]/);
+      });
+    });
+
+    it('should change the scenario name', function () {
+      return instance.injectThen({
+        method: 'PATCH',
+        url: '/projects/1000/scenarios/1000',
+        payload: {
+          name: 'New name'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        assert.equal(result.name, 'New name');
+      });
+    });
+
+    it('should not accept an empty description', function () {
+      return instance.injectThen({
+        method: 'PATCH',
+        url: '/projects/1000/scenarios/1000',
+        payload: {
+          description: ''
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /["description" is not allowed to be empty]/);
+      });
+    });
+
+    it('should accept a null description', function () {
+      return instance.injectThen({
+        method: 'PATCH',
+        url: '/projects/1000/scenarios/1000',
+        payload: {
+          description: null
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        assert.equal(result.description, null);
+      });
+    });
+
+    it('should update all values', function () {
+      return instance.injectThen({
+        method: 'PATCH',
+        url: '/projects/1000/scenarios/1000',
+        payload: {
+          name: 'updated name',
+          description: 'updated description'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        assert.equal(result.name, 'updated name');
+        assert.equal(result.description, 'updated description');
+        assert.equal((new Date(result.created_at)).toISOString(), '2017-02-01T12:00:01.000Z');
+        assert.notEqual(result.created_at, result.updated_at);
+      });
+    });
+  });
 });
