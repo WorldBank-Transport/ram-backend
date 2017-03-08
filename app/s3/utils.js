@@ -39,3 +39,15 @@ export function getFile (file) {
     });
   });
 }
+
+// Copy file.
+export function copyFile (oldFile, newFile) {
+  return new Promise((resolve, reject) => {
+    s3.copyObject(bucket, newFile, `${bucket}/${oldFile}`, null, (err, data) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve();
+    });
+  });
+}

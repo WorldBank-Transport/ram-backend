@@ -386,4 +386,103 @@ describe('Scenarios', function () {
       });
     });
   });
+
+  describe('POST /projects/{projId}/scenarios', function () {
+    it('should fail when creating a scenario without a name', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/scenarios',
+        payload: {
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /["name" is required]/);
+      });
+    });
+
+    it('should not accept an empty name', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/scenarios',
+        payload: {
+          name: ''
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /["name" is not allowed to be empty]/);
+      });
+    });
+
+    it('should not accept an empty description', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/scenarios',
+        payload: {
+          name: 'Scenario name',
+          description: ''
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /["description" is not allowed to be empty]/);
+      });
+    });
+
+    it('should return not found when creating a scenario for a non existent project', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/300/scenarios',
+        payload: {
+          name: 'Scenario name'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'Project not found');
+      });
+    });
+
+    it('should return conflict for a non set up project', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/scenarios',
+        payload: {
+          name: 'Scenario name'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        assert.equal(res.result.message, 'Project setup not completed');
+      });
+    });
+
+    it('should return a conflict when using a name that already exists for another scenario of the same project', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1200/scenarios',
+        payload: {
+          name: 'Main scenario 1200'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        var result = res.result;
+        assert.equal(result.message, 'Scenario name already in use for this project: Main scenario 1200');
+      });
+    });
+
+    it('should return bad request when then scenario to clone from does not exist', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1200/scenarios',
+        payload: {
+          name: 'New scenario',
+          roadNetworkSourceScenario: 1
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.equal(result.message, 'Source scenario for cloning not found');
+      });
+    });
+  });
 });
