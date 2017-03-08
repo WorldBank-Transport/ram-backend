@@ -55,6 +55,7 @@ module.exports = [
                 throw new ScenarioNotFoundError();
               }
             })
+            .then(() => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId))
             .then(() => {
               return Promise.map(allFiles, f => removeFile(f.path));
             });

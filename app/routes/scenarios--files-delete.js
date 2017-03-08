@@ -52,6 +52,7 @@ module.exports = [
             .del()
             .then(() => removeFile(data.file_path));
         })
+        .then(() => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId))
         .then(() => reply({statusCode: 200, message: 'File deleted'}))
         .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))

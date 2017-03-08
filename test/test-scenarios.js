@@ -1,5 +1,6 @@
 'use strict';
 import { assert } from 'chai';
+import mockdate from 'mockdate';
 
 import Server from '../app/services/server';
 import {
@@ -12,7 +13,7 @@ import {
   createProjectsFilesTable,
   createScenariosFilesTable
 } from '../app/db/structure';
-import { fixMeUp } from './utils/data';
+import { fixMeUp, projectPendingWithFiles } from './utils/data';
 import db from '../app/db';
 
 var options = {
@@ -202,7 +203,7 @@ describe('Scenarios', function () {
   });
 
   describe('PATCH /projects/{projId}/scenarios/{scId}', function () {
-    it('should return not found when patching a non existent scenatio', function () {
+    it('should return not found when patching a non existent scenario', function () {
       return instance.injectThen({
         method: 'PATCH',
         url: '/projects/1000/scenarios/300',
@@ -298,6 +299,90 @@ describe('Scenarios', function () {
         assert.equal(result.description, 'updated description');
         assert.equal((new Date(result.created_at)).toISOString(), '2017-02-01T12:00:01.000Z');
         assert.notEqual(result.created_at, result.updated_at);
+      });
+    });
+  });
+
+  describe('Project updated_at property', function () {
+    before(function (done) {
+      let id = 8888;
+
+      projectPendingWithFiles(8888)
+        .then(() => db
+          .insert({
+            'id': id + 1,
+            'name': `Scenario ${id + 1}`,
+            'description': `Ghost scenario ${id + 1} created when the project ${id} was created. Has a poi file`,
+            'status': 'active',
+            'project_id': id,
+            'master': false,
+            'created_at': '2017-02-01T12:00:00.000Z',
+            'updated_at': '2017-02-01T12:00:00.000Z'
+          })
+          .into('scenarios')
+        )
+        .then(() => done());
+    });
+
+    it('should update when updating a scenario', function () {
+      mockdate.set(1000000000000);
+      return instance.injectThen({
+        method: 'PATCH',
+        url: '/projects/8888/scenarios/8888',
+        payload: {
+          name: 'New name'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.name, 'New name');
+
+        return db.select('updated_at')
+          .from('projects')
+          .where('id', 8888)
+          .then(projects => {
+            let timestamp = (new Date(projects[0].updated_at)).getTime();
+            assert.equal(timestamp, 1000000000000);
+            mockdate.reset();
+          });
+      });
+    });
+
+    it('should update when deleting a scenario', function () {
+      mockdate.set(1222000000000);
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/8888/scenarios/8889'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+
+        return db.select('updated_at')
+          .from('projects')
+          .where('id', 8888)
+          .then(projects => {
+            let timestamp = (new Date(projects[0].updated_at)).getTime();
+            assert.equal(timestamp, 1222000000000);
+            mockdate.reset();
+          });
+      });
+    });
+
+    it('should update when deleting a scenario file', function () {
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/8888/scenarios/8888/files/8888'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+
+        return db.select('updated_at')
+          .from('projects')
+          .where('id', 8888)
+          .then(projects => {
+            // Because of S3 we can't use stub dates.
+            // S3Error: The difference between the request time and the server's time is too large.
+            let now = ~~((new Date()).getTime() / 1000);
+            let timestamp = ~~((new Date(projects[0].updated_at)).getTime() / 1000);
+            assert.equal(timestamp, now);
+          });
       });
     });
   });

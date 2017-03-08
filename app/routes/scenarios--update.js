@@ -40,6 +40,7 @@ module.exports = [
         if (!scenarios.length) throw new ScenarioNotFoundError();
         return scenarios[0];
       })
+      .then((scenario) => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId).then(() => scenario))
       .then(scenario => reply(scenario))
       .catch(err => {
         if (err.constraint === 'scenarios_project_id_name_unique') {
