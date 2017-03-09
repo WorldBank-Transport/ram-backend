@@ -51,8 +51,7 @@ module.exports = [
       db('scenarios')
         .select('id')
         .where('project_id', request.params.projId)
-        .orderBy('id')
-        .limit(1)
+        .where('master', true)
         .then(res => {
           if (!res.length) throw new ProjectNotFoundError();
           return res[0].id;
