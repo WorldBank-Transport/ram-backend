@@ -73,7 +73,7 @@ module.exports = [
               .then(scenario => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId).then(() => scenario))
               .then(scenario => {
                 if (source === 'new') {
-                  return handleRoadNetworkUpload(reply, scenario);
+                  return handleRoadNetworkUpload(trx, reply, scenario);
                 }
                 // Else we're done.
                 return reply(scenario);
@@ -100,7 +100,7 @@ function insertScenario (trx, data) {
 
 // Get the presigned url for file upload and send it to the client.
 // Listen for file changes to update the database.
-function handleRoadNetworkUpload (reply, scenario) {
+function handleRoadNetworkUpload (trx, reply, scenario) {
   const type = 'road-network';
   const fileName = `${type}_${Date.now()}`;
   const filePath = `scenario-${scenario.id}/${fileName}`;
@@ -114,6 +114,9 @@ function handleRoadNetworkUpload (reply, scenario) {
 
       return reply(scenario);
     })
+    // We need to manually commit the transaction because the listenForFile will
+    // only resolve after the upload and the transaction will be left hanging.
+    .then(() => trx.commit())
     .then(() => listenForFile(filePath))
     .then(record => {
       let now = new Date();
@@ -159,10 +162,11 @@ function cloneNeededScenarioFiles (trx, roadNetworkSource, sourceScenarioId, sce
     // road-network. Since the poi file is identical for all
     // scenarios of the project just clone it from the master.
     res = trx('scenarios_files')
-      .select('*')
-      .where('master', true)
-      .where('project_id', scenarioData.project_id)
-      .where('type', 'poi')
+      .select('scenarios_files.*')
+      .innerJoin('scenarios', 'scenarios.id', 'scenarios_files.scenario_id')
+      .where('scenarios.master', true)
+      .where('scenarios.project_id', scenarioData.project_id)
+      .where('scenarios_files.type', 'poi')
       .then(files => cloneScenarioFiles(trx, files, scenarioData));
   }
 
