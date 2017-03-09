@@ -239,7 +239,7 @@ describe('Scenarios', function () {
             .then(projects => {
               let now = ~~((new Date()).getTime() / 1000);
               let timestamp = ~~((new Date(projects[0].updated_at)).getTime() / 1000);
-              assert.equal(timestamp, now, 'Project updated_at should be updated');
+              assert.approximately(timestamp, now, 1, 'Project updated_at should be updated');
             })
         ]);
       });
@@ -297,7 +297,7 @@ describe('Scenarios', function () {
             .then(projects => {
               let now = ~~((new Date()).getTime() / 1000);
               let timestamp = ~~((new Date(projects[0].updated_at)).getTime() / 1000);
-              assert.equal(timestamp, now, 'Project updated_at should be updated');
+              assert.approximately(timestamp, now, 1, 'Project updated_at should be updated');
             })
         ])
         .then(() => result.roadNetworkUpload.presignedUrl);
@@ -353,7 +353,7 @@ describe('Scenarios', function () {
                 .then(projects => {
                   let now = ~~((new Date()).getTime() / 1000);
                   let timestamp = ~~((new Date(projects[0].updated_at)).getTime() / 1000);
-                  assert.equal(timestamp, now, 'Project updated_at timestamp');
+                  assert.approximately(timestamp, now, 1, 'Project updated_at timestamp');
                 }),
               // Ensure that the scenario "updated_at" gets updated and status
               // is changed to active.
@@ -364,7 +364,7 @@ describe('Scenarios', function () {
                   let scenario = scenarios[0];
                   let now = ~~((new Date()).getTime() / 1000);
                   let timestamp = ~~((new Date(scenario.updated_at)).getTime() / 1000);
-                  assert.equal(timestamp, now, 'Scenario updated_at timestamp');
+                  assert.approximately(timestamp, now, 1, 'Scenario updated_at timestamp');
                   assert.equal(scenario.status, 'active', 'Scenario status');
                 })
             ])

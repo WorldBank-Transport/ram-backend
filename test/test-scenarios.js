@@ -381,7 +381,7 @@ describe('Scenarios', function () {
             // S3Error: The difference between the request time and the server's time is too large.
             let now = ~~((new Date()).getTime() / 1000);
             let timestamp = ~~((new Date(projects[0].updated_at)).getTime() / 1000);
-            assert.equal(timestamp, now);
+            assert.approximately(timestamp, now, 1);
           });
       });
     });

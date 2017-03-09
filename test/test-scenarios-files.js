@@ -361,7 +361,7 @@ describe('Scenario files', function () {
                 .then(projects => {
                   let now = ~~((new Date()).getTime() / 1000);
                   let timestamp = ~~((new Date(projects[0].updated_at)).getTime() / 1000);
-                  assert.equal(timestamp, now);
+                  assert.approximately(timestamp, now, 1);
                 })
               )
               .then(() => resolve())
