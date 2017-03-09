@@ -4,7 +4,7 @@ import Boom from 'boom';
 import Promise from 'bluebird';
 
 import db from '../db/';
-import { copyFile } from '../s3/utils';
+import { copyFile, getPresignedUrl, listenForFile } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
 
 module.exports = [
@@ -69,19 +69,17 @@ module.exports = [
                 }
                 throw err;
               })
+              .then(scenario => cloneNeededScenarioFiles(trx, source, sourceScenarioId, scenario))
+              .then(scenario => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId).then(() => scenario))
               .then(scenario => {
-                if (source === 'clone') {
-                  return cloneFilesFromScenario(trx, sourceScenarioId, scenario);
+                if (source === 'new') {
+                  return handleRoadNetworkUpload(reply, scenario);
                 }
-                // TODO:
-                // - [ ] Handle file upload option
-                // - [ ] Add tests for scenario clone option
-                // - [ ] Add tests for file upload option
-                // - [ ] Make either "cloning from scenario" or "upload new file" mandatory
+                // Else we're done.
+                return reply(scenario);
               });
           });
         })
-        .then(() => reply('This is a temporary reply'))
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ScenarioNotFoundError, e => reply(Boom.badRequest('Source scenario for cloning not found')))
         .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
@@ -100,30 +98,97 @@ function insertScenario (trx, data) {
     .then(res => res[0]);
 }
 
-function cloneFilesFromScenario (trx, sourceScenarioId, scenarioData) {
-  // Clone files from a different scenario.
-  return trx('scenarios_files')
-    .select('*')
-    .where('scenario_id', sourceScenarioId)
-    .where('project_id', scenarioData.project_id)
-    // Prepare files.
-    .then(files => {
-      let newFiles = files.map(file => {
-        const fileName = `${file.type}_${Date.now()}`;
-        const filePath = `scenario-${scenarioData.id}/${fileName}`;
+// Get the presigned url for file upload and send it to the client.
+// Listen for file changes to update the database.
+function handleRoadNetworkUpload (reply, scenario) {
+  const type = 'road-network';
+  const fileName = `${type}_${Date.now()}`;
+  const filePath = `scenario-${scenario.id}/${fileName}`;
 
-        return {
-          name: fileName,
-          type: file.type,
-          path: filePath,
-          project_id: scenarioData.project_id,
-          scenario_id: scenarioData.id,
-          created_at: (new Date()),
-          updated_at: (new Date())
-        };
-      });
-      return [files, newFiles];
+  return getPresignedUrl(filePath)
+    .then(presignedUrl => {
+      scenario.roadNetworkUpload = {
+        fileName: fileName,
+        presignedUrl
+      };
+
+      return reply(scenario);
     })
+    .then(() => listenForFile(filePath))
+    .then(record => {
+      let now = new Date();
+      let data = {
+        name: fileName,
+        type: type,
+        path: filePath,
+        project_id: scenario.project_id,
+        scenario_id: scenario.id,
+        created_at: now,
+        updated_at: now
+      };
+
+      db('scenarios_files')
+        .returning('*')
+        .insert(data)
+        .then(res => {
+          console.log('res', res);
+        })
+        .then(() => db('scenarios').update({updated_at: now, status: 'active'}).where('id', scenario.id))
+        .then(() => db('projects').update({updated_at: now}).where('id', scenario.project_id))
+        .catch(err => {
+          console.log('err', err);
+        });
+    });
+}
+
+// Clones the needed files based on the roadNetworkSource.
+// case "clone": road-network and poi
+// case "new": poi
+function cloneNeededScenarioFiles (trx, roadNetworkSource, sourceScenarioId, scenarioData) {
+  let res;
+  if (roadNetworkSource === 'clone') {
+    // Clone files from a different scenario.
+    res = trx('scenarios_files')
+      .select('*')
+      .where('scenario_id', sourceScenarioId)
+      .where('project_id', scenarioData.project_id)
+      .then(files => cloneScenarioFiles(trx, files, scenarioData));
+  }
+  if (roadNetworkSource === 'new') {
+    // When uploading a new file we do so only for the
+    // road-network. Since the poi file is identical for all
+    // scenarios of the project just clone it from the master.
+    res = trx('scenarios_files')
+      .select('*')
+      .where('master', true)
+      .where('project_id', scenarioData.project_id)
+      .where('type', 'poi')
+      .then(files => cloneScenarioFiles(trx, files, scenarioData));
+  }
+
+  // Send back scenario data.
+  return res.then(() => scenarioData);
+}
+
+// Copies the given files from a to the new scenario, both the database entries
+// and the physical file.
+function cloneScenarioFiles (trx, files, scenarioData) {
+  let newFiles = files.map(file => {
+    const fileName = `${file.type}_${Date.now()}`;
+    const filePath = `scenario-${scenarioData.id}/${fileName}`;
+
+    return {
+      name: fileName,
+      type: file.type,
+      path: filePath,
+      project_id: scenarioData.project_id,
+      scenario_id: scenarioData.id,
+      created_at: (new Date()),
+      updated_at: (new Date())
+    };
+  });
+
+  return Promise.resolve([files, newFiles])
     // Insert new files in the db.
     .then(allFiles => {
       let [oldFiles, newFiles] = allFiles;

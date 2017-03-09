@@ -387,7 +387,7 @@ describe('Scenarios', function () {
     });
   });
 
-  describe('POST /projects/{projId}/scenarios', function () {
+  describe.only('POST /projects/{projId}/scenarios', function () {
     it('should fail when creating a scenario without a name', function () {
       return instance.injectThen({
         method: 'POST',
@@ -533,6 +533,54 @@ describe('Scenarios', function () {
         assert.equal(res.statusCode, 409, 'Status code is 409');
         var result = res.result;
         assert.equal(result.message, 'Scenario name already in use for this project: Main scenario 1200');
+      });
+    });
+
+    it('should create a scenario and clone files', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1200/scenarios',
+        payload: {
+          name: 'New scenario project 1200',
+          roadNetworkSource: 'clone',
+          roadNetworkSourceScenario: 1200
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        assert.equal(result.name, 'New scenario project 1200');
+        assert.equal(result.status, 'active');
+        assert.equal(result.master, false);
+        assert.equal(result.project_id, 1200);
+
+        // Check that files are in the db.
+        return Promise.all([
+          db.select('*')
+          .from('scenarios_files')
+          .where('project_id', 1200)
+          .where('scenario_id', result.id)
+          .then(files => {
+            assert.equal(files.length, 2);
+            files = files.sort((a, b) => a.type > b.type);
+
+            assert.match(files[0].name, /^poi_[0-9]+$/);
+            assert.equal(files[0].type, 'poi');
+            assert.match(files[0].path, /scenario-[0-9]+\/poi_[0-9]+/);
+
+            assert.match(files[1].name, /^road-network_[0-9]+$/);
+            assert.equal(files[1].type, 'road-network');
+            assert.match(files[1].path, /scenario-[0-9]+\/road-network_[0-9]+/);
+          }),
+          // Ensure that the project "updated_at" gets updated.
+          db.select('*')
+            .from('projects')
+            .where('id', 1200)
+            .then(projects => {
+              let now = ~~((new Date()).getTime() / 1000);
+              let timestamp = ~~((new Date(projects[0].updated_at)).getTime() / 1000);
+              assert.equal(timestamp, now, 'Project updated_at should be updated');
+            })
+        ]);
       });
     });
   });
