@@ -430,12 +430,58 @@ describe('Scenarios', function () {
       });
     });
 
+    it('should require a value for road-network source', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/scenarios',
+        payload: {
+          name: 'Scenario name'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" is required\]/);
+      });
+    });
+
+    it('should fail with invalid road-network source', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/scenarios',
+        payload: {
+          name: 'Scenario name',
+          roadNetworkSource: 'invalid'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" must be one of \[clone, new\]\]/);
+      });
+    });
+
+    it('should require scenario id when road-network source is clone', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/scenarios',
+        payload: {
+          name: 'Scenario name',
+          roadNetworkSource: 'clone'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /child "roadNetworkSourceScenario" fails because \["roadNetworkSourceScenario" is required\]/);
+      });
+    });
+
     it('should return not found when creating a scenario for a non existent project', function () {
       return instance.injectThen({
         method: 'POST',
         url: '/projects/300/scenarios',
         payload: {
-          name: 'Scenario name'
+          name: 'Scenario name',
+          roadNetworkSource: 'clone',
+          roadNetworkSourceScenario: 1
         }
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
@@ -448,25 +494,13 @@ describe('Scenarios', function () {
         method: 'POST',
         url: '/projects/1000/scenarios',
         payload: {
-          name: 'Scenario name'
+          name: 'Scenario name',
+          roadNetworkSource: 'clone',
+          roadNetworkSourceScenario: 1
         }
       }).then(res => {
         assert.equal(res.statusCode, 409, 'Status code is 409');
         assert.equal(res.result.message, 'Project setup not completed');
-      });
-    });
-
-    it('should return a conflict when using a name that already exists for another scenario of the same project', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1200/scenarios',
-        payload: {
-          name: 'Main scenario 1200'
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 409, 'Status code is 409');
-        var result = res.result;
-        assert.equal(result.message, 'Scenario name already in use for this project: Main scenario 1200');
       });
     });
 
@@ -476,12 +510,29 @@ describe('Scenarios', function () {
         url: '/projects/1200/scenarios',
         payload: {
           name: 'New scenario',
+          roadNetworkSource: 'clone',
           roadNetworkSourceScenario: 1
         }
       }).then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         var result = res.result;
         assert.equal(result.message, 'Source scenario for cloning not found');
+      });
+    });
+
+    it('should return a conflict when using a name that already exists for another scenario of the same project', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1200/scenarios',
+        payload: {
+          name: 'Main scenario 1200',
+          roadNetworkSource: 'clone',
+          roadNetworkSourceScenario: 1200
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        var result = res.result;
+        assert.equal(result.message, 'Scenario name already in use for this project: Main scenario 1200');
       });
     });
   });

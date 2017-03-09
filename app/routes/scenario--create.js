@@ -19,27 +19,30 @@ module.exports = [
         payload: {
           name: Joi.string().required(),
           description: Joi.string(),
-          roadNetworkSourceScenario: Joi.number()
+          roadNetworkSource: Joi.string().valid('clone', 'new').required(),
+          roadNetworkSourceScenario: Joi.number().when('roadNetworkSource', {is: 'clone', then: Joi.required()})
         }
       }
     },
     handler: (request, reply) => {
       const data = request.payload;
+      const source = data.roadNetworkSource;
+      const sourceScenarioId = data.roadNetworkSourceScenario;
 
       db('projects')
         .select('status')
         .where('id', request.params.projId)
         .then(projects => {
           if (!projects.length) throw new ProjectNotFoundError();
-          //  not possible to create scenarios for pending projects.
+          //  It's not possible to create scenarios for pending projects.
           if (projects[0].status === 'pending') throw new DataConflictError('Project setup not completed');
         })
         .then(() => {
           // If we're cloning from a different scenario, make sure it exists.
-          if (data.roadNetworkSourceScenario) {
+          if (source === 'clone') {
             return db('scenarios')
               .select('id')
-              .where('id', data.roadNetworkSourceScenario)
+              .where('id', sourceScenarioId)
               .where('project_id', request.params.projId)
               .then((scenarios) => {
                 if (!scenarios.length) throw new ScenarioNotFoundError();
@@ -67,8 +70,8 @@ module.exports = [
                 throw err;
               })
               .then(scenario => {
-                if (data.roadNetworkSourceScenario) {
-                  return cloneFilesFromScenario(trx, data.roadNetworkSourceScenario, scenario);
+                if (source === 'clone') {
+                  return cloneFilesFromScenario(trx, sourceScenarioId, scenario);
                 }
                 // TODO:
                 // - [ ] Handle file upload option
