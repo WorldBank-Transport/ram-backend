@@ -333,8 +333,18 @@ describe('Project files', function () {
                 assert.equal(files[0].project_id, 1000);
                 assert.match(files[0].name, /^villages_[0-9]+$/);
                 assert.match(files[0].path, /project-1000\/villages_[0-9]+/);
-                resolve();
               })
+              // Ensure that the project "updated_at" gets updated.
+              .then(() => db.select('*')
+                .from('projects')
+                .where('id', 1000)
+                .then(projects => {
+                  let now = ~~((new Date()).getTime() / 1000);
+                  let timestamp = ~~((new Date(projects[0].updated_at)).getTime() / 1000);
+                  assert.approximately(timestamp, now, 1);
+                })
+              )
+              .then(() => resolve())
               .catch((err) => retry(delay, err));
           };
 

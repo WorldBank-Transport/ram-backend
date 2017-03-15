@@ -83,6 +83,7 @@ module.exports = [
             .then(res => {
               console.log('res', res);
             })
+            .then(() => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId))
             .catch(err => {
               console.log('err', err);
             });
