@@ -141,6 +141,7 @@ Follow these steps to set up a deployment to an ECS Cluster:
 1. [Create an ECS Cluster](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/create_cluster.html) on AWS  
   - the current setup requires one EC2 instance and has been tested on a `t2.medium`
   - associate a Key Pair to the instance
+  - expose the port for the API (default is `4000`). If you're using Minio as the storage engine, also open that port (eg. `9000`).
 2. Modify the Travis config with your AWS credentials  
   - `AWS_ECS_CLUSTER` = the cluster you created in step 1
   - `AWS_REGION`
