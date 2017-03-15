@@ -6,6 +6,8 @@ rra-postgis:
     POSTGRES_PASSWORD: rra
     POSTGRES_USER: rra
     POSTGRES_DB: rra
+  volumes:
+    - /var/lib/postgresql/data:/var/lib/postgresql/data
 rra-minio:
   image: minio/minio
   ports:
@@ -14,6 +16,9 @@ rra-minio:
     MINIO_ACCESS_KEY: minio
     MINIO_SECRET_KEY: miniostorageengine
   command: server /export
+  volumes:
+    - /export:/export
+    - /root/.minio:/root/.minio
 rra-api:
   image: wbtransport/rra-api
   ports:

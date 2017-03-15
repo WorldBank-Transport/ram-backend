@@ -8,7 +8,7 @@ module.exports = {
   db: 'postgresql://rra:rra@rra-postgis:5432/rra',
   dbTest: null,
   storage: {
-    host: 'rra-minio',
+    host: '34.207.194.24',
     port: 9000,
     engine: 'minio',
     accessKey: 'minio',
