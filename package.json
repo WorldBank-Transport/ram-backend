@@ -34,6 +34,8 @@
     "knex": "^0.12.7",
     "lodash": "^4.17.0",
     "minio": "^3.1.1",
+    "osm-p2p": "^1.4.0",
+    "osm-p2p-server": "^2.1.2",
     "pg": "^6.1.2"
   },
   "devDependencies": {
