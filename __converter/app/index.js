@@ -40,7 +40,7 @@ Promise.all([
   getJSONFileContents(files.poi.path),
   writeFile(files.profile.path, `${WORK_DIR}/profile.lua`),
   writeFile(files['road-network'].path, `${WORK_DIR}/road-network.osm`)
-])
+]))
 .then(res => {
   let [adminArea, villages, pois] = res;
 
