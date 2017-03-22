@@ -1,0 +1,24 @@
+{
+  "name": "rra-converter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Development Seed <dev@developmentseed.org> (https://developmentseed.org)",
+  "license": "ISC",
+  "dependencies": {
+    "@turf/buffer": "^3.13.0",
+    "@turf/intersect": "^3.13.0",
+    "@turf/turf": "^3.13.2",
+    "@turf/within": "^3.13.0",
+    "async": "^2.1.5",
+    "babel-preset-es2015": "^6.24.0",
+    "babel-register": "^6.23.0",
+    "knex": "^0.12.7",
+    "minio": "^3.1.3",
+    "osrm": "^5.6.4",
+    "pg": "^6.1.2"
+  }
+}
