@@ -105,8 +105,6 @@ function osm2osrmCleanup (dir) {
 
 
 
-var envelope = require('@turf/envelope');
-var squareGrid = require('@turf/square-grid');
 
 
 
@@ -125,15 +123,13 @@ function createTimeMatrix (data, osrm) {
   // data.maxSpeed = data.maxSpeed || c.maxSpeed;
 
   // split the input region in squares for parallelisation
-  var box = envelope(data.adminArea);
-  var extent = [box.geometry.coordinates[0][0][0], box.geometry.coordinates[0][0][1], box.geometry.coordinates[0][2][0], box.geometry.coordinates[0][2][1]];
-  var squares = squareGrid(extent, 30, 'kilometers');
+
 
   // tell the client how many squares there are
   let processData = {
     id: 2,
     poi: data.pois,
-    squares: squares.features,
+    gridSize: 30,
     villages: data.villages,
     osrmFile: osrm,
     maxTime: data.maxTime,
@@ -143,15 +139,20 @@ function createTimeMatrix (data, osrm) {
 
   cETA.send(processData);
 
-  var remaining = squares.features.length;
+  var remaining = null;
 
   cETA.on('message', function (msg) {
     console.log('msg', msg);
+
+    if (msg.type === 'done') {
+      process.exit(0);
+    }
     return;
 
 
-
-    if(msg.type == 'status') {
+    if(msg.type == 'squarecount') {
+      remaining = msg.data;
+    } else if(msg.type == 'status') {
       io.emit('status',{id:msg.id,msg:msg.data});
     }
     else if(msg.type=='square') {
