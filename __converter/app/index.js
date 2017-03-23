@@ -48,7 +48,7 @@ Promise.all([
   //   .then(() => osm2osrmCleanup(WORK_DIR))
   //   .then(() => {
       var data = {
-        feature: adminArea.features.find(o => o.properties.name === 'Tobias Barreto'),
+        adminArea: adminArea.features.find(o => o.properties.name === 'Tobias Barreto'),
         villages: villages,
         pois: {
           townhall: pois
@@ -125,22 +125,23 @@ function createTimeMatrix (data, osrm) {
   // data.maxSpeed = data.maxSpeed || c.maxSpeed;
 
   // split the input region in squares for parallelisation
-  var box = envelope(data.feature);
+  var box = envelope(data.adminArea);
   var extent = [box.geometry.coordinates[0][0][0], box.geometry.coordinates[0][0][1], box.geometry.coordinates[0][2][0], box.geometry.coordinates[0][2][1]];
   var squares = squareGrid(extent, 30, 'kilometers');
 
   // tell the client how many squares there are
-
-  cETA.send({
-    data: data,
+  let processData = {
+    id: 2,
+    poi: data.pois,
     squares: squares.features,
     villages: data.villages,
-    POIs: data.pois,
-    osrm: osrm,
+    osrmFile: osrm,
+    maxTime: data.maxTime,
+    maxSpeed: data.maxSpeed,
+    adminArea: data.adminArea
+  };
 
-    id: 2,
-    project: data.project
-  });
+  cETA.send(processData);
 
   var remaining = squares.features.length;
 
