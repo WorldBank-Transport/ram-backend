@@ -408,6 +408,85 @@ export function project1200 () {
   .then(() => putObjectFromFile(bucket, 'scenario-1201/poi_000000', FILE));
 }
 
+// Project 2000 in active state with one scenarios and all files.
+// Files represent real data from Sergipe, Brazil
+export function project2000 () {
+  return project({
+    'id': 2000,
+    'name': 'Sergipe, Brazil',
+    'description': 'Townhalls in a part of Sergipe, brazil.',
+    'status': 'active',
+    'created_at': '2017-02-01T12:00:06.000Z',
+    'updated_at': '2017-02-01T12:00:06.000Z'
+  })
+  .then(() => projectFile([
+    {
+      'id': 2000,
+      'name': 'profile_000000',
+      'type': 'profile',
+      'path': 'project-2000/profile_000000',
+      'project_id': 2000,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    },
+    {
+      'id': 2001,
+      'name': 'villages_000000',
+      'type': 'villages',
+      'path': 'project-2000/villages_000000',
+      'project_id': 2000,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    },
+    {
+      'id': 2002,
+      'name': 'admin-bounds_000000',
+      'type': 'admin-bounds',
+      'path': 'project-2000/admin-bounds_000000',
+      'project_id': 2000,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    }
+  ]))
+  .then(() => putObjectFromFile(bucket, 'project-2000/profile_000000', path.join(__dirname, 'data-sergipe/profile.lua')))
+  .then(() => putObjectFromFile(bucket, 'project-2000/villages_000000', path.join(__dirname, 'data-sergipe/villages.geojson')))
+  .then(() => putObjectFromFile(bucket, 'project-2000/admin-bounds_000000', path.join(__dirname, 'data-sergipe/admin-boundaries.geojson')))
+  .then(() => scenario({
+    'id': 2000,
+    'name': 'Main scenario for Sergipe',
+    'description': '',
+    'status': 'active',
+    'project_id': 2000,
+    'master': true,
+    'created_at': '2017-02-01T12:00:06.000Z',
+    'updated_at': '2017-02-01T12:00:06.000Z'
+  }))
+  .then(() => scenarioFile([
+    {
+      'id': 2000,
+      'name': 'road-network_000000',
+      'type': 'road-network',
+      'path': 'scenario-2000/road-network_000000',
+      'project_id': 2000,
+      'scenario_id': 2000,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    },
+    {
+      'id': 2001,
+      'name': 'poi_000000',
+      'type': 'poi',
+      'path': 'scenario-2000/poi_000000',
+      'project_id': 2000,
+      'scenario_id': 2000,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    }
+  ]))
+  .then(() => putObjectFromFile(bucket, 'scenario-2000/road-network_000000', path.join(__dirname, 'data-sergipe/road-network.osm')))
+  .then(() => putObjectFromFile(bucket, 'scenario-2000/poi_000000', path.join(__dirname, 'data-sergipe/poi-townhalls.geojson')));
+}
+
 //
 // Insert all the projects above.
 //
@@ -420,7 +499,8 @@ export function fixMeUp () {
     project1003(),
     project1004(),
     project1100(),
-    project1200()
+    project1200(),
+    project2000()
   ]);
 }
 

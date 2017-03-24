@@ -50,7 +50,7 @@ describe('Projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
-        assert.equal(result.meta.found, 7);
+        assert.equal(result.meta.found, 8);
         assert.equal(result.results[0].name, 'Project 1000');
       });
     });
@@ -62,7 +62,7 @@ describe('Projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
-        assert.equal(result.meta.found, 7);
+        assert.equal(result.meta.found, 8);
         assert.equal(result.results[0].id, 1002);
         assert.equal(result.results[0].status, 'pending');
         assert.equal(result.results[0].name, 'Project 1002');
