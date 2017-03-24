@@ -7,8 +7,8 @@ docker rm rra-converter
 
 docker run \
   -e 'DB_URI=postgresql://rra:rra@172.17.0.1:5432/rra' \
-  -e 'PROJECT_ID=2' \
-  -e 'SCENARIO_ID=2' \
+  -e 'PROJECT_ID=2000' \
+  -e 'SCENARIO_ID=2000' \
   -e 'STORAGE_HOST=172.17.0.1' \
   -e 'STORAGE_PORT=9000' \
   -e 'STORAGE_ENGINE=minio' \

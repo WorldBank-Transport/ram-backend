@@ -1,84 +1,117 @@
 'use strict';
 import path from 'path';
 import { exec, fork } from 'child_process';
+import fs from 'fs';
 
 import { writeFile, getJSONFileContents } from './s3/utils';
 import db from './db';
 
-const WORK_DIR = path.resolve(__dirname, '../conversion');
 const { PROJECT_ID: projId, SCENARIO_ID: scId } = process.env;
+const WORK_DIR = path.resolve(__dirname, '../conversion', `p${projId}s${scId}`);
 
+try {
+  fs.mkdirSync(WORK_DIR);
+} catch (e) {
+  if (e.code !== 'EEXIST') {
+    throw e;
+  }
+}
 
-import Operation from './utils/operation';
+//
+// TODO Error handling: When one forked process fails everything has to be aborted.
+//
 
-new Operation();
-
-process.exit(0)
-
-
-
-// Include the project Id and scenario is in the file name, before the
-// extension. profile.lua => profile--p1s1.lua
-const f = (name) => {
-  let pieces = name.split('.');
-  return `${pieces[0]}--p${projId}s${scId}.${pieces[1]}`;
-};
-
-Promise.all([
-  db('projects_files')
-    .select('*')
-    .where('project_id', projId),
-  db('scenarios_files')
-    .select('*')
-    .where('project_id', projId)
-    .where('scenario_id', scId)
-])
-// Convert the files array into an object indexed by type.
+// Start by loading the info on all the project and scenario files needed
+// for the results processing.
+fetchFilesInfo(projId, scId)
 .then(files => {
-  let obj = {};
-  files
-    .reduce((acc, f) => acc.concat(f), [])
-    .forEach(o => (obj[o.type] = o));
-  return obj;
+  let osm2osrmTime = Date.now();
+  // Write files used by osm2osrm to disk.
+  return Promise.all([
+    writeFile(files.profile.path, `${WORK_DIR}/profile.lua`),
+    writeFile(files['road-network'].path, `${WORK_DIR}/road-network.osm`)
+  ])
+  // Create orsm files and cleanup.
+  .then(() => osm2osrm(WORK_DIR))
+  .then(() => osm2osrmCleanup(WORK_DIR))
+  .then(() => {
+    let calculationTime = (Date.now() - osm2osrmTime) / 1000;
+    console.log('osm2osrm', calculationTime);
+  })
+  // Pass the files for the next step.
+  .then(() => files);
 })
-// Loaded needed files and write the others to disk to be used by
-// osm2osrm for the conversion.
+// Load the other needed files.
 .then(files => Promise.all([
   getJSONFileContents(files['admin-bounds'].path),
   getJSONFileContents(files.villages.path),
-  getJSONFileContents(files.poi.path),
-  writeFile(files.profile.path, `${WORK_DIR}/profile.lua`),
-  writeFile(files['road-network'].path, `${WORK_DIR}/road-network.osm`)
+  getJSONFileContents(files.poi.path)
 ]))
 .then(res => {
   let [adminArea, villages, pois] = res;
 
-  // return osm2osrm(WORK_DIR)
-  //   .then(() => osm2osrmCleanup(WORK_DIR))
-  //   .then(() => {
-      var data = {
-        adminArea: adminArea.features.find(o => o.properties.name === 'Tobias Barreto'),
-        villages: villages,
-        pois: {
-          townhall: pois
-        },
-        maxSpeed: 120,
-        maxTime: 3600
-      };
+  let areas = [
+    adminArea.features.find(o => o.properties.name === 'Tobias Barreto'),
+    adminArea.features.find(o => o.properties.name === 'Lagarto'),
+    adminArea.features.find(o => o.properties.name === 'Estância'),
+    adminArea.features.find(o => o.properties.name === 'Palmares')
+  ];
 
-      createTimeMatrix(data, `${WORK_DIR}/road-network.osrm`);
+  var timeMatrixTasks = areas.map(area => {
+    const data = {
+      adminArea: area,
+      villages: villages,
+      pois: {
+        townhall: pois
+      },
+      maxSpeed: 120,
+      maxTime: 3600
+    };
+    return createTimeMatrixTask(data, `${WORK_DIR}/road-network.osrm`);
+  });
 
-    // })
+  // Note to self.
+  // Since promises are executed as soon as they are created, the process is
+  // spawned. There are some errors being thrown. Investigate!
+
+  // return timeMatrixTasks[0];
+
+  return Promise.all(timeMatrixTasks);
 })
-// .then(() => {
-
-// })
-// .then(() => process.exit(0))
+.then(adminAreasCsv => {
+  adminAreasCsv.forEach(o => {
+    let name = 'results--' + o.adminArea.name.replace(' ', '') + '.csv';
+    fs.writeFileSync(`${WORK_DIR}/${name}`, o.csv);
+  });
+})
+.then(() => process.exit(0))
 .catch(err => {
   console.log('err', err);
   process.exit(1);
 });
 
+function fetchFilesInfo (projId, scId) {
+  return Promise.all([
+    db('projects_files')
+      .select('*')
+      .whereIn('type', ['profile', 'villages', 'admin-bounds'])
+      .where('project_id', projId),
+    db('scenarios_files')
+      .select('*')
+      .whereIn('type', ['poi', 'road-network'])
+      .where('project_id', projId)
+      .where('scenario_id', scId)
+  ])
+  .then(files => {
+    // Merge scenario and project files and convert the files array
+    // into an object indexed by type.
+    let obj = {};
+    files
+      .reduce((acc, f) => acc.concat(f), [])
+      .forEach(o => (obj[o.type] = o));
+    return obj;
+  });
+}
 
 function osm2osrm (dir) {
   return new Promise((resolve, reject) => {
@@ -96,7 +129,9 @@ function osm2osrmCleanup (dir) {
       'road-network.osm',
       // 'road-network.osrm.*',
       'stxxl*',
-      'profile.lua'
+      '.stxxl',
+      'profile.lua',
+      'lib'
     ].map(g => `${dir}/${g}`).join(' ');
 
     exec(`rm ${globs}`, (error, stdout, stderr) => {
@@ -106,187 +141,64 @@ function osm2osrmCleanup (dir) {
   });
 }
 
+function createTimeMatrixTask (data, osrmFile) {
+  return new Promise((resolve, reject) => {
+    console.log('here');
+    let beginTime = Date.now();
 
+    let processData = {
+      id: 2,
+      poi: data.pois,
+      gridSize: 30,
+      villages: data.villages,
+      osrmFile: osrmFile,
+      maxTime: data.maxTime,
+      maxSpeed: data.maxSpeed,
+      adminArea: data.adminArea
+    };
+    let remainingSquares = null;
 
+    const cETA = fork(path.resolve(__dirname, 'calculateETA.js'));
+    cETA.send(processData);
+    cETA.on('message', function (msg) {
+      switch (msg.type) {
+        case 'squarecount':
+          remainingSquares = msg.data;
+          break;
+        case 'square':
+          remainingSquares--;
+          // Emit status?
+          break;
+        case 'done':
+          let calculationTime = (Date.now() - beginTime) / 1000;
+          console.log('calculationTime', calculationTime);
+          // Build csv file.
+          let result = msg.data;
+          let header = Object.keys(result[0]);
+          // Ensure the row order is the same as the header.
+          let rows = result.map(r => header.map(h => r[h]));
 
+          // Convert to string
+          let csv = header.join(',') + '\n';
+          csv += rows.map(r => r.join(',')).join('\n');
 
+          console.log('data.adminArea.properties', data.adminArea.properties.name);
+          cETA.disconnect();
+          return resolve({
+            adminArea: data.adminArea.properties,
+            csv
+          });
+          // fs.writeFileSync('results', file);
+          break;
+      }
+    });
 
-
-
-
-
-import fs from 'fs';
-
-
-function createTimeMatrix (data, osrm) {
-  let beginTime = Date.now();
-
-  let processData = {
-    id: 2,
-    poi: data.pois,
-    gridSize: 30,
-    villages: data.villages,
-    osrmFile: osrm,
-    maxTime: data.maxTime,
-    maxSpeed: data.maxSpeed,
-    adminArea: data.adminArea
-  };
-  let remainingSquares = null;
-
-  const cETA = fork(path.resolve(__dirname, 'calculateETA.js'));
-  cETA.send(processData);
-  cETA.on('message', function (msg) {
-    console.log('msg', msg);
-
-    switch (msg.type) {
-      case 'squarecount':
-        remainingSquares = msg.data;
-        break;
-      case 'square':
-        remainingSquares--;
-        // Emit status?
-        break;
-      case 'done':
-        let calculationTime = (Date.now() - beginTime) / 1000;
-        console.log('calculationTime', calculationTime);
-        // Build csv file.
-        let data = msg.data;
-        let header = Object.keys(data[0]);
-        // Ensure the row order is the same as the header.
-        let rows = data.map(r => header.map(h => r[h]));
-
-        // Convert to string
-        let file = header.join(',') + '\n';
-        file += rows.map(r => r.join(',')).join('\n');
-
-        fs.writeFileSync('results', file);
-
-        cETA.disconnect();
-        process.exit(0);
-        break;
-    }
-  });
-
-  cETA.on('exit', (code) => {
-    console.log('exit', code);
+    cETA.on('exit', (code) => {
+      // if (code !== 0) {
+      //   let error = new Error('calculateETA exited with non 0 code');
+      //   error.code = code;
+      //   return reject(error);
+      // }
+    });
   });
 }
-
-
-function processResult (data) {
-  // Build csv file.
-  console.log('data', data);
-
-  // var networkfile = msg.osrm.split('/')[msg.osrm.split('/').length-1];
-  // var osrmfile = networkfile.split('.')[0];
-  // var print = d3.csv.format(msg.data);
-  // var subfile = data.geometryId+'-'+msg.id+'-'+osrmfile;
-  // var file = subfile+'.csv';
-  // var fullpath = './web/data/'+data.project+'/csv/';
-  // var meta = {
-  //   'created':{
-  //     'time':new Date().getTime(),
-  //     'user':credentials.user
-  //   },
-  //   'name':subfile,
-  //   'csvfile':file
-  // };
-  // var metafile = fullpath+subfile+'.json';
-  // fs.writeFile(metafile,JSON.stringify(meta),function(err){
-  //   if(err) return console.log(err);
-  //   io.emit('csvMetaFinished',{id:msg.id,project:data.project});
-  // });
-  // fs.writeFile(fullpath+file, print, function(err){
-  //   if(err) {
-  //     return console.log(err);
-  //   }
-  //   io.emit('status',{id:msg.id,msg:'srv_finished',project:data.project});
-  //   io.emit('csvFinished',{id:msg.id,project:data.project});
-  //   cETA.disconnect();
-  // });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// const CODE_PROCESS_ZONE = 1;
-// const CODE_AGGREGATE = 2;
-
-// const db = knex({
-//   client: 'pg',
-//   connection: process.env.DB_URI
-// });
-
-// db('conversions')
-//   .returning('*')
-//   .insert({
-//     project_id: 1200,
-//     scenario_id: 1200,
-//     status: 'processing',
-//     created_at: (new Date()),
-//     updated_at: (new Date())
-//   })
-//   .then(res => {
-//     console.log('Start...');
-//     start(res[0].id);
-//   })
-//   .catch(err => {
-//     console.log('err', err);
-//     process.exit(1);
-//   });
-
-// function start (conversionId) {
-//   let count = 0;
-//   let iterations = 10;
-
-//   const processor = () => {
-//     db('conversions_logs')
-//       .insert({
-//         conversion_id: conversionId,
-//         code: CODE_PROCESS_ZONE,
-//         data: JSON.stringify({zone: count}),
-//         created_at: (new Date())
-//       })
-//       .then(() => {
-//         console.log('Doing something', count);
-//         if (++count < iterations) {
-//           setTimeout(processor, 1000);
-//         } else {
-//           aggregate(conversionId);
-//         }
-//       });
-//   };
-//   processor();
-// }
-
-// function aggregate (conversionId) {
-//   db('conversions_logs')
-//     .insert({
-//       conversion_id: conversionId,
-//       code: CODE_AGGREGATE,
-//       created_at: (new Date())
-//     })
-//     .then(() => db('conversions')
-//       .update({
-//         status: 'finished',
-//         updated_at: (new Date())
-//       })
-//       .where('id', conversionId)
-//     )
-//     .then(() => {
-//       console.log('done');
-//       process.exit(0);
-//     });
-// }
