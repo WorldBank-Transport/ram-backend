@@ -24,6 +24,16 @@ export function dropScenariosFiles () {
   return db.schema.dropTableIfExists('scenarios_files');
 }
 
+export function dropOperations () {
+  DEBUG && console.log('Dropping table: operations');
+  return db.schema.dropTableIfExists('operations');
+}
+
+export function dropOperationsLogs () {
+  DEBUG && console.log('Dropping table: operations_logs');
+  return db.schema.dropTableIfExists('operations_logs');
+}
+
 export function createProjectsTable () {
   DEBUG && console.log('Creating table: projects');
   return db.schema.createTable('projects', table => {
@@ -85,13 +95,43 @@ export function createScenariosFilesTable () {
   });
 }
 
+export function createOperationsTable () {
+  DEBUG && console.log('Creating table: operations');
+  return db.schema.createTable('operations', table => {
+    table.increments('id').primary();
+    table.string('name');
+    table.integer('project_id').unsigned();
+    table.foreign('project_id').references('projects.id');
+    table.integer('scenario_id').unsigned();
+    table.foreign('scenario_id').references('scenarios.id');
+    table.string('status');
+    table.timestamps();
+  });
+}
+
+export function createOperationsLogsTable () {
+  DEBUG && console.log('Creating table: operations_logs');
+  return db.schema.createTable('operations_logs', table => {
+    table.increments('id').primary();
+    table.integer('conversion_id').unsigned();
+    table.foreign('conversion_id').references('operations.id');
+    table.integer('code');
+    table.json('data');
+    table.timestamp('created_at').defaultTo(db.fn.now());
+  });
+}
+
 export function setupStructure () {
   return dropScenariosFiles()
   .then(() => dropProjectsFiles())
+  .then(() => dropOperationsLogs())
+  .then(() => dropOperations())
   .then(() => dropScenarios())
   .then(() => dropProjects())
   .then(() => createProjectsTable())
   .then(() => createScenariosTable())
+  .then(() => createOperationsTable())
+  .then(() => createOperationsLogsTable())
   .then(() => createProjectsFilesTable())
   .then(() => createScenariosFilesTable());
 }
