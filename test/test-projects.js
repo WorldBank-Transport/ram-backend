@@ -3,16 +3,7 @@ import { assert } from 'chai';
 
 import Server from '../app/services/server';
 import db from '../app/db';
-import {
-  dropScenariosFiles,
-  dropProjectsFiles,
-  dropScenarios,
-  dropProjects,
-  createProjectsTable,
-  createScenariosTable,
-  createProjectsFilesTable,
-  createScenariosFilesTable
-} from '../app/db/structure';
+import { setupStructure as setupDdStructure } from '../app/db/structure';
 import { fixMeUp, projectPendingWithFiles, projectPendingWithAllFiles } from './utils/data';
 
 var options = {
@@ -30,14 +21,7 @@ before(function (done) {
 
 describe('Projects', function () {
   before(function (done) {
-    dropScenariosFiles()
-      .then(() => dropProjectsFiles())
-      .then(() => dropScenarios())
-      .then(() => dropProjects())
-      .then(() => createProjectsTable())
-      .then(() => createScenariosTable())
-      .then(() => createProjectsFilesTable())
-      .then(() => createScenariosFilesTable())
+    setupDdStructure()
       .then(() => fixMeUp())
       .then(() => done());
   });

@@ -20,7 +20,7 @@ import {
 import { fixMeUp } from './utils/data';
 import Operation from '../app/utils/operation';
 
-describe.only('Operation', function () {
+describe('Operation', function () {
   before(function (done) {
     dropScenariosFiles()
       .then(() => dropOperationsLogs())
@@ -181,6 +181,13 @@ describe.only('Operation', function () {
         });
     });
 
+    after(function () {
+      // Clear the whole table
+      return db('operations')
+        .whereNot('id', -1)
+        .del();
+    });
+
     it('should throw error loading a non existed operation by id', function () {
       let op = new Operation(db);
 
@@ -220,6 +227,124 @@ describe.only('Operation', function () {
           assert.isFalse(op.isCompleted());
           assert.equal(op.getStatus(), Operation.status.running);
           assert.equal(op.getName(), 'op-load-test');
+        });
+    });
+  });
+
+  describe('Log', function () {
+    it('should throw error adding a log to a non running operation', function () {
+      let op = new Operation(db);
+
+      return op.log(1, {message: 'test1'})
+        .catch(err => assert.equal(err.message, 'Operation not running'));
+    });
+
+    it('should throw error adding a log to a complete operation', function () {
+      let op = new Operation(db);
+
+      return op.start('operation-name-log', 1200, 1200)
+        .then(op => op.finish())
+        .then(op => op.log(1, {message: 'test2'}))
+        .catch(err => assert.equal(err.message, 'Operation already complete'));
+    });
+
+    it('should add a log and update the operation timestamp', function () {
+      let op = new Operation(db);
+      let opId;
+
+      return op.start('operation-name-log', 1200, 1200)
+        .then(op => {
+          mockdate.set(1000000000000);
+          opId = op.getId();
+          return op.log(1, {message: 'test3'});
+        })
+        .then(op => {
+          // Check the db
+          return db('operations')
+            .select('*')
+            .where('id', opId);
+        })
+        .then(res => {
+          assert.equal(res[0].name, 'operation-name-log');
+          let timestamp = (new Date(res[0].updated_at)).getTime();
+          assert.equal(timestamp, 1000000000000, 'Operation timestamp');
+        })
+        .then(op => {
+          // Check the db
+          return db('operations_logs')
+            .select('*')
+            .where('operation_id', opId);
+        })
+        .then(res => {
+          assert.equal(res[0].code, 1);
+          assert.equal(res[0].data.message, 'test3');
+          let timestamp = (new Date(res[0].created_at)).getTime();
+          assert.equal(timestamp, 1000000000000, 'Operation log timestamp');
+          mockdate.reset();
+        });
+    });
+
+    it('should accept empty data', function () {
+      let op = new Operation(db);
+
+      return op.start('operation-name-log2', 1200, 1200)
+        .then(op => op.log(1))
+        .then(op => {
+          // Check the db
+          return db('operations_logs')
+            .select('*')
+            .where('operation_id', op.getId());
+        })
+        .then(res => {
+          assert.equal(res[0].data, null);
+        });
+    });
+
+    it('should convert any primitive used for data to json with message key', function () {
+      let op = new Operation(db);
+
+      return op.start('operation-name-log3', 1200, 1200)
+        .then(op => op.log(1, 'the message'))
+        .then(op => {
+          // Check the db
+          return db('operations_logs')
+            .select('*')
+            .where('operation_id', op.getId());
+        })
+        .then(res => {
+          assert.equal(res[0].data.message, 'the message');
+        });
+    });
+
+    it('should get all the operation logs', function () {
+      let op = new Operation(db);
+
+      return op.start('operation-name-log4', 1200, 1200)
+        .then(op => op.log(1, {message: 'init'}))
+        .then(op => op.log(2, {message: 'done', remaining: 4}))
+        .then(op => op.log(2, {message: 'done', remaining: 3}))
+        .then(op => op.log(2, {message: 'done', remaining: 2}))
+        .then(op => op.fetchOperationLogs())
+        .then(res => {
+          assert.equal(res[0].data.remaining, 2);
+          assert.equal(res[1].data.remaining, 3);
+          assert.equal(res[2].data.remaining, 4);
+          assert.equal(res[3].data.message, 'init');
+        });
+    });
+
+    it('should get the last operation log', function () {
+      let op = new Operation(db);
+
+      return op.start('operation-name-log5', 1200, 1200)
+        .then(op => op.log(1, {message: 'init'}))
+        .then(op => op.log(2, {message: 'done', remaining: 4}))
+        .then(op => op.log(2, {message: 'done', remaining: 3}))
+        .then(op => op.log(2, {message: 'done', remaining: 2}))
+        .then(op => op.fetchLastOperationLog())
+        .then(res => {
+          assert.equal(res[0].data.message, 'done');
+          assert.equal(res[0].data.remaining, 2);
         });
     });
   });

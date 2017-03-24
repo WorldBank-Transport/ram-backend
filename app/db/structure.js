@@ -113,8 +113,8 @@ export function createOperationsLogsTable () {
   DEBUG && console.log('Creating table: operations_logs');
   return db.schema.createTable('operations_logs', table => {
     table.increments('id').primary();
-    table.integer('conversion_id').unsigned();
-    table.foreign('conversion_id').references('operations.id');
+    table.integer('operation_id').unsigned();
+    table.foreign('operation_id').references('operations.id');
     table.integer('code');
     table.json('data');
     table.timestamp('created_at').defaultTo(db.fn.now());

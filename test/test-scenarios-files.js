@@ -6,16 +6,8 @@ import Promise from 'bluebird';
 
 import Server from '../app/services/server';
 import db from '../app/db';
-import {
-  dropScenariosFiles,
-  dropProjectsFiles,
-  dropScenarios,
-  dropProjects,
-  createProjectsTable,
-  createScenariosTable,
-  createProjectsFilesTable,
-  createScenariosFilesTable
-} from '../app/db/structure';
+import { setupStructure as setupDdStructure } from '../app/db/structure';
+import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp } from './utils/data';
 
 var options = {
@@ -33,14 +25,8 @@ before(function (done) {
 
 describe('Scenario files', function () {
   before(function (done) {
-    dropScenariosFiles()
-      .then(() => dropProjectsFiles())
-      .then(() => dropScenarios())
-      .then(() => dropProjects())
-      .then(() => createProjectsTable())
-      .then(() => createScenariosTable())
-      .then(() => createProjectsFilesTable())
-      .then(() => createScenariosFilesTable())
+    setupDdStructure()
+      .then(() => setupStorageStructure())
       .then(() => fixMeUp())
       .then(() => done());
   });

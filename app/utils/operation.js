@@ -69,8 +69,6 @@ export default class Operation {
    * @return {Operation}     This operation instance
    */
   start (name, projId, scId) {
-    if (!this.db) throw new Error('Missing db instance');
-
     if (!name || !projId || !scId) {
       throw new Error('Missing parameters');
     }
@@ -134,8 +132,6 @@ export default class Operation {
    * @return {Operation}     This operation instance
    */
   finish () {
-    if (!this.db) throw new Error('Missing db instance');
-
     if (!this.isStarted()) {
       return Promise.reject(new Error('Operation not running'));
     }
@@ -177,6 +173,70 @@ export default class Operation {
       project_id: projId,
       scenario_id: scId
     });
+  }
+
+  /**
+   * Log an entry to the database.
+   *
+   * @param  {Number} code   Operation code
+   * @param  {Any} data      Any arbitrary data. It will be stored as json
+   *                         format. If `data` is not an object it will be
+   *                         stored as {message: `data`}
+   * @return {Operation}     This operation instance
+   */
+  log (code, data = null) {
+    if (this.isCompleted()) {
+      return Promise.reject(new Error('Operation already complete'));
+    }
+
+    if (!this.isStarted()) {
+      return Promise.reject(new Error('Operation not running'));
+    }
+
+    if (data !== null && data.toString() !== '[object Object]') {
+      data = {message: data};
+    }
+
+    return this.db.transaction(trx => {
+      return trx(Operation.opTable)
+        .update({updated_at: (new Date())})
+        .where('id', this.id)
+        .then(() => {
+          return trx(Operation.logTable)
+            .insert({
+              operation_id: this.id,
+              code,
+              data,
+              created_at: (new Date())
+            });
+        })
+        .then(() => this);
+    });
+  }
+
+  /**
+   * Returns all the operation logs.
+   *
+   * @return {Promise}     The db query. Results are sorted newest first.
+   */
+  fetchOperationLogs () {
+    return this.db(Operation.logTable)
+      .select('*')
+      .where('operation_id', this.getId())
+      .orderBy('id', 'desc');
+  }
+
+  /**
+   * Returns the last the operation log.
+   *
+   * @return {Promise}     The db query.
+   */
+  fetchLastOperationLog () {
+    return this.db(Operation.logTable)
+      .select('*')
+      .where('operation_id', this.getId())
+      .orderBy('id', 'desc')
+      .limit(1);
   }
 
   /**
