@@ -8,6 +8,15 @@ import db from './db';
 const WORK_DIR = path.resolve(__dirname, '../conversion');
 const { PROJECT_ID: projId, SCENARIO_ID: scId } = process.env;
 
+
+import Operation from './utils/operation';
+
+new Operation();
+
+process.exit(0)
+
+
+
 // Include the project Id and scenario is in the file name, before the
 // extension. profile.lua => profile--p1s1.lua
 const f = (name) => {
@@ -106,26 +115,12 @@ function osm2osrmCleanup (dir) {
 
 
 
-
+import fs from 'fs';
 
 
 function createTimeMatrix (data, osrm) {
-  console.log('Location of OSRM: ', osrm);
-  var cETA = fork(path.resolve(__dirname, 'calculateETA.js'));
+  let beginTime = Date.now();
 
-  var beginTime = new Date().getTime();
-
-  // if(!data||!data.feature) {
-  //   console.warn('no data');
-  //   return false;
-  // }
-  // data.maxTime = data.maxTime || c.maxTime;
-  // data.maxSpeed = data.maxSpeed || c.maxSpeed;
-
-  // split the input region in squares for parallelisation
-
-
-  // tell the client how many squares there are
   let processData = {
     id: 2,
     poi: data.pois,
@@ -136,77 +131,80 @@ function createTimeMatrix (data, osrm) {
     maxSpeed: data.maxSpeed,
     adminArea: data.adminArea
   };
+  let remainingSquares = null;
 
+  const cETA = fork(path.resolve(__dirname, 'calculateETA.js'));
   cETA.send(processData);
-
-  var remaining = null;
-
   cETA.on('message', function (msg) {
     console.log('msg', msg);
 
-    if (msg.type === 'done') {
-      process.exit(0);
-    }
-    return;
+    switch (msg.type) {
+      case 'squarecount':
+        remainingSquares = msg.data;
+        break;
+      case 'square':
+        remainingSquares--;
+        // Emit status?
+        break;
+      case 'done':
+        let calculationTime = (Date.now() - beginTime) / 1000;
+        console.log('calculationTime', calculationTime);
+        // Build csv file.
+        let data = msg.data;
+        let header = Object.keys(data[0]);
+        // Ensure the row order is the same as the header.
+        let rows = data.map(r => header.map(h => r[h]));
 
+        // Convert to string
+        let file = header.join(',') + '\n';
+        file += rows.map(r => r.join(',')).join('\n');
 
-    if(msg.type == 'squarecount') {
-      remaining = msg.data;
-    } else if(msg.type == 'status') {
-      io.emit('status',{id:msg.id,msg:msg.data});
-    }
-    else if(msg.type=='square') {
-      remaining--;
-      io.emit('status',{id:msg.id,msg:'srv_remaining_squares',p0:remaining});
-    }
-    else if(msg.type =='done') {
-      //we are done, save as csv and send the filename
-      var calculationTime = (new Date().getTime()-beginTime)/1000;
-      var timing = Math.round(calculationTime);
-      if(calculationTime>60) {
-        timing = Math.round(calculationTime/60);
-        io.emit('status',{id:msg.id,msg:'srv_calculated_in_m',p0:timing});
+        fs.writeFileSync('results', file);
 
-      }
-      else {
-        io.emit('status',{id:msg.id,msg:'srv_calculated_in_s',p0:timing});
-
-      }
-      console.log('timing: '+timing);
-      io.emit('status',{id:msg.id,msg:'srv_writing'});
-      var networkfile = msg.osrm.split('/')[msg.osrm.split('/').length-1];
-      var osrmfile = networkfile.split('.')[0];
-      var print = d3.csv.format(msg.data);
-      var subfile = data.geometryId+'-'+msg.id+'-'+osrmfile;
-      var file = subfile+'.csv';
-      var fullpath = './web/data/'+data.project+'/csv/';
-      var meta = {
-        'created':{
-          'time':new Date().getTime(),
-          'user':credentials.user
-        },
-        'name':subfile,
-        'csvfile':file
-      };
-      var metafile = fullpath+subfile+'.json';
-      fs.writeFile(metafile,JSON.stringify(meta),function(err){
-        if(err) return console.log(err);
-        io.emit('csvMetaFinished',{id:msg.id,project:data.project});
-      });
-      fs.writeFile(fullpath+file, print, function(err){
-        if(err) {
-          return console.log(err);
-        }
-        io.emit('status',{id:msg.id,msg:'srv_finished',project:data.project});
-        io.emit('csvFinished',{id:msg.id,project:data.project});
         cETA.disconnect();
-      });
+        process.exit(0);
+        break;
     }
+  });
+
+  cETA.on('exit', (code) => {
+    console.log('exit', code);
   });
 }
 
 
+function processResult (data) {
+  // Build csv file.
+  console.log('data', data);
 
+  // var networkfile = msg.osrm.split('/')[msg.osrm.split('/').length-1];
+  // var osrmfile = networkfile.split('.')[0];
+  // var print = d3.csv.format(msg.data);
+  // var subfile = data.geometryId+'-'+msg.id+'-'+osrmfile;
+  // var file = subfile+'.csv';
+  // var fullpath = './web/data/'+data.project+'/csv/';
+  // var meta = {
+  //   'created':{
+  //     'time':new Date().getTime(),
+  //     'user':credentials.user
+  //   },
+  //   'name':subfile,
+  //   'csvfile':file
+  // };
+  // var metafile = fullpath+subfile+'.json';
+  // fs.writeFile(metafile,JSON.stringify(meta),function(err){
+  //   if(err) return console.log(err);
+  //   io.emit('csvMetaFinished',{id:msg.id,project:data.project});
+  // });
+  // fs.writeFile(fullpath+file, print, function(err){
+  //   if(err) {
+  //     return console.log(err);
+  //   }
+  //   io.emit('status',{id:msg.id,msg:'srv_finished',project:data.project});
+  //   io.emit('csvFinished',{id:msg.id,project:data.project});
+  //   cETA.disconnect();
+  // });
+}
 
 
 
