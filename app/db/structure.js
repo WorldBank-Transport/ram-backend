@@ -62,6 +62,8 @@ export function createProjectsFilesTable () {
     table.string('path');
     table.integer('project_id').unsigned();
     table.foreign('project_id').references('projects.id');
+    // Arbitrary additional json data.
+    table.json('data');
     table.timestamps();
   });
 }
@@ -77,6 +79,8 @@ export function createScenariosFilesTable () {
     table.foreign('project_id').references('projects.id');
     table.integer('scenario_id').unsigned();
     table.foreign('scenario_id').references('scenarios.id');
+    // Arbitrary additional json data.
+    table.json('data');
     table.timestamps();
   });
 }
