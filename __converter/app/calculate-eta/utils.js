@@ -25,7 +25,6 @@ export function range (start, end) {
  */
 export function villagesInRegion (area, villages) {
   let result = within(villages, featureCollection([area]));
-  console.log('villages in batch', result.features.length);
   return result;
 }
 

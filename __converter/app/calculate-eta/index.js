@@ -1,15 +1,14 @@
 'use strict';
 import OSRM from 'osrm';
 import async from 'async';
-import os from 'os';
 import intersect from '@turf/intersect';
 import envelope from '@turf/envelope';
 import squareGrid from '@turf/square-grid';
 
+import config from '../config';
 import { createProcessAreaTask } from './tasks';
 
-const cpus = os.cpus().length;
-process.env.UV_THREADPOOL_SIZE = Math.floor(cpus * 1.5);
+process.env.UV_THREADPOOL_SIZE = config.cpus;
 
 /**
  * Process to compute the time it takes for each village inside the
@@ -57,7 +56,7 @@ process.on('message', function (e) {
     return createProcessAreaTask(workArea, poiByType, villages, osrm, maxTime, maxSpeed, id);
   });
 
-  async.parallelLimit(squareTasks, cpus, (err, allSquaresRes) => {
+  async.parallelLimit(squareTasks, config.cpus, (err, allSquaresRes) => {
     if (err) {
       throw err;
     }

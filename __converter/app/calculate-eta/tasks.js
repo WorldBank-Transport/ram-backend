@@ -33,7 +33,7 @@ export function createProcessAreaTask (workArea, poiByType, villages, osrm, maxT
     if (!workArea) {
       // The square doesn't intersect with the adminArea.
       // Return an empty result.
-      process.send({type: 'square', id: id});
+      process.send({type: 'square', data: 'No intersection', id: id});
       return callback(null, []);
     }
 
@@ -42,9 +42,11 @@ export function createProcessAreaTask (workArea, poiByType, villages, osrm, maxT
     if (workingSet.features.length === 0) {
       // There are no villages within the square.
       // Return an empty result.
-      process.send({type: 'square', id: id});
+      process.send({type: 'square', data: 'No villages', id: id});
       return callback(null, []);
     }
+
+    process.send({type: 'debug', data: `Villages in working set: ${workingSet.features.length}`, id: id});
 
     let poilist = [];
 
@@ -55,10 +57,15 @@ export function createProcessAreaTask (workArea, poiByType, villages, osrm, maxT
       let poiSet;
       let time = maxTime;
       let speed = maxSpeed;
+      // We want to have at least 4 poi to work with, but we have to account
+      // for the case where there are less than 4, as to avoid infinite loops.
+      let totalPoi = poiByType[key].features.length;
+      let minPoi = Math.min(totalPoi, 4);
+      process.send({type: 'debug', data: `Total poi of type ${key}: ${totalPoi}`, id: id});
       do {
         poiSet = poisInBuffer(workArea, poiByType[key], time, speed);
         time += 900;
-      } while (poiSet.features.length < 4);
+      } while (poiSet.features.length < minPoi);
 
       poilist.push({type: key, items: poiSet});
     }
@@ -111,7 +118,7 @@ export function createProcessAreaTask (workArea, poiByType, villages, osrm, maxT
         squareResults.push(properties);
       });
 
-      process.send({type: 'square', id: id});
+      process.send({type: 'square', data: 'Processed', id: id});
       return callback(null, squareResults);
     });
   };
