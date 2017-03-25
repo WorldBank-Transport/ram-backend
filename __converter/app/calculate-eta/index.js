@@ -27,7 +27,7 @@ process.env.UV_THREADPOOL_SIZE = config.cpus;
  * @return                     The process will emit several states:
  */
 process.on('message', function (e) {
-  process.send({type: 'status', data: 'srv_started', id: id});
+  process.send({type: 'status', data: 'srv_started', id: e.id});
   const {
     id,
     poi: poiByType,

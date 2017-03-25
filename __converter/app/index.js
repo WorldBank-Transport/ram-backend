@@ -4,9 +4,9 @@ import { exec, fork } from 'child_process';
 import fs from 'fs';
 import async from 'async';
 
+import config from './config';
 import { writeFile, getJSONFileContents } from './s3/utils';
 import db from './db';
-import config from './config';
 
 const { PROJECT_ID: projId, SCENARIO_ID: scId } = process.env;
 const WORK_DIR = path.resolve(__dirname, '../conversion', `p${projId}s${scId}`);
@@ -23,10 +23,6 @@ try {
 }
 
 logger.log('Max running processes set at', config.cpus);
-
-//
-// TODO Error handling: When one forked process fails everything has to be aborted.
-//
 
 // Start by loading the info on all the project and scenario files needed
 // for the results processing.
@@ -84,8 +80,8 @@ fetchFilesInfo(projId, scId)
   return new Promise((resolve, reject) => {
     let time = Date.now();
     async.parallelLimit(timeMatrixTasks, config.cpus, (err, adminAreasCsv) => {
-      logger.log('Processed ', timeMatrixTasks.length, 'admin areas in', (Date.now() - time) / 1000, 'seconds');
       if (err) return reject(err);
+      logger.log('Processed ', timeMatrixTasks.length, 'admin areas in', (Date.now() - time) / 1000, 'seconds');
       return resolve(adminAreasCsv);
     });
   });
@@ -160,11 +156,13 @@ function osm2osrmCleanup (dir) {
   });
 }
 
+// Store all the created processes.
+let runningProcesses = [];
+
 function createTimeMatrixTask (data, osrmFile) {
   return (callback) => {
     const taskLogger = logger.group(data.adminArea.properties.name);
     const beginTime = Date.now();
-
     let processData = {
       id: 2,
       poi: data.pois,
@@ -178,6 +176,8 @@ function createTimeMatrixTask (data, osrmFile) {
     let remainingSquares = null;
 
     const cETA = fork(path.resolve(__dirname, 'calculateETA.js'));
+    runningProcesses.push(cETA);
+
     cETA.send(processData);
     cETA.on('message', function (msg) {
       switch (msg.type) {
@@ -231,6 +231,8 @@ function createTimeMatrixTask (data, osrmFile) {
 
     cETA.on('exit', (code) => {
       if (code !== 0) {
+        // Stop everything if one of the processes errors.
+        runningProcesses.forEach(p => p.kill());
         let error = new Error('calculateETA exited with non 0 code');
         error.code = code;
         return callback(error);
