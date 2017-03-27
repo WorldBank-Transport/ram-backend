@@ -127,7 +127,7 @@ operation.start('generate-analysis', projId, scId)
 .then(() => process.exit(0))
 .catch(err => {
   console.log('err', err);
-  operation.log(op.ERROR, {error: err})
+  operation.log(op.OP_ERROR, {error: err})
     .then(() => operation.finish())
     .then(() => process.exit(1), () => process.exit(1));
 });
