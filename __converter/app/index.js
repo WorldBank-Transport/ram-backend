@@ -7,12 +7,16 @@ import async from 'async';
 import config from './config';
 import { writeFile, getJSONFileContents } from './s3/utils';
 import db from './db';
+import Operation from './utils/operation';
+import AppLogger from './utils/app-logger';
+import * as op from './utils/operation-codes';
 
 const { PROJECT_ID: projId, SCENARIO_ID: scId } = process.env;
 const WORK_DIR = path.resolve(__dirname, '../conversion', `p${projId}s${scId}`);
 
 const DEBUG = config.debug;
 const logger = AppLogger({ output: DEBUG });
+const operation = new Operation(db);
 
 try {
   fs.mkdirSync(WORK_DIR);
@@ -24,18 +28,21 @@ try {
 
 logger.log('Max running processes set at', config.cpus);
 
+operation.start('generate-analysis', projId, scId)
 // Start by loading the info on all the project and scenario files needed
 // for the results processing.
-fetchFilesInfo(projId, scId)
+.then(() => fetchFilesInfo(projId, scId))
 .then(files => {
   // Write files used by osm2osrm to disk.
   return Promise.all([
     writeFile(files.profile.path, `${WORK_DIR}/profile.lua`),
     writeFile(files['road-network'].path, `${WORK_DIR}/road-network.osm`)
   ])
+  .then(() => operation.log(op.OP_OSRM, {message: 'osm2osrm processing started'}))
   // Create orsm files and cleanup.
   .then(() => osm2osrm(WORK_DIR))
   .then(() => osm2osrmCleanup(WORK_DIR))
+  .then(() => operation.log(op.OP_OSRM, {message: 'osm2osrm processing finished'}))
   // Pass the files for the next step.
   .then(() => files);
 })
@@ -77,7 +84,7 @@ fetchFilesInfo(projId, scId)
 
   // createTimeMatrixTask need to be executed in parallel with a limit because
   // they spawn new processes. Use async but Promisify to continue chain.
-  return new Promise((resolve, reject) => {
+  let timeMatrixRunner = new Promise((resolve, reject) => {
     let time = Date.now();
     async.parallelLimit(timeMatrixTasks, config.cpus, (err, adminAreasCsv) => {
       if (err) return reject(err);
@@ -85,6 +92,10 @@ fetchFilesInfo(projId, scId)
       return resolve(adminAreasCsv);
     });
   });
+
+  return operation.log(op.OP_ROUTING, {message: 'Routing started', count: timeMatrixTasks.length})
+    .then(() => timeMatrixRunner)
+    .then((adminAreasCsv) => operation.log(op.OP_ROUTING, {message: 'Routing complete'}).then(() => adminAreasCsv));
 })
 .then(adminAreasCsv => {
   logger.log('Writing result CSVs');
@@ -95,11 +106,15 @@ fetchFilesInfo(projId, scId)
 
   logger.log('Done writing result CSVs');
 })
+.then(() => operation.log(3, {message: 'Files written'}))
+.then(() => operation.finish())
 .then(() => logger.toFile(`${WORK_DIR}/process.log`))
 .then(() => process.exit(0))
 .catch(err => {
   console.log('err', err);
-  process.exit(1);
+  operation.log(op.ERROR, {error: err})
+    .then(() => operation.finish())
+    .then(() => process.exit(1), () => process.exit(1));
 });
 
 function fetchFilesInfo (projId, scId) {
@@ -125,19 +140,32 @@ function fetchFilesInfo (projId, scId) {
   });
 }
 
+/**
+ * Runs the osm 2 osrm conversion.
+ * Calls a bash script with all the instruction located at
+ * ../scripts/osm2osrm.sh
+ * @param  {string} dir Directory where the needed files are.
+ *                      Expects a profile.lua and a road-network.osm
+ * @return {Promise}
+ */
 function osm2osrm (dir) {
   return new Promise((resolve, reject) => {
     logger.group('OSRM').log('Generation started');
     let osm2osrmTime = Date.now();
     let bin = path.resolve(__dirname, '../scripts/osm2osrm.sh');
     exec(`bash ${bin} -d ${dir}`, (error, stdout, stderr) => {
-      logger.group('OSRM').log('Completed in', (Date.now() - osm2osrmTime) / 1000, 'seconds');
       if (error) return reject(stderr);
+      logger.group('OSRM').log('Completed in', (Date.now() - osm2osrmTime) / 1000, 'seconds');
       return resolve(stdout);
     });
   });
 }
 
+/**
+ * Cleanup after the osm2osrm.
+ * @param  {string} dir Directory where the files are.
+ * @return {Promise}
+ */
 function osm2osrmCleanup (dir) {
   return new Promise((resolve, reject) => {
     let globs = [
@@ -220,11 +248,18 @@ function createTimeMatrixTask (data, osrmFile) {
           let csv = header.join(',') + '\n';
           csv += rows.map(r => r.join(',')).join('\n');
 
-          cETA.disconnect();
-          return callback(null, {
-            adminArea: data.adminArea.properties,
-            csv
-          });
+          const finish = () => {
+            cETA.disconnect();
+            return callback(null, {
+              adminArea: data.adminArea.properties,
+              csv
+            });
+          };
+
+          // Error or not, we finish the process.
+          operation.log(op.OP_ROUTING_AREA, {message: 'Routing complete', adminArea: data.adminArea.properties.name})
+            .then(() => finish(), () => finish());
+
           // break;
       }
     });
@@ -238,64 +273,5 @@ function createTimeMatrixTask (data, osrmFile) {
         return callback(error);
       }
     });
-  };
-}
-
-function AppLogger (options) {
-  options = Object.assign({}, {
-    output: false
-  }, options);
-
-  let chrono = [];
-  let history = {
-    main: []
-  };
-
-  const getLogTime = () => {
-    let d = new Date();
-    let h = d.getHours();
-    h = h < 10 ? `0${h}` : h;
-    let m = d.getMinutes();
-    m = m < 10 ? `0${m}` : m;
-    let s = d.getSeconds();
-    s = s < 10 ? `0${s}` : s;
-    let ml = d.getMilliseconds();
-    ml = ml < 10 ? `00${ml}` : ml < 100 ? `0${ml}` : ml;
-    return `${h}:${m}:${s}.${ml}`;
-  };
-
-  const _log = (group, ...args) => {
-    if (!history[group]) history[group] = [];
-    let t = getLogTime();
-    history[group].push([`[${t}]`, ...args]);
-    chrono.push([`[${t}]`, `[${group}]`, ...args]);
-    options.output && console.log(`[${t}]`, `[${group}]`, ...args);
-  };
-
-  const _dump = (group) => {
-    options.output && console.log('--- --- ---');
-    options.output && console.log(`[${group}]`);
-    options.output && history[group].forEach(o => console.log(...o));
-    options.output && console.log('--- --- ---');
-  };
-
-  return {
-    getLogTime,
-    group: (name) => ({
-      getLogTime,
-      log: (...args) => _log(name, ...args),
-      dump: () => _dump(name)
-    }),
-    log: (...args) => _log('main', ...args),
-    dump: () => {
-      options.output && chrono.forEach(o => console.log(...o));
-    },
-    dumpGroups: () => {
-      Object.keys(history).forEach(g => _dump(g));
-    },
-    toFile: (path) => {
-      let data = chrono.map(o => o.join(' ')).join('\n');
-      fs.writeFileSync(path, data);
-    }
   };
 }
