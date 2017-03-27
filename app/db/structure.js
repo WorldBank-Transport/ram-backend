@@ -115,7 +115,7 @@ export function createOperationsLogsTable () {
     table.increments('id').primary();
     table.integer('operation_id').unsigned();
     table.foreign('operation_id').references('operations.id');
-    table.integer('code');
+    table.string('code');
     table.json('data');
     table.timestamp('created_at').defaultTo(db.fn.now());
   });
