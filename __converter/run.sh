@@ -16,5 +16,6 @@ docker run \
   -e 'STORAGE_SECRET_KEY=miniostorageengine' \
   -e 'STORAGE_BUCKET=rra' \
   -e 'STORAGE_REGION=us-east-1' \
+  -e 'CONVERSION_DIR=/conversion' \
   --name rra-converter \
   rra-converter

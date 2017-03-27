@@ -11,8 +11,8 @@ import Operation from './utils/operation';
 import AppLogger from './utils/app-logger';
 import * as op from './utils/operation-codes';
 
-const { PROJECT_ID: projId, SCENARIO_ID: scId } = process.env;
-const WORK_DIR = path.resolve(__dirname, '../conversion', `p${projId}s${scId}`);
+const { PROJECT_ID: projId, SCENARIO_ID: scId, CONVERSION_DIR: conversion_dir } = process.env;
+const WORK_DIR = path.resolve(conversion_dir, `p${projId}s${scId}`);
 
 const DEBUG = config.debug;
 const logger = AppLogger({ output: DEBUG });
