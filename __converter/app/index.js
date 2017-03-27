@@ -5,7 +5,7 @@ import fs from 'fs';
 import async from 'async';
 
 import config from './config';
-import { writeFile, getJSONFileContents } from './s3/utils';
+import { writeFile, getJSONFileContents, putFile } from './s3/utils';
 import db from './db';
 import Operation from './utils/operation';
 import AppLogger from './utils/app-logger';
@@ -97,6 +97,21 @@ operation.start('generate-analysis', projId, scId)
     .then(() => timeMatrixRunner)
     .then((adminAreasCsv) => operation.log(op.OP_ROUTING, {message: 'Routing complete'}).then(() => adminAreasCsv));
 })
+// S3 storage.
+.then(adminAreasCsv => {
+  logger.group('s3').log('Storing files');
+  let putFilesTasks = adminAreasCsv.map(o => saveScenarioFile(o, projId, scId));
+
+  return operation.log(op.OP_RESULTS, {message: 'Storing results'})
+    .then(() => Promise.all(putFilesTasks))
+    .then(() => operation.log(op.OP_RESULTS, {message: 'Storing results complete'}))
+    .then(() => {
+      logger.group('s3').log('Storing files complete');
+      // Pass it along.
+      return adminAreasCsv;
+    });
+})
+// File storage
 .then(adminAreasCsv => {
   logger.log('Writing result CSVs');
   adminAreasCsv.forEach(o => {
@@ -274,4 +289,39 @@ function createTimeMatrixTask (data, osrmFile) {
       }
     });
   };
+}
+
+/**
+ * Stores a scenario file to the storage engine and updates the database.
+ * @param  {object} data   Object with data to store and admin area properties.
+ * @param  {number} projId Project id.
+ * @param  {number} scId   Scenario id.
+ * @return {Promise}
+ */
+function saveScenarioFile (data, projId, scId) {
+  const fileName = `results_${data.adminArea.name.replace(' ', '')}_${Date.now()}`;
+  const filePath = `scenario-${scId}/${fileName}`;
+  const fileData = {
+    name: fileName,
+    type: 'results',
+    path: filePath,
+    project_id: projId,
+    scenario_id: scId,
+    created_at: (new Date()),
+    updated_at: (new Date())
+  };
+
+  logger.group('s3').log('Saving file', filePath);
+
+  return putFile(filePath, data.csv)
+    .then(() => db('scenarios_files')
+      .returning('*')
+      .insert(fileData)
+      .then(() => db('projects')
+        .update({
+          updated_at: (new Date())
+        })
+        .where('id', projId)
+      )
+    );
 }

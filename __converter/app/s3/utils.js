@@ -62,3 +62,15 @@ export function writeFile (file, destination) {
     });
   });
 }
+
+// Put file.
+export function putFile (file, data) {
+  return new Promise((resolve, reject) => {
+    s3.putObject(bucket, file, data, (err, etag) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(etag);
+    });
+  });
+}
