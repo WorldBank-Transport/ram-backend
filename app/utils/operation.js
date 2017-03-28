@@ -46,6 +46,7 @@ export default class Operation {
     return this.db(Operation.opTable)
       .select('*')
       .where(opts)
+      .orderBy('created_at', 'desc')
       .then(res => {
         if (!res.length) return Promise.reject(new Error('Operation does not exist'));
         let op = res[0];
