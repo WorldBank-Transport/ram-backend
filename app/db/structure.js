@@ -57,6 +57,7 @@ export function createScenariosTable () {
     table.boolean('master').defaultTo(false);
     table.integer('project_id').unsigned();
     table.foreign('project_id').references('projects.id');
+    table.json('admin_areas');
     table.timestamps();
 
     table.unique(['project_id', 'name']);
