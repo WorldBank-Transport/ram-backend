@@ -51,3 +51,29 @@ export function copyFile (oldFile, newFile) {
     });
   });
 }
+
+// Get file content.
+export function getFileContents (file) {
+  return new Promise((resolve, reject) => {
+    s3.getObject(bucket, file, (err, dataStream) => {
+      if (err) return reject(err);
+
+      var data = '';
+      dataStream.on('data', chunk => (data += chunk));
+      dataStream.on('end', () => resolve(data));
+      dataStream.on('error', () => reject(err));
+    });
+  });
+}
+
+// Get file content in JSON.
+export function getJSONFileContents (file) {
+  return getFileContents(file)
+    .then(result => {
+      try {
+        return JSON.parse(result);
+      } catch (e) {
+        Promise.reject(e);
+      }
+    });
+}
