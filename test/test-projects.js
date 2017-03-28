@@ -199,7 +199,7 @@ describe('Projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         var result = res.result;
-        assert.match(result.message, /["name" is required]/);
+        assert.match(result.message, /['name' is required]/);
       });
     });
 
@@ -286,7 +286,7 @@ describe('Projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         var result = res.result;
-        assert.match(result.message, /["name" is not allowed to be empty]/);
+        assert.match(result.message, /['name' is not allowed to be empty]/);
       });
     });
 
@@ -314,7 +314,7 @@ describe('Projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         var result = res.result;
-        assert.match(result.message, /["description" is not allowed to be empty]/);
+        assert.match(result.message, /['description' is not allowed to be empty]/);
       });
     });
 
@@ -353,7 +353,7 @@ describe('Projects', function () {
 
   describe('POST /projects/{projId}/finish-setup', function () {
     before(function (done) {
-      // Needed for test: "should update project and scenario with name and description"
+      // Needed for test: 'should update project and scenario with name and description'
       projectPendingWithAllFiles(19999)
         .then(() => done());
     });
@@ -424,7 +424,39 @@ describe('Projects', function () {
             .then(scenario => {
               assert.equal(scenario[0].status, 'active');
               assert.equal(scenario[0].name, 'Main scenario');
-              assert.equal(scenario[0].description, '');
+              let adminAreas = [
+                {'name': 'Distrito de Abadia', 'selected': false},
+                {'name': 'Distrito de Itanhi', 'selected': false},
+                {'name': 'Distrito de Conceição de Campinas', 'selected': false},
+                {'name': 'Distrito de Sambaíba', 'selected': false},
+                {'name': 'Distrito de Buril', 'selected': false},
+                {'name': 'Distrito de Itamira', 'selected': false},
+                {'name': 'Estância', 'selected': false},
+                {'name': 'Itaporanga d\'Ajuda', 'selected': false},
+                {'name': 'Salgado', 'selected': false},
+                {'name': 'Arauá', 'selected': false},
+                {'name': 'Boquim', 'selected': false},
+                {'name': 'Cristinápolis', 'selected': false},
+                {'name': 'Indiaroba', 'selected': false},
+                {'name': 'Itabaianinha', 'selected': false},
+                {'name': 'Pedrinhas', 'selected': false},
+                {'name': 'Santa Luzia do Itanhy', 'selected': false},
+                {'name': 'Tomar do Geru', 'selected': false},
+                {'name': 'Umbaúba', 'selected': false},
+                {'name': 'Pedra Mole', 'selected': false},
+                {'name': 'Campo do Brito', 'selected': false},
+                {'name': 'Itabaiana', 'selected': false},
+                {'name': 'Lagarto', 'selected': false},
+                {'name': 'Macambira', 'selected': false},
+                {'name': 'Poço Verde', 'selected': false},
+                {'name': 'Simão Dias', 'selected': false},
+                {'name': 'São Domingos', 'selected': false},
+                {'name': 'Palmares', 'selected': false},
+                {'name': 'Riachão do Dantas', 'selected': false},
+                {'name': 'Samambaia', 'selected': false},
+                {'name': 'Tobias Barreto', 'selected': false}
+              ];
+              assert.deepEqual(scenario[0].admin_areas, adminAreas);
             })
         ]);
       });

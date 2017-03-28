@@ -75,7 +75,6 @@ module.exports = [
                 if (source === 'new') {
                   return handleRoadNetworkUpload(trx, reply, scenario);
                 }
-                spawnAnalysisProcess(scenario.project_id, scenario.id);
                 // Else we're done.
                 return reply(scenario);
               });
@@ -139,9 +138,6 @@ function handleRoadNetworkUpload (trx, reply, scenario) {
         })
         .then(() => db('scenarios').update({updated_at: now, status: 'active'}).where('id', scenario.id))
         .then(() => db('projects').update({updated_at: now}).where('id', scenario.project_id))
-        .then(() => {
-          spawnAnalysisProcess(scenario.project_id, scenario.id);
-        })
         .catch(err => {
           console.log('err', err);
         });
@@ -207,40 +203,4 @@ function cloneScenarioFiles (trx, files, scenarioData) {
       let [oldFiles, newFiles] = allFiles;
       return Promise.map(oldFiles, (old, i) => copyFile(old.path, newFiles[i].path));
     });
-}
-
-import cp from 'child_process';
-import config from '../config';
-
-function spawnAnalysisProcess (projId, scId) {
-  let args = [
-    'run',
-    '-e', `DB_URI=${config.analysisProcess.db}`,
-    '-e', `PROJECT_ID=${projId}`,
-    '-e', `SCENARIO_ID=${scId}`,
-    '-e', `STORAGE_HOST=${config.analysisProcess.storageHost}`,
-    '-e', `STORAGE_PORT=${config.analysisProcess.storagePort}`,
-    '-e', `STORAGE_ENGINE=${config.storage.engine}`,
-    '-e', `STORAGE_ACCESS_KEY=${config.storage.accessKey}`,
-    '-e', `STORAGE_SECRET_KEY=${config.storage.secretKey}`,
-    '-e', `STORAGE_BUCKET=${config.storage.bucket}`,
-    '-e', `STORAGE_REGION=${config.storage.region}`,
-    '-e', 'CONVERSION_DIR=/conversion',
-    config.analysisProcess.container
-  ];
-
-  // Spawn the processing script. It will take care of updating
-  // the database with progress.
-  let analysisProc = cp.spawn('docker', args);
-  analysisProc.stdout.on('data', (data) => {
-    console.log(`[ANALYSIS P${projId} S${scId}]`, data.toString());
-  });
-
-  analysisProc.stderr.on('data', (data) => {
-    console.log(`[ANALYSIS P${projId} S${scId}][ERROR]`, data.toString());
-  });
-
-  analysisProc.on('close', (code) => {
-    console.log(`[ANALYSIS P${projId} S${scId}][EXIT]`, code.toString());
-  });
 }
