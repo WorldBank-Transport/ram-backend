@@ -86,6 +86,7 @@ function singleScenarioHandler (request, reply) {
       return scenarios[0];
     })
     .then(scenario => attachScenarioFiles(scenario))
+    .then(scenario => attachAnalysisOperation(scenario))
     .then(scenario => reply(scenario))
     .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
     .catch(err => {
@@ -101,5 +102,45 @@ function attachScenarioFiles (scenario) {
     .then(files => {
       scenario.files = files || [];
       return scenario;
+    });
+}
+
+function attachAnalysisOperation (scenario) {
+  return db.select('*')
+    .from('operations')
+    .where('operations.scenario_id', scenario.id)
+    .where('operations.name', 'generate-analysis')
+    .orderBy('created_at', 'desc')
+    .limit(1)
+    .then(op => {
+      if (!op.length) {
+        scenario.gen_analysis = null;
+        return scenario;
+      }
+      op = op[0];
+
+      return db.select('*')
+        .from('operations_logs')
+        .where('operation_id', op.id)
+        .then(logs => {
+          let errored = false;
+          if (logs.length) {
+            errored = logs[logs.length - 1].code === 'error';
+          }
+          scenario.gen_analysis = {
+            id: op.id,
+            status: op.status,
+            created_at: op.created_at,
+            updated_at: op.updated_at,
+            errored,
+            logs: logs.map(l => ({
+              id: l.id,
+              code: l.code,
+              data: l.data,
+              created_at: l.created_at
+            }))
+          };
+          return scenario;
+        });
     });
 }
