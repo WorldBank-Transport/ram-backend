@@ -4,6 +4,7 @@ import mockdate from 'mockdate';
 
 import Server from '../app/services/server';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
+import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp, projectPendingWithFiles } from './utils/data';
 import db from '../app/db';
 
@@ -23,6 +24,7 @@ before(function (done) {
 describe('Scenarios', function () {
   before(function (done) {
     setupDdStructure()
+      .then(() => setupStorageStructure())
       .then(() => fixMeUp())
       .then(() => done());
   });

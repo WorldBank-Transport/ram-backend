@@ -179,7 +179,7 @@ export default class Operation {
   /**
    * Log an entry to the database.
    *
-   * @param  {Number} code   Operation code
+   * @param  {String} code   Operation code
    * @param  {Any} data      Any arbitrary data. It will be stored as json
    *                         format. If `data` is not an object it will be
    *                         stored as {message: `data`}
@@ -199,19 +199,20 @@ export default class Operation {
     }
 
     return this.db.transaction(trx => {
-      return trx(Operation.opTable)
-        .update({updated_at: (new Date())})
-        .where('id', this.id)
-        .then(() => {
-          return trx(Operation.logTable)
-            .insert({
-              operation_id: this.id,
-              code,
-              data,
-              created_at: (new Date())
-            });
-        })
-        .then(() => this);
+      let date = new Date();
+      return Promise.all([
+        trx(Operation.opTable)
+          .update({updated_at: date})
+          .where('id', this.id),
+        trx(Operation.logTable)
+          .insert({
+            operation_id: this.id,
+            code,
+            data,
+            created_at: date
+          })
+      ])
+      .then(() => this);
     });
   }
 

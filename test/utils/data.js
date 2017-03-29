@@ -7,9 +7,6 @@ import db from '../../app/db';
 import { bucket } from '../../app/s3/';
 import { putObjectFromFile } from '../../app/s3/structure';
 
-const FILE = path.join(__dirname, 'test-file');
-const FILE_SCENARIO_1200 = path.join(__dirname, 'test-file-scenario-1200');
-
 const FILE_PROFILE = path.join(__dirname, 'data-sergipe/profile.lua');
 const FILE_VILLAGES = path.join(__dirname, 'data-sergipe/villages.geojson');
 const FILE_ADMIN = path.join(__dirname, 'data-sergipe/admin-boundaries.geojson');

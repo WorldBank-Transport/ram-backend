@@ -3,37 +3,15 @@ import { assert } from 'chai';
 import mockdate from 'mockdate';
 
 import db from '../app/db';
-import {
-  dropScenariosFiles,
-  dropProjectsFiles,
-  dropScenarios,
-  dropProjects,
-  dropOperationsLogs,
-  dropOperations,
-  createProjectsTable,
-  createScenariosTable,
-  createProjectsFilesTable,
-  createScenariosFilesTable,
-  createOperationsTable,
-  createOperationsLogsTable
-} from '../app/db/structure';
+import { setupStructure as setupDdStructure } from '../app/db/structure';
+import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp } from './utils/data';
 import Operation from '../app/utils/operation';
 
 describe('Operation', function () {
   before(function (done) {
-    dropScenariosFiles()
-      .then(() => dropOperationsLogs())
-      .then(() => dropOperations())
-      .then(() => dropProjectsFiles())
-      .then(() => dropScenarios())
-      .then(() => dropProjects())
-      .then(() => createProjectsTable())
-      .then(() => createScenariosTable())
-      .then(() => createProjectsFilesTable())
-      .then(() => createScenariosFilesTable())
-      .then(() => createOperationsTable())
-      .then(() => createOperationsLogsTable())
+    setupDdStructure()
+      .then(() => setupStorageStructure())
       .then(() => fixMeUp())
       .then(() => done());
   });

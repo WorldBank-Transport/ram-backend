@@ -4,6 +4,7 @@ import { assert } from 'chai';
 import Server from '../app/services/server';
 import db from '../app/db';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
+import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp, projectPendingWithFiles, projectPendingWithAllFiles } from './utils/data';
 
 var options = {
@@ -22,6 +23,7 @@ before(function (done) {
 describe('Projects', function () {
   before(function (done) {
     setupDdStructure()
+      .then(() => setupStorageStructure())
       .then(() => fixMeUp())
       .then(() => done());
   });
