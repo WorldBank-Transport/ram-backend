@@ -34,7 +34,7 @@ module.exports = [
           }
         }, err => {
           // In this case if the operation doesn't exist is not a problem.
-          if (err.message.match(/not exist/)) { /* noop */ }
+          if (err.message.match(/not exist/)) { return; }
           throw err;
         })
         // Valid project ?
@@ -86,6 +86,7 @@ module.exports = [
           op = new Operation(db);
           return op.start('generate-analysis', projId, scId);
         })
+        .then(op => op.log('generate-analysis', {message: 'Analysis generation started'}))
         // Start generation.
         .then(op => spawnAnalysisProcess(projId, scId, op.getId()))
         .then(() => reply({statusCode: 200, message: 'Result generation started'}))
