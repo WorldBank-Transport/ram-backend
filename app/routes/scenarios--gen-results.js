@@ -130,11 +130,25 @@ function spawnAnalysisProcess (projId, scId, opId) {
     console.log(`[ANALYSIS P${projId} S${scId}]`, data.toString());
   });
 
+  let error;
   analysisProc.stderr.on('data', (data) => {
+    error = data.toString();
     console.log(`[ANALYSIS P${projId} S${scId}][ERROR]`, data.toString());
   });
 
   analysisProc.on('close', (code) => {
+    if (code !== 0) {
+      // The operation may not have finished if the error took place outside
+      // the promise, or if the error was due to a wrong db connection.
+      let op = new Operation(db);
+      op.loadById(opId)
+        .then(op => {
+          if (!op.isCompleted()) {
+            return op.log('error', {error: error})
+              .then(op => op.finish());
+          }
+        });
+    }
     console.log(`[ANALYSIS P${projId} S${scId}][EXIT]`, code.toString());
   });
 }
