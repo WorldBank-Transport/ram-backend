@@ -13,11 +13,17 @@ let obj = YAML.load(input)
 // Switch based on environment
 if (process.env.TRAVIS_BRANCH === process.env.STABLE_BRANCH) {
   var latest_tag = 'latest-stable'
-  obj['rra-api']['environment'] = ['DS_ENV=production']
+  var dsEnv = 'production'
 } else {
   latest_tag = 'latest-dev'
-  obj['rra-api']['environment'] = ['DS_ENV=staging']
+  dsEnv = 'staging'
 }
+
+obj['rra-api']['environment'] = [
+  `HYPER_ACCESS=${process.env['HYPER_ACCESS']}`,
+  `HYPER_SECRET=${process.env['HYPER_SECRET']}`,
+  `DS_ENV=${dsEnv}`
+]
 
 // Set container version based on hash. Falls back to latest tag
 let hash = process.env.TRAVIS_COMMIT || latest_tag
