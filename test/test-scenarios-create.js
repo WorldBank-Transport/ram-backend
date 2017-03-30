@@ -194,6 +194,39 @@ describe('Scenarios', function () {
         assert.equal(result.name, 'New scenario project 1200');
         assert.equal(result.status, 'active');
         assert.equal(result.master, false);
+        let adminAreas = [
+          {'name': 'Distrito de Abadia', 'selected': false},
+          {'name': 'Distrito de Itanhi', 'selected': false},
+          {'name': 'Distrito de Conceição de Campinas', 'selected': false},
+          {'name': 'Distrito de Sambaíba', 'selected': false},
+          {'name': 'Distrito de Buril', 'selected': false},
+          {'name': 'Distrito de Itamira', 'selected': false},
+          {'name': 'Estância', 'selected': false},
+          {'name': 'Itaporanga d\'Ajuda', 'selected': false},
+          {'name': 'Salgado', 'selected': false},
+          {'name': 'Arauá', 'selected': false},
+          {'name': 'Boquim', 'selected': false},
+          {'name': 'Cristinápolis', 'selected': false},
+          {'name': 'Indiaroba', 'selected': false},
+          {'name': 'Itabaianinha', 'selected': false},
+          {'name': 'Pedrinhas', 'selected': false},
+          {'name': 'Santa Luzia do Itanhy', 'selected': false},
+          {'name': 'Tomar do Geru', 'selected': false},
+          {'name': 'Umbaúba', 'selected': false},
+          {'name': 'Pedra Mole', 'selected': false},
+          {'name': 'Campo do Brito', 'selected': false},
+          {'name': 'Itabaiana', 'selected': false},
+          {'name': 'Lagarto', 'selected': false},
+          {'name': 'Macambira', 'selected': false},
+          {'name': 'Poço Verde', 'selected': false},
+          {'name': 'Simão Dias', 'selected': false},
+          {'name': 'São Domingos', 'selected': false},
+          {'name': 'Palmares', 'selected': false},
+          {'name': 'Riachão do Dantas', 'selected': false},
+          {'name': 'Samambaia', 'selected': false},
+          {'name': 'Tobias Barreto', 'selected': false}
+        ];
+        assert.deepEqual(result.admin_areas, adminAreas);
         assert.equal(result.project_id, 1200);
         assert.equal(typeof result.roadNetworkUpload, 'undefined');
 
@@ -255,6 +288,39 @@ describe('Scenarios', function () {
         assert.equal(result.name, 'New scenario file upload');
         assert.equal(result.status, 'active');
         assert.equal(result.master, false);
+        let adminAreas = [
+          {'name': 'Distrito de Abadia', 'selected': false},
+          {'name': 'Distrito de Itanhi', 'selected': false},
+          {'name': 'Distrito de Conceição de Campinas', 'selected': false},
+          {'name': 'Distrito de Sambaíba', 'selected': false},
+          {'name': 'Distrito de Buril', 'selected': false},
+          {'name': 'Distrito de Itamira', 'selected': false},
+          {'name': 'Estância', 'selected': false},
+          {'name': 'Itaporanga d\'Ajuda', 'selected': false},
+          {'name': 'Salgado', 'selected': false},
+          {'name': 'Arauá', 'selected': false},
+          {'name': 'Boquim', 'selected': false},
+          {'name': 'Cristinápolis', 'selected': false},
+          {'name': 'Indiaroba', 'selected': false},
+          {'name': 'Itabaianinha', 'selected': false},
+          {'name': 'Pedrinhas', 'selected': false},
+          {'name': 'Santa Luzia do Itanhy', 'selected': false},
+          {'name': 'Tomar do Geru', 'selected': false},
+          {'name': 'Umbaúba', 'selected': false},
+          {'name': 'Pedra Mole', 'selected': false},
+          {'name': 'Campo do Brito', 'selected': false},
+          {'name': 'Itabaiana', 'selected': false},
+          {'name': 'Lagarto', 'selected': false},
+          {'name': 'Macambira', 'selected': false},
+          {'name': 'Poço Verde', 'selected': false},
+          {'name': 'Simão Dias', 'selected': false},
+          {'name': 'São Domingos', 'selected': false},
+          {'name': 'Palmares', 'selected': false},
+          {'name': 'Riachão do Dantas', 'selected': false},
+          {'name': 'Samambaia', 'selected': false},
+          {'name': 'Tobias Barreto', 'selected': false}
+        ];
+        assert.deepEqual(result.admin_areas, adminAreas);
         assert.equal(result.project_id, projectId);
         assert.notEqual(typeof result.roadNetworkUpload, 'undefined');
 

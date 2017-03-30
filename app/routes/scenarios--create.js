@@ -49,14 +49,25 @@ module.exports = [
               });
           }
         })
-        // Check that the provided scenario to copy from exists.
-        .then(() => {
+        // Get the admin areas to use from the master scenario.
+        .then(() => db('scenarios')
+          .select('*')
+          .where('project_id', request.params.projId)
+          .where('master', true)
+          .first()
+          .then(scenario => scenario.admin_areas.map(o => {
+            o.selected = false;
+            return o;
+          }))
+        )
+        .then(adminAreas => {
           return db.transaction(function (trx) {
             const info = {
               name: data.name,
               description: data.description || '',
               status: 'active',
               master: false,
+              admin_areas: JSON.stringify(adminAreas),
               project_id: request.params.projId,
               created_at: (new Date()),
               updated_at: (new Date())
