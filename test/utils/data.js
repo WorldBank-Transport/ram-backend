@@ -7,8 +7,45 @@ import db from '../../app/db';
 import { bucket } from '../../app/s3/';
 import { putObjectFromFile } from '../../app/s3/structure';
 
-const FILE = path.join(__dirname, 'test-file');
-const FILE_SCENARIO_1200 = path.join(__dirname, 'test-file-scenario-1200');
+const FILE_PROFILE = path.join(__dirname, 'data-sergipe/profile.lua');
+const FILE_VILLAGES = path.join(__dirname, 'data-sergipe/villages.geojson');
+const FILE_ADMIN = path.join(__dirname, 'data-sergipe/admin-boundaries.geojson');
+const FILE_ROAD_NETWORK = path.join(__dirname, 'data-sergipe/road-network.osm');
+const FILE_POI = path.join(__dirname, 'data-sergipe/poi-townhalls.geojson');
+
+// Admin areas from admin-boundaries.geojson
+const ADMIN_AREAS = [
+  {'name': 'Distrito de Abadia', 'selected': false},
+  {'name': 'Distrito de Itanhi', 'selected': false},
+  {'name': 'Distrito de Conceição de Campinas', 'selected': false},
+  {'name': 'Distrito de Sambaíba', 'selected': false},
+  {'name': 'Distrito de Buril', 'selected': false},
+  {'name': 'Distrito de Itamira', 'selected': false},
+  {'name': 'Estância', 'selected': false},
+  {'name': 'Itaporanga d\'Ajuda', 'selected': false},
+  {'name': 'Salgado', 'selected': true},
+  {'name': 'Arauá', 'selected': false},
+  {'name': 'Boquim', 'selected': false},
+  {'name': 'Cristinápolis', 'selected': false},
+  {'name': 'Indiaroba', 'selected': false},
+  {'name': 'Itabaianinha', 'selected': false},
+  {'name': 'Pedrinhas', 'selected': false},
+  {'name': 'Santa Luzia do Itanhy', 'selected': false},
+  {'name': 'Tomar do Geru', 'selected': false},
+  {'name': 'Umbaúba', 'selected': false},
+  {'name': 'Pedra Mole', 'selected': false},
+  {'name': 'Campo do Brito', 'selected': false},
+  {'name': 'Itabaiana', 'selected': true},
+  {'name': 'Lagarto', 'selected': true},
+  {'name': 'Macambira', 'selected': false},
+  {'name': 'Poço Verde', 'selected': true},
+  {'name': 'Simão Dias', 'selected': false},
+  {'name': 'São Domingos', 'selected': false},
+  {'name': 'Palmares', 'selected': false},
+  {'name': 'Riachão do Dantas', 'selected': false},
+  {'name': 'Samambaia', 'selected': false},
+  {'name': 'Tobias Barreto', 'selected': false}
+];
 
 // Project in pending state with one scenario.
 export function project1000 () {
@@ -73,7 +110,7 @@ export function project1001 () {
     'created_at': '2017-02-01T12:00:03.000Z',
     'updated_at': '2017-02-01T12:00:03.000Z'
   }))
-  .then(() => putObjectFromFile(bucket, 'project-1001/profile_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'project-1001/profile_000000', FILE_PROFILE))
   .then(() => scenario({
     'id': 1001,
     'name': 'Main scenario',
@@ -94,7 +131,7 @@ export function project1001 () {
     'created_at': '2017-02-01T12:00:03.000Z',
     'updated_at': '2017-02-01T12:00:03.000Z'
   }))
-  .then(() => putObjectFromFile(bucket, 'scenario-1001/poi_000000', FILE));
+  .then(() => putObjectFromFile(bucket, 'scenario-1001/poi_000000', FILE_POI));
 }
 
 // Project 1003 in pending state with one scenario and a villages file
@@ -116,7 +153,7 @@ export function project1003 () {
     'created_at': '2017-02-01T12:00:04.000Z',
     'updated_at': '2017-02-01T12:00:04.000Z'
   }))
-  .then(() => putObjectFromFile(bucket, 'project-1003/villages_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'project-1003/villages_000000', FILE_VILLAGES))
   .then(() => scenario({
     'id': 1003,
     'name': 'Main scenario 1003',
@@ -137,7 +174,7 @@ export function project1003 () {
     'created_at': '2017-02-01T12:00:04.000Z',
     'updated_at': '2017-02-01T12:00:04.000Z'
   }))
-  .then(() => putObjectFromFile(bucket, 'scenario-1003/road-network_000000', FILE));
+  .then(() => putObjectFromFile(bucket, 'scenario-1003/road-network_000000', FILE_ROAD_NETWORK));
 }
 
 // Project 1004 in pending state with one scenarios and all files
@@ -179,9 +216,9 @@ export function project1004 () {
       'updated_at': '2017-02-01T12:00:05.000Z'
     }
   ]))
-  .then(() => putObjectFromFile(bucket, 'project-1004/profile_000000', FILE))
-  .then(() => putObjectFromFile(bucket, 'project-1004/villages_000000', FILE))
-  .then(() => putObjectFromFile(bucket, 'project-1004/admin-bounds_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'project-1004/profile_000000', FILE_PROFILE))
+  .then(() => putObjectFromFile(bucket, 'project-1004/villages_000000', FILE_VILLAGES))
+  .then(() => putObjectFromFile(bucket, 'project-1004/admin-bounds_000000', FILE_ADMIN))
   .then(() => scenario({
     'id': 1004,
     'name': 'Main scenario 1004',
@@ -214,8 +251,8 @@ export function project1004 () {
       'updated_at': '2017-02-01T12:00:05.000Z'
     }
   ]))
-  .then(() => putObjectFromFile(bucket, 'scenario-1004/road-network_000000', FILE))
-  .then(() => putObjectFromFile(bucket, 'scenario-1004/poi_000000', FILE));
+  .then(() => putObjectFromFile(bucket, 'scenario-1004/road-network_000000', FILE_ROAD_NETWORK))
+  .then(() => putObjectFromFile(bucket, 'scenario-1004/poi_000000', FILE_POI));
 }
 
 // Project 1100 in active state with one scenarios and all files
@@ -257,9 +294,9 @@ export function project1100 () {
       'updated_at': '2017-02-01T12:00:06.000Z'
     }
   ]))
-  .then(() => putObjectFromFile(bucket, 'project-1100/profile_000000', FILE))
-  .then(() => putObjectFromFile(bucket, 'project-1100/villages_000000', FILE))
-  .then(() => putObjectFromFile(bucket, 'project-1100/admin-bounds_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'project-1100/profile_000000', FILE_PROFILE))
+  .then(() => putObjectFromFile(bucket, 'project-1100/villages_000000', FILE_VILLAGES))
+  .then(() => putObjectFromFile(bucket, 'project-1100/admin-bounds_000000', FILE_ADMIN))
   .then(() => scenario({
     'id': 1100,
     'name': 'Main scenario 1100',
@@ -267,6 +304,7 @@ export function project1100 () {
     'status': 'active',
     'project_id': 1100,
     'master': true,
+    'admin_areas': JSON.stringify(ADMIN_AREAS),
     'created_at': '2017-02-01T12:00:06.000Z',
     'updated_at': '2017-02-01T12:00:06.000Z'
   }))
@@ -292,8 +330,8 @@ export function project1100 () {
       'updated_at': '2017-02-01T12:00:06.000Z'
     }
   ]))
-  .then(() => putObjectFromFile(bucket, 'scenario-1100/road-network_000000', FILE))
-  .then(() => putObjectFromFile(bucket, 'scenario-1100/poi_000000', FILE));
+  .then(() => putObjectFromFile(bucket, 'scenario-1100/road-network_000000', FILE_ROAD_NETWORK))
+  .then(() => putObjectFromFile(bucket, 'scenario-1100/poi_000000', FILE_POI));
 }
 
 // Project 1200 in active state with 2 scenarios
@@ -335,9 +373,9 @@ export function project1200 () {
       'updated_at': '2017-02-01T12:00:07.000Z'
     }
   ]))
-  .then(() => putObjectFromFile(bucket, 'project-1200/profile_000000', FILE))
-  .then(() => putObjectFromFile(bucket, 'project-1200/villages_000000', FILE))
-  .then(() => putObjectFromFile(bucket, 'project-1200/admin-bounds_000000', FILE))
+  .then(() => putObjectFromFile(bucket, 'project-1200/profile_000000', FILE_PROFILE))
+  .then(() => putObjectFromFile(bucket, 'project-1200/villages_000000', FILE_VILLAGES))
+  .then(() => putObjectFromFile(bucket, 'project-1200/admin-bounds_000000', FILE_ADMIN))
   .then(() => scenario([
     {
       'id': 1200,
@@ -346,6 +384,7 @@ export function project1200 () {
       'status': 'active',
       'project_id': 1200,
       'master': true,
+      'admin_areas': JSON.stringify(ADMIN_AREAS),
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
     },
@@ -356,6 +395,7 @@ export function project1200 () {
       'status': 'active',
       'project_id': 1200,
       'master': false,
+      'admin_areas': JSON.stringify(ADMIN_AREAS),
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
     }
@@ -402,10 +442,90 @@ export function project1200 () {
       'updated_at': '2017-02-01T12:00:07.000Z'
     }
   ]))
-  .then(() => putObjectFromFile(bucket, 'scenario-1200/road-network_000000', FILE_SCENARIO_1200))
-  .then(() => putObjectFromFile(bucket, 'scenario-1200/poi_000000', FILE_SCENARIO_1200))
-  .then(() => putObjectFromFile(bucket, 'scenario-1201/road-network_000000', FILE))
-  .then(() => putObjectFromFile(bucket, 'scenario-1201/poi_000000', FILE));
+  .then(() => putObjectFromFile(bucket, 'scenario-1200/road-network_000000', FILE_ROAD_NETWORK))
+  .then(() => putObjectFromFile(bucket, 'scenario-1200/poi_000000', FILE_POI))
+  .then(() => putObjectFromFile(bucket, 'scenario-1201/road-network_000000', FILE_ROAD_NETWORK))
+  .then(() => putObjectFromFile(bucket, 'scenario-1201/poi_000000', FILE_POI));
+}
+
+// Project 2000 in active state with one scenarios and all files.
+// Files represent real data from Sergipe, Brazil
+export function project2000 () {
+  return project({
+    'id': 2000,
+    'name': 'Sergipe, Brazil',
+    'description': 'Townhalls in a part of Sergipe, brazil.',
+    'status': 'active',
+    'created_at': '2017-02-01T12:00:06.000Z',
+    'updated_at': '2017-02-01T12:00:06.000Z'
+  })
+  .then(() => projectFile([
+    {
+      'id': 2000,
+      'name': 'profile_000000',
+      'type': 'profile',
+      'path': 'project-2000/profile_000000',
+      'project_id': 2000,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    },
+    {
+      'id': 2001,
+      'name': 'villages_000000',
+      'type': 'villages',
+      'path': 'project-2000/villages_000000',
+      'project_id': 2000,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    },
+    {
+      'id': 2002,
+      'name': 'admin-bounds_000000',
+      'type': 'admin-bounds',
+      'path': 'project-2000/admin-bounds_000000',
+      'project_id': 2000,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    }
+  ]))
+  .then(() => putObjectFromFile(bucket, 'project-2000/profile_000000', FILE_PROFILE))
+  .then(() => putObjectFromFile(bucket, 'project-2000/villages_000000', FILE_VILLAGES))
+  .then(() => putObjectFromFile(bucket, 'project-2000/admin-bounds_000000', FILE_ADMIN))
+  .then(() => scenario({
+    'id': 2000,
+    'name': 'Main scenario for Sergipe',
+    'description': '',
+    'status': 'active',
+    'project_id': 2000,
+    'master': true,
+    'admin_areas': JSON.stringify(ADMIN_AREAS),
+    'created_at': '2017-02-01T12:00:06.000Z',
+    'updated_at': '2017-02-01T12:00:06.000Z'
+  }))
+  .then(() => scenarioFile([
+    {
+      'id': 2000,
+      'name': 'road-network_000000',
+      'type': 'road-network',
+      'path': 'scenario-2000/road-network_000000',
+      'project_id': 2000,
+      'scenario_id': 2000,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    },
+    {
+      'id': 2001,
+      'name': 'poi_000000',
+      'type': 'poi',
+      'path': 'scenario-2000/poi_000000',
+      'project_id': 2000,
+      'scenario_id': 2000,
+      'created_at': '2017-02-01T12:00:06.000Z',
+      'updated_at': '2017-02-01T12:00:06.000Z'
+    }
+  ]))
+  .then(() => putObjectFromFile(bucket, 'scenario-2000/road-network_000000', FILE_ROAD_NETWORK))
+  .then(() => putObjectFromFile(bucket, 'scenario-2000/poi_000000', FILE_POI));
 }
 
 //
@@ -420,7 +540,8 @@ export function fixMeUp () {
     project1003(),
     project1004(),
     project1100(),
-    project1200()
+    project1200(),
+    project2000()
   ]);
 }
 
@@ -489,7 +610,7 @@ export function projectPendingWithFiles (id) {
     'created_at': '2017-02-01T12:00:00.000Z',
     'updated_at': '2017-02-01T12:00:00.000Z'
   }))
-  .then(() => putObjectFromFile(bucket, `project-${id}/profile_000000`, FILE))
+  .then(() => putObjectFromFile(bucket, `project-${id}/profile_000000`, FILE_PROFILE))
   .then(() => scenario({
     'id': id,
     'name': `Scenario ${id}`,
@@ -510,7 +631,7 @@ export function projectPendingWithFiles (id) {
     'created_at': '2017-02-01T12:00:00.000Z',
     'updated_at': '2017-02-01T12:00:00.000Z'
   }))
-  .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE));
+  .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE_POI));
 }
 
 // Insert a project, a scenario, and all files.
@@ -552,9 +673,9 @@ export function projectPendingWithAllFiles (id) {
       'updated_at': '2017-02-01T12:00:07.000Z'
     }
   ]))
-  .then(() => putObjectFromFile(bucket, `project-${id}/profile_000000`, FILE))
-  .then(() => putObjectFromFile(bucket, `project-${id}/villages_000000`, FILE))
-  .then(() => putObjectFromFile(bucket, `project-${id}/admin-bounds_000000`, FILE))
+  .then(() => putObjectFromFile(bucket, `project-${id}/profile_000000`, FILE_PROFILE))
+  .then(() => putObjectFromFile(bucket, `project-${id}/villages_000000`, FILE_VILLAGES))
+  .then(() => putObjectFromFile(bucket, `project-${id}/admin-bounds_000000`, FILE_ADMIN))
   .then(() => scenario({
     'id': id,
     'name': `Scenario ${id}`,
@@ -587,6 +708,6 @@ export function projectPendingWithAllFiles (id) {
       'updated_at': '2017-02-01T12:00:06.000Z'
     }
   ]))
-  .then(() => putObjectFromFile(bucket, `scenario-${id}/road-network_000000`, FILE))
-  .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE));
+  .then(() => putObjectFromFile(bucket, `scenario-${id}/road-network_000000`, FILE_ROAD_NETWORK))
+  .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE_POI));
 }

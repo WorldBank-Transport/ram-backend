@@ -1,0 +1,3521 @@
+{
+"type": "FeatureCollection",
+"features": [
+{
+  "type": "Feature",
+  "id": "node/415521713",
+  "properties": {
+    "IBGE:GEOCODIGO": "292380305",
+    "name": "Paripiranga",
+    "place": "town",
+    "population": "29459",
+    "source": "IBGE",
+    "wikidata": "Q1761881",
+    "id": "node/415521713"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8621523,
+      -10.6828923
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521791",
+  "properties": {
+    "IBGE:GEOCODIGO": "291790405",
+    "name": "Jandaíra",
+    "place": "town",
+    "population": "10997",
+    "source": "IBGE",
+    "id": "node/415521791"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7820255,
+      -11.5628009
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521817",
+  "properties": {
+    "IBGE:GEOCODIGO": "280740205",
+    "name": "Tobias Barreto",
+    "place": "town",
+    "population": "48733",
+    "source": "IBGE",
+    "wikidata": "Q2013156",
+    "id": "node/415521817"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0034554,
+      -11.188034
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521819",
+  "properties": {
+    "IBGE:GEOCODIGO": "280300505",
+    "name": "Itabaianinha",
+    "place": "town",
+    "population": "38565",
+    "source": "IBGE",
+    "wikidata": "Q1802007",
+    "id": "node/415521819"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.78666,
+      -11.2760142
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521822",
+  "properties": {
+    "IBGE:GEOCODIGO": "280170205",
+    "name": "Cristinápolis",
+    "place": "town",
+    "population": "16365",
+    "source": "IBGE",
+    "wikidata": "Q1802492",
+    "id": "node/415521822"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7560258,
+      -11.4755122
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521824",
+  "properties": {
+    "IBGE:GEOCODIGO": "280750105",
+    "name": "Tomar do Geru",
+    "place": "town",
+    "population": "13252",
+    "source": "IBGE",
+    "id": "node/415521824"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8413399,
+      -11.3752475
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521826",
+  "properties": {
+    "IBGE:GEOCODIGO": "291650005",
+    "name": "Itapicuru",
+    "place": "town",
+    "population": "32100",
+    "source": "IBGE",
+    "id": "node/415521826"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.2184391,
+      -11.3094471
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521828",
+  "properties": {
+    "IBGE:GEOCODIGO": "292700205",
+    "name": "Rio Real",
+    "place": "town",
+    "population": "40203",
+    "source": "IBGE",
+    "wikidata": "Q965807",
+    "id": "node/415521828"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9317491,
+      -11.4869788
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521833",
+  "properties": {
+    "IBGE:GEOCODIGO": "290960405",
+    "name": "Crisópolis",
+    "place": "town",
+    "population": "20179",
+    "source": "IBGE",
+    "wikidata": "Q578451",
+    "id": "node/415521833"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.1501281,
+      -11.5121006
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521851",
+  "properties": {
+    "IBGE:GEOCODIGO": "280550505",
+    "name": "Poço Verde",
+    "place": "town",
+    "population": "21721",
+    "source": "IBGE",
+    "wikidata": "Q2014476",
+    "id": "node/415521851"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.1766851,
+      -10.7108776
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521878",
+  "properties": {
+    "IBGE:GEOCODIGO": "280580205",
+    "name": "Riachão do Dantas",
+    "place": "town",
+    "population": "19567",
+    "source": "IBGE",
+    "wikidata": "Q2078413",
+    "id": "node/415521878"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.726446,
+      -11.0704439
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521879",
+  "properties": {
+    "IBGE:GEOCODIGO": "280067005",
+    "name": "Boquim",
+    "place": "town",
+    "population": "25190",
+    "source": "IBGE",
+    "wikidata": "Q746187",
+    "id": "node/415521879"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6204228,
+      -11.1450175
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521884",
+  "properties": {
+    "IBGE:GEOCODIGO": "280680005",
+    "name": "São Domingos",
+    "place": "town",
+    "population": "10443",
+    "source": "IBGE",
+    "id": "node/415521884"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5667586,
+      -10.7903753
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521890",
+  "properties": {
+    "IBGE:GEOCODIGO": "280760005",
+    "name": "Umbaúba",
+    "place": "town",
+    "population": "21195",
+    "source": "IBGE",
+    "wikidata": "Q1807390",
+    "id": "node/415521890"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6565562,
+      -11.3826792
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521891",
+  "properties": {
+    "IBGE:GEOCODIGO": "280280905",
+    "name": "Indiaroba",
+    "place": "town",
+    "population": "17677",
+    "source": "IBGE",
+    "wikidata": "Q2013163",
+    "id": "node/415521891"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5075262,
+      -11.5250972
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/415521892",
+  "properties": {
+    "IBGE:GEOCODIGO": "280040705",
+    "name": "Arauá",
+    "place": "town",
+    "population": "11980",
+    "source": "IBGE",
+    "id": "node/415521892"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6181058,
+      -11.2644014
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416643115",
+  "properties": {
+    "IBGE:GEOCODIGO": "291650010",
+    "name": "Sambaíba",
+    "place": "hamlet",
+    "population": "18908",
+    "source": "IBGE",
+    "id": "node/416643115"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.065854,
+      -11.2011983
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654645",
+  "properties": {
+    "name": "Loreto",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654645"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8570508,
+      -11.5380038
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654647",
+  "properties": {
+    "name": "Bxa. Grande",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654647"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.248855,
+      -10.816999
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654649",
+  "properties": {
+    "name": "Junco",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654649"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.175863,
+      -10.924904
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654655",
+  "properties": {
+    "name": "Pilão",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654655"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0943915,
+      -11.0248651
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654657",
+  "properties": {
+    "name": "Tanque Novo",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654657"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8209102,
+      -11.101542
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654660",
+  "properties": {
+    "name": "Ilha",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654660"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8838894,
+      -11.2458693
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654662",
+  "properties": {
+    "name": "Monte Coelhos",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654662"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.1641454,
+      -10.9819604
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654665",
+  "properties": {
+    "name": "Bonfim",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654665"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8545688,
+      -11.0398509
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654667",
+  "properties": {
+    "name": "Vila Velha",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654667"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.127705,
+      -11.333478
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654672",
+  "properties": {
+    "name": "Capitôa",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654672"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0387771,
+      -11.0458346
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654674",
+  "properties": {
+    "name": "Pé-de-boi",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654674"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0567977,
+      -11.115332
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654699",
+  "properties": {
+    "name": "Campo do Crioulo",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654699"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7692947,
+      -10.9818089
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654705",
+  "properties": {
+    "name": "Curral dos Bois",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654705"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9198119,
+      -10.8627301
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654707",
+  "properties": {
+    "name": "São Domingos",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654707"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9089048,
+      -10.7772682
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416654806",
+  "properties": {
+    "name": "Preguiça",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416654806"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5086145,
+      -10.9471452
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416762260",
+  "properties": {
+    "name": "Boa Vista",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416762260"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.251031,
+      -11.420334
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416762304",
+  "properties": {
+    "name": "Catinga de Cima",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416762304"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.03445,
+      -11.287138
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/416762313",
+  "properties": {
+    "name": "Praia Grande",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/416762313"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.059049,
+      -11.464371
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1176166710",
+  "properties": {
+    "name": "Gameleira",
+    "place": "hamlet",
+    "id": "node/1176166710"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5507299,
+      -10.7715327
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1176173765",
+  "properties": {
+    "name": "Pau de Ferro",
+    "place": "hamlet",
+    "id": "node/1176173765"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6738147,
+      -10.7264186
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1181870326",
+  "properties": {
+    "name": "São José",
+    "place": "hamlet",
+    "id": "node/1181870326"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7450606,
+      -11.0376703
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1181870331",
+  "properties": {
+    "name": "Mangueira",
+    "place": "hamlet",
+    "id": "node/1181870331"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9053923,
+      -11.0513173
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1181870363",
+  "properties": {
+    "name": "Bulandeira",
+    "place": "hamlet",
+    "id": "node/1181870363"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6283309,
+      -11.2293443
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1181883234",
+  "properties": {
+    "name": "Jabiberi",
+    "place": "hamlet",
+    "id": "node/1181883234"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9524773,
+      -11.0682274
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1181883243",
+  "properties": {
+    "name": "Jacaré",
+    "place": "hamlet",
+    "id": "node/1181883243"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0611751,
+      -11.0159348
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1181891011",
+  "properties": {
+    "name": "Mangabeira",
+    "place": "hamlet",
+    "id": "node/1181891011"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9000331,
+      -10.9488643
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1181905983",
+  "properties": {
+    "name": "Malhada da Onça",
+    "place": "hamlet",
+    "id": "node/1181905983"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.1371352,
+      -10.8487372
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1181905986",
+  "properties": {
+    "name": "Triunfo",
+    "place": "hamlet",
+    "id": "node/1181905986"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9413481,
+      -10.7930091
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1181905993",
+  "properties": {
+    "name": "Batatal",
+    "place": "hamlet",
+    "id": "node/1181905993"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9368064,
+      -10.807429
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1181905998",
+  "properties": {
+    "name": "Galho Quebrado",
+    "place": "hamlet",
+    "id": "node/1181905998"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.936978,
+      -10.8325518
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1206897772",
+  "properties": {
+    "name": "Urubutinga",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/1206897772"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6263467,
+      -10.907531
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1206903105",
+  "properties": {
+    "name": "Limoeiro",
+    "place": "hamlet",
+    "id": "node/1206903105"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5277869,
+      -11.2036485
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1206903106",
+  "properties": {
+    "name": "Bom Jesus",
+    "place": "hamlet",
+    "id": "node/1206903106"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.578427,
+      -11.1999439
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1206906171",
+  "properties": {
+    "name": "Miguel dos Anjos",
+    "place": "hamlet",
+    "id": "node/1206906171"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.584807,
+      -11.1400894
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1206906180",
+  "properties": {
+    "name": "Santo Antônio do Mangue",
+    "place": "hamlet",
+    "id": "node/1206906180"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5818603,
+      -11.0845723
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1206906181",
+  "properties": {
+    "name": "Romão",
+    "place": "hamlet",
+    "id": "node/1206906181"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6817672,
+      -11.1617163
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/1206907005",
+  "properties": {
+    "name": "Várzea Grande",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/1206907005"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7701728,
+      -11.1332529
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2796464183",
+  "properties": {
+    "name": "Camilo Torres",
+    "place": "hamlet",
+    "id": "node/2796464183"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5912817,
+      -10.8584721
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2812296581",
+  "properties": {
+    "name": "Mariquita de Baixo",
+    "place": "hamlet",
+    "id": "node/2812296581"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.693552,
+      -10.8102383
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2812297004",
+  "properties": {
+    "name": "Rio Fundo",
+    "place": "hamlet",
+    "id": "node/2812297004"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7159201,
+      -10.8197927
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2814458379",
+  "properties": {
+    "IBGE:GEOCODIGO": "280710505",
+    "name": "Simão Dias",
+    "place": "town",
+    "population": "38232",
+    "source": "IBGE",
+    "wikidata": "Q1848973",
+    "id": "node/2814458379"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8092502,
+      -10.7389663
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2830475422",
+  "properties": {
+    "name": "Santo Antonio",
+    "place": "hamlet",
+    "id": "node/2830475422"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7152313,
+      -10.9358386
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2877119038",
+  "properties": {
+    "name": "Brejo Meio",
+    "place": "hamlet",
+    "id": "node/2877119038"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6311358,
+      -10.9731741
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2898424383",
+  "properties": {
+    "name": "Barro Vermelho",
+    "place": "hamlet",
+    "id": "node/2898424383"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.685771,
+      -10.8870542
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025654",
+  "properties": {
+    "name": "Alto",
+    "place": "hamlet",
+    "id": "node/2902025654"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5478425,
+      -10.8899624
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025656",
+  "properties": {
+    "name": "Assentamento Karl Marks",
+    "place": "hamlet",
+    "id": "node/2902025656"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5792355,
+      -10.8682754
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025657",
+  "properties": {
+    "name": "Assentamento Tiradentes",
+    "place": "hamlet",
+    "id": "node/2902025657"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6233545,
+      -10.8250493
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025658",
+  "properties": {
+    "name": "Açu Velho",
+    "place": "hamlet",
+    "id": "node/2902025658"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5672718,
+      -10.924105
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025659",
+  "properties": {
+    "name": "Açuzinho",
+    "place": "hamlet",
+    "id": "node/2902025659"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5568655,
+      -10.946425
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025660",
+  "properties": {
+    "name": "Boa Vista",
+    "place": "hamlet",
+    "id": "node/2902025660"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5679203,
+      -10.9141719
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025661",
+  "properties": {
+    "name": "Bomfim",
+    "place": "hamlet",
+    "id": "node/2902025661"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.71865,
+      -10.8003386
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025662",
+  "properties": {
+    "name": "Brejo baixo",
+    "place": "hamlet",
+    "id": "node/2902025662"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.626301,
+      -10.9855254
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025663",
+  "properties": {
+    "name": "Brejo cima",
+    "place": "hamlet",
+    "id": "node/2902025663"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6347392,
+      -10.9660138
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025664",
+  "properties": {
+    "name": "Britinho",
+    "place": "hamlet",
+    "id": "node/2902025664"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5548729,
+      -10.8771979
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025665",
+  "properties": {
+    "name": "Cacho da Banana",
+    "place": "hamlet",
+    "id": "node/2902025665"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5142013,
+      -10.9591855
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025666",
+  "properties": {
+    "name": "Caldeirão",
+    "place": "hamlet",
+    "id": "node/2902025666"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7778969,
+      -10.8819749
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025667",
+  "properties": {
+    "name": "Caraíbas",
+    "place": "hamlet",
+    "id": "node/2902025667"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5834303,
+      -10.9308329
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025668",
+  "properties": {
+    "name": "Carcará",
+    "place": "hamlet",
+    "id": "node/2902025668"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7277205,
+      -10.802355
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025669",
+  "properties": {
+    "name": "Cipó",
+    "place": "hamlet",
+    "id": "node/2902025669"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6068758,
+      -10.9631293
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025670",
+  "properties": {
+    "name": "Cova da onça",
+    "place": "hamlet",
+    "id": "node/2902025670"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5735659,
+      -10.9663052
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025671",
+  "properties": {
+    "name": "Colégio",
+    "place": "hamlet",
+    "id": "node/2902025671"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7937514,
+      -10.9998618
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025672",
+  "properties": {
+    "name": "Curralinho",
+    "place": "hamlet",
+    "id": "node/2902025672"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7043386,
+      -11.0269109
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025682",
+  "properties": {
+    "name": "Flexas",
+    "place": "hamlet",
+    "id": "node/2902025682"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7272664,
+      -10.7877822
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025683",
+  "properties": {
+    "name": "Formosa",
+    "place": "hamlet",
+    "id": "node/2902025683"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.843273,
+      -10.994512
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025684",
+  "properties": {
+    "name": "Galo Assanhado",
+    "place": "hamlet",
+    "id": "node/2902025684"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5539373,
+      -11.0098573
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025685",
+  "properties": {
+    "name": "Gameleiro",
+    "place": "hamlet",
+    "id": "node/2902025685"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6098897,
+      -10.9229692
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025688",
+  "properties": {
+    "name": "Jibóia",
+    "place": "hamlet",
+    "id": "node/2902025688"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7066599,
+      -10.9665546
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025690",
+  "properties": {
+    "name": "João Amazonas",
+    "place": "hamlet",
+    "id": "node/2902025690"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8005469,
+      -11.0196034
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025691",
+  "properties": {
+    "name": "João Martins",
+    "place": "hamlet",
+    "id": "node/2902025691"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5019962,
+      -10.9022071
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025692",
+  "properties": {
+    "name": "Luiz Freire",
+    "place": "hamlet",
+    "id": "node/2902025692"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5677043,
+      -10.9523944
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025693",
+  "properties": {
+    "alt_name": "Araça",
+    "name": "Luizão",
+    "place": "hamlet",
+    "id": "node/2902025693"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5003102,
+      -10.8897898
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025694",
+  "properties": {
+    "name": "Mangabeira",
+    "place": "hamlet",
+    "id": "node/2902025694"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5778751,
+      -11.0475288
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025696",
+  "properties": {
+    "name": "Moita",
+    "place": "hamlet",
+    "id": "node/2902025696"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.555546,
+      -10.8905028
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025698",
+  "properties": {
+    "name": "Oiteros",
+    "place": "hamlet",
+    "id": "node/2902025698"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9535832,
+      -10.9069798
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025699",
+  "properties": {
+    "name": "Palestina",
+    "place": "hamlet",
+    "id": "node/2902025699"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6516308,
+      -10.7482544
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902025700",
+  "properties": {
+    "name": "Pau D'arco",
+    "place": "hamlet",
+    "id": "node/2902025700"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8238402,
+      -11.000261
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036501",
+  "properties": {
+    "name": "Pau Grande",
+    "place": "hamlet",
+    "id": "node/2902036501"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5241048,
+      -10.9632493
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036502",
+  "properties": {
+    "name": "Periquito Pelado",
+    "place": "hamlet",
+    "id": "node/2902036502"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5315796,
+      -10.9916111
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036503",
+  "properties": {
+    "name": "Piabas",
+    "place": "hamlet",
+    "id": "node/2902036503"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6992393,
+      -10.7738765
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036504",
+  "properties": {
+    "name": "Pindoba",
+    "place": "hamlet",
+    "id": "node/2902036504"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8757651,
+      -11.0010105
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036505",
+  "properties": {
+    "name": "Pombo",
+    "place": "hamlet",
+    "id": "node/2902036505"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.721467,
+      -10.7676378
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036506",
+  "properties": {
+    "name": "Pururuca",
+    "place": "hamlet",
+    "id": "node/2902036506"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7856796,
+      -10.8724369
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036507",
+  "properties": {
+    "name": "Qui",
+    "place": "hamlet",
+    "id": "node/2902036507"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5959399,
+      -10.9706119
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036509",
+  "properties": {
+    "name": "Retiro",
+    "place": "hamlet",
+    "id": "node/2902036509"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6481452,
+      -10.8022887
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036510",
+  "properties": {
+    "name": "Rio das Vaca",
+    "place": "hamlet",
+    "id": "node/2902036510"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5701528,
+      -11.0077777
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036511",
+  "properties": {
+    "name": "Saboeiro",
+    "place": "hamlet",
+    "id": "node/2902036511"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6224538,
+      -10.7910038
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036512",
+  "properties": {
+    "name": "Saco Encantado",
+    "place": "hamlet",
+    "id": "node/2902036512"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5165613,
+      -11.0059842
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036513",
+  "properties": {
+    "name": "Saco Grande",
+    "place": "hamlet",
+    "id": "node/2902036513"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6240891,
+      -10.9915553
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036514",
+  "properties": {
+    "name": "Saco Redondo",
+    "place": "hamlet",
+    "id": "node/2902036514"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7837225,
+      -10.9312587
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036516",
+  "properties": {
+    "name": "Tanque",
+    "place": "hamlet",
+    "id": "node/2902036516"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7278144,
+      -11.0155686
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036517",
+  "properties": {
+    "name": "Taperinha",
+    "place": "hamlet",
+    "id": "node/2902036517"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7235186,
+      -10.8264183
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036518",
+  "properties": {
+    "name": "Timbales",
+    "place": "hamlet",
+    "id": "node/2902036518"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.548445,
+      -10.9328957
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036519",
+  "properties": {
+    "name": "Urubu Grande",
+    "place": "hamlet",
+    "id": "node/2902036519"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5680186,
+      -10.8825475
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036520",
+  "properties": {
+    "name": "Uzeda",
+    "place": "hamlet",
+    "id": "node/2902036520"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6194925,
+      -10.9671505
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036521",
+  "properties": {
+    "name": "Varzea do Espinho",
+    "place": "hamlet",
+    "id": "node/2902036521"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5381799,
+      -10.894057
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/2902036692",
+  "properties": {
+    "name": "22 de Novembro",
+    "place": "hamlet",
+    "id": "node/2902036692"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7884886,
+      -10.9388005
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300519251",
+  "properties": {
+    "name": "Cajazeira",
+    "place": "hamlet",
+    "id": "node/3300519251"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6686497,
+      -11.0002947
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300519253",
+  "properties": {
+    "name": "Candial",
+    "place": "hamlet",
+    "id": "node/3300519253"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6588574,
+      -11.0255944
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300519254",
+  "properties": {
+    "name": "Cocão",
+    "place": "hamlet",
+    "id": "node/3300519254"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6613043,
+      -10.9711144
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300519255",
+  "properties": {
+    "name": "Curralinho",
+    "place": "hamlet",
+    "id": "node/3300519255"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7075732,
+      -11.0024182
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300519257",
+  "properties": {
+    "name": "Mandela",
+    "place": "hamlet",
+    "id": "node/3300519257"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.821028,
+      -10.9805714
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300519258",
+  "properties": {
+    "name": "Moita Redonda",
+    "place": "hamlet",
+    "id": "node/3300519258"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6342077,
+      -10.9491242
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300519259",
+  "properties": {
+    "name": "Morcego",
+    "place": "hamlet",
+    "id": "node/3300519259"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7525108,
+      -10.8952998
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300519260",
+  "properties": {
+    "name": "Oiteros",
+    "place": "hamlet",
+    "id": "node/3300519260"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8274831,
+      -10.9050362
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300521262",
+  "properties": {
+    "name": "Papagaio",
+    "place": "hamlet",
+    "id": "node/3300521262"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8574965,
+      -10.8980459
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300521263",
+  "properties": {
+    "name": "Pindoba",
+    "place": "hamlet",
+    "id": "node/3300521263"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8352556,
+      -10.969841
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300521264",
+  "properties": {
+    "name": "Pé da Serra",
+    "place": "hamlet",
+    "id": "node/3300521264"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5912378,
+      -10.9503154
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3300521265",
+  "properties": {
+    "name": "Sobrado",
+    "place": "hamlet",
+    "id": "node/3300521265"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6224444,
+      -10.9588554
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3325220312",
+  "properties": {
+    "name": "Cipó Grande",
+    "place": "hamlet",
+    "id": "node/3325220312"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6586866,
+      -11.1303894
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3325220321",
+  "properties": {
+    "name": "Tapera de Macambira",
+    "place": "hamlet",
+    "id": "node/3325220321"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5391614,
+      -10.6915694
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3370960440",
+  "properties": {
+    "name": "Murici",
+    "place": "hamlet",
+    "id": "node/3370960440"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.846646,
+      -11.3650711
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955128",
+  "properties": {
+    "name": "Assentamento Mártires D'Eldorado",
+    "place": "hamlet",
+    "id": "node/3450955128"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6097658,
+      -10.825404
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955129",
+  "properties": {
+    "name": "Boa Vista do Urubu",
+    "place": "hamlet",
+    "id": "node/3450955129"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5624875,
+      -10.8953035
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955130",
+  "properties": {
+    "name": "Cabocla",
+    "place": "hamlet",
+    "id": "node/3450955130"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7553228,
+      -10.9437485
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955131",
+  "properties": {
+    "name": "Cavaleira",
+    "place": "hamlet",
+    "id": "node/3450955131"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8143167,
+      -10.8903721
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955132",
+  "properties": {
+    "name": "Crioulo de Cima",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/3450955132"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7510319,
+      -10.9630012
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955141",
+  "properties": {
+    "name": "Fazenda Grande",
+    "place": "hamlet",
+    "id": "node/3450955141"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6318872,
+      -10.9380585
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955152",
+  "properties": {
+    "name": "Juerana",
+    "place": "hamlet",
+    "id": "node/3450955152"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5371942,
+      -10.941781
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955153",
+  "properties": {
+    "name": "Mangabeira",
+    "place": "hamlet",
+    "id": "node/3450955153"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5753919,
+      -11.0284893
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955154",
+  "properties": {
+    "name": "Marilopes",
+    "place": "hamlet",
+    "id": "node/3450955154"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6142504,
+      -10.93066
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955155",
+  "properties": {
+    "name": "Mariquita de Cima",
+    "place": "hamlet",
+    "id": "node/3450955155"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6968522,
+      -10.7959678
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955156",
+  "properties": {
+    "name": "Palma",
+    "place": "hamlet",
+    "id": "node/3450955156"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8191221,
+      -10.9275454
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955157",
+  "properties": {
+    "name": "Poeirão",
+    "place": "hamlet",
+    "id": "node/3450955157"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.544879,
+      -10.9593531
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955158",
+  "properties": {
+    "name": "Quipé",
+    "place": "hamlet",
+    "id": "node/3450955158"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7071913,
+      -10.7917932
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955160",
+  "properties": {
+    "name": "Saco do Tigre",
+    "place": "hamlet",
+    "id": "node/3450955160"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8018928,
+      -10.9532073
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955162",
+  "properties": {
+    "name": "Tanque",
+    "place": "hamlet",
+    "id": "node/3450955162"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7223154,
+      -10.9927336
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955163",
+  "properties": {
+    "name": "Tapera do Nico",
+    "place": "hamlet",
+    "id": "node/3450955163"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6492815,
+      -10.882282
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955164",
+  "properties": {
+    "name": "Tapera dos Modestos",
+    "place": "hamlet",
+    "id": "node/3450955164"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6937441,
+      -10.8233196
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955165",
+  "properties": {
+    "name": "Varzea do Cagados",
+    "place": "hamlet",
+    "id": "node/3450955165"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6452658,
+      -10.9452995
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3450955166",
+  "properties": {
+    "name": "Araçá",
+    "place": "hamlet",
+    "id": "node/3450955166"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5184258,
+      -10.8968003
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3665034441",
+  "properties": {
+    "name": "Agrovila",
+    "place": "hamlet",
+    "id": "node/3665034441"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9258346,
+      -11.0702679
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3665034443",
+  "properties": {
+    "name": "Boqueirão",
+    "place": "hamlet",
+    "source": "IBGE",
+    "id": "node/3665034443"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8925388,
+      -10.9645883
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3670839428",
+  "properties": {
+    "name": "Cabeça d'Anta",
+    "place": "hamlet",
+    "id": "node/3670839428"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5841054,
+      -11.1820897
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3670839430",
+  "properties": {
+    "name": "Campo Grande",
+    "place": "hamlet",
+    "id": "node/3670839430"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9429025,
+      -11.2952442
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3670839441",
+  "properties": {
+    "name": "Jardim",
+    "place": "hamlet",
+    "id": "node/3670839441"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.749518,
+      -11.3301519
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3688714434",
+  "properties": {
+    "name": "Cercado",
+    "place": "hamlet",
+    "id": "node/3688714434"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5647522,
+      -10.7497629
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3688714435",
+  "properties": {
+    "name": "Gameleira",
+    "place": "hamlet",
+    "id": "node/3688714435"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5518511,
+      -10.7608742
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3688714440",
+  "properties": {
+    "name": "Terra Vermelha",
+    "place": "hamlet",
+    "id": "node/3688714440"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5616274,
+      -10.7254458
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3695761432",
+  "properties": {
+    "name": "Jaqueira",
+    "place": "hamlet",
+    "id": "node/3695761432"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.750416,
+      -10.7531658
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3695761434",
+  "properties": {
+    "name": "Pirajá",
+    "place": "hamlet",
+    "id": "node/3695761434"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.760717,
+      -10.7287389
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3695761435",
+  "properties": {
+    "alt_name": "Salobra",
+    "name": "Salobro",
+    "place": "hamlet",
+    "id": "node/3695761435"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7391447,
+      -10.757502
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3759814490",
+  "properties": {
+    "name": "São José",
+    "place": "hamlet",
+    "id": "node/3759814490"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0820627,
+      -10.7262789
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3762069492",
+  "properties": {
+    "name": "São Francisco",
+    "place": "hamlet",
+    "id": "node/3762069492"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0393077,
+      -10.6972315
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744357",
+  "properties": {
+    "name": "Aroeira Velha",
+    "place": "hamlet",
+    "id": "node/3772744357"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0951873,
+      -10.8015421
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744358",
+  "properties": {
+    "name": "Aroeira",
+    "place": "hamlet",
+    "id": "node/3772744358"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.937624,
+      -10.7746432
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744361",
+  "properties": {
+    "name": "Barnabé",
+    "place": "hamlet",
+    "id": "node/3772744361"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8839181,
+      -10.7734408
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744362",
+  "properties": {
+    "name": "Brinquinho",
+    "place": "hamlet",
+    "id": "node/3772744362"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8865106,
+      -10.7397987
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744364",
+  "properties": {
+    "name": "Caraíba de Cima",
+    "place": "hamlet",
+    "id": "node/3772744364"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9852382,
+      -10.7665109
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744365",
+  "properties": {
+    "name": "Corimbas",
+    "place": "hamlet",
+    "id": "node/3772744365"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0570118,
+      -10.78315
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744367",
+  "properties": {
+    "name": "Fundas",
+    "place": "hamlet",
+    "id": "node/3772744367"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8760277,
+      -10.7442267
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744368",
+  "properties": {
+    "name": "Paracatu de Baixo",
+    "place": "hamlet",
+    "id": "node/3772744368"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8759109,
+      -10.7499898
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744369",
+  "properties": {
+    "name": "Pau de Colher",
+    "place": "hamlet",
+    "id": "node/3772744369"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8745628,
+      -10.7782493
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744372",
+  "properties": {
+    "name": "Ponta da Serra",
+    "place": "hamlet",
+    "id": "node/3772744372"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0675944,
+      -10.7652865
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744373",
+  "properties": {
+    "name": "Poço D'Antas",
+    "place": "hamlet",
+    "id": "node/3772744373"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9212819,
+      -10.7775029
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744376",
+  "properties": {
+    "name": "Recanto",
+    "place": "hamlet",
+    "id": "node/3772744376"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0566281,
+      -10.7343175
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744377",
+  "properties": {
+    "name": "Saco da Camisa",
+    "place": "hamlet",
+    "id": "node/3772744377"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0536519,
+      -10.76537
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3772744378",
+  "properties": {
+    "name": "Tabuleirinho",
+    "place": "hamlet",
+    "id": "node/3772744378"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0153755,
+      -10.7518586
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3789113462",
+  "properties": {
+    "name": "Campo Pequeno",
+    "place": "hamlet",
+    "id": "node/3789113462"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9083693,
+      -11.1163754
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3789113463",
+  "properties": {
+    "alt_name": "Olhos DAgua da Bica",
+    "name": "Olhos D'Agua da Bica",
+    "place": "hamlet",
+    "id": "node/3789113463"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7858238,
+      -11.1295139
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3789113464",
+  "properties": {
+    "name": "Pau de Colher",
+    "place": "hamlet",
+    "id": "node/3789113464"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9223392,
+      -11.1404922
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3789113465",
+  "properties": {
+    "name": "Tanque Grande",
+    "place": "hamlet",
+    "id": "node/3789113465"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8487983,
+      -11.1107126
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3793690413",
+  "properties": {
+    "name": "Cancelão",
+    "place": "hamlet",
+    "id": "node/3793690413"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8975742,
+      -11.1063232
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3861817269",
+  "properties": {
+    "name": "Conjunto Augusto Franco",
+    "place": "hamlet",
+    "id": "node/3861817269"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6280261,
+      -11.1421737
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3861817270",
+  "properties": {
+    "name": "Conjunto Pedro Vieira da Costa",
+    "place": "hamlet",
+    "id": "node/3861817270"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6164698,
+      -11.1549835
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3861817271",
+  "properties": {
+    "name": "Loteamento São João",
+    "place": "hamlet",
+    "id": "node/3861817271"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6189304,
+      -11.1518559
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3888035767",
+  "properties": {
+    "name": "Pilão",
+    "place": "hamlet",
+    "id": "node/3888035767"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.098028,
+      -11.0062864
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3888035769",
+  "properties": {
+    "name": "Pé-de-Boi",
+    "place": "hamlet",
+    "id": "node/3888035769"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0539852,
+      -11.1102292
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3894312633",
+  "properties": {
+    "alt_name": "conceição de campinas",
+    "name": "Conceição do Saco",
+    "place": "hamlet",
+    "id": "node/3894312633"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9665665,
+      -10.7425514
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3895586954",
+  "properties": {
+    "name": "Agua Fria",
+    "place": "hamlet",
+    "id": "node/3895586954"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5172095,
+      -11.0009458
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3961637557",
+  "properties": {
+    "name": "Matata",
+    "place": "hamlet",
+    "id": "node/3961637557"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.509143,
+      -11.0087166
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4048566060",
+  "properties": {
+    "name": "Moreira",
+    "place": "hamlet",
+    "id": "node/4048566060"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6642612,
+      -10.8712931
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4048566061",
+  "properties": {
+    "name": "Moreirinha",
+    "place": "hamlet",
+    "id": "node/4048566061"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6735311,
+      -10.8613999
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4098693685",
+  "properties": {
+    "name": "Pastinho",
+    "place": "hamlet",
+    "id": "node/4098693685"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8522885,
+      -10.7652673
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4098693686",
+  "properties": {
+    "name": "Pau de Leite",
+    "place": "hamlet",
+    "id": "node/4098693686"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.8303909,
+      -10.8265618
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4186474602",
+  "properties": {
+    "name": "Quilombo",
+    "place": "hamlet",
+    "id": "node/4186474602"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7461307,
+      -10.8152478
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4200520188",
+  "properties": {
+    "name": "Barriga",
+    "place": "hamlet",
+    "id": "node/4200520188"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0088705,
+      -11.0742144
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4200520189",
+  "properties": {
+    "name": "Boiadeiro",
+    "place": "hamlet",
+    "id": "node/4200520189"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0357301,
+      -11.1023046
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4200520190",
+  "properties": {
+    "name": "Campestre do Abreu",
+    "place": "hamlet",
+    "id": "node/4200520190"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.004182,
+      -11.0094193
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4200520191",
+  "properties": {
+    "name": "Fortinha",
+    "place": "hamlet",
+    "id": "node/4200520191"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0231934,
+      -11.1002779
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4200520192",
+  "properties": {
+    "name": "Madeiro",
+    "place": "hamlet",
+    "id": "node/4200520192"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9827726,
+      -11.0205218
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4200520193",
+  "properties": {
+    "name": "Paiva",
+    "place": "hamlet",
+    "id": "node/4200520193"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9902345,
+      -11.1277076
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4200520194",
+  "properties": {
+    "name": "Riacho Fundo",
+    "place": "hamlet",
+    "id": "node/4200520194"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9158783,
+      -11.1910214
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4200520195",
+  "properties": {
+    "name": "Riacho Grande",
+    "place": "hamlet",
+    "id": "node/4200520195"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0084145,
+      -11.0571989
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4200520196",
+  "properties": {
+    "name": "Tanque",
+    "place": "hamlet",
+    "id": "node/4200520196"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.9729235,
+      -11.0398034
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4200520197",
+  "properties": {
+    "name": "Taquara",
+    "place": "hamlet",
+    "id": "node/4200520197"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0476954,
+      -10.9800353
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4261285522",
+  "properties": {
+    "name": "Cacimba Nova",
+    "place": "hamlet",
+    "id": "node/4261285522"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0435748,
+      -10.7356656
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4318477774",
+  "properties": {
+    "name": "Coqueiro",
+    "place": "hamlet",
+    "id": "node/4318477774"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6811369,
+      -10.8973517
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4647826881",
+  "properties": {
+    "name": "Queimada",
+    "place": "hamlet",
+    "id": "node/4647826881"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.1563987,
+      -10.9671265
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4647826882",
+  "properties": {
+    "name": "Arapuá",
+    "place": "hamlet",
+    "id": "node/4647826882"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.1742998,
+      -10.9689407
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4647830708",
+  "properties": {
+    "name": "Sotero",
+    "place": "hamlet",
+    "id": "node/4647830708"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.1124253,
+      -10.9520647
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4647831804",
+  "properties": {
+    "name": "Alagoinhas",
+    "place": "hamlet",
+    "id": "node/4647831804"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.1364485,
+      -10.9872916
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4690885030",
+  "properties": {
+    "name": "Tabuleiro",
+    "place": "hamlet",
+    "id": "node/4690885030"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.7041566,
+      -10.9271681
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4690885031",
+  "properties": {
+    "name": "Itaperinha",
+    "place": "hamlet",
+    "id": "node/4690885031"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6937497,
+      -10.9393245
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4716237662",
+  "properties": {
+    "name": "Sariema",
+    "place": "hamlet",
+    "id": "node/4716237662"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.1527965,
+      -10.9083988
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4716237779",
+  "properties": {
+    "name": "Curtume",
+    "place": "hamlet",
+    "id": "node/4716237779"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.118896,
+      -10.8643673
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4716237780",
+  "properties": {
+    "name": "Pedra de Amolar",
+    "place": "hamlet",
+    "id": "node/4716237780"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0995949,
+      -10.9170044
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/4716238203",
+  "properties": {
+    "name": "Nova Brasília",
+    "place": "hamlet",
+    "id": "node/4716238203"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0499914,
+      -11.0517563
+    ]
+  }
+}
+]
+}

@@ -41,6 +41,11 @@ config.storageTest.secretKey = process.env.STORAGE_TEST_SECRET_KEY || config.sto
 config.storageTest.bucket = process.env.STORAGE_TEST_BUCKET || config.storageTest.bucket;
 config.storageTest.region = process.env.STORAGE_TEST_REGION || config.storageTest.region;
 
+config.analysisProcess.container = process.env.ANL_CONTAINER || config.analysisProcess.container;
+config.analysisProcess.db = process.env.ANL_DB || config.analysisProcess.db;
+config.analysisProcess.storageHost = process.env.ANL_STORAGE_HOST || config.analysisProcess.storageHost;
+config.analysisProcess.storagePort = process.env.ANL_STORAGE_PORT || config.analysisProcess.storagePort;
+
 config.baseDir = __dirname;
 
 module.exports = config;

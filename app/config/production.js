@@ -24,5 +24,11 @@ module.exports = {
     secretKey: null,
     bucket: null,
     region: null
+  },
+  analysisProcess: {
+    container: null,
+    db: null,
+    storageHost: null,
+    storagePort: 9000
   }
 };

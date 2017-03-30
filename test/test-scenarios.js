@@ -3,16 +3,8 @@ import { assert } from 'chai';
 import mockdate from 'mockdate';
 
 import Server from '../app/services/server';
-import {
-  dropScenariosFiles,
-  dropProjectsFiles,
-  dropScenarios,
-  dropProjects,
-  createProjectsTable,
-  createScenariosTable,
-  createProjectsFilesTable,
-  createScenariosFilesTable
-} from '../app/db/structure';
+import { setupStructure as setupDdStructure } from '../app/db/structure';
+import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp, projectPendingWithFiles } from './utils/data';
 import db from '../app/db';
 
@@ -31,14 +23,8 @@ before(function (done) {
 
 describe('Scenarios', function () {
   before(function (done) {
-    dropScenariosFiles()
-      .then(() => dropProjectsFiles())
-      .then(() => dropScenarios())
-      .then(() => dropProjects())
-      .then(() => createProjectsTable())
-      .then(() => createScenariosTable())
-      .then(() => createProjectsFilesTable())
-      .then(() => createScenariosFilesTable())
+    setupDdStructure()
+      .then(() => setupStorageStructure())
       .then(() => fixMeUp())
       .then(() => done());
   });
@@ -299,6 +285,100 @@ describe('Scenarios', function () {
         assert.equal(result.description, 'updated description');
         assert.equal((new Date(result.created_at)).toISOString(), '2017-02-01T12:00:01.000Z');
         assert.notEqual(result.created_at, result.updated_at);
+      });
+    });
+
+    it('should update the selected admin areas', function () {
+      return instance.injectThen({
+        method: 'PATCH',
+        url: '/projects/2000/scenarios/2000',
+        payload: {
+          selectedAdminAreas: [
+            'Salgado', 'Itabaiana', 'Lagarto', 'Poço Verde'
+          ]
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        let adminAreas = [
+          {'name': 'Distrito de Abadia', 'selected': false},
+          {'name': 'Distrito de Itanhi', 'selected': false},
+          {'name': 'Distrito de Conceição de Campinas', 'selected': false},
+          {'name': 'Distrito de Sambaíba', 'selected': false},
+          {'name': 'Distrito de Buril', 'selected': false},
+          {'name': 'Distrito de Itamira', 'selected': false},
+          {'name': 'Estância', 'selected': false},
+          {'name': 'Itaporanga d\'Ajuda', 'selected': false},
+          {'name': 'Salgado', 'selected': true},
+          {'name': 'Arauá', 'selected': false},
+          {'name': 'Boquim', 'selected': false},
+          {'name': 'Cristinápolis', 'selected': false},
+          {'name': 'Indiaroba', 'selected': false},
+          {'name': 'Itabaianinha', 'selected': false},
+          {'name': 'Pedrinhas', 'selected': false},
+          {'name': 'Santa Luzia do Itanhy', 'selected': false},
+          {'name': 'Tomar do Geru', 'selected': false},
+          {'name': 'Umbaúba', 'selected': false},
+          {'name': 'Pedra Mole', 'selected': false},
+          {'name': 'Campo do Brito', 'selected': false},
+          {'name': 'Itabaiana', 'selected': true},
+          {'name': 'Lagarto', 'selected': true},
+          {'name': 'Macambira', 'selected': false},
+          {'name': 'Poço Verde', 'selected': true},
+          {'name': 'Simão Dias', 'selected': false},
+          {'name': 'São Domingos', 'selected': false},
+          {'name': 'Palmares', 'selected': false},
+          {'name': 'Riachão do Dantas', 'selected': false},
+          {'name': 'Samambaia', 'selected': false},
+          {'name': 'Tobias Barreto', 'selected': false}
+        ];
+        assert.deepEqual(result.admin_areas, adminAreas);
+      });
+    });
+
+    it('should update the deselect all admin areas', function () {
+      return instance.injectThen({
+        method: 'PATCH',
+        url: '/projects/2000/scenarios/2000',
+        payload: {
+          selectedAdminAreas: []
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        let adminAreas = [
+          {'name': 'Distrito de Abadia', 'selected': false},
+          {'name': 'Distrito de Itanhi', 'selected': false},
+          {'name': 'Distrito de Conceição de Campinas', 'selected': false},
+          {'name': 'Distrito de Sambaíba', 'selected': false},
+          {'name': 'Distrito de Buril', 'selected': false},
+          {'name': 'Distrito de Itamira', 'selected': false},
+          {'name': 'Estância', 'selected': false},
+          {'name': 'Itaporanga d\'Ajuda', 'selected': false},
+          {'name': 'Salgado', 'selected': false},
+          {'name': 'Arauá', 'selected': false},
+          {'name': 'Boquim', 'selected': false},
+          {'name': 'Cristinápolis', 'selected': false},
+          {'name': 'Indiaroba', 'selected': false},
+          {'name': 'Itabaianinha', 'selected': false},
+          {'name': 'Pedrinhas', 'selected': false},
+          {'name': 'Santa Luzia do Itanhy', 'selected': false},
+          {'name': 'Tomar do Geru', 'selected': false},
+          {'name': 'Umbaúba', 'selected': false},
+          {'name': 'Pedra Mole', 'selected': false},
+          {'name': 'Campo do Brito', 'selected': false},
+          {'name': 'Itabaiana', 'selected': false},
+          {'name': 'Lagarto', 'selected': false},
+          {'name': 'Macambira', 'selected': false},
+          {'name': 'Poço Verde', 'selected': false},
+          {'name': 'Simão Dias', 'selected': false},
+          {'name': 'São Domingos', 'selected': false},
+          {'name': 'Palmares', 'selected': false},
+          {'name': 'Riachão do Dantas', 'selected': false},
+          {'name': 'Samambaia', 'selected': false},
+          {'name': 'Tobias Barreto', 'selected': false}
+        ];
+        assert.deepEqual(result.admin_areas, adminAreas);
       });
     });
   });

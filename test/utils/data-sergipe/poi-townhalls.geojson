@@ -1,0 +1,101 @@
+{
+"type": "FeatureCollection",
+"features": [
+{
+  "type": "Feature",
+  "id": "node/3390484067",
+  "properties": {
+    "amenity": "townhall",
+    "name": "Prefeitura Municipal",
+    "id": "node/3390484067"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.5081188,
+      -11.5250279
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3670839442",
+  "properties": {
+    "amenity": "townhall",
+    "name": "Prefeitura Municipal de Boquim",
+    "id": "node/3670839442"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6259847,
+      -11.1478675
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3841705716",
+  "properties": {
+    "amenity": "townhall",
+    "name": "Prefeitura Municipal de Tobias Barreto",
+    "id": "node/3841705716"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -38.0033176,
+      -11.1880577
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3844026945",
+  "properties": {
+    "amenity": "townhall",
+    "name": "Prefeitura Municipal de Pedrinhas",
+    "id": "node/3844026945"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6760995,
+      -11.1929695
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3845957608",
+  "properties": {
+    "amenity": "townhall",
+    "name": "Prefeitura Municipal de Umbaúba",
+    "id": "node/3845957608"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.6565803,
+      -11.3824781
+    ]
+  }
+},
+{
+  "type": "Feature",
+  "id": "node/3870177452",
+  "properties": {
+    "amenity": "townhall",
+    "name": "Prefeitura Municipal de Itabiananinha",
+    "id": "node/3870177452"
+  },
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -37.786388,
+      -11.2759715
+    ]
+  }
+}
+]
+}

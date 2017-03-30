@@ -4,16 +4,8 @@ import fs from 'fs';
 import request from 'request';
 
 import Server from '../app/services/server';
-import {
-  dropScenariosFiles,
-  dropProjectsFiles,
-  dropScenarios,
-  dropProjects,
-  createProjectsTable,
-  createScenariosTable,
-  createProjectsFilesTable,
-  createScenariosFilesTable
-} from '../app/db/structure';
+import { setupStructure as setupDdStructure } from '../app/db/structure';
+import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp } from './utils/data';
 import db from '../app/db';
 
@@ -32,14 +24,8 @@ before(function (done) {
 
 describe('Scenarios', function () {
   before(function (done) {
-    dropScenariosFiles()
-      .then(() => dropProjectsFiles())
-      .then(() => dropScenarios())
-      .then(() => dropProjects())
-      .then(() => createProjectsTable())
-      .then(() => createScenariosTable())
-      .then(() => createProjectsFilesTable())
-      .then(() => createScenariosFilesTable())
+    setupDdStructure()
+      .then(() => setupStorageStructure())
       .then(() => fixMeUp())
       .then(() => done());
   });

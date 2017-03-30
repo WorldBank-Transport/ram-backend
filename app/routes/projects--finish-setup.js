@@ -4,9 +4,9 @@ import Boom from 'boom';
 import Promise from 'bluebird';
 
 import db from '../db/';
-
 import { ProjectNotFoundError, DataConflictError } from '../utils/errors';
 import { getProject } from './projects--get';
+import { getJSONFileContents } from '../s3/utils';
 
 module.exports = [
   {
@@ -38,23 +38,35 @@ module.exports = [
           return db.transaction(function (trx) {
             let {scenarioName, scenarioDescription} = request.payload;
 
-            return Promise.all([
-              trx('projects')
-                .update({
-                  updated_at: (new Date()),
-                  status: 'active'
-                })
-                .where('id', project.id),
-              trx('scenarios')
-                .update({
-                  name: scenarioName,
-                  description: typeof scenarioDescription === 'undefined' ? '' : scenarioDescription,
-                  updated_at: (new Date()),
-                  status: 'active'
-                })
-                .where('project_id', project.id)
-                .where('master', true)
-            ]);
+            return trx('projects_files')
+              .select('*')
+              .where('project_id', project.id)
+              .where('type', 'admin-bounds')
+              .then(files => getJSONFileContents(files[0].path))
+              .then(adminBoundsFc => adminBoundsFc.features
+                  .map(o => ({name: o.properties.name, selected: false}))
+                  .filter(o => !!o.name)
+              )
+              .then(adminAreas => {
+                return Promise.all([
+                  trx('projects')
+                    .update({
+                      updated_at: (new Date()),
+                      status: 'active'
+                    })
+                    .where('id', project.id),
+                  trx('scenarios')
+                    .update({
+                      name: scenarioName,
+                      description: typeof scenarioDescription === 'undefined' ? '' : scenarioDescription,
+                      admin_areas: JSON.stringify(adminAreas),
+                      updated_at: (new Date()),
+                      status: 'active'
+                    })
+                    .where('project_id', project.id)
+                    .where('master', true)
+                ]);
+              });
           });
         })
         .then(() => reply({statusCode: 200, message: 'Project setup finished'}))
