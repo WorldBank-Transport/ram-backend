@@ -106,8 +106,12 @@ function spawnAnalysisProcess (projId, scId, opId) {
   // It will be tested in the appropriate place.
   if (process.env.DS_ENV === 'test') { return; }
 
-  let args = [
+  // Each Project/Scenario combination can only have one analysis process
+  // running.
+  let containerName = `analysisp${projId}s${scId}`;
+  let baseOptions = [
     'run',
+    '--name', containerName,
     '-e', `DB_URI=${config.analysisProcess.db}`,
     '-e', `PROJECT_ID=${projId}`,
     '-e', `SCENARIO_ID=${scId}`,
@@ -119,13 +123,29 @@ function spawnAnalysisProcess (projId, scId, opId) {
     '-e', `STORAGE_SECRET_KEY=${config.storage.secretKey}`,
     '-e', `STORAGE_BUCKET=${config.storage.bucket}`,
     '-e', `STORAGE_REGION=${config.storage.region}`,
-    '-e', 'CONVERSION_DIR=/conversion',
-    config.analysisProcess.container
+    '-e', 'CONVERSION_DIR=/conversion'
   ];
+
+  let service = config.analysisProcess.service;
+  switch (service) {
+    case 'docker':
+      break;
+    case 'hyper':
+      baseOptions.push = (
+        '-e', `HYPER_ACCESS=${config.analysisProcess.hyperAccess}`,
+        '-e', `HYPER_SECRET=${config.analysisProcess.hyperSecret}`
+      );
+      break;
+    default:
+      console.log(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`);
+  }
+
+  // Append the name of the image last
+  let args = baseOptions.concat(config.analysisProcess.container);
 
   // Spawn the processing script. It will take care of updating
   // the database with progress.
-  let analysisProc = cp.spawn('docker', args);
+  let analysisProc = cp.spawn(service, args);
   analysisProc.stdout.on('data', (data) => {
     console.log(`[ANALYSIS P${projId} S${scId}]`, data.toString());
   });
@@ -149,6 +169,9 @@ function spawnAnalysisProcess (projId, scId, opId) {
           }
         });
     }
+    // Remove the container once the process is finished. Especially important
+    // for a hosted scenario, in which stopped containers may incur costs.
+    cp.spawn(service, ['rm', containerName]);
     console.log(`[ANALYSIS P${projId} S${scId}][EXIT]`, code.toString());
   });
 }

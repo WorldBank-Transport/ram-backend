@@ -41,10 +41,13 @@ config.storageTest.secretKey = process.env.STORAGE_TEST_SECRET_KEY || config.sto
 config.storageTest.bucket = process.env.STORAGE_TEST_BUCKET || config.storageTest.bucket;
 config.storageTest.region = process.env.STORAGE_TEST_REGION || config.storageTest.region;
 
+config.analysisProcess.service = process.env.ANL_SERVICE || config.analysisProcess.service;
 config.analysisProcess.container = process.env.ANL_CONTAINER || config.analysisProcess.container;
 config.analysisProcess.db = process.env.ANL_DB || config.analysisProcess.db;
 config.analysisProcess.storageHost = process.env.ANL_STORAGE_HOST || config.analysisProcess.storageHost;
 config.analysisProcess.storagePort = process.env.ANL_STORAGE_PORT || config.analysisProcess.storagePort;
+config.analysisProcess.hyperAccess = process.env.HYPER_ACCESS || config.analysisProcess.hyperAccess;
+config.analysisProcess.hyperSecret = process.env.HYPER_SECRET || config.analysisProcess.hyperSecret;
 
 config.baseDir = __dirname;
 

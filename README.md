@@ -89,6 +89,14 @@ The following options must be set: (The used file will depend on the context)
   - `storageTest.secretKey` - Secret key for storage. [STORAGE_TEST_SECRET_KEY]
   - `storageTest.bucket` - Secret key for storage. [STORAGE_TEST_BUCKET]
   - `storageTest.region` - Secret key for storage. [STORAGE_TEST_REGION]
+  - `analysisProcess.service` - The service to run the analysis on. Either `docker` (for local development and off-line) or `hyper`. [ANL_SERVICE]
+  - `analysisProcess.hyperAccess` - Access key for Hyper. [HYPER_ACCESS]
+  - `analysisProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
+  - `analysisProcess.container` - The name of the rra-analysis container (Default wbtransport/rra-analysis:latest-stable) [ANL_CONTAINER]
+  - `analysisProcess.db` - The database connection string. When using Docker for the analysis process, the host will the Docker inet address ($ ifconfig). When using Hyper, this will be the IP of your hosted database [ANL_DB]
+  - `analysisProcess.storageHost` - The host of the storage service. See notes above. [ANL_STORAGE_HOST]
+  - `analysisProcess.storagePort` - The port to use. [ANL_STORAGE_PORT]
+ 
 
 Example:
 ``` 
@@ -116,6 +124,15 @@ module.exports = {
     secretKey: 'miniostorageengine',
     bucket: 'rra-test',
     region: 'us-east-1'
+  },
+  analysisProcess: {
+    service: 'docker',
+    hyperAccess: null,
+    hyperSecret: null,
+    container: 'wbtransport/rra-analysis:latest-stable',
+    db: 'postgresql://rra:rra@172.17.0.1:5432/rra',
+    storageHost: '172.17.0.1',
+    storagePort: 9000
   }
 };
 ```
@@ -150,6 +167,7 @@ Follow these steps to set up a deployment to an ECS Cluster:
 3. SSH into the machine with your Key Pair to set up the basic database structure  
   - run `docker ps` and to find the Container ID of `rra-api`
   - run `docker exec [container_id] npm run setup -- --db --bucket`
+4. [to come] deployment of the Analysis process
 
 This should set up the basic cluster that Travis can push the backend to.
 
