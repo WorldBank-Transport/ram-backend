@@ -14,7 +14,7 @@ const FILE_ROAD_NETWORK = path.join(__dirname, 'data-sergipe/road-network.osm');
 const FILE_POI = path.join(__dirname, 'data-sergipe/poi-townhalls.geojson');
 
 // Admin areas from admin-boundaries.geojson
-const ADMIN_AREAS = [
+export const ADMIN_AREAS = [
   {'name': 'Distrito de Abadia', 'selected': false},
   {'name': 'Distrito de Itanhi', 'selected': false},
   {'name': 'Distrito de Conceição de Campinas', 'selected': false},

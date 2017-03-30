@@ -102,6 +102,10 @@ module.exports = [
 ];
 
 function spawnAnalysisProcess (projId, scId, opId) {
+  // In test mode we don't want to start the generation.
+  // It will be tested in the appropriate place.
+  if (process.env.DS_ENV === 'test') { return; }
+
   let args = [
     'run',
     '-e', `DB_URI=${config.analysisProcess.db}`,
