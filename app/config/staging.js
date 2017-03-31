@@ -15,5 +15,14 @@ module.exports = {
     secretKey: 'miniostorageengine',
     bucket: 'rra',
     region: 'us-east-1'
+  },
+  analysisProcess: {
+    service: 'hyper',
+    hyperAccess: null,
+    hyperSecret: null,
+    container: 'wbtransport/rra-analysis',
+    db: null,
+    storageHost: '34.207.194.24',
+    storagePort: 9000
   }
 };
