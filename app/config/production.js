@@ -29,7 +29,7 @@ module.exports = {
     service: null,
     hyperAccess: null,
     hyperSecret: null,
-    container: null,
+    container: 'wbtransport/rra-analysis:latest-stable',
     db: null,
     storageHost: null,
     storagePort: 9000
