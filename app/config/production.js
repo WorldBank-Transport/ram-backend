@@ -28,6 +28,7 @@ module.exports = {
   analysisProcess: {
     service: null,
     hyperAccess: null,
+    hyperSecret: null,
     container: null,
     db: null,
     storageHost: null,

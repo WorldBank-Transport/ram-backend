@@ -19,6 +19,7 @@ module.exports = {
   analysisProcess: {
     service: 'hyper',
     hyperAccess: null,
+    hyperSecret: null,
     container: 'wbtransport/rra-analysis',
     db: null,
     storageHost: '34.207.194.24',
