@@ -109,7 +109,7 @@ function spawnAnalysisProcess (projId, scId, opId) {
   // Each Project/Scenario combination can only have one analysis process
   // running.
   let containerName = `analysisp${projId}s${scId}`;
-  let baseOptions = [
+  let args = [
     'run',
     '--name', containerName,
     '-e', `DB_URI=${config.analysisProcess.db}`,
@@ -131,7 +131,7 @@ function spawnAnalysisProcess (projId, scId, opId) {
     case 'docker':
       break;
     case 'hyper':
-      baseOptions.push = (
+      args.push = (
         '-e', `HYPER_ACCESS=${config.analysisProcess.hyperAccess}`,
         '-e', `HYPER_SECRET=${config.analysisProcess.hyperSecret}`
       );
@@ -141,7 +141,7 @@ function spawnAnalysisProcess (projId, scId, opId) {
   }
 
   // Append the name of the image last
-  let args = baseOptions.concat(config.analysisProcess.container);
+  args.push(config.analysisProcess.container);
 
   // Spawn the processing script. It will take care of updating
   // the database with progress.
