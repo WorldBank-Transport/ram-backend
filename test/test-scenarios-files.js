@@ -24,7 +24,7 @@ before(function (done) {
 });
 
 describe('Scenario files', function () {
-  before(function (done) {
+  before('Before - Scenario files', function (done) {
     setupDdStructure()
       .then(() => setupStorageStructure())
       .then(() => fixMeUp())

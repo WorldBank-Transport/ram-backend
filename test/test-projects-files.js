@@ -24,7 +24,7 @@ before(function (done) {
 });
 
 describe('Project files', function () {
-  before(function (done) {
+  before('Before - Project files', function (done) {
     setupDdStructure()
       .then(() => setupStorageStructure())
       .then(() => fixMeUp())

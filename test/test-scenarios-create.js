@@ -23,7 +23,7 @@ before(function (done) {
 });
 
 describe('Scenarios', function () {
-  before(function (done) {
+  before('Before - Scenarios', function (done) {
     setupDdStructure()
       .then(() => setupStorageStructure())
       .then(() => fixMeUp())
