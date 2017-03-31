@@ -19,11 +19,23 @@ if (process.env.TRAVIS_BRANCH === process.env.STABLE_BRANCH) {
   dsEnv = 'staging'
 }
 
-obj['rra-api']['environment'] = [
-  `HYPER_ACCESS=${process.env['HYPER_ACCESS']}`,
-  `HYPER_SECRET=${process.env['HYPER_SECRET']}`,
-  `DS_ENV=${dsEnv}`
-]
+var splitEnvs = [
+  'ANL_SERVICE',
+  'ANL_CONTAINER',
+  'ANL_DB',
+  'ANL_STORAGE_HOST',
+  'ANL_STORAGE_PORT',
+  'HYPER_ACCESS',
+  'HYPER_SECRET'
+];
+
+var envs = splitEnvs
+  .filter(o => process.env[o])
+  .map(e => `${e}=${process.env[e]}`);
+
+envs.push(`DS_ENV=${dsEnv}`)
+
+obj['rra-api']['environment'] = envs
 
 // Set container version based on hash. Falls back to latest tag
 let hash = process.env.TRAVIS_COMMIT || latest_tag

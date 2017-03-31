@@ -131,7 +131,7 @@ function spawnAnalysisProcess (projId, scId, opId) {
     case 'docker':
       break;
     case 'hyper':
-      args.push = (
+      args.push(
         '-e', `HYPER_ACCESS=${config.analysisProcess.hyperAccess}`,
         '-e', `HYPER_SECRET=${config.analysisProcess.hyperSecret}`
       );
