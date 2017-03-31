@@ -20,8 +20,8 @@ before(function (done) {
   });
 });
 
-describe('Scenarios', function () {
-  before(function (done) {
+describe('Result generation', function () {
+  before('Before - Result generation', function (done) {
     setupDdStructure()
       .then(() => setupStorageStructure())
       .then(() => fixMeUp())
