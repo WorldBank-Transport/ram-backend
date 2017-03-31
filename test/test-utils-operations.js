@@ -9,11 +9,10 @@ import { fixMeUp } from './utils/data';
 import Operation from '../app/utils/operation';
 
 describe('Operation', function () {
-  before('Before - Operation', function (done) {
-    setupDdStructure()
+  before('Before - Operation', function () {
+    return setupDdStructure()
       .then(() => setupStorageStructure())
-      .then(() => fixMeUp())
-      .then(() => done());
+      .then(() => fixMeUp());
   });
 
   describe('Create', function () {
