@@ -1,10 +1,8 @@
 'use strict';
 import Joi from 'joi';
-import config from '../config';
-import osmdb from 'osm-p2p';
-import osmrouter from 'osm-p2p-server';
+import Boom from 'boom';
 
-var dbConnections = {};
+import { getRouter } from '../services/rra-osm-p2p';
 
 const rraOsmRoute = {
   path: '/projects/{projId}/scenarios/{scId}/osm/{path*}',
@@ -34,32 +32,18 @@ const rraOsmRoute = {
     let qs = req.url.match(/\?(.*)+/);
     qs = qs ? qs[0] : '';
 
-    req.url = `/api/0.6/${path}${qs}`;
+    if (router.match(request.method, `/api/0.6/${path}`)) {
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    }
+
+    req.url = `/api/0.6/${path}${qs}`;
 
     if (!router.handle(req, res)) {
-      return reply('no');
-    } else {
+      return reply(Boom.notFound());
     }
   }
 };
-
-function getRouter (projId, scId) {
-  return osmrouter(getDatabase(projId, scId));
-}
-
-function getDatabase (projId, scId) {
-  let baseDir = `${config.baseDir}/../osm-p2p-dbs`;
-  let dbName = `p${projId}s${scId}`;
-
-  // Create a connection if one is not found.
-  if (!dbConnections[dbName]) {
-    dbConnections[dbName] = osmdb(`${baseDir}/${dbName}`);
-  }
-
-  return dbConnections[dbName];
-}
 
 exports.register = function (server, options, next) {
   server.route(rraOsmRoute);
