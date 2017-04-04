@@ -129,6 +129,12 @@ function startFinishSetupProcess (op, projId, scId) {
   }
 
   function processRoadNetwork (roadNetwork) {
+    // WARNING!!!!
+    // ////////////////////////////////////////////////////////// //
+    // roadNetwork MUST be converted to a changeset before using. //
+    // This is not implemented yet!                               //
+    // ////////////////////////////////////////////////////////// //
+
     console.log('processRoadNetwork start');
     console.time('processRoadNetwork');
     let task = new Promise((resolve, reject) => {
