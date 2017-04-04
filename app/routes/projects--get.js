@@ -53,6 +53,7 @@ function attachProjectFiles (project) {
   return db.select('id', 'name', 'type', 'path', 'created_at')
     .from('projects_files')
     .where('project_id', project.id)
+    .whereIn('type', ['profile', 'villages', 'admin-bounds'])
     .then(files => {
       project.files = files || [];
       return project;
@@ -79,17 +80,18 @@ function getProject (id) {
       return projects[0];
     })
     .then(project => attachProjectFiles(project))
+    .then(project => attachFinishSetupOperation(project))
     .then(project => {
       // Check if a project is ready to move out of the setup phase.
       // Get 1st scenario files.
       return db('scenarios_files')
         .where('project_id', project.id)
+        .whereIn('type', ['road-network', 'poi'])
         .where('scenario_id', function () {
           this.select('id')
             .from('scenarios')
             .where('project_id', project.id)
-            .orderBy('created_at')
-            .limit(1);
+            .where('master', true);
         }).then(scenarioFiles => {
           // For a file to be ready it need 5 files:
           // - 3 on the project
@@ -101,6 +103,52 @@ function getProject (id) {
         });
     })
     .then(project => attachScenarioCount(project));
+}
+
+function attachFinishSetupOperation (project) {
+  return db.select('*')
+    .from('operations')
+    .where('operations.project_id', project.id)
+    .where('operations.scenario_id', function () {
+      this.select('id')
+        .from('scenarios')
+        .where('project_id', project.id)
+        .where('master', true);
+    })
+    .where('operations.name', 'project-setup-finish')
+    .orderBy('created_at', 'desc')
+    .limit(1)
+    .first()
+    .then(op => {
+      if (!op) {
+        project.finish_setup = null;
+        return project;
+      }
+
+      return db.select('*')
+        .from('operations_logs')
+        .where('operation_id', op.id)
+        .then(logs => {
+          let errored = false;
+          if (logs.length) {
+            errored = logs[logs.length - 1].code === 'error';
+          }
+          project.finish_setup = {
+            id: op.id,
+            status: op.status,
+            created_at: op.created_at,
+            updated_at: op.updated_at,
+            errored,
+            logs: logs.map(l => ({
+              id: l.id,
+              code: l.code,
+              data: l.data,
+              created_at: l.created_at
+            }))
+          };
+          return project;
+        });
+    });
 }
 
 module.exports.getProject = getProject;
