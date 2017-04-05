@@ -11,6 +11,8 @@ import { getDatabase } from '../rra-osm-p2p';
 process.on('message', function (e) {
   // Capture all the errors.
   try {
+    e.successTerminator = () => process.exit(0);
+    e.errorTerminator = () => process.exit(1);
     startFinishSetupProcess(e);
   } catch (err) {
     process.send({type: 'error', data: err.message, stack: err.stack});
@@ -19,7 +21,7 @@ process.on('message', function (e) {
 });
 
 export function startFinishSetupProcess (e) {
-  const {opId, projId, scId} = e;
+  const {opId, projId, scId, successTerminator, errorTerminator} = e;
 
   function processAdminAreas (adminBoundsFc) {
     console.log('processAdminAreas');
@@ -126,11 +128,11 @@ export function startFinishSetupProcess (e) {
       .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
     });
   })
-  .then(() => process.exit(0))
+  .then(() => successTerminator())
   .catch(err => {
     console.log('err', err);
     op.log('error', {error: err.message})
       .then(op => op.finish())
-      .then(() => process.exit(1), () => process.exit(1));
+      .then(() => errorTerminator(err.message), () => errorTerminator(err.message));
   });
 }

@@ -93,7 +93,7 @@ function startOperation (projId, scId) {
     .then(() => {
       let op = new Operation(db);
       return op.start('project-setup-finish', projId, scId)
-        .then(() => op.log('start', {message: 'Process starting'}));
+        .then(() => op.log('start', {message: 'Operation started'}));
     });
 }
 
@@ -105,7 +105,7 @@ function startFinishSetupProcess (opId, projId, scId) {
   const p = fork(path.resolve(__dirname, '../services/project-setup/index.js'));
   let processError = null;
 
-  p.send({opId: opId, projId, scId});
+  p.send({opId, projId, scId});
 
   p.on('message', function (msg) {
     switch (msg.type) {
