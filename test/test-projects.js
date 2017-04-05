@@ -195,7 +195,7 @@ describe('Projects', function () {
       });
     });
 
-    it.only('should delete a project pending and all related scenarios, files and operation', function () {
+    it('should delete a project pending and all related scenarios, files and operation', function () {
       return instance.injectThen({
         method: 'DELETE',
         url: '/projects/88888'
@@ -456,53 +456,35 @@ describe('Projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
-        assert.equal(result.message, 'Project setup finished');
+        assert.equal(result.message, 'Project setup finish started');
 
         // Check the db for updates.
         return Promise.all([
           db('projects')
             .where('id', 1004)
+            .first()
             .then(proj => {
-              assert.equal(proj[0].status, 'active');
+              assert.equal(proj.status, 'pending');
             }),
           db('scenarios')
             .where('project_id', 1004)
+            .first()
             .then(scenario => {
-              assert.equal(scenario[0].status, 'active');
-              assert.equal(scenario[0].name, 'Main scenario');
-              let adminAreas = [
-                {'name': 'Distrito de Abadia', 'selected': false},
-                {'name': 'Distrito de Itanhi', 'selected': false},
-                {'name': 'Distrito de Conceição de Campinas', 'selected': false},
-                {'name': 'Distrito de Sambaíba', 'selected': false},
-                {'name': 'Distrito de Buril', 'selected': false},
-                {'name': 'Distrito de Itamira', 'selected': false},
-                {'name': 'Estância', 'selected': false},
-                {'name': 'Itaporanga d\'Ajuda', 'selected': false},
-                {'name': 'Salgado', 'selected': false},
-                {'name': 'Arauá', 'selected': false},
-                {'name': 'Boquim', 'selected': false},
-                {'name': 'Cristinápolis', 'selected': false},
-                {'name': 'Indiaroba', 'selected': false},
-                {'name': 'Itabaianinha', 'selected': false},
-                {'name': 'Pedrinhas', 'selected': false},
-                {'name': 'Santa Luzia do Itanhy', 'selected': false},
-                {'name': 'Tomar do Geru', 'selected': false},
-                {'name': 'Umbaúba', 'selected': false},
-                {'name': 'Pedra Mole', 'selected': false},
-                {'name': 'Campo do Brito', 'selected': false},
-                {'name': 'Itabaiana', 'selected': false},
-                {'name': 'Lagarto', 'selected': false},
-                {'name': 'Macambira', 'selected': false},
-                {'name': 'Poço Verde', 'selected': false},
-                {'name': 'Simão Dias', 'selected': false},
-                {'name': 'São Domingos', 'selected': false},
-                {'name': 'Palmares', 'selected': false},
-                {'name': 'Riachão do Dantas', 'selected': false},
-                {'name': 'Samambaia', 'selected': false},
-                {'name': 'Tobias Barreto', 'selected': false}
-              ];
-              assert.deepEqual(scenario[0].admin_areas, adminAreas);
+              assert.equal(scenario.status, 'pending');
+              assert.equal(scenario.name, 'Main scenario');
+            }),
+          db('operations')
+            .where('project_id', 1004)
+            .where('name', 'project-setup-finish')
+            .first()
+            .then(operation => {
+              assert.equal(operation.status, 'running');
+              return db('operations_logs')
+                .where('operation_id', operation.id)
+                .first()
+                .then(log => {
+                  assert.equal(log.code, 'start');
+                });
             })
         ]);
       });
@@ -519,19 +501,19 @@ describe('Projects', function () {
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
-        assert.equal(result.message, 'Project setup finished');
+        assert.equal(result.message, 'Project setup finish started');
 
         // Check the db for updates.
         return Promise.all([
           db('projects')
             .where('id', 19999)
             .then(proj => {
-              assert.equal(proj[0].status, 'active');
+              assert.equal(proj[0].status, 'pending');
             }),
           db('scenarios')
             .where('project_id', 19999)
             .then(scenario => {
-              assert.equal(scenario[0].status, 'active');
+              assert.equal(scenario[0].status, 'pending');
               assert.equal(scenario[0].name, 'Main scenario updated');
               assert.equal(scenario[0].description, 'Main scenario description');
             })

@@ -98,6 +98,10 @@ function startOperation (projId, scId) {
 }
 
 function startFinishSetupProcess (opId, projId, scId) {
+  // In test mode we don't want to start the script.
+  // It will be tested in the appropriate place.
+  if (process.env.DS_ENV === 'test') { return; }
+
   const p = fork(path.resolve(__dirname, '../services/project-setup/index.js'));
   let processError = null;
 
