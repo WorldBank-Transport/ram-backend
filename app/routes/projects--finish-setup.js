@@ -196,12 +196,10 @@ function startFinishSetupProcess (op, projId, scId) {
     return db.transaction(function (trx) {
       return Promise.all([
         trx('projects')
-          // .update({updated_at: (new Date()), status: 'active'})
-          .update({updated_at: (new Date()), status: 'pending'})
+          .update({updated_at: (new Date()), status: 'active'})
           .where('id', projId),
         trx('scenarios')
-          // .update({updated_at: (new Date()), status: 'active'})
-          .update({updated_at: (new Date()), status: 'pending'})
+          .update({updated_at: (new Date()), status: 'active'})
           .where('id', scId)
       ])
       .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
