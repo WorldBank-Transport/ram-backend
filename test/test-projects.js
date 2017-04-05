@@ -5,7 +5,11 @@ import Server from '../app/services/server';
 import db from '../app/db';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
-import { fixMeUp, projectPendingWithFiles, projectPendingWithAllFiles } from './utils/data';
+import {
+  fixMeUp,
+  projectPendingWithFiles,
+  projectPendingWithAllFiles,
+  projectPendingWithAllFilesAndOperation } from './utils/data';
 
 var options = {
   connection: {port: 2000, host: '0.0.0.0'}
@@ -146,6 +150,7 @@ describe('Projects', function () {
       // Insert an entry on every table to ensure delete works.
       // Use just the needed fields.
       projectPendingWithFiles(99999)
+      .then(() => projectPendingWithAllFilesAndOperation(88888))
       .then(() => done());
     });
 
@@ -158,7 +163,7 @@ describe('Projects', function () {
       });
     });
 
-    it('should delete a project and all related scenarios and files', function () {
+    it('should delete a project pending and all related scenarios and files', function () {
       return instance.injectThen({
         method: 'DELETE',
         url: '/projects/99999'
@@ -185,6 +190,45 @@ describe('Projects', function () {
             .where('project_id', 99999)
             .then(files => {
               assert.equal(files.length, 0);
+            })
+          );
+      });
+    });
+
+    it.only('should delete a project pending and all related scenarios, files and operation', function () {
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/88888'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.message, 'Project deleted');
+
+        return db.select('*')
+          .from('scenarios')
+          .where('project_id', 88888)
+          .then(scenarios => {
+            assert.equal(scenarios.length, 0);
+            return;
+          })
+          .then(() => db.select('*')
+            .from('projects_files')
+            .where('project_id', 88888)
+            .then(files => {
+              assert.equal(files.length, 0);
+            })
+          )
+          .then(() => db.select('*')
+            .from('scenarios_files')
+            .where('project_id', 88888)
+            .then(files => {
+              assert.equal(files.length, 0);
+            })
+          )
+          .then(() => db.select('*')
+            .from('operations')
+            .where('project_id', 88888)
+            .then(op => {
+              assert.equal(op.length, 0);
             })
           );
       });

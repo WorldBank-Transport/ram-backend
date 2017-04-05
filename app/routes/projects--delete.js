@@ -29,13 +29,13 @@ module.exports = [
           trx.select('*').from('scenarios_files').where('project_id', id)
         ])
         .then(files => { allFiles = files; })
-        // Delete files from tables. Needs to be done first because of the
-        // foreign keys.
-        .then(() => Promise.all([
-          trx.delete().from('projects_files').where('project_id', id),
-          trx.delete().from('scenarios_files').where('project_id', id)
-        ]))
-        .then(() => trx.delete().from('scenarios').where('project_id', id))
+        // Delete the project. Everything else will follow due to
+        // cascade delete.
+        // - project files
+        // - scenario
+        // - scenario files
+        // - operations
+        // - operation logs
         .then(() => trx
           .delete()
           .from('projects')

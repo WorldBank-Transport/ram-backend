@@ -711,3 +711,40 @@ export function projectPendingWithAllFiles (id) {
   .then(() => putObjectFromFile(bucket, `scenario-${id}/road-network_000000`, FILE_ROAD_NETWORK))
   .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE_POI));
 }
+
+export function projectPendingWithAllFilesAndOperation (id) {
+  return projectPendingWithAllFiles(id)
+    .then(() => addOperationAndLogs('test-operation', id, id));
+}
+
+function addOperationAndLogs (name, projectId, scenarioId) {
+  let date = new Date();
+
+  const addLog = (opId, code, data) => {
+    return db('operations_logs')
+      .insert({
+        operation_id: opId,
+        code,
+        data,
+        created_at: date
+      })
+      .then(() => opId);
+  };
+
+  return db('operations')
+    .returning('id')
+    .insert({
+      name,
+      project_id: projectId,
+      scenario_id: scenarioId,
+      status: 'complete',
+      created_at: date,
+      updated_at: date
+    })
+    .then(res => res[0].id)
+    .then(id => addLog(id, 'test', {message: 'Test operation started'}))
+    .then(id => addLog(id, 'test:runner', {message: 'Running'}))
+    .then(id => addLog(id, 'test', {message: ''}))
+    .then(id => addLog(id, 'success', {message: 'Test operation complete'}))
+    .then(id => addLog(id, '', {message: ''}));
+}

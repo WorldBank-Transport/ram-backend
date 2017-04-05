@@ -56,7 +56,9 @@ export function createScenariosTable () {
     table.string('status');
     table.boolean('master').defaultTo(false);
     table.integer('project_id').unsigned();
-    table.foreign('project_id').references('projects.id');
+    table.foreign('project_id')
+      .references('projects.id')
+      .onDelete('CASCADE');
     table.json('admin_areas');
     table.timestamps();
 
@@ -72,7 +74,9 @@ export function createProjectsFilesTable () {
     table.string('type');
     table.string('path');
     table.integer('project_id').unsigned();
-    table.foreign('project_id').references('projects.id');
+    table.foreign('project_id')
+      .references('projects.id')
+      .onDelete('CASCADE');
     // Arbitrary additional json data.
     table.json('data');
     table.timestamps();
@@ -87,9 +91,13 @@ export function createScenariosFilesTable () {
     table.string('type');
     table.string('path');
     table.integer('project_id').unsigned();
-    table.foreign('project_id').references('projects.id');
+    table.foreign('project_id')
+      .references('projects.id')
+      .onDelete('CASCADE');
     table.integer('scenario_id').unsigned();
-    table.foreign('scenario_id').references('scenarios.id');
+    table.foreign('scenario_id')
+      .references('scenarios.id')
+      .onDelete('CASCADE');
     // Arbitrary additional json data.
     table.json('data');
     table.timestamps();
@@ -102,9 +110,13 @@ export function createOperationsTable () {
     table.increments('id').primary();
     table.string('name');
     table.integer('project_id').unsigned();
-    table.foreign('project_id').references('projects.id');
+    table.foreign('project_id')
+      .references('projects.id')
+      .onDelete('CASCADE');
     table.integer('scenario_id').unsigned();
-    table.foreign('scenario_id').references('scenarios.id');
+    table.foreign('scenario_id')
+      .references('scenarios.id')
+      .onDelete('CASCADE');
     table.string('status');
     table.timestamps();
   });
@@ -115,7 +127,9 @@ export function createOperationsLogsTable () {
   return db.schema.createTable('operations_logs', table => {
     table.increments('id').primary();
     table.integer('operation_id').unsigned();
-    table.foreign('operation_id').references('operations.id');
+    table.foreign('operation_id')
+      .references('operations.id')
+      .onDelete('CASCADE');
     table.string('code');
     table.json('data');
     table.timestamp('created_at').defaultTo(db.fn.now());
