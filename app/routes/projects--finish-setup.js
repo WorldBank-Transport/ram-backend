@@ -6,14 +6,10 @@ import Promise from 'bluebird';
 import db from '../db/';
 import { ProjectNotFoundError, DataConflictError } from '../utils/errors';
 import { getProject } from './projects--get';
-import { getFileContents, getJSONFileContents } from '../s3/utils';
 import Operation from '../utils/operation';
 
-import osm2json from 'osm2json';
-import putChanges from 'osm-p2p-server/api/put_changes';
-import createChangeset from 'osm-p2p-server/api/create_changeset';
-
-import { getDatabase } from '../services/rra-osm-p2p';
+import { fork } from 'child_process';
+import path from 'path';
 
 module.exports = [
   {
@@ -68,7 +64,7 @@ module.exports = [
             ]);
           })
           .then(() => startOperation(projId, scId)
-            .then(op => startFinishSetupProcess(op, projId, scId))
+            .then(op => startFinishSetupProcess(op.getId(), projId, scId))
           );
         })
         .then(() => reply({statusCode: 200, message: 'Project setup finish started'}))
@@ -96,116 +92,38 @@ function startOperation (projId, scId) {
     })
     .then(() => {
       let op = new Operation(db);
-      return op.start('project-setup-finish', projId, scId);
+      return op.start('project-setup-finish', projId, scId)
+        .then(() => op.log('start', {message: 'Process starting'}));
     });
 }
 
-function startFinishSetupProcess (op, projId, scId) {
-  //
-  function processAdminAreas (adminBoundsFc) {
-    console.log('processAdminAreas');
-    let task = db.transaction(function (trx) {
-      let adminAreas = adminBoundsFc.features
-        .map(o => ({name: o.properties.name, selected: false}))
-        .filter(o => !!o.name);
+function startFinishSetupProcess (opId, projId, scId) {
+  const p = fork(path.resolve(__dirname, '../services/project-setup/index.js'));
+  let processError = null;
 
-      return Promise.all([
-        trx('projects')
-          .update({
-            updated_at: (new Date())
-          })
-          .where('id', projId),
-        trx('scenarios')
-          .update({
-            admin_areas: JSON.stringify(adminAreas),
-            updated_at: (new Date())
-          })
-          .where('id', scId)
-      ]);
-    });
+  p.send({opId: opId, projId, scId});
 
-    return op.log('process:admin-bounds', {message: 'Processing admin areas'})
-      .then(() => task);
-  }
+  p.on('message', function (msg) {
+    switch (msg.type) {
+      case 'error':
+        processError = msg;
+        break;
+    }
+  });
 
-  function processRoadNetwork (roadNetwork) {
-    // WARNING!!!!
-    // ////////////////////////////////////////////////////////// //
-    // roadNetwork MUST be converted to a changeset before using. //
-    // This is not implemented yet!                               //
-    // ////////////////////////////////////////////////////////// //
-
-    console.log('processRoadNetwork start');
-    console.time('processRoadNetwork');
-    let task = new Promise((resolve, reject) => {
-      let db = getDatabase(projId, scId);
-
-      let changeset = {
-        type: 'changeset',
-        tags: {
-          comment: `Finish project setup. Project ${projId}, Scenario ${scId}`,
-          created_by: 'RRA'
-        }
-      };
-      createChangeset(db)(changeset, (err, id, node) => {
-        if (err) return reject(err);
-
-        let changes = osm2json({coerceIds: false}).parse(roadNetwork);
-        // Set the correct id.
-        changes = changes.map(c => {
-          c.changeset = id;
-          return c;
+  p.on('exit', (code) => {
+    if (code !== 0) {
+      processError = processError || `Unknown error. Code ${code}`;
+      // The operation may not have finished if the error took place outside
+      // the promise, or if the error was due to a wrong db connection.
+      let op = new Operation(db);
+      op.loadById(opId)
+        .then(op => {
+          if (!op.isCompleted()) {
+            return op.log('error', {error: processError})
+              .then(op => op.finish());
+          }
         });
-
-        putChanges(db)(changes, id, (err, diffResult) => {
-          console.timeEnd('processRoadNetwork');
-          if (err) return reject(err);
-          return resolve();
-        });
-      });
-    });
-
-    return op.log('process:road-network', {message: 'Road network processing started'})
-      .then(() => task)
-      .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
-  }
-
-  Promise.all([
-    db('scenarios_files')
-      .select('*')
-      .where('project_id', projId)
-      .where('type', 'road-network')
-      .first()
-      .then(file => getFileContents(file.path)),
-    db('projects_files')
-      .select('*')
-      .where('project_id', projId)
-      .where('type', 'admin-bounds')
-      .first()
-      .then(file => getJSONFileContents(file.path))
-  ])
-  .then(filesContent => {
-    let [roadNetwork, adminBoundsFc] = filesContent;
-
-    return Promise.all([
-      processAdminAreas(adminBoundsFc),
-      processRoadNetwork(roadNetwork)
-    ]);
-  })
-  .then(() => {
-    return db.transaction(function (trx) {
-      return Promise.all([
-        trx('projects')
-          .update({updated_at: (new Date()), status: 'active'})
-          .where('id', projId),
-        trx('scenarios')
-          .update({updated_at: (new Date()), status: 'active'})
-          .where('id', scId)
-      ])
-      .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
-    });
-  })
-  .catch(err => {
-    op.log('error', {error: err.message}).then(op => op.finish());
+    }
   });
 }
