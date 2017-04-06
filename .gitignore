@@ -102,3 +102,6 @@ tmp
 dist
 .nyc_output
 ecs-task-definition-generated.yml
+
+# OSM P2P db
+osm-p2p-dbs
