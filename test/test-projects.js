@@ -25,11 +25,11 @@ before(function (done) {
 });
 
 describe('Projects', function () {
-  before('Before - Projects', function (done) {
-    setupDdStructure()
+  before('Before - Projects', function () {
+    this.timeout(5000);
+    return setupDdStructure()
       .then(() => setupStorageStructure())
-      .then(() => fixMeUp())
-      .then(() => done());
+      .then(() => fixMeUp());
   });
 
   describe('GET /projects', function () {

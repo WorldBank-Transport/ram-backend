@@ -15,8 +15,9 @@ const INVALID_FILE_JSON = path.join(__dirname, 'utils/test-file.json');
 const INVALID_FILE = path.join(__dirname, 'utils/test-file');
 
 describe('Finish Project Setup', function () {
-  before(function (done) {
-    setupDdStructure()
+  before(function () {
+    this.timeout(5000);
+    return setupDdStructure()
       .then(() => setupStorageStructure())
 
       // Small valid road-network file.
@@ -29,9 +30,7 @@ describe('Finish Project Setup', function () {
 
       // Invalid road-network file. (not xml, just text)
       .then(() => projectPendingWithAllFiles(3020))
-      .then(() => putObjectFromFile(bucket, `scenario-3020/road-network_000000`, INVALID_FILE))
-
-      .then(() => done());
+      .then(() => putObjectFromFile(bucket, `scenario-3020/road-network_000000`, INVALID_FILE));
   });
 
   it('should process the project files to finish the setup', function (done) {

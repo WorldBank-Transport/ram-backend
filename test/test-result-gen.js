@@ -21,11 +21,11 @@ before(function (done) {
 });
 
 describe('Result generation', function () {
-  before('Before - Result generation', function (done) {
-    setupDdStructure()
+  before('Before - Result generation', function () {
+    this.timeout(5000);
+    return setupDdStructure()
       .then(() => setupStorageStructure())
-      .then(() => fixMeUp())
-      .then(() => done());
+      .then(() => fixMeUp());
   });
 
   describe('POST /projects/{projId}/scenarios/{scId}/generate', function () {

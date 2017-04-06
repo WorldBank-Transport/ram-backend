@@ -24,11 +24,11 @@ before(function (done) {
 });
 
 describe('Scenario files', function () {
-  before('Before - Scenario files', function (done) {
-    setupDdStructure()
+  before('Before - Scenario files', function () {
+    this.timeout(5000);
+    return setupDdStructure()
       .then(() => setupStorageStructure())
-      .then(() => fixMeUp())
-      .then(() => done());
+      .then(() => fixMeUp());
   });
 
   describe('DELETE /projects/{projId}/scenarios/{scId}/files/{fileId}', function () {

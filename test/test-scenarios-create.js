@@ -23,11 +23,11 @@ before(function (done) {
 });
 
 describe('Scenarios', function () {
-  before('Before - Scenarios', function (done) {
-    setupDdStructure()
+  before('Before - Scenarios', function () {
+    this.timeout(5000);
+    return setupDdStructure()
       .then(() => setupStorageStructure())
-      .then(() => fixMeUp())
-      .then(() => done());
+      .then(() => fixMeUp());
   });
 
   describe('POST /projects/{projId}/scenarios', function () {
