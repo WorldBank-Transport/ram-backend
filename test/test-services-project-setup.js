@@ -8,7 +8,7 @@ import { bucket } from '../app/s3/';
 import { setupStructure as setupStorageStructure, putObjectFromFile } from '../app/s3/structure';
 import { projectPendingWithAllFiles } from './utils/data';
 import Operation from '../app/utils/operation';
-import { startFinishSetupProcess } from '../app/services/project-setup/project-setup';
+import { concludeProjectSetup } from '../app/services/project-setup/project-setup';
 
 const FILE_ROAD_NETWORK = path.join(__dirname, 'utils/road-network-changeset-small.osm');
 const INVALID_FILE_JSON = path.join(__dirname, 'utils/test-file.json');
@@ -125,12 +125,15 @@ describe('Finish Project Setup', function () {
           opId: op.getId(),
           projId: 3000,
           scId: 3000,
-          successTerminator: validate,
-          errorTerminator: (err) => {
-            done(new Error('The script ended in error' + err));
+          callback: (err) => {
+            if (err) {
+              done(new Error('The script ended in error' + err));
+            } else {
+              validate();
+            }
           }
         };
-        startFinishSetupProcess(data);
+        concludeProjectSetup(data);
       });
   });
 
@@ -147,25 +150,26 @@ describe('Finish Project Setup', function () {
           opId: op.getId(),
           projId: 3010,
           scId: 3010,
-          successTerminator: () => {
-            done(new Error('The test should have failed but succeeded'));
-          },
-          errorTerminator: (err) => {
-            db('operations_logs')
-              .where('operation_id', op.getId())
-              .orderBy('id', 'desc')
-              .then(logs => {
-                assert.equal(err, "Cannot read property 'map' of undefined");
-                assert.lengthOf(logs, 3);
-                assert.equal(logs[0].code, 'error');
-                assert.equal(logs[0].data.error, "Cannot read property 'map' of undefined");
-              })
-              .then(() => done())
-              .catch(err => done(err));
+          callback: (err) => {
+            if (err) {
+              db('operations_logs')
+                .where('operation_id', op.getId())
+                .orderBy('id', 'desc')
+                .then(logs => {
+                  assert.equal(err, "Cannot read property 'map' of undefined");
+                  assert.lengthOf(logs, 3);
+                  assert.equal(logs[0].code, 'error');
+                  assert.equal(logs[0].data.error, "Cannot read property 'map' of undefined");
+                })
+                .then(() => done())
+                .catch(err => done(err));
+            } else {
+              done(new Error('The test should have failed but succeeded'));
+            }
           }
         };
 
-        startFinishSetupProcess(data);
+        concludeProjectSetup(data);
       });
   });
 
@@ -183,25 +187,26 @@ describe('Finish Project Setup', function () {
           opId: op.getId(),
           projId: 3020,
           scId: 3020,
-          successTerminator: () => {
-            done(new Error('The test should have failed but succeeded'));
-          },
-          errorTerminator: (err) => {
-            db('operations_logs')
-              .where('operation_id', op.getId())
-              .orderBy('id', 'desc')
-              .then(logs => {
-                assert.equal(err, 'Error parsing XML');
-                assert.lengthOf(logs, 4);
-                assert.equal(logs[0].code, 'error');
-                assert.equal(logs[0].data.error, 'Error parsing XML');
-              })
-              .then(() => done())
-              .catch(err => done(err));
+          callback: (err) => {
+            if (err) {
+              db('operations_logs')
+                .where('operation_id', op.getId())
+                .orderBy('id', 'desc')
+                .then(logs => {
+                  assert.equal(err, 'Error parsing XML');
+                  assert.lengthOf(logs, 4);
+                  assert.equal(logs[0].code, 'error');
+                  assert.equal(logs[0].data.error, 'Error parsing XML');
+                })
+                .then(() => done())
+                .catch(err => done(err));
+            } else {
+              done(new Error('The test should have failed but succeeded'));
+            }
           }
         };
 
-        startFinishSetupProcess(data);
+        concludeProjectSetup(data);
       });
   });
 });

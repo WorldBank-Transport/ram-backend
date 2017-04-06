@@ -64,7 +64,7 @@ module.exports = [
             ]);
           })
           .then(() => startOperation(projId, scId)
-            .then(op => startFinishSetupProcess(op.getId(), projId, scId))
+            .then(op => concludeProjectSetup(op.getId(), projId, scId))
           );
         })
         .then(() => reply({statusCode: 200, message: 'Project setup finish started'}))
@@ -97,7 +97,7 @@ function startOperation (projId, scId) {
     });
 }
 
-function startFinishSetupProcess (opId, projId, scId) {
+function concludeProjectSetup (opId, projId, scId) {
   // In test mode we don't want to start the script.
   // It will be tested in the appropriate place.
   if (process.env.DS_ENV === 'test') { return; }

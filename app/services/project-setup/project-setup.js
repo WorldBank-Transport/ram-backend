@@ -12,17 +12,37 @@ import { getDatabase } from '../rra-osm-p2p';
 process.on('message', function (e) {
   // Capture all the errors.
   try {
-    e.successTerminator = () => process.exit(0);
-    e.errorTerminator = () => process.exit(1);
-    startFinishSetupProcess(e);
+    e.callback = (err) => {
+      if (err) return process.exit(1);
+      else process.exit(0);
+    };
+    concludeProjectSetup(e);
   } catch (err) {
     process.send({type: 'error', data: err.message, stack: err.stack});
     throw err;
   }
 });
 
-export function startFinishSetupProcess (e) {
-  const {opId, projId, scId, successTerminator, errorTerminator} = e;
+// The project setup script is setup so that it run on a different node process
+// using fork. This allows us to offload the main server not causing blocking
+// operations.
+
+/**
+ * Finishes the project setup by processing all the needed files:
+ * Road network:
+ *   - Convert the osm file to a changeset and import it to the osm-p2p-db
+ * Admin Bound:
+ *   - Extract all the village names, and store them on the database. This is
+ *   needed to later select what admin areas are to be processed.
+ *
+ * @param  {object} e       Data.
+ *         e.opId           Operation Id. It has to be already started.
+ *         e.projId         Project Id.
+ *         e.scId           Scenario Id.
+ *         e.callback
+ */
+export function concludeProjectSetup (e) {
+  const {opId, projId, scId, callback} = e;
 
   function processAdminAreas (adminBoundsFc) {
     console.log('processAdminAreas');
@@ -141,10 +161,10 @@ export function startFinishSetupProcess (e) {
       .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
     });
   })
-  .then(() => successTerminator())
+  .then(() => callback())
   .catch(err => {
     return op.log('error', {error: err.message})
       .then(op => op.finish())
-      .then(() => errorTerminator(err.message), () => errorTerminator(err.message));
+      .then(() => callback(err.message), () => callback(err.message));
   });
 }
