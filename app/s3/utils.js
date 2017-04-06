@@ -69,11 +69,5 @@ export function getFileContents (file) {
 // Get file content in JSON.
 export function getJSONFileContents (file) {
   return getFileContents(file)
-    .then(result => {
-      try {
-        return JSON.parse(result);
-      } catch (e) {
-        Promise.reject(e);
-      }
-    });
+    .then(result => JSON.parse(result));
 }
