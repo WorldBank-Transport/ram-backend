@@ -399,6 +399,7 @@ describe('Projects', function () {
 
   describe('POST /projects/{projId}/finish-setup', function () {
     before(function (done) {
+      this.timeout(5000);
       // Needed for test: 'should update project and scenario with name and description'
       projectPendingWithAllFiles(19999)
         .then(() => done());

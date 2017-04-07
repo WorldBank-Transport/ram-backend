@@ -9,9 +9,6 @@ import { getProject } from './projects--get';
 import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
 
-import { fork } from 'child_process';
-import path from 'path';
-
 module.exports = [
   {
     path: '/projects/{projId}/finish-setup',
@@ -99,6 +96,10 @@ function startOperation (projId, scId) {
 }
 
 function concludeProjectSetup (projId, scId, opId, cb) {
+  // In test mode we don't want to start the generation.
+  // It will be tested in the appropriate place.
+  if (process.env.DS_ENV === 'test') { return; }
+
   console.log(`p${projId} s${scId}`, 'concludeProjectSetup');
   let service = new ServiceRunner('project-setup', {projId, scId, opId});
 

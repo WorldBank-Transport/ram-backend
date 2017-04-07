@@ -66,20 +66,20 @@ export function exportRoadNetwork (e) {
         throw err;
       });
 
-      logger.log('starting data stream');
+      logger && logger.log('starting data stream');
       let stream = getMap(osmDb)(bbox, {order: 'type'})
         .pipe(formatTransform);
 
       return putFileStream(filePath, stream);
     })
     .then(() => {
-      logger.log('process complete');
-      DEBUG && appLogger.toFile(path.resolve(__dirname, `../../../export-road-network_p${projId}s${scId}.log`));
+      logger && logger.log('process complete');
+      DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../export-road-network_p${projId}s${scId}.log`));
       callback();
     })
     .catch(err => {
-      logger.log('error', err);
-      DEBUG && appLogger.toFile(path.resolve(__dirname, `../../../export-road-network_p${projId}s${scId}.log`));
+      logger && logger.log('error', err);
+      DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../export-road-network_p${projId}s${scId}.log`));
       return op.log('error', {error: err.message})
         .then(op => op.finish())
         .then(() => callback(err.message), () => callback(err.message));

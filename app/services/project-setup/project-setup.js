@@ -54,7 +54,7 @@ export function concludeProjectSetup (e) {
   const {opId, projId, scId, callback} = e;
 
   function processAdminAreas (adminBoundsFc) {
-    logger.log('process admin areas');
+    logger && logger.log('process admin areas');
 
     let adminAreaTask = () => {
       return db.transaction(function (trx) {
@@ -89,7 +89,7 @@ export function concludeProjectSetup (e) {
     // This is not implemented yet!                               //
     // ////////////////////////////////////////////////////////// //
 
-    logger.log('process road network');
+    logger && logger.log('process road network');
     console.time('processRoadNetwork');
 
     let roadNetworkTask = () => {
@@ -171,13 +171,13 @@ export function concludeProjectSetup (e) {
     });
   })
   .then(() => {
-    logger.log('process complete');
-    DEBUG && appLogger.toFile(path.resolve(__dirname, `../../../project-setup_p${projId}s${scId}.log`));
+    logger && logger.log('process complete');
+    DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../project-setup_p${projId}s${scId}.log`));
     callback();
   })
   .catch(err => {
-    logger.log('error', err);
-    DEBUG && appLogger.toFile(path.resolve(__dirname, `../../../project-setup_p${projId}s${scId}.log`));
+    logger && logger.log('error', err);
+    DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../project-setup_p${projId}s${scId}.log`));
     return op.log('error', {error: err.message})
       .then(op => op.finish())
       .then(() => callback(err.message), () => callback(err.message));
