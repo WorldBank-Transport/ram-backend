@@ -141,6 +141,9 @@ parser.add_option("--split-ways", dest="maxNodesPerWay", type=int, default=1800,
 parser.add_option("--saveid", dest="saveid", type=str, default=None,
                     help="Save last ID after execution to a file.")
 
+parser.add_option("--changeset-id", dest="changesetID", type=str, default=None,
+                    help="Provide a Changeset ID to output an OSM Change file.")
+
 # Positive IDs can cause big problems if used inappropriately so hide the help for this
 parser.add_option("--positive-id", dest="positiveID", action="store_true",
                     help=optparse.SUPPRESS_HELP)
@@ -152,6 +155,7 @@ parser.add_option("--add-version", dest="addVersion", action="store_true",
 # Add timestamp attributes. Again, this can cause big problems so surpress the help
 parser.add_option("--add-timestamp", dest="addTimestamp", action="store_true",
                     help=optparse.SUPPRESS_HELP)
+
 
 parser.add_option("--sql", dest="sqlQuery", type=str, default=None,
                      help="SQL query to execute on a PostgreSQL source")
@@ -185,13 +189,18 @@ if options.addTimestamp:
 source = args[0]
 sourceIsDatabase = bool(re.match('^PG:', source))
 
+if options.changesetID:
+    extension = ".osmc"
+else:
+    extension = ".osm"
+
 if options.outputFile is not None:
     options.outputFile = os.path.realpath(options.outputFile)
 elif sourceIsDatabase:
     parser.error("ERROR: An output file must be explicitly specified when using a database source")
 else:
     (base, ext) = os.path.splitext(os.path.basename(source))
-    options.outputFile = os.path.join(os.getcwd(), base + ".osm")
+    options.outputFile = os.path.join(os.getcwd(), base + extension)
 
 if options.sqlQuery and not sourceIsDatabase:
     parser.error("ERROR: You must use a database source when specifying a query with --sql")
@@ -641,7 +650,9 @@ def output():
     # Open up the output file with the system default buffering
     with open(options.outputFile, 'w', buffering=-1) as f:
 
-        if options.noUploadFalse:
+        if options.changesetID:
+            f.write('<?xml version="1.0"?>\n<osmChange version="0.6" generator="uvmogr2osm">\n<create>\n')
+        elif options.noUploadFalse:
             f.write('<?xml version="1.0"?>\n<osm version="0.6" generator="uvmogr2osm">\n')
         else:
             f.write('<?xml version="1.0"?>\n<osm version="0.6" upload="false" generator="uvmogr2osm">\n')
@@ -656,6 +667,10 @@ def output():
 
         for node in nodes:
             xmlattrs = {'visible':'true','id':str(node.id), 'lat':str(node.y*10**-options.significantDigits), 'lon':str(node.x*10**-options.significantDigits)}
+
+            if options.changesetID:
+                xmlattrs['changeset'] = options.changesetID
+
             xmlattrs.update(attributes)
 
             xmlobject = etree.Element('node', xmlattrs)
@@ -672,6 +687,10 @@ def output():
 
         for way in ways:
             xmlattrs = {'visible':'true', 'id':str(way.id)}
+
+            if options.changesetID:
+                xmlattrs['changeset'] = options.changesetID
+
             xmlattrs.update(attributes)
 
             xmlobject = etree.Element('way', xmlattrs)
@@ -692,6 +711,10 @@ def output():
 
         for relation in relations:
             xmlattrs = {'visible':'true', 'id':str(relation.id)}
+
+            if options.changesetID:
+                xmlattrs['changeset'] = options.changesetID
+
             xmlattrs.update(attributes)
 
             xmlobject = etree.Element('relation', xmlattrs)
@@ -713,7 +736,10 @@ def output():
                 f.write(etree.tostring(xmlobject, encoding='unicode'))
             f.write('\n')
 
-        f.write('</osm>')
+        if options.changesetID:
+            f.write('</create>\n<modify/>\n<delete if-unused="true"/>\n</osmChange>')
+        else:
+            f.write('</osm>')
 
 
 # Main flow
