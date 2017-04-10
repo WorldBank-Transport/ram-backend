@@ -1,5 +1,6 @@
 'use strict';
 import path from 'path';
+import bbox from '@turf/bbox';
 import osm2json from 'osm2json';
 import putChanges from 'osm-p2p-server/api/put_changes';
 import createChangeset from 'osm-p2p-server/api/create_changeset';
@@ -62,9 +63,12 @@ export function concludeProjectSetup (e) {
           .map(o => ({name: o.properties.name, selected: false}))
           .filter(o => !!o.name);
 
+        let adminAreasBbox = bbox(adminBoundsFc);
+
         return Promise.all([
           trx('projects')
             .update({
+              bbox: JSON.stringify(adminAreasBbox),
               updated_at: (new Date())
             })
             .where('id', projId),

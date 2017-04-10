@@ -41,6 +41,7 @@ export function createProjectsTable () {
     table.string('name');
     table.text('description');
     table.string('status');
+    table.json('bbox');
     table.timestamps();
 
     table.unique('name');

@@ -143,6 +143,28 @@ describe('Projects', function () {
         assert.equal(res.result.readyToEndSetup, true);
       });
     });
+
+    it('should not include bbox for a pending project', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1004'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.status, 'pending');
+        assert.equal(res.result.bbox, null);
+      });
+    });
+
+    it('should include bbox for a pending project', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1200'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        assert.equal(res.result.status, 'active');
+        assert.deepEqual(res.result.bbox, [ -38.313, -11.89, -37.1525399, -10.5333431 ]);
+      });
+    });
   });
 
   describe('DELETE /projects/{projId}', function () {
