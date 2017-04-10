@@ -49,6 +49,7 @@ import logging as l
 import re
 l.basicConfig(level=l.DEBUG, format="%(message)s")
 
+from osgeo import gdal
 from osgeo import ogr
 from osgeo import osr
 from geom import *
@@ -320,6 +321,7 @@ def getFileData(filename):
             elif filename.endswith('.zip'):
                 filename = '/vsizip/' + filename
 
+    gdal.SetConfigOption('OSM_USE_CUSTOM_INDEXING', 'NO')
     fileDataSource = ogr.Open(filename, 0)  # 0 means read-only
     if fileDataSource is None:
         l.error('OGR failed to open ' + filename + ', format may be unsupported')
