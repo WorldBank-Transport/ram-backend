@@ -135,9 +135,15 @@ export function concludeProjectSetup (e) {
         ];
 
         let conversionProcess = cp.spawn('python', args);
-        conversionProcess.on('close', (code) => {
+        let processError = '';
+        conversionProcess.stderr.on('data', err => {
+          processError += err.toString();
+        });
+        conversionProcess.on('close', code => {
           if (code !== 0) {
-            return reject();
+            let err = processError.match(/(ogr2osm.py: error:.+)/);
+            err = err[0] || `Unknown error. Code ${code}`;
+            return reject(new Error(err));
           }
           return resolve(id);
         });
