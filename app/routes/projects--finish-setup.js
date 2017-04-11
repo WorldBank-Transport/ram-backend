@@ -7,9 +7,7 @@ import db from '../db/';
 import { ProjectNotFoundError, DataConflictError } from '../utils/errors';
 import { getProject } from './projects--get';
 import Operation from '../utils/operation';
-
-import { fork } from 'child_process';
-import path from 'path';
+import ServiceRunner from '../utils/service-runner';
 
 module.exports = [
   {
@@ -64,7 +62,7 @@ module.exports = [
             ]);
           })
           .then(() => startOperation(projId, scId)
-            .then(op => concludeProjectSetup(op.getId(), projId, scId))
+            .then(op => concludeProjectSetup(projId, scId, op.getId()))
           );
         })
         .then(() => reply({statusCode: 200, message: 'Project setup finish started'}))
@@ -97,37 +95,28 @@ function startOperation (projId, scId) {
     });
 }
 
-function concludeProjectSetup (opId, projId, scId) {
-  // In test mode we don't want to start the script.
+function concludeProjectSetup (projId, scId, opId, cb) {
+  // In test mode we don't want to start the generation.
   // It will be tested in the appropriate place.
   if (process.env.DS_ENV === 'test') { return; }
 
-  const p = fork(path.resolve(__dirname, '../services/project-setup/index.js'));
-  let processError = null;
+  console.log(`p${projId} s${scId}`, 'concludeProjectSetup');
+  let service = new ServiceRunner('project-setup', {projId, scId, opId});
 
-  p.send({opId, projId, scId});
-
-  p.on('message', function (msg) {
-    switch (msg.type) {
-      case 'error':
-        processError = msg;
-        break;
-    }
-  });
-
-  p.on('exit', (code) => {
-    if (code !== 0) {
-      processError = processError || `Unknown error. Code ${code}`;
+  service.on('complete', err => {
+    console.log(`p${projId} s${scId}`, 'concludeProjectSetup complete');
+    if (err) {
       // The operation may not have finished if the error took place outside
       // the promise, or if the error was due to a wrong db connection.
       let op = new Operation(db);
       op.loadById(opId)
         .then(op => {
           if (!op.isCompleted()) {
-            return op.log('error', {error: processError})
+            return op.log('error', {error: err.message})
               .then(op => op.finish());
           }
         });
     }
-  });
+  })
+  .start();
 }

@@ -19,6 +19,7 @@
   "license": "",
   "homepage": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility",
   "dependencies": {
+    "@turf/bbox": "^4.0.2",
     "babel-preset-es2015": "^6.18.0",
     "babel-register": "^6.18.0",
     "bluebird": "^3.4.7",
@@ -35,6 +36,7 @@
     "knex": "^0.12.7",
     "lodash": "^4.17.0",
     "minio": "^3.1.1",
+    "obj2osm": "^2.0.1",
     "osm-p2p": "^1.4.0",
     "osm-p2p-server": "^2.1.2",
     "osm2json": "^2.1.0",

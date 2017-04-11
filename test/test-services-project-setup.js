@@ -43,6 +43,7 @@ describe('Finish Project Setup', function () {
       .then(() => {
         const validate = () => {
           // Project should be active.
+          // Project should have a bbox
           // Scenario should be active.
           // Scenario should have admin areas.
           // Operation should be complete.
@@ -53,6 +54,7 @@ describe('Finish Project Setup', function () {
               .first()
               .then(proj => {
                 assert.equal(proj.status, 'active');
+                assert.deepEqual(proj.bbox, [ -38.313, -11.89, -37.1525399, -10.5333431 ]);
               }),
             db('scenarios')
               .where('id', 3000)

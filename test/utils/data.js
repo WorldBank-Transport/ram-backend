@@ -2,16 +2,24 @@
 import Promise from 'bluebird';
 import _ from 'lodash';
 import path from 'path';
+import bbox from '@turf/bbox';
+import fs from 'fs';
 
 import db from '../../app/db';
 import { bucket } from '../../app/s3/';
 import { putObjectFromFile } from '../../app/s3/structure';
+
+function readJSONSync (file) {
+  return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
 
 const FILE_PROFILE = path.join(__dirname, 'data-sergipe/profile.lua');
 const FILE_VILLAGES = path.join(__dirname, 'data-sergipe/villages.geojson');
 const FILE_ADMIN = path.join(__dirname, 'data-sergipe/admin-boundaries.geojson');
 const FILE_ROAD_NETWORK = path.join(__dirname, 'data-sergipe/road-network.osm');
 const FILE_POI = path.join(__dirname, 'data-sergipe/poi-townhalls.geojson');
+
+const ADMIN_AREAS_BBOX = bbox(readJSONSync(FILE_ADMIN));
 
 // Admin areas from admin-boundaries.geojson
 export const ADMIN_AREAS = [
@@ -262,6 +270,7 @@ export function project1100 () {
     'name': 'Project 1100',
     'description': 'Project 1100 in active state with one scenarios and all files',
     'status': 'active',
+    'bbox': JSON.stringify(ADMIN_AREAS_BBOX),
     'created_at': '2017-02-01T12:00:06.000Z',
     'updated_at': '2017-02-01T12:00:06.000Z'
   })
@@ -341,6 +350,7 @@ export function project1200 () {
     'name': 'Project 1200',
     'description': 'Project 1200 in active state with 2 scenarios',
     'status': 'active',
+    'bbox': JSON.stringify(ADMIN_AREAS_BBOX),
     'created_at': '2017-02-01T12:00:07.000Z',
     'updated_at': '2017-02-01T12:00:07.000Z'
   })
@@ -456,6 +466,7 @@ export function project2000 () {
     'name': 'Sergipe, Brazil',
     'description': 'Townhalls in a part of Sergipe, brazil.',
     'status': 'active',
+    'bbox': JSON.stringify(ADMIN_AREAS_BBOX),
     'created_at': '2017-02-01T12:00:06.000Z',
     'updated_at': '2017-02-01T12:00:06.000Z'
   })
@@ -641,6 +652,7 @@ export function projectPendingWithAllFiles (id) {
     'name': `Full project ${id}`,
     'description': 'Project in pending state with one scenario and a profile file',
     'status': 'pending',
+    'bbox': JSON.stringify(ADMIN_AREAS_BBOX),
     'created_at': '2017-02-01T12:00:00.000Z',
     'updated_at': '2017-02-01T12:00:00.000Z'
   })

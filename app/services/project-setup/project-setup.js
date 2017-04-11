@@ -1,4 +1,5 @@
 'use strict';
+import bbox from '@turf/bbox';
 import osm2json from 'osm2json';
 import putChanges from 'osm-p2p-server/api/put_changes';
 import createChangeset from 'osm-p2p-server/api/create_changeset';
@@ -9,14 +10,22 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
+import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
 import { getFileContents, getJSONFileContents } from '../../s3/utils';
 import { getDatabase } from '../rra-osm-p2p';
+import AppLogger from '../../utils/app-logger';
+
+const DEBUG = config.debug;
+let appLogger = AppLogger({ output: DEBUG });
+let logger;
 
 process.on('message', function (e) {
   // Capture all the errors.
   try {
+    logger = appLogger.group(`p${e.projId} s${e.scId} proj-setup`);
+    logger.log('init');
     e.callback = (err) => {
       if (err) return process.exit(1);
       else process.exit(0);
@@ -50,7 +59,7 @@ export function concludeProjectSetup (e) {
   const {opId, projId, scId, callback} = e;
 
   function processAdminAreas (adminBoundsFc) {
-    console.log('processAdminAreas');
+    logger && logger.log('process admin areas');
 
     let adminAreaTask = () => {
       return db.transaction(function (trx) {
@@ -58,9 +67,12 @@ export function concludeProjectSetup (e) {
           .map(o => ({name: o.properties.name, selected: false}))
           .filter(o => !!o.name);
 
+        let adminAreasBbox = bbox(adminBoundsFc);
+
         return Promise.all([
           trx('projects')
             .update({
+              bbox: JSON.stringify(adminAreasBbox),
               updated_at: (new Date())
             })
             .where('id', projId),
@@ -79,7 +91,7 @@ export function concludeProjectSetup (e) {
   }
 
   function processRoadNetwork (roadNetwork) {
-    console.log('processRoadNetwork start');
+    logger && logger.log('process road network');
     console.time('processRoadNetwork');
     const db = getDatabase(projId, scId);
     const basePath = path.join(os.tmpdir(), `road-networkP${projId}S${scId}`);
@@ -195,8 +207,14 @@ export function concludeProjectSetup (e) {
       .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
     });
   })
-  .then(() => callback())
+  .then(() => {
+    logger && logger.log('process complete');
+    DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../project-setup_p${projId}s${scId}.log`));
+    callback();
+  })
   .catch(err => {
+    logger && logger.log('error', err);
+    DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../project-setup_p${projId}s${scId}.log`));
     return op.log('error', {error: err.message})
       .then(op => op.finish())
       .then(() => callback(err.message), () => callback(err.message));
