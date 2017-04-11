@@ -139,8 +139,7 @@ export function concludeProjectSetup (e) {
         });
         conversionProcess.on('close', code => {
           if (code !== 0) {
-            let err = processError.match(/(ogr2osm.py: error:.+)/);
-            err = err[0] || `Unknown error. Code ${code}`;
+            let err = processError || `Unknown error. Code ${code}`;
             return reject(new Error(err));
           }
           return resolve(id);

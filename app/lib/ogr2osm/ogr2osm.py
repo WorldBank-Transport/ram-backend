@@ -47,7 +47,7 @@ import os
 import optparse
 import logging as l
 import re
-l.basicConfig(level=l.DEBUG, format="%(message)s")
+l.basicConfig(level=l.ERROR, format="%(message)s")
 
 from osgeo import gdal
 from osgeo import ogr

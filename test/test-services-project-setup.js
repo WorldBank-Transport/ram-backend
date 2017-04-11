@@ -10,7 +10,7 @@ import { projectPendingWithAllFiles } from './utils/data';
 import Operation from '../app/utils/operation';
 import { concludeProjectSetup } from '../app/services/project-setup/project-setup';
 
-const FILE_ROAD_NETWORK = path.join(__dirname, 'utils/road-network-changeset-small.osm');
+const FILE_ROAD_NETWORK = path.join(__dirname, 'utils/road-network-small.osm');
 const INVALID_FILE_JSON = path.join(__dirname, 'utils/test-file.json');
 const INVALID_FILE = path.join(__dirname, 'utils/test-file');
 
@@ -194,10 +194,10 @@ describe('Finish Project Setup', function () {
                 .where('operation_id', op.getId())
                 .orderBy('id', 'desc')
                 .then(logs => {
-                  assert.equal(err, 'Error parsing XML');
+                  assert.match(err, /OGR failed to open (.+)\/road-networkP3020S3020.osm, format may be unsupported/);
                   assert.lengthOf(logs, 4);
                   assert.equal(logs[0].code, 'error');
-                  assert.equal(logs[0].data.error, 'Error parsing XML');
+                  assert.match(logs[0].data.error, /OGR failed to open (.+)\/road-networkP3020S3020.osm, format may be unsupported/);
                 })
                 .then(() => done())
                 .catch(err => done(err));
