@@ -9,6 +9,7 @@ To set up the development environment for this website, you'll need to install t
 
 - [Node](http://nodejs.org/) v6.x (To manage multiple node versions we recommend [nvm](https://github.com/creationix/nvm))
 - [Docker](https://www.docker.com/products/docker) and [Docker Compose](https://docs.docker.com/compose/install/) v1.10.0
+- python-gdal and python-lxml to generate OSM Change files (eg. `$ apt-get install -y python-gdal python-lxml`)
 
 ### Install Application Dependencies
 
