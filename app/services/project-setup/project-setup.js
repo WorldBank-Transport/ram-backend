@@ -63,8 +63,8 @@ export function concludeProjectSetup (e) {
     let adminAreaTask = () => {
       return db.transaction(function (trx) {
         let adminAreas = adminBoundsFc.features
-          .map(o => ({name: o.properties.name, selected: false}))
-          .filter(o => !!o.name);
+          .filter(o => !!o.properties.name && o.geometry.type !== 'Point')
+          .map(o => ({name: o.properties.name, selected: false}));
 
         let adminAreasBbox = bbox(adminBoundsFc);
 

@@ -157,10 +157,10 @@ describe('Finish Project Setup', function () {
                 .where('operation_id', op.getId())
                 .orderBy('id', 'desc')
                 .then(logs => {
-                  assert.equal(err, "Cannot read property 'map' of undefined");
+                  assert.equal(err, "Cannot read property 'filter' of undefined");
                   assert.lengthOf(logs, 3);
                   assert.equal(logs[0].code, 'error');
-                  assert.equal(logs[0].data.error, "Cannot read property 'map' of undefined");
+                  assert.equal(logs[0].data.error, "Cannot read property 'filter' of undefined");
                 })
                 .then(() => done())
                 .catch(err => done(err));
