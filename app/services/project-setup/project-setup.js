@@ -162,7 +162,6 @@ export function concludeProjectSetup (e) {
       .then(() => generateChangeset())
       .then(id => createOSMChange(id))
       .then(id => putChangeset(id))
-      .catch(err => console.log(err))
       .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
   }
 
