@@ -1,13 +1,13 @@
 'use strict';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import cp from 'child_process';
 import bbox from '@turf/bbox';
 import osm2json from 'osm2json';
 import putChanges from 'osm-p2p-server/api/put_changes';
 import createChangeset from 'osm-p2p-server/api/create_changeset';
 import osmP2PErrors from 'osm-p2p-server/errors';
-
-import cp from 'child_process';
-import fs from 'fs';
-import os from 'os';
 
 import config from '../../config';
 import db from '../../db/';
@@ -95,7 +95,7 @@ export function concludeProjectSetup (e) {
     const db = getDatabase(projId, scId);
     const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
 
-    // Create a new changeset through the API
+    // Create a new changeset through the API.
     const generateChangeset = () => {
       return new Promise((resolve, reject) => {
         let changeset = {
@@ -112,7 +112,7 @@ export function concludeProjectSetup (e) {
       });
     };
 
-    // Create an OSM Change file and store it in system /tmp folder
+    // Create an OSM Change file and store it in system /tmp folder.
     const createOSMChange = (id) => {
       return new Promise((resolve, reject) => {
         // OGR reads from a file
@@ -150,7 +150,7 @@ export function concludeProjectSetup (e) {
       });
     };
 
-    // Add data from the OSM Change file to the created changeset
+    // Add data from the OSM Change file to the created changeset.
     const putChangeset = (id) => {
       return new Promise((resolve, reject) => {
         let changes = osm2json({coerceIds: false}).parse(fs.readFileSync(`${basePath}.osmc`));
