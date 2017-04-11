@@ -7,7 +7,6 @@ import osmP2PErrors from 'osm-p2p-server/errors';
 
 import cp from 'child_process';
 import fs from 'fs';
-import path from 'path';
 import os from 'os';
 
 import config from '../../config';
@@ -94,7 +93,7 @@ export function concludeProjectSetup (e) {
     logger && logger.log('process road network');
     console.time('processRoadNetwork');
     const db = getDatabase(projId, scId);
-    const basePath = path.join(os.tmpdir(), `road-networkP${projId}S${scId}`);
+    const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
 
     // Create a new changeset through the API
     let generateChangeset = () => {
@@ -125,8 +124,9 @@ export function concludeProjectSetup (e) {
         // -t - a custom translation file. Default only removes empty values
         // -o - to specify output file
         // -f - to force overwrite
+        let cmd = path.resolve(__dirname, '../../lib/ogr2osm/ogr2osm.py');
         let args = [
-          './app/lib/ogr2osm/ogr2osm.py',
+          cmd,
           `${basePath}.osm`,
           '-t', './app/lib/ogr2osm/default_translation.py',
           '--changeset-id', id,
