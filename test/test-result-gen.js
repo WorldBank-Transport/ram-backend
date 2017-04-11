@@ -20,7 +20,7 @@ before(function (done) {
   });
 });
 
-describe.only('Result generation', function () {
+describe('Result generation', function () {
   before('Before - Result generation', function () {
     this.timeout(5000);
     return setupDdStructure()
