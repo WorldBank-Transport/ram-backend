@@ -1,5 +1,8 @@
 'use strict';
+import fs from 'fs';
+import os from 'os';
 import path from 'path';
+import cp from 'child_process';
 import bbox from '@turf/bbox';
 import osm2json from 'osm2json';
 import putChanges from 'osm-p2p-server/api/put_changes';
@@ -87,19 +90,14 @@ export function concludeProjectSetup (e) {
   }
 
   function processRoadNetwork (roadNetwork) {
-    // WARNING!!!!
-    // ////////////////////////////////////////////////////////// //
-    // roadNetwork MUST be converted to a changeset before using. //
-    // This is not implemented yet!                               //
-    // ////////////////////////////////////////////////////////// //
-
     logger && logger.log('process road network');
     console.time('processRoadNetwork');
+    const db = getDatabase(projId, scId);
+    const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
 
-    let roadNetworkTask = () => {
+    // Create a new changeset through the API.
+    const generateChangeset = () => {
       return new Promise((resolve, reject) => {
-        let db = getDatabase(projId, scId);
-
         let changeset = {
           type: 'changeset',
           tags: {
@@ -109,26 +107,65 @@ export function concludeProjectSetup (e) {
         };
         createChangeset(db)(changeset, (err, id, node) => {
           if (err) return reject(err);
+          return resolve(id);
+        });
+      });
+    };
 
-          let changes = osm2json({coerceIds: false}).parse(roadNetwork);
-          if (!changes.length) return reject(new osmP2PErrors.XmlParseError());
-          // Set the correct id.
-          changes = changes.map(c => {
-            c.changeset = id;
-            return c;
-          });
+    // Create an OSM Change file and store it in system /tmp folder.
+    const createOSMChange = (id) => {
+      return new Promise((resolve, reject) => {
+        // OGR reads from a file
+        fs.writeFileSync(`${basePath}.osm`, roadNetwork);
 
-          putChanges(db)(changes, id, (err, diffResult) => {
-            console.timeEnd('processRoadNetwork');
-            if (err) return reject(err);
-            return resolve();
-          });
+        // Use ogr2osm with:
+        // -t - a custom translation file. Default only removes empty values
+        // -o - to specify output file
+        // -f - to force overwrite
+        let cmd = path.resolve(__dirname, '../../lib/ogr2osm/ogr2osm.py');
+        let args = [
+          cmd,
+          `${basePath}.osm`,
+          '-t', './app/lib/ogr2osm/default_translation.py',
+          '--changeset-id', id,
+          '-o', `${basePath}.osmc`,
+          '-f'
+        ];
+
+        let conversionProcess = cp.spawn('python', args);
+        let processError = '';
+        conversionProcess.stderr.on('data', err => {
+          processError += err.toString();
+        });
+        conversionProcess.on('close', code => {
+          if (code !== 0) {
+            let err = processError.match(/(ogr2osm.py: error:.+)/);
+            err = err[0] || `Unknown error. Code ${code}`;
+            return reject(new Error(err));
+          }
+          return resolve(id);
+        });
+      });
+    };
+
+    // Add data from the OSM Change file to the created changeset.
+    const putChangeset = (id) => {
+      return new Promise((resolve, reject) => {
+        let changes = osm2json({coerceIds: false}).parse(fs.readFileSync(`${basePath}.osmc`));
+        if (!changes.length) return reject(new osmP2PErrors.XmlParseError());
+
+        putChanges(db)(changes, id, (err, diffResult) => {
+          console.timeEnd('processRoadNetwork');
+          if (err) return reject(err);
+          return resolve();
         });
       });
     };
 
     return op.log('process:road-network', {message: 'Road network processing started'})
-      .then(() => roadNetworkTask())
+      .then(() => generateChangeset())
+      .then(id => createOSMChange(id))
+      .then(id => putChangeset(id))
       .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
   }
 
@@ -150,7 +187,6 @@ export function concludeProjectSetup (e) {
   ]))
   .then(filesContent => {
     let [roadNetwork, adminBoundsFc] = filesContent;
-
     // Run the tasks in series rather than in parallel.
     // This is better for error handling. If they run in parallel and
     // `processAdminAreas` errors, the script hangs a bit while
