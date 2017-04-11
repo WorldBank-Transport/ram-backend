@@ -70,17 +70,15 @@ module.exports = [
           .select('*')
           .where('scenario_id', scId)
           .where('project_id', projId)
-          .where('type', 'results')
-            .then(files => {
-              let tasks = files.map(f => removeFile(f.path));
-              return Promise.all(tasks);
-            })
-            .then(() => db('scenarios_files')
-              .where('scenario_id', scId)
-              .where('project_id', projId)
-              .where('type', 'results')
-              .del()
-            )
+          .whereIn('type', ['results', 'results-all'])
+          .then(files => {
+            let tasks = files.map(f => removeFile(f.path));
+            let ids = files.map(f => f.id);
+            return Promise.all(tasks)
+              .then(() => db('scenarios_files')
+                .whereIn('id', ids)
+                .del());
+          })
         )
         // Create an operation.
         .then(() => {
