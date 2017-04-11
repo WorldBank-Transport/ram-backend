@@ -96,7 +96,7 @@ export function concludeProjectSetup (e) {
     const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
 
     // Create a new changeset through the API
-    let generateChangeset = () => {
+    const generateChangeset = () => {
       return new Promise((resolve, reject) => {
         let changeset = {
           type: 'changeset',
@@ -113,7 +113,7 @@ export function concludeProjectSetup (e) {
     };
 
     // Create an OSM Change file and store it in system /tmp folder
-    let createOSMChange = (id) => {
+    const createOSMChange = (id) => {
       return new Promise((resolve, reject) => {
         // OGR reads from a file
         fs.writeFile(`${basePath}.osm`, roadNetwork, (err) => {
@@ -145,7 +145,7 @@ export function concludeProjectSetup (e) {
     };
 
     // Add data from the OSM Change file to the created changeset
-    let putChangeset = (id) => {
+    const putChangeset = (id) => {
       return new Promise((resolve, reject) => {
         let changes = osm2json({coerceIds: false}).parse(fs.readFileSync(`${basePath}.osmc`));
         if (!changes.length) return reject(new osmP2PErrors.XmlParseError());
