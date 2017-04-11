@@ -116,9 +116,7 @@ export function concludeProjectSetup (e) {
     const createOSMChange = (id) => {
       return new Promise((resolve, reject) => {
         // OGR reads from a file
-        fs.writeFile(`${basePath}.osm`, roadNetwork, (err) => {
-          if (err) return reject(err);
-        });
+        fs.writeFileSync(`${basePath}.osm`, roadNetwork);
 
         // Use ogr2osm with:
         // -t - a custom translation file. Default only removes empty values
