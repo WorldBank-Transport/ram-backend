@@ -1,14 +1,13 @@
 'use strict';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import cp from 'child_process';
 import bbox from '@turf/bbox';
 import osm2json from 'osm2json';
 import putChanges from 'osm-p2p-server/api/put_changes';
 import createChangeset from 'osm-p2p-server/api/create_changeset';
 import osmP2PErrors from 'osm-p2p-server/errors';
-
-import cp from 'child_process';
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
 
 import config from '../../config';
 import db from '../../db/';
@@ -94,10 +93,10 @@ export function concludeProjectSetup (e) {
     logger && logger.log('process road network');
     console.time('processRoadNetwork');
     const db = getDatabase(projId, scId);
-    const basePath = path.join(os.tmpdir(), `road-networkP${projId}S${scId}`);
+    const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
 
-    // Create a new changeset through the API
-    let generateChangeset = () => {
+    // Create a new changeset through the API.
+    const generateChangeset = () => {
       return new Promise((resolve, reject) => {
         let changeset = {
           type: 'changeset',
@@ -113,8 +112,8 @@ export function concludeProjectSetup (e) {
       });
     };
 
-    // Create an OSM Change file and store it in system /tmp folder
-    let createOSMChange = (id) => {
+    // Create an OSM Change file and store it in system /tmp folder.
+    const createOSMChange = (id) => {
       return new Promise((resolve, reject) => {
         // OGR reads from a file
         fs.writeFile(`${basePath}.osm`, roadNetwork, (err) => {
@@ -125,8 +124,9 @@ export function concludeProjectSetup (e) {
         // -t - a custom translation file. Default only removes empty values
         // -o - to specify output file
         // -f - to force overwrite
+        let cmd = path.resolve(__dirname, '../../lib/ogr2osm/ogr2osm.py');
         let args = [
-          './app/lib/ogr2osm/ogr2osm.py',
+          cmd,
           `${basePath}.osm`,
           '-t', './app/lib/ogr2osm/default_translation.py',
           '--changeset-id', id,
@@ -135,17 +135,23 @@ export function concludeProjectSetup (e) {
         ];
 
         let conversionProcess = cp.spawn('python', args);
-        conversionProcess.on('close', (code) => {
+        let processError = '';
+        conversionProcess.stderr.on('data', err => {
+          processError += err.toString();
+        });
+        conversionProcess.on('close', code => {
           if (code !== 0) {
-            return reject();
+            let err = processError.match(/(ogr2osm.py: error:.+)/);
+            err = err[0] || `Unknown error. Code ${code}`;
+            return reject(new Error(err));
           }
           return resolve(id);
         });
       });
     };
 
-    // Add data from the OSM Change file to the created changeset
-    let putChangeset = (id) => {
+    // Add data from the OSM Change file to the created changeset.
+    const putChangeset = (id) => {
       return new Promise((resolve, reject) => {
         let changes = osm2json({coerceIds: false}).parse(fs.readFileSync(`${basePath}.osmc`));
         if (!changes.length) return reject(new osmP2PErrors.XmlParseError());
@@ -162,7 +168,6 @@ export function concludeProjectSetup (e) {
       .then(() => generateChangeset())
       .then(id => createOSMChange(id))
       .then(id => putChangeset(id))
-      .catch(err => console.log(err))
       .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
   }
 
