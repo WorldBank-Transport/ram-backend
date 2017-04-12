@@ -59,12 +59,13 @@ npm run setup -- --data
 
 #### Config files
 All the config files can be found in `app/config`.
-After installing the projects there will be 3 main files:
+After installing the projects there will be 4 main files:
+  - `test.js` - Used for testing. There is typically no need to modify this file.
   - `local.js` - Used only for local development. On production this file should not exist or be empty.
   - `staging.js`
   - `production.js`
 
-The `production.js` file serves as base and the other 2 will override it as needed:
+The `production.js` file serves as base and will override the staging and local configuration as needed:
   - `staging.js` will be loaded whenever the env variable `DS_ENV` is set to staging.
   - `local.js` will be loaded if it exists.
 
@@ -82,14 +83,6 @@ The following options must be set: (The used file will depend on the context)
   - `storage.secretKey` - Secret key for storage. [STORAGE_SECRET_KEY]
   - `storage.bucket` - Secret key for storage. [STORAGE_BUCKET]
   - `storage.region` - Secret key for storage. [STORAGE_REGION]
-  - `storageTest` - Object with storage related settings, used for testing. Has to be s3 compatible.
-  - `storageTest.host` - The host to use. (Default 0.0.0.0). [STORAGE_TEST_HOST]
-  - `storageTest.port` - The port to use. (Default 0.0.0.0). [STORAGE_TEST_PORT]
-  - `storageTest.engine` - The storage engine to use. Either `minio` or `s3`. [STORAGE_TEST_ENGINE]
-  - `storageTest.accessKey` - Access key for the storage. [STORAGE_TEST_ACCESS_KEY]
-  - `storageTest.secretKey` - Secret key for storage. [STORAGE_TEST_SECRET_KEY]
-  - `storageTest.bucket` - Secret key for storage. [STORAGE_TEST_BUCKET]
-  - `storageTest.region` - Secret key for storage. [STORAGE_TEST_REGION]
   - `analysisProcess.service` - The service to run the analysis on. Either `docker` (for local development and off-line) or `hyper`. [ANL_SERVICE]
   - `analysisProcess.hyperAccess` - Access key for Hyper. [HYPER_ACCESS]
   - `analysisProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
@@ -107,7 +100,6 @@ module.exports = {
     port: 4000
   },
   db: 'postgresql://rra:rra@localhost:5432/rra',
-  dbTest: 'postgresql://rratest:rratest@localhost:5432/rratest',
   storage: {
     host: '0.0.0.0',
     port: 9000,
@@ -115,15 +107,6 @@ module.exports = {
     accessKey: 'minio',
     secretKey: 'miniostorageengine',
     bucket: 'rra',
-    region: 'us-east-1'
-  },
-  storageTest: {
-    host: '0.0.0.0',
-    port: 9000,
-    engine: 'minio',
-    accessKey: 'minio',
-    secretKey: 'miniostorageengine',
-    bucket: 'rra-test',
     region: 'us-east-1'
   },
   analysisProcess: {
