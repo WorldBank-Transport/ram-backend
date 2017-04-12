@@ -6,7 +6,6 @@ module.exports = {
     port: 4000
   },
   db: 'postgresql://rra:rra@rra-postgis:5432/rra',
-  dbTest: null,
   storage: {
     host: '34.207.194.24',
     port: 9000,

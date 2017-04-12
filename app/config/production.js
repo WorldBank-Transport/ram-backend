@@ -6,17 +6,7 @@ module.exports = {
     port: 4000
   },
   db: null,
-  dbTest: null,
   storage: {
-    host: null,
-    port: 9000,
-    engine: null,
-    accessKey: null,
-    secretKey: null,
-    bucket: null,
-    region: null
-  },
-  storageTest: {
     host: null,
     port: 9000,
     engine: null,
