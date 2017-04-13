@@ -25,15 +25,18 @@ services:
   - docker
 
 before_script:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y python-gdal python-lxml
-  - sudo /etc/init.d/postgresql stop
-  - docker-compose up -d
-  - sleep 10 # Wait for the docker container with db to be up
-  - DS_ENV=test npm run setup -- --db --bucket
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - docker-compose -f docker-compose-test.yml run rra-api npm run setup -- --db --bucket
 
 script:
-  - npm test
+  - docker-compose -f docker-compose-test.yml run rra-api npm test
+
+after_script:
+  - docker-compose stop
+  - docker-compose rm -f
 
 deploy:
   - provider: script
