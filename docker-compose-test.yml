@@ -3,7 +3,7 @@ services:
   rra-postgis:
     image: mdillon/postgis
     ports:
-      - "5432:5432"
+      - "5432"
     environment:
       POSTGRES_PASSWORD: rra
       POSTGRES_USER: rra
@@ -13,7 +13,7 @@ services:
   rra-minio:
     image: "minio/minio"
     ports:
-      - "9000:9000"
+      - "9000"
     environment:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: miniostorageengine
@@ -24,7 +24,7 @@ services:
   rra-api:
     build: ./
     ports:
-      - "4000:4000"
+      - "4000"
     environment:
       DB_CONNECTION: 'postgresql://rratest:rratest@rra-postgis:5432/rratest'
       STORAGE_HOST: 'rra-minio'
