@@ -19,7 +19,7 @@ try {
 
 // In a test setup, the other config files are ignored
 if (process.env.DS_ENV === 'test') {
-  _.merge(config, require('./config/test'));
+  config = require('./config/test');
 }
 
 // Overrides by ENV variables:

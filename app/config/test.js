@@ -13,5 +13,14 @@ module.exports = {
     secretKey: 'miniostorageengine',
     bucket: 'rra',
     region: 'us-east-1'
+  },
+  analysisProcess: {
+    service: null,
+    hyperAccess: null,
+    hyperSecret: null,
+    container: null,
+    db: null,
+    storageHost: null,
+    storagePort: null
   }
 };
