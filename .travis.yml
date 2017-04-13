@@ -15,14 +15,6 @@ env:
   - AWS_REGION=us-east-1
   - AWS_ACCESS_KEY_ID=AKIAILREAKXPJOWAXTBQ
   - secure: xK+lbzwxAz1ePCLEc4M4h/qoT/iR7pPW2Oe0PLRBuApR/cZA0rmCAe6S48AwiA7pj/xV5eDeNtWIOl7ovmY/dZiF5RTS/1HXj60pfMfrzkIb8pzTdSm3OL9D6ZOGpQMCDR8DhoPYGGlTYFBEef/4WMxFmhuk2XL09UEybMee0JXaFz9I5XmfLJxiLWtvHNer2bdOBt153xJIrZ3VU2IqPLHXnH1W0nCevHTxxKoMQ8fyjQQKL0YZefGu2cqNurKNxb4cRGzzbeQLW2Z0oILFsXkZszJ5VAshK5QfB/VZrg0qAmmEbGKbP7wN04Kx1fz0UXxQFvPzDDyA1F8LKVN/VJKvNPD6oy16vj3dXnyK1Sc2f+wLD3rI4pQSPlyOoREWHX0TUf1o6oD9DxbU/h7OAwWh9Gs7zM4r76+iCpnt1ixtVITogJKz/+dMCMaJBEgOrsYGL1CbLkntMeoRBo6wKO1kkZr0aQ2nR09lxK4prWEIUB7GazDBM+UyHwZq/13xt7hG+nCTKbB53RD/qwNXD7A0gv8oRcfYWpcpgkk1v/CI4fxI28oRaVRP1rcl1oh43EuS4SGMn2898s1VY4Z9GRuSCucjZAlgl/uM44mIJa+f1yfSSV7thfqNyL1jg62kRg9Up8Q3pxMOA31+AhK0rpg8MoMBsaQInb5LwC6nES8=
-  - DB_TEST_CONNECTION=postgresql://rratest:rratest@localhost:5432/rratest
-  - STORAGE_TEST_HOST=localhost
-  - STORAGE_TEST_PORT=9000
-  - STORAGE_TEST_ENGINE=minio
-  - STORAGE_TEST_ACCESS_KEY=minio
-  - STORAGE_TEST_SECRET_KEY=miniostorageengine
-  - STORAGE_TEST_BUCKET=rra-test
-  - STORAGE_TEST_REGION=us-east-1
 
 cache:
   apt: true
@@ -33,15 +25,18 @@ services:
   - docker
 
 before_script:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y python-gdal python-lxml
-  - sudo /etc/init.d/postgresql stop
-  - docker-compose up -d
-  - sleep 10 # Wait for the docker container with db to be up
-  - DS_ENV=test npm run setup -- --db --bucket
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/1.12.0/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  - docker-compose -f docker-compose-test.yml run rra-api npm run setup -- --db --bucket
 
 script:
-  - npm test
+  - docker-compose -f docker-compose-test.yml run rra-api npm test
+
+after_script:
+  - docker-compose stop
+  - docker-compose rm -f
 
 deploy:
   - provider: script

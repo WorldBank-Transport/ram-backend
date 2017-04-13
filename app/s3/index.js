@@ -3,7 +3,7 @@ import * as Minio from 'minio';
 import config from '../config';
 
 var minioClient;
-const { host, port, engine, accessKey, secretKey } = process.env.DS_ENV === 'test' ? config.storageTest : config.storage;
+const { host, port, engine, accessKey, secretKey } = config.storage;
 
 switch (engine) {
   case 'minio':
@@ -23,5 +23,5 @@ switch (engine) {
 
 export default minioClient;
 
-export const bucket = process.env.DS_ENV === 'test' ? config.storageTest.bucket : config.storage.bucket;
-export const region = process.env.DS_ENV === 'test' ? config.storageTest.region : config.storage.region;
+export const bucket = config.storage.bucket;
+export const region = config.storage.region;

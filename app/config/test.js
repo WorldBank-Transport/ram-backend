@@ -1,13 +1,12 @@
-'use strict';
 module.exports = {
-  environment: 'staging',
+  environment: 'local',
   connection: {
     host: '0.0.0.0',
     port: 4000
   },
-  db: 'postgresql://rra:rra@rra-postgis:5432/rra',
+  db: 'postgresql://rratest:rratest@localhost:5432/rratest',
   storage: {
-    host: '34.207.194.24',
+    host: '0.0.0.0',
     port: 9000,
     engine: 'minio',
     accessKey: 'minio',
@@ -16,12 +15,12 @@ module.exports = {
     region: 'us-east-1'
   },
   analysisProcess: {
-    service: 'hyper',
+    service: null,
     hyperAccess: null,
     hyperSecret: null,
-    container: 'wbtransport/rra-analysis:latest-dev',
+    container: null,
     db: null,
-    storageHost: '34.207.194.24',
-    storagePort: 9000
+    storageHost: null,
+    storagePort: null
   }
 };
