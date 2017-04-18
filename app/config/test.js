@@ -11,7 +11,7 @@ module.exports = {
     engine: 'minio',
     accessKey: 'minio',
     secretKey: 'miniostorageengine',
-    bucket: 'rra',
+    bucket: 'rra-test',
     region: 'us-east-1'
   },
   analysisProcess: {
