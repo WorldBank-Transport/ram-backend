@@ -17,13 +17,17 @@ try {
   // Local file is not mandatory.
 }
 
+// In a test setup, the other config files are ignored
+if (process.env.DS_ENV === 'test') {
+  config = require('./config/test');
+}
+
 // Overrides by ENV variables:
 config.debug = process.env.DEBUG !== undefined ? (process.env.DEBUG.toLowerCase() === 'true') : config.debug;
 config.connection.port = process.env.PORT || config.connection.port;
 config.connection.host = process.env.HOST || config.connection.host;
 
 config.db = process.env.DB_CONNECTION || config.db;
-config.dbTest = process.env.DB_TEST_CONNECTION || config.dbTest;
 
 config.storage.host = process.env.STORAGE_HOST || config.storage.host;
 config.storage.port = parseInt(process.env.STORAGE_PORT) || config.storage.port;
@@ -32,14 +36,6 @@ config.storage.accessKey = process.env.STORAGE_ACCESS_KEY || config.storage.acce
 config.storage.secretKey = process.env.STORAGE_SECRET_KEY || config.storage.secretKey;
 config.storage.bucket = process.env.STORAGE_BUCKET || config.storage.bucket;
 config.storage.region = process.env.STORAGE_REGION || config.storage.region;
-
-config.storageTest.host = process.env.STORAGE_TEST_HOST || config.storageTest.host;
-config.storageTest.port = parseInt(process.env.STORAGE_TEST_PORT) || config.storageTest.port;
-config.storageTest.engine = process.env.STORAGE_TEST_ENGINE || config.storageTest.engine;
-config.storageTest.accessKey = process.env.STORAGE_TEST_ACCESS_KEY || config.storageTest.accessKey;
-config.storageTest.secretKey = process.env.STORAGE_TEST_SECRET_KEY || config.storageTest.secretKey;
-config.storageTest.bucket = process.env.STORAGE_TEST_BUCKET || config.storageTest.bucket;
-config.storageTest.region = process.env.STORAGE_TEST_REGION || config.storageTest.region;
 
 config.analysisProcess.service = process.env.ANL_SERVICE || config.analysisProcess.service;
 config.analysisProcess.container = process.env.ANL_CONTAINER || config.analysisProcess.container;
