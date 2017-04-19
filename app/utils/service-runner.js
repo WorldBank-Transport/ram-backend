@@ -10,6 +10,8 @@ export default class ServiceRunner extends EventEmitter {
   }
 
   start () {
+    // Set an unused port number.
+    // process.execArgv.push('--debug=' + (12345));
     let servicePath = path.resolve(__dirname, `../services/${this.name}/index.js`);
     let p = fork(servicePath);
     let processError = null;

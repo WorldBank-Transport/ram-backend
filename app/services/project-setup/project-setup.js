@@ -165,6 +165,8 @@ export function concludeProjectSetup (e) {
       .then(() => generateChangeset())
       .then(id => createOSMChange(id))
       .then(id => putChangeset(id))
+      // Note: There's no need to close the osm-p2p-db because when the process
+      // terminates the connection is automatically closed.
       .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
   }
 

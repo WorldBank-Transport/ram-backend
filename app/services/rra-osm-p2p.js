@@ -21,3 +21,29 @@ export function getDatabase (projId, scId) {
 
   return dbConnections[dbName];
 }
+
+export function closeDatabase (projId, scId) {
+  return new Promise((resolve, reject) => {
+    let dbName = `p${projId}s${scId}`;
+    let db = dbConnections[dbName];
+
+    // If there's no db stored means that no connection was open for this
+    // db on the current process.
+    if (!db) {
+      return resolve();
+    }
+
+    let pending = 3;
+    const done = () => {
+      if (--pending === 0) {
+        delete dbConnections[dbName];
+        resolve();
+      }
+    };
+
+    // Close all the connections.
+    db.db.close(done);
+    db.log.db.close(done);
+    db.kdb.kdb.store.close(done);
+  });
+}

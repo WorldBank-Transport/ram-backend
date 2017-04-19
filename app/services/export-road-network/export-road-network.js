@@ -72,6 +72,8 @@ export function exportRoadNetwork (e) {
 
       return putFileStream(filePath, stream);
     })
+    // Note: There's no need to close the osm-p2p-db because when the process
+    // terminates the connection is automatically closed.
     .then(() => {
       logger && logger.log('process complete');
       DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../export-road-network_p${projId}s${scId}.log`));

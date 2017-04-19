@@ -11,6 +11,7 @@ import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '
 import { getProject } from './projects--get';
 import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
+import { closeDatabase } from '../services/rra-osm-p2p';
 
 module.exports = [
   {
@@ -106,12 +107,15 @@ function generateResults (projId, scId, opId) {
   if (process.env.DS_ENV === 'test') { return; }
 
   process.nextTick(() => {
-    updateRN(projId, scId, opId, (err) => {
-      // The error is logged to the db inside `updateRN`.
-      // There's nothing else to do.
-      if (!err) {
-        spawnAnalysisProcess(projId, scId, opId);
-      }
+    // Close the database on this process before exporting the road network.
+    closeDatabase(projId, scId).then(() => {
+      updateRN(projId, scId, opId, (err) => {
+        // The error is logged to the db inside `updateRN`.
+        // There's nothing else to do.
+        if (!err) {
+          spawnAnalysisProcess(projId, scId, opId);
+        }
+      });
     });
   });
 }

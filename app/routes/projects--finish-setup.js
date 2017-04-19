@@ -8,6 +8,7 @@ import { ProjectNotFoundError, DataConflictError } from '../utils/errors';
 import { getProject } from './projects--get';
 import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
+import { closeDatabase } from '../services/rra-osm-p2p';
 
 module.exports = [
   {
@@ -100,23 +101,25 @@ function concludeProjectSetup (projId, scId, opId, cb) {
   // It will be tested in the appropriate place.
   if (process.env.DS_ENV === 'test') { return; }
 
-  console.log(`p${projId} s${scId}`, 'concludeProjectSetup');
-  let service = new ServiceRunner('project-setup', {projId, scId, opId});
+  closeDatabase(projId, scId).then(() => {
+    console.log(`p${projId} s${scId}`, 'concludeProjectSetup');
+    let service = new ServiceRunner('project-setup', {projId, scId, opId});
 
-  service.on('complete', err => {
-    console.log(`p${projId} s${scId}`, 'concludeProjectSetup complete');
-    if (err) {
-      // The operation may not have finished if the error took place outside
-      // the promise, or if the error was due to a wrong db connection.
-      let op = new Operation(db);
-      op.loadById(opId)
-        .then(op => {
-          if (!op.isCompleted()) {
-            return op.log('error', {error: err.message})
-              .then(op => op.finish());
-          }
-        });
-    }
-  })
-  .start();
+    service.on('complete', err => {
+      console.log(`p${projId} s${scId}`, 'concludeProjectSetup complete');
+      if (err) {
+        // The operation may not have finished if the error took place outside
+        // the promise, or if the error was due to a wrong db connection.
+        let op = new Operation(db);
+        op.loadById(opId)
+          .then(op => {
+            if (!op.isCompleted()) {
+              return op.log('error', {error: err.message})
+                .then(op => op.finish());
+            }
+          });
+      }
+    })
+    .start();
+  });
 }
