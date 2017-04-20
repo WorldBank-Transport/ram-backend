@@ -1,5 +1,6 @@
 <h1 align="center">Rural Road Accessibility Server</h1>
-The Rural Roads Accessibility tool allows you to assess the accessibility of rural populations in relation to critical services. Using the [Open Source Routing Machine](http://project-osrm.org/), RRA calculates travel times from population centers to the nearest POI.
+
+The Rural Roads Accessibility tool allows you to assess the accessibility of rural populations in relation to critical services. Using the [Open Source Routing Machine](http://project-osrm.org), RRA calculates travel times from population centers to the nearest POI.
 
 Apart from the RRA Server, the tool relies on the following projects:
 
