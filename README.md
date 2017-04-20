@@ -1,4 +1,11 @@
-<h1 align="center">Rural-Road-Accessibility (RRA)</h1>
+<h1 align="center">Rural Road Accessibility Server</h1>
+The Rural Roads Accessibility tool allows you to assess the accessibility of rural populations in relation to critical services. Using the [Open Source Routing Machine](http://project-osrm.org/), RRA calculates travel times from population centers to the nearest POI.
+
+Apart from the RRA Server, the tool relies on the following projects:
+
+1. [rra-frontend](https://github.com/WorldBank-Transport/rra-frontend) with the code for the user interface
+2. [rra-datapipeline](https://github.com/WorldBank-Transport/rra-datapipeline) that handles some of the more intensive data processing
+3. [rra-iD](https://github.com/WorldBank-Transport/rra-iD), a customized version of iD - the popular OSM editor - to allow editing of the road network
 
 ## Installation and Usage
 
