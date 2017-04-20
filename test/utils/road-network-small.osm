@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="Overpass API">
+<note>The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.</note>
+<meta osm_base="2017-03-21T16:24:02Z"/>
+
+  <way id="-1" visible="true">
+    <nd ref="-2"/>
+    <nd ref="-3"/>
+    <nd ref="-4"/>
+    <nd ref="-5"/>
+    <nd ref="-6"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="name" v="Boulevard Kamanyola"/>
+  </way>
+
+  <node id="-2" lat="-11.6572028" lon="27.4691154" visible="true"/>
+  <node id="-3" lat="-11.6570032" lon="27.4688649" visible="true"/>
+  <node id="-4" lat="-11.6567879" lon="27.4684879" visible="true"/>
+  <node id="-5" lat="-11.6557674" lon="27.4664466" visible="true"/>
+  <node id="-6" lat="-11.655604" lon="27.4659408" visible="true"/>
+
+</osm>

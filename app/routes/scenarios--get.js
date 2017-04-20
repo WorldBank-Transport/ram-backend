@@ -122,6 +122,7 @@ function attachAnalysisOperation (scenario) {
       return db.select('*')
         .from('operations_logs')
         .where('operation_id', op.id)
+        .orderBy('created_at')
         .then(logs => {
           let errored = false;
           if (logs.length) {

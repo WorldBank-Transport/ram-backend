@@ -10,6 +10,8 @@ import { removeFile } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
 import { getProject } from './projects--get';
 import Operation from '../utils/operation';
+import ServiceRunner from '../utils/service-runner';
+import { closeDatabase } from '../services/rra-osm-p2p';
 
 module.exports = [
   {
@@ -69,26 +71,24 @@ module.exports = [
           .select('*')
           .where('scenario_id', scId)
           .where('project_id', projId)
-          .where('type', 'results')
-            .then(files => {
-              let tasks = files.map(f => removeFile(f.path));
-              return Promise.all(tasks);
-            })
-            .then(() => db('scenarios_files')
-              .where('scenario_id', scId)
-              .where('project_id', projId)
-              .where('type', 'results')
-              .del()
-            )
+          .whereIn('type', ['results', 'results-all'])
+          .then(files => {
+            let tasks = files.map(f => removeFile(f.path));
+            let ids = files.map(f => f.id);
+            return Promise.all(tasks)
+              .then(() => db('scenarios_files')
+                .whereIn('id', ids)
+                .del());
+          })
         )
         // Create an operation.
         .then(() => {
           op = new Operation(db);
           return op.start('generate-analysis', projId, scId);
         })
-        .then(op => op.log('generate-analysis', {message: 'Analysis generation started'}))
+        .then(op => op.log('start', {message: 'Analysis generation started'}))
         // Start generation.
-        .then(op => spawnAnalysisProcess(projId, scId, op.getId()))
+        .then(op => generateResults(projId, scId, op.getId()))
         .then(() => reply({statusCode: 200, message: 'Result generation started'}))
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
@@ -101,11 +101,52 @@ module.exports = [
   }
 ];
 
-function spawnAnalysisProcess (projId, scId, opId) {
+function generateResults (projId, scId, opId) {
   // In test mode we don't want to start the generation.
   // It will be tested in the appropriate place.
   if (process.env.DS_ENV === 'test') { return; }
 
+  process.nextTick(() => {
+    // Close the database on this process before exporting the road network.
+    closeDatabase(projId, scId).then(() => {
+      updateRN(projId, scId, opId, (err) => {
+        // The error is logged to the db inside `updateRN`.
+        // There's nothing else to do.
+        if (!err) {
+          spawnAnalysisProcess(projId, scId, opId);
+        }
+      });
+    });
+  });
+}
+
+function updateRN (projId, scId, opId, cb) {
+  console.log(`p${projId} s${scId}`, 'updateRN');
+  let service = new ServiceRunner('export-road-network', {projId, scId, opId});
+
+  service.on('complete', err => {
+    console.log(`p${projId} s${scId}`, 'updateRN complete');
+    if (err) {
+      // The operation may not have finished if the error took place outside
+      // the promise, or if the error was due to a wrong db connection.
+      let op = new Operation(db);
+      op.loadById(opId)
+        .then(op => {
+          if (!op.isCompleted()) {
+            return op.log('error', {error: err.message})
+              .then(op => op.finish());
+          }
+        })
+        .then(() => cb(err), () => cb(err));
+    } else {
+      cb();
+    }
+  })
+  .start();
+}
+
+function spawnAnalysisProcess (projId, scId, opId) {
+  console.log(`p${projId} s${scId}`, 'spawnAnalysisProcess');
   // Each Project/Scenario combination can only have one analysis process
   // running.
   let containerName = `analysisp${projId}s${scId}`;
@@ -137,7 +178,7 @@ function spawnAnalysisProcess (projId, scId, opId) {
       );
       break;
     default:
-      console.log(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`);
+      throw new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`);
   }
 
   // Append the name of the image last

@@ -10,6 +10,7 @@ import Operation from '../app/utils/operation';
 
 describe('Operation', function () {
   before('Before - Operation', function () {
+    this.timeout(5000);
     return setupDdStructure()
       .then(() => setupStorageStructure())
       .then(() => fixMeUp());

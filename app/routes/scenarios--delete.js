@@ -46,9 +46,11 @@ module.exports = [
             .where('scenario_id', scId)
             .where('project_id', projId)
             .then(files => { allFiles = files; })
-            // Delete files from tables. Needs to be done first because of the
-            // foreign keys.
-            .then(() => trx.delete().from('scenarios_files').where('scenario_id', scId).where('project_id', projId))
+            // Delete the scenario. Everything else will follow due to
+            // cascade delete.
+            // - scenario files
+            // - operations
+            // - operation logs
             .then(() => trx.delete().from('scenarios').where('id', scId).where('project_id', projId))
             .then(res => {
               if (res <= 0) {

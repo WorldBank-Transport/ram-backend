@@ -24,11 +24,11 @@ before(function (done) {
 });
 
 describe('Project files', function () {
-  before('Before - Project files', function (done) {
-    setupDdStructure()
+  before('Before - Project files', function () {
+    this.timeout(5000);
+    return setupDdStructure()
       .then(() => setupStorageStructure())
-      .then(() => fixMeUp())
-      .then(() => done());
+      .then(() => fixMeUp());
   });
 
   describe('DELETE /projects/{projId}/files/{fileId}', function () {

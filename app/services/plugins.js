@@ -2,6 +2,11 @@
 
 module.exports = function (hapiServer, cb) {
   hapiServer.register([
+    // RRA OSM P2P Server
+    {
+      register: require('../plugins/rra-osm-p2p-server')
+    },
+
     // Good console.
     {
       register: require('good'),

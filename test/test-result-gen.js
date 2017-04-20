@@ -21,11 +21,11 @@ before(function (done) {
 });
 
 describe('Result generation', function () {
-  before('Before - Result generation', function (done) {
-    setupDdStructure()
+  before('Before - Result generation', function () {
+    this.timeout(5000);
+    return setupDdStructure()
       .then(() => setupStorageStructure())
-      .then(() => fixMeUp())
-      .then(() => done());
+      .then(() => fixMeUp());
   });
 
   describe('POST /projects/{projId}/scenarios/{scId}/generate', function () {
@@ -82,11 +82,31 @@ describe('Result generation', function () {
     });
 
     it('should remove old results and start generation', function () {
-      // Modify db entry.
-      return instance.injectThen({
+      // Insert some dummy files to ensure they're deleted.
+      return db.batchInsert('scenarios_files', [
+        {
+          'name': 'results',
+          'type': 'results',
+          'path': 'scenario-2000/results_000000',
+          'project_id': 2000,
+          'scenario_id': 2000,
+          'created_at': '2017-02-01T12:00:03.000Z',
+          'updated_at': '2017-02-01T12:00:03.000Z'
+        },
+        {
+          'name': 'results-all',
+          'type': 'results-all',
+          'path': 'scenario-2000/results-all_000000',
+          'project_id': 2000,
+          'scenario_id': 2000,
+          'created_at': '2017-02-01T12:00:03.000Z',
+          'updated_at': '2017-02-01T12:00:03.000Z'
+        }
+      ])
+      .then(() => instance.injectThen({
         method: 'POST',
         url: '/projects/2000/scenarios/2000/generate'
-      })
+      }))
       .then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.equal(res.result.message, 'Result generation started');
@@ -95,7 +115,7 @@ describe('Result generation', function () {
       .then(() => db('scenarios_files')
         .select('*')
         .where('scenario_id', 2000)
-        .where('type', 'results')
+        .whereIn('type', ['results', 'results-all'])
       )
       .then(files => {
         assert.lengthOf(files, 0, 'Scenario results is empty');
@@ -113,7 +133,6 @@ describe('Result generation', function () {
     });
 
     it('should throw error if the results generation is already running', function () {
-      // Modify db entry.
       return instance.injectThen({
         method: 'POST',
         url: '/projects/2000/scenarios/2000/generate'

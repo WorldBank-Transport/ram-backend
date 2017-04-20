@@ -6,7 +6,9 @@ import Promise from 'bluebird';
 import db from '../db/';
 import { ProjectNotFoundError, DataConflictError } from '../utils/errors';
 import { getProject } from './projects--get';
-import { getJSONFileContents } from '../s3/utils';
+import Operation from '../utils/operation';
+import ServiceRunner from '../utils/service-runner';
+import { closeDatabase } from '../services/rra-osm-p2p';
 
 module.exports = [
   {
@@ -32,44 +34,39 @@ module.exports = [
           if (!project.readyToEndSetup) {
             throw new DataConflictError('Project preconditions to finish setup not met');
           }
-          return project;
         })
-        .then(project => {
-          return db.transaction(function (trx) {
-            let {scenarioName, scenarioDescription} = request.payload;
+        .then(() => db('scenarios')
+          .select('*')
+          .where('project_id', request.params.projId)
+          .where('master', true)
+          .first()
+        )
+        .then(scenario => {
+          let projId = scenario.project_id;
+          let scId = scenario.id;
+          let {scenarioName, scenarioDescription} = request.payload;
 
-            return trx('projects_files')
-              .select('*')
-              .where('project_id', project.id)
-              .where('type', 'admin-bounds')
-              .then(files => getJSONFileContents(files[0].path))
-              .then(adminBoundsFc => adminBoundsFc.features
-                  .map(o => ({name: o.properties.name, selected: false}))
-                  .filter(o => !!o.name)
-              )
-              .then(adminAreas => {
-                return Promise.all([
-                  trx('projects')
-                    .update({
-                      updated_at: (new Date()),
-                      status: 'active'
-                    })
-                    .where('id', project.id),
-                  trx('scenarios')
-                    .update({
-                      name: scenarioName,
-                      description: typeof scenarioDescription === 'undefined' ? '' : scenarioDescription,
-                      admin_areas: JSON.stringify(adminAreas),
-                      updated_at: (new Date()),
-                      status: 'active'
-                    })
-                    .where('project_id', project.id)
-                    .where('master', true)
-                ]);
-              });
-          });
+          return db.transaction(function (trx) {
+            return Promise.all([
+              trx('projects')
+                .update({
+                  updated_at: (new Date())
+                })
+                .where('id', projId),
+              trx('scenarios')
+                .update({
+                  name: scenarioName,
+                  description: typeof scenarioDescription === 'undefined' ? '' : scenarioDescription,
+                  updated_at: (new Date())
+                })
+                .where('id', scId)
+            ]);
+          })
+          .then(() => startOperation(projId, scId)
+            .then(op => concludeProjectSetup(projId, scId, op.getId()))
+          );
         })
-        .then(() => reply({statusCode: 200, message: 'Project setup finished'}))
+        .then(() => reply({statusCode: 200, message: 'Project setup finish started'}))
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
         .catch(err => {
@@ -79,3 +76,50 @@ module.exports = [
     }
   }
 ];
+
+function startOperation (projId, scId) {
+  let op = new Operation(db);
+  return op.loadByData('project-setup-finish', projId, scId)
+    .then(op => {
+      if (op.isStarted()) {
+        throw new DataConflictError('Project finish setup already in progress');
+      }
+    }, err => {
+      // In this case if the operation doesn't exist is not a problem.
+      if (err.message.match(/not exist/)) { return; }
+      throw err;
+    })
+    .then(() => {
+      let op = new Operation(db);
+      return op.start('project-setup-finish', projId, scId)
+        .then(() => op.log('start', {message: 'Operation started'}));
+    });
+}
+
+function concludeProjectSetup (projId, scId, opId, cb) {
+  // In test mode we don't want to start the generation.
+  // It will be tested in the appropriate place.
+  if (process.env.DS_ENV === 'test') { return; }
+
+  closeDatabase(projId, scId).then(() => {
+    console.log(`p${projId} s${scId}`, 'concludeProjectSetup');
+    let service = new ServiceRunner('project-setup', {projId, scId, opId});
+
+    service.on('complete', err => {
+      console.log(`p${projId} s${scId}`, 'concludeProjectSetup complete');
+      if (err) {
+        // The operation may not have finished if the error took place outside
+        // the promise, or if the error was due to a wrong db connection.
+        let op = new Operation(db);
+        op.loadById(opId)
+          .then(op => {
+            if (!op.isCompleted()) {
+              return op.log('error', {error: err.message})
+                .then(op => op.finish());
+            }
+          });
+      }
+    })
+    .start();
+  });
+}
