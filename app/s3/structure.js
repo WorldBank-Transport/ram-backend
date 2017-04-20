@@ -6,10 +6,10 @@ const DEBUG = config.debug;
 const BUCKET = bucket;
 const REGION = region;
 
-export function emptyBucket (bucket) {
+export function emptyBucket (bucket, objPrefix = '') {
   return new Promise((resolve, reject) => {
     var remove = [];
-    var stream = s3.listObjectsV2(bucket, '', true);
+    var stream = s3.listObjectsV2(bucket, objPrefix, true);
     stream.on('data', obj => {
       remove.push(removeObject(bucket, obj.name));
     });
