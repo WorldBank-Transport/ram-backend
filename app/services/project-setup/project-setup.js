@@ -1,19 +1,12 @@
 'use strict';
-import fs from 'fs';
-import os from 'os';
 import path from 'path';
-import cp from 'child_process';
 import bbox from '@turf/bbox';
-import osm2json from 'osm2json';
-import putChanges from 'osm-p2p-server/api/put_changes';
-import createChangeset from 'osm-p2p-server/api/create_changeset';
-import osmP2PErrors from 'osm-p2p-server/errors';
 
 import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
 import { getFileContents, getJSONFileContents } from '../../s3/utils';
-import { getDatabase } from '../rra-osm-p2p';
+import { importRoadNetwork } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
 
 const DEBUG = config.debug;
@@ -89,87 +82,6 @@ export function concludeProjectSetup (e) {
       .then(() => adminAreaTask());
   }
 
-  function processRoadNetwork (roadNetwork) {
-    logger && logger.log('process road network');
-    console.time('processRoadNetwork');
-    const db = getDatabase(projId, scId);
-    const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
-
-    // Create a new changeset through the API.
-    const generateChangeset = () => {
-      return new Promise((resolve, reject) => {
-        let changeset = {
-          type: 'changeset',
-          tags: {
-            comment: `Finish project setup. Project ${projId}, Scenario ${scId}`,
-            created_by: 'RRA'
-          }
-        };
-        createChangeset(db)(changeset, (err, id, node) => {
-          if (err) return reject(err);
-          return resolve(id);
-        });
-      });
-    };
-
-    // Create an OSM Change file and store it in system /tmp folder.
-    const createOSMChange = (id) => {
-      return new Promise((resolve, reject) => {
-        // OGR reads from a file
-        fs.writeFileSync(`${basePath}.osm`, roadNetwork);
-
-        // Use ogr2osm with:
-        // -t - a custom translation file. Default only removes empty values
-        // -o - to specify output file
-        // -f - to force overwrite
-        let cmd = path.resolve(__dirname, '../../lib/ogr2osm/ogr2osm.py');
-        let args = [
-          cmd,
-          `${basePath}.osm`,
-          '-t', './app/lib/ogr2osm/default_translation.py',
-          '--changeset-id', id,
-          '-o', `${basePath}.osmc`,
-          '-f'
-        ];
-
-        let conversionProcess = cp.spawn('python', args);
-        let processError = '';
-        conversionProcess.stderr.on('data', err => {
-          processError += err.toString();
-        });
-        conversionProcess.on('close', code => {
-          if (code !== 0) {
-            let err = processError || `Unknown error. Code ${code}`;
-            return reject(new Error(err));
-          }
-          return resolve(id);
-        });
-      });
-    };
-
-    // Add data from the OSM Change file to the created changeset.
-    const putChangeset = (id) => {
-      return new Promise((resolve, reject) => {
-        let changes = osm2json({coerceIds: false}).parse(fs.readFileSync(`${basePath}.osmc`));
-        if (!changes.length) return reject(new osmP2PErrors.XmlParseError());
-
-        putChanges(db)(changes, id, (err, diffResult) => {
-          console.timeEnd('processRoadNetwork');
-          if (err) return reject(err);
-          return resolve();
-        });
-      });
-    };
-
-    return op.log('process:road-network', {message: 'Road network processing started'})
-      .then(() => generateChangeset())
-      .then(id => createOSMChange(id))
-      .then(id => putChangeset(id))
-      // Note: There's no need to close the osm-p2p-db because when the process
-      // terminates the connection is automatically closed.
-      .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
-  }
-
   let op = new Operation(db);
   op.loadById(opId)
   .then(() => Promise.all([
@@ -196,7 +108,10 @@ export function concludeProjectSetup (e) {
     // Since processing the admin areas is a pretty fast operation, the
     // performance is not really affected.
     return processAdminAreas(adminBoundsFc)
-      .then(() => processRoadNetwork(roadNetwork));
+      .then(() => {
+        logger && logger.log('process road network');
+        return importRoadNetwork(projId, scId, op, roadNetwork);
+      });
   })
   .then(() => {
     return db.transaction(function (trx) {
