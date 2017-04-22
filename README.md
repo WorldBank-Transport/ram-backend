@@ -1,6 +1,7 @@
 <h1 align="center">Rural Road Accessibility Server</h1>
 
 The Rural Roads Accessibility tool allows you to assess the accessibility of rural populations in relation to critical services. Using the [Open Source Routing Machine](http://project-osrm.org), RRA calculates travel times from population centers to the nearest POI.
+RRA Server is the main backend of the project and contains the API, database and file storage.
 
 Apart from the RRA Server, the tool relies on the following projects:
 
@@ -9,8 +10,19 @@ Apart from the RRA Server, the tool relies on the following projects:
 3. [rra-iD](https://github.com/WorldBank-Transport/rra-iD), a customized version of iD - the popular OSM editor - to allow editing of the road network
 
 ## Installation and Usage
+These installation instructions focus on running the RRA Server locally. This readme also contains instructions on [deploying the application to ECS](#deployment-to-ecs).
 
-The steps below will walk you through setting up your own instance of the rra.
+First time setup:
+
+1. install Node 6, Docker, Docker Compose, python-gdal, python-lxml - [more on project dependencies](#install-project-dependencies)
+2. `npm install` - [more on application dependencies](#install-application-dependencies)
+3. add configuration variables to `app/config/local.js`. The [example config](#config-example) should work well.
+4. `npm run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `npm run setup -- --data` instead - [more on setup](#setup)
+
+After first time setup, you can start the server by using:
+
+1. `docker-compose up -d` to start the database and bucket in the background - [more on starting the containers](#starting-the-containers)
+2. `npm start` to start the app - [more on starting the app](#starting-the-app)
 
 ### Install Project Dependencies
 To set up the development environment for this website, you'll need to install the following on your system:
@@ -33,39 +45,7 @@ Install Node modules:
 npm install
 ```
 
-Start the docker containers in the background:
-```
-docker-compose up -d
-```
-Stop the docker containers with:
-```
-docker-compose stop
-```
-
-The containers will store the information within themselves. If the container is deleted all the information will be lost.
-[Minio](https://minio.io) can be used to store the files locally as an alternative to AWS S3. This is particularly useful for local development. Its interface will be available at `http://localhost:9000`.
-
-### Setup
-Both the database and the local storage need some setup. Before running the setup add the appropriate values to the config files. (See section below)
-```
-npm run setup -- --db --bucket
-```
-Will prepare all the needed tables for the database and the bucket for storage. Both the database and the bucket will be removed and created anew. **Data will be lost.**
-
-Other available options:
-- `--db` - Sets up the db structure.
-- `--bucket` - Sets up the storage bucket.
-- `--data` - Sets up database and data fixtures. This also sets up the db and bucket, so it's not needed to be used with the previous commands.
-
-Full setup with fixtures example:
-*(The `--` is important and can't be omitted)*
-```
-npm run setup -- --data
-```
-
-### Usage
-
-#### Config files
+### Configuration
 All the config files can be found in `app/config`.
 After installing the projects there will be 4 main files:
   - `test.js` - Used for testing. There is typically no need to modify this file.
@@ -78,7 +58,8 @@ The `production.js` file serves as base and will override the staging and local 
   - `local.js` will be loaded if it exists.
 
 Some of the following options are overridable by environment variables, expressed between [].
-The following options must be set: (The used file will depend on the context)
+The following options must be set:
+
   - `connection.host` - The host. (mostly cosmetic. Default to 0.0.0.0). [PORT]
   - `connection.port` - The port where the app runs. (Default 4000). [HOST]
   - `db` - The database connection string. [DB_CONNECTION]
@@ -98,9 +79,8 @@ The following options must be set: (The used file will depend on the context)
   - `analysisProcess.db` - The database connection string. When using Docker for the analysis process, the host will the Docker inet address ($ ifconfig). When using Hyper, this will be the IP of your hosted database [ANL_DB]
   - `analysisProcess.storageHost` - The host of the storage service. See notes above. [ANL_STORAGE_HOST]
   - `analysisProcess.storagePort` - The port to use. [ANL_STORAGE_PORT]
- 
 
-Example:
+#### Config Example
 ``` 
 module.exports = {
   connection: {
@@ -129,7 +109,42 @@ module.exports = {
 };
 ```
 
-#### Starting the app
+### Setup
+Both the database and the local storage need some setup.
+
+```
+npm run setup -- --db --bucket
+```
+
+Will prepare all the needed tables for the database and the bucket for storage. Both the database and the bucket will be removed and created anew. **Data will be lost.**
+
+Other available options:
+- `--db` - Sets up the db structure.
+- `--bucket` - Sets up the storage bucket.
+- `--data` - Sets up database and data fixtures. This also sets up the db and bucket, so it's not needed to be used with the previous commands.
+
+Full setup with fixtures example:
+*(The `--` is important and can't be omitted)*
+```
+npm run setup -- --data
+```
+
+### Starting the containers
+
+Start the docker containers in the background:
+```
+docker-compose up -d
+```
+Stop the docker containers with:
+```
+docker-compose stop
+```
+
+The containers will store the information within themselves. If the container is deleted all the information will be lost.
+[Minio](https://minio.io) can be used to store the files locally as an alternative to AWS S3. This is particularly useful for local development. Its interface will be available at `http://localhost:9000`.
+
+
+### Starting the app
 ```
 npm run nodemon
 ```
@@ -141,10 +156,10 @@ npm start
 ```
 Starts the app without file watching
 
-### Deployment
+## Deployment to ECS
 Travis is set up to deploy the backend to an AWS ECS Cluster whenever a PR is merged into the `develop` or `master` branch of the project. This triggers a deploy of the API, the database, and the Minio bucket.
 
-#### Setting up deployment
+### Setting up deployment
 Follow these steps to set up a deployment to an ECS Cluster:
 
 1. [Create an ECS Cluster](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/create_cluster.html) on AWS  
