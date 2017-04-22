@@ -4,8 +4,11 @@ import Boom from 'boom';
 import Promise from 'bluebird';
 
 import db from '../db/';
-import { copyFile, getPresignedUrl, listenForFile } from '../s3/utils';
+import { getPresignedUrl, listenForFile } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
+import Operation from '../utils/operation';
+import ServiceRunner from '../utils/service-runner';
+import { closeDatabase } from '../services/rra-osm-p2p';
 
 module.exports = [
   {
@@ -49,47 +52,39 @@ module.exports = [
               });
           }
         })
-        // Get the admin areas to use from the master scenario.
-        .then(() => db('scenarios')
-          .select('*')
-          .where('project_id', request.params.projId)
-          .where('master', true)
-          .first()
-          .then(scenario => scenario.admin_areas.map(o => {
-            o.selected = false;
-            return o;
-          }))
-        )
-        .then(adminAreas => {
-          return db.transaction(function (trx) {
-            const info = {
-              name: data.name,
-              description: data.description || '',
-              status: 'active',
-              master: false,
-              admin_areas: JSON.stringify(adminAreas),
-              project_id: request.params.projId,
-              created_at: (new Date()),
-              updated_at: (new Date())
-            };
+        .then(() => {
+          // Create the scenario base to be able to start an operation for it.
+          const info = {
+            name: data.name,
+            description: data.description || '',
+            status: 'pending',
+            master: false,
+            project_id: request.params.projId,
+            created_at: (new Date()),
+            updated_at: (new Date())
+          };
 
-            return insertScenario(trx, info)
-              .catch(err => {
-                if (err.constraint === 'scenarios_project_id_name_unique') {
-                  throw new DataConflictError(`Scenario name already in use for this project: ${data.name}`);
-                }
-                throw err;
-              })
-              .then(scenario => cloneNeededScenarioFiles(trx, source, sourceScenarioId, scenario))
-              .then(scenario => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId).then(() => scenario))
-              .then(scenario => {
-                if (source === 'new') {
-                  return handleRoadNetworkUpload(trx, reply, scenario);
-                }
-                // Else we're done.
-                return reply(scenario);
-              });
-          });
+          return db('scenarios')
+            .returning('*')
+            .insert(info)
+            .then(res => res[0])
+            .catch(err => {
+              if (err.constraint === 'scenarios_project_id_name_unique') {
+                throw new DataConflictError(`Scenario name already in use for this project: ${data.name}`);
+              }
+              throw err;
+            });
+        })
+        // Start operation and return data to continue.
+        .then(scenario => startOperation(request.params.projId, scenario.id).then(op => [op, scenario]))
+        .then(data => {
+          let [op, scenario] = data;
+          if (source === 'clone') {
+            return createScenario(request.params.projId, scenario.id, op.getId(), source, {sourceScenarioId})
+              .then(() => reply(scenario));
+          } else if (source === 'new') {
+            return handleRoadNetworkUpload(reply, scenario, op.getId(), source);
+          }
         })
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ScenarioNotFoundError, e => reply(Boom.badRequest('Source scenario for cloning not found')))
@@ -102,16 +97,68 @@ module.exports = [
   }
 ];
 
-function insertScenario (trx, data) {
-  return trx('scenarios')
-    .returning('*')
-    .insert(data)
-    .then(res => res[0]);
+function startOperation (projId, scId) {
+  let op = new Operation(db);
+  return op.loadByData('scenario-create', projId, scId)
+    .then(op => {
+      if (op.isStarted()) {
+        throw new DataConflictError('Scenario creation already in progress');
+      }
+    }, err => {
+      // In this case if the operation doesn't exist is not a problem.
+      if (err.message.match(/not exist/)) { return; }
+      throw err;
+    })
+    .then(() => {
+      let op = new Operation(db);
+      return op.start('scenario-create', projId, scId)
+        .then(() => op.log('start', {message: 'Operation started'}));
+    });
+}
+
+function createScenario (projId, scId, opId, source, data) {
+  let action = Promise.resolve();
+  // In test mode we don't want to start the generation.
+  // It will be tested in the appropriate place.
+  if (process.env.DS_ENV === 'test') { return action; }
+
+  if (source === 'clone') {
+    // We need to close the connection to the source scenario before cloning
+    // the database. This needs to be done in this process. The process ran by
+    // the service runner won't have access to it.
+    action = closeDatabase(projId, data.sourceScenarioId);
+  }
+
+  let serviceData = Object.assign({}, {projId, scId, opId, source}, data);
+
+  action.then(() => {
+    console.log(`p${projId} s${scId}`, 'createScenario');
+    let service = new ServiceRunner('scenario-create', serviceData);
+
+    service.on('complete', err => {
+      console.log(`p${projId} s${scId}`, 'createScenario complete');
+      if (err) {
+        // The operation may not have finished if the error took place outside
+        // the promise, or if the error was due to a wrong db connection.
+        let op = new Operation(db);
+        op.loadById(opId)
+          .then(op => {
+            if (!op.isCompleted()) {
+              return op.log('error', {error: err.message})
+                .then(op => op.finish());
+            }
+          });
+      }
+    })
+    .start();
+  });
+
+  return action;
 }
 
 // Get the presigned url for file upload and send it to the client.
 // Listen for file changes to update the database.
-function handleRoadNetworkUpload (trx, reply, scenario) {
+function handleRoadNetworkUpload (reply, scenario, opId, source) {
   const type = 'road-network';
   const fileName = `${type}_${Date.now()}`;
   const filePath = `scenario-${scenario.id}/${fileName}`;
@@ -125,93 +172,8 @@ function handleRoadNetworkUpload (trx, reply, scenario) {
 
       return reply(scenario);
     })
-    // We need to manually commit the transaction because the listenForFile will
-    // only resolve after the upload and the transaction will be left hanging.
-    .then(() => trx.commit())
     .then(() => listenForFile(filePath))
     .then(record => {
-      let now = new Date();
-      let data = {
-        name: fileName,
-        type: type,
-        path: filePath,
-        project_id: scenario.project_id,
-        scenario_id: scenario.id,
-        created_at: now,
-        updated_at: now
-      };
-
-      db('scenarios_files')
-        .returning('*')
-        .insert(data)
-        .then(res => {
-          console.log('res', res);
-        })
-        .then(() => db('scenarios').update({updated_at: now, status: 'active'}).where('id', scenario.id))
-        .then(() => db('projects').update({updated_at: now}).where('id', scenario.project_id))
-        .catch(err => {
-          console.log('err', err);
-        });
-    });
-}
-
-// Clones the needed files based on the roadNetworkSource.
-// case "clone": road-network and poi
-// case "new": poi
-function cloneNeededScenarioFiles (trx, roadNetworkSource, sourceScenarioId, scenarioData) {
-  let res;
-  if (roadNetworkSource === 'clone') {
-    // Clone files from a different scenario.
-    res = trx('scenarios_files')
-      .select('*')
-      .where('scenario_id', sourceScenarioId)
-      .where('project_id', scenarioData.project_id)
-      .then(files => cloneScenarioFiles(trx, files, scenarioData));
-  }
-  if (roadNetworkSource === 'new') {
-    // When uploading a new file we do so only for the
-    // road-network. Since the poi file is identical for all
-    // scenarios of the project just clone it from the master.
-    res = trx('scenarios_files')
-      .select('scenarios_files.*')
-      .innerJoin('scenarios', 'scenarios.id', 'scenarios_files.scenario_id')
-      .where('scenarios.master', true)
-      .where('scenarios.project_id', scenarioData.project_id)
-      .where('scenarios_files.type', 'poi')
-      .then(files => cloneScenarioFiles(trx, files, scenarioData));
-  }
-
-  // Send back scenario data.
-  return res.then(() => scenarioData);
-}
-
-// Copies the given files from a to the new scenario, both the database entries
-// and the physical file.
-function cloneScenarioFiles (trx, files, scenarioData) {
-  let newFiles = files.map(file => {
-    const fileName = `${file.type}_${Date.now()}`;
-    const filePath = `scenario-${scenarioData.id}/${fileName}`;
-
-    return {
-      name: fileName,
-      type: file.type,
-      path: filePath,
-      project_id: scenarioData.project_id,
-      scenario_id: scenarioData.id,
-      created_at: (new Date()),
-      updated_at: (new Date())
-    };
-  });
-
-  return Promise.resolve([files, newFiles])
-    // Insert new files in the db.
-    .then(allFiles => {
-      let [oldFiles, newFiles] = allFiles;
-      return trx.batchInsert('scenarios_files', newFiles).then(() => [oldFiles, newFiles]);
-    })
-    // Copy files on s3.
-    .then(allFiles => {
-      let [oldFiles, newFiles] = allFiles;
-      return Promise.map(oldFiles, (old, i) => copyFile(old.path, newFiles[i].path));
+      createScenario(scenario.project_id, scenario.id, opId, source, {roadNetworkFile: fileName});
     });
 }

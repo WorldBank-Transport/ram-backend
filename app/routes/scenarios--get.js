@@ -86,7 +86,8 @@ function singleScenarioHandler (request, reply) {
       return scenarios[0];
     })
     .then(scenario => attachScenarioFiles(scenario))
-    .then(scenario => attachAnalysisOperation(scenario))
+    .then(scenario => attachOperation('generate-analysis', 'gen_analysis', scenario))
+    .then(scenario => attachOperation('scenario-create', 'scen_create', scenario))
     .then(scenario => reply(scenario))
     .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
     .catch(err => {
@@ -105,16 +106,16 @@ function attachScenarioFiles (scenario) {
     });
 }
 
-function attachAnalysisOperation (scenario) {
+function attachOperation (opName, prop, scenario) {
   return db.select('*')
     .from('operations')
     .where('operations.scenario_id', scenario.id)
-    .where('operations.name', 'generate-analysis')
+    .where('operations.name', opName)
     .orderBy('created_at', 'desc')
     .limit(1)
     .then(op => {
       if (!op.length) {
-        scenario.gen_analysis = null;
+        scenario[prop] = null;
         return scenario;
       }
       op = op[0];
@@ -128,7 +129,7 @@ function attachAnalysisOperation (scenario) {
           if (logs.length) {
             errored = logs[logs.length - 1].code === 'error';
           }
-          scenario.gen_analysis = {
+          scenario[prop] = {
             id: op.id,
             status: op.status,
             created_at: op.created_at,
