@@ -61,6 +61,8 @@ export function createScenariosTable () {
       .references('projects.id')
       .onDelete('CASCADE');
     table.json('admin_areas');
+    // Arbitrary additional json data.
+    table.json('data');
     table.timestamps();
 
     table.unique(['project_id', 'name']);
