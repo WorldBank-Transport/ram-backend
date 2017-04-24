@@ -196,6 +196,8 @@ describe('Scenarios', function () {
         assert.equal(result.master, false);
         assert.equal(result.project_id, 1200);
         assert.equal(typeof result.roadNetworkUpload, 'undefined');
+        assert.equal(result.data.res_gen_at, 0);
+        assert.equal(result.data.rn_updated_at, 0);
 
         return result;
       });

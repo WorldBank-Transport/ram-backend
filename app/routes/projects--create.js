@@ -38,7 +38,11 @@ module.exports = [
           status: 'pending',
           master: true,
           created_at: (new Date()),
-          updated_at: (new Date())
+          updated_at: (new Date()),
+          data: {
+            res_gen_at: 0,
+            rn_updated_at: 0
+          }
         })
         .then(() => reply(projectData))
         .catch(err => reply(Boom.badImplementation(err)));
