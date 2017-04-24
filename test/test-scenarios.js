@@ -466,4 +466,58 @@ describe('Scenarios', function () {
       });
     });
   });
+
+  describe('GET /projects/{projId}/scenarios/{scId}/results?download=true', function () {
+    before(function (done) {
+      // Add one file without an s3 representation.
+      db.insert({
+        id: 10000001,
+        name: 'results_000000',
+        type: 'results',
+        path: 'scenario-1000/results_000000',
+        project_id: 1000,
+        scenario_id: 1000
+      })
+      .into('scenarios_files')
+      .then(() => done());
+    });
+
+    after(function (done) {
+      // cleanup
+      db('scenarios_files')
+        .where('id', 10000001)
+        .del()
+      .then(() => done());
+    });
+
+    it('should return 400 when download flag not true', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/results?download=false'
+      }).then(res => {
+        assert.equal(res.statusCode, 501, 'Status code is 404');
+        assert.equal(res.result.message, 'Query parameter "download" missing');
+      });
+    });
+
+    it('should return 404 when a file is not found', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/8888/scenarios/8888/results?download=true'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'Results not found');
+      });
+    });
+
+    it('should return 404 when a file is not found on s3', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/results?download=true'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        assert.equal(res.result.message, 'File not found in storage bucket');
+      });
+    });
+  });
 });
