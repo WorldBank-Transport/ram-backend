@@ -203,4 +203,55 @@ describe('Scenarios', function () {
       });
     });
   });
+
+  describe('POST /projects/{projId}/scenarios/{scId}/duplicate', function () {
+    before(function (done) {
+      // Add simple scenario for duplication.
+      db.insert({
+        id: 1200001,
+        name: 'Main scenario 1200 (2)',
+        project_id: 1200
+      })
+      .into('scenarios')
+      .then(() => done());
+    });
+
+    after(function (done) {
+      // cleanup
+      db('scenarios')
+        .where('id', 1200001)
+        .del()
+      .then(() => done());
+    });
+
+    it('should return not found when scenario to duplicate from does not exist', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1200/scenarios/8888/duplicate'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        var result = res.result;
+        assert.equal(result.message, 'Scenario not found');
+      });
+    });
+
+    it('should duplicate a scenario with the correct name', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1200/scenarios/1200/duplicate'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        assert.equal(result.name, 'Main scenario 1200 (3)');
+        assert.equal(result.status, 'pending');
+        assert.equal(result.master, false);
+        assert.equal(result.project_id, 1200);
+        assert.equal(typeof result.roadNetworkUpload, 'undefined');
+        assert.equal(result.data.res_gen_at, 0);
+        assert.equal(result.data.rn_updated_at, 0);
+
+        return result;
+      });
+    });
+  });
 });
