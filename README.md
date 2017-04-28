@@ -15,19 +15,20 @@ These installation instructions focus on running the RRA Server locally. This re
 First time setup:
 
 1. install Node 6, Docker, Docker Compose, python-gdal, python-lxml - [more on project dependencies](#install-project-dependencies)
-2. `npm install` - [more on application dependencies](#install-application-dependencies)
+2. `yarn install` - [more on application dependencies](#install-application-dependencies)
 3. add configuration variables to `app/config/local.js`. The [example config](#config-example) should work well.
-4. `npm run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `npm run setup -- --data` instead - [more on setup](#setup)
+4. `yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `yarn run setup -- --data` instead - [more on setup](#setup)
 
 After first time setup, you can start the server by using:
 
 1. `docker-compose up -d` to start the database and bucket in the background - [more on starting the containers](#starting-the-containers)
-2. `npm start` to start the app - [more on starting the app](#starting-the-app)
+2. `yarn start` to start the app - [more on starting the app](#starting-the-app)
 
 ### Install Project Dependencies
 To set up the development environment for this website, you'll need to install the following on your system:
 
 - [Node](http://nodejs.org/) v6.x (To manage multiple node versions we recommend [nvm](https://github.com/creationix/nvm))
+- [Yarn](https://yarnpkg.com/) Package manager
 - [Docker](https://www.docker.com/products/docker) and [Docker Compose](https://docs.docker.com/compose/install/) v1.10.0
 - python-gdal and python-lxml to generate OSM Change files (eg. `$ apt-get install -y python-gdal python-lxml`)
 
@@ -42,7 +43,7 @@ nvm install
 Install Node modules:
 
 ```
-npm install
+yarn install
 ```
 
 ### Configuration
@@ -113,7 +114,7 @@ module.exports = {
 Both the database and the local storage need some setup.
 
 ```
-npm run setup -- --db --bucket
+yarn run setup -- --db --bucket
 ```
 
 Will prepare all the needed tables for the database and the bucket for storage. Both the database and the bucket will be removed and created anew. **Data will be lost.**
@@ -126,7 +127,7 @@ Other available options:
 Full setup with fixtures example:
 *(The `--` is important and can't be omitted)*
 ```
-npm run setup -- --data
+yarn run setup -- --data
 ```
 
 ### Starting the containers
@@ -146,13 +147,13 @@ The containers will store the information within themselves. If the container is
 
 ### Starting the app
 ```
-npm run nodemon
+yarn run nodemon
 ```
 This will start the app at `http://localhost:4000`.
 This command starts the server with `nodemon` which watches files and restarts when there's a change.
 
 ```
-npm start
+yarn start
 ```
 Starts the app without file watching
 
