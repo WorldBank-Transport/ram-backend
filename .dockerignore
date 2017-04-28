@@ -1,0 +1,4 @@
+.resources
+node_modules
+osm-p2p-dbs
+*.log
