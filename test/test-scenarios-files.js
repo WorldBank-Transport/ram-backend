@@ -202,7 +202,7 @@ describe('Scenario files', function () {
     after(function (done) {
       // cleanup
       db('scenarios_files')
-        .where('id', 10030001)
+        .where('id', 10000001)
         .del()
       .then(() => done());
     });
