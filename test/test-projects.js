@@ -316,6 +316,31 @@ describe('Projects', function () {
         assert.equal(result.description, 'This is the description');
       });
     });
+
+    it('should create a master ghost scenario', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects',
+        payload: {
+          name: 'Project and ghost'
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        assert.equal(result.name, 'Project and ghost');
+
+        return db('scenarios')
+          .select('*')
+          .where('project_id', result.id)
+          .where('master', true)
+          .first()
+          .then(scenario => {
+            assert.equal(scenario.name, 'Main scenario');
+            assert.equal(scenario.data.res_gen_at, 0);
+            assert.equal(scenario.data.rn_updated_at, 0);
+          });
+      });
+    });
   });
 
   describe('PATCH /projects/{projId}', function () {

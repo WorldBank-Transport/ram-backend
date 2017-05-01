@@ -61,7 +61,11 @@ module.exports = [
             master: false,
             project_id: request.params.projId,
             created_at: (new Date()),
-            updated_at: (new Date())
+            updated_at: (new Date()),
+            data: {
+              res_gen_at: 0,
+              rn_updated_at: 0
+            }
           };
 
           return db('scenarios')

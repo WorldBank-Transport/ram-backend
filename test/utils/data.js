@@ -73,7 +73,11 @@ export function project1000 () {
     'project_id': 1000,
     'master': true,
     'created_at': '2017-02-01T12:00:01.000Z',
-    'updated_at': '2017-02-01T12:00:01.000Z'
+    'updated_at': '2017-02-01T12:00:01.000Z',
+    'data': {
+      'res_gen_at': 0,
+      'rn_updated_at': 0
+    }
   }));
 }
 
@@ -95,7 +99,11 @@ export function project1002 () {
     'project_id': 1002,
     'master': true,
     'created_at': '2017-02-01T12:00:02.000Z',
-    'updated_at': '2017-02-01T12:00:02.000Z'
+    'updated_at': '2017-02-01T12:00:02.000Z',
+    'data': {
+      'res_gen_at': 0,
+      'rn_updated_at': 0
+    }
   }));
 }
 
@@ -127,7 +135,11 @@ export function project1001 () {
     'project_id': 1001,
     'master': true,
     'created_at': '2017-02-01T12:00:03.000Z',
-    'updated_at': '2017-02-01T12:00:03.000Z'
+    'updated_at': '2017-02-01T12:00:03.000Z',
+    'data': {
+      'res_gen_at': 0,
+      'rn_updated_at': 0
+    }
   }))
   .then(() => scenarioFile({
     'id': 1001,
@@ -170,7 +182,11 @@ export function project1003 () {
     'project_id': 1003,
     'master': true,
     'created_at': '2017-02-01T12:00:04.000Z',
-    'updated_at': '2017-02-01T12:00:04.000Z'
+    'updated_at': '2017-02-01T12:00:04.000Z',
+    'data': {
+      'res_gen_at': 0,
+      'rn_updated_at': 0
+    }
   }))
   .then(() => scenarioFile({
     'id': 1003,
@@ -235,7 +251,11 @@ export function project1004 () {
     'project_id': 1004,
     'master': true,
     'created_at': '2017-02-01T12:00:05.000Z',
-    'updated_at': '2017-02-01T12:00:05.000Z'
+    'updated_at': '2017-02-01T12:00:05.000Z',
+    'data': {
+      'res_gen_at': 0,
+      'rn_updated_at': 0
+    }
   }))
   .then(() => scenarioFile([
     {
@@ -315,7 +335,11 @@ export function project1100 () {
     'master': true,
     'admin_areas': JSON.stringify(ADMIN_AREAS),
     'created_at': '2017-02-01T12:00:06.000Z',
-    'updated_at': '2017-02-01T12:00:06.000Z'
+    'updated_at': '2017-02-01T12:00:06.000Z',
+    'data': {
+      'res_gen_at': 0,
+      'rn_updated_at': 0
+    }
   }))
   .then(() => scenarioFile([
     {
@@ -396,7 +420,11 @@ export function project1200 () {
       'master': true,
       'admin_areas': JSON.stringify(ADMIN_AREAS),
       'created_at': '2017-02-01T12:00:07.000Z',
-      'updated_at': '2017-02-01T12:00:07.000Z'
+      'updated_at': '2017-02-01T12:00:07.000Z',
+      'data': {
+        'res_gen_at': 0,
+        'rn_updated_at': 0
+      }
     },
     {
       'id': 1201,
@@ -407,7 +435,11 @@ export function project1200 () {
       'master': false,
       'admin_areas': JSON.stringify(ADMIN_AREAS),
       'created_at': '2017-02-01T12:00:07.000Z',
-      'updated_at': '2017-02-01T12:00:07.000Z'
+      'updated_at': '2017-02-01T12:00:07.000Z',
+      'data': {
+        'res_gen_at': 0,
+        'rn_updated_at': 0
+      }
     }
   ]))
   .then(() => scenarioFile([
@@ -511,7 +543,11 @@ export function project2000 () {
     'master': true,
     'admin_areas': JSON.stringify(ADMIN_AREAS),
     'created_at': '2017-02-01T12:00:06.000Z',
-    'updated_at': '2017-02-01T12:00:06.000Z'
+    'updated_at': '2017-02-01T12:00:06.000Z',
+    'data': {
+      'res_gen_at': 0,
+      'rn_updated_at': 0
+    }
   }))
   .then(() => scenarioFile([
     {
@@ -598,7 +634,11 @@ export function projectBarebones (id) {
     'project_id': id,
     'master': true,
     'created_at': '2017-02-01T12:00:00.000Z',
-    'updated_at': '2017-02-01T12:00:00.000Z'
+    'updated_at': '2017-02-01T12:00:00.000Z',
+    'data': {
+      'res_gen_at': 0,
+      'rn_updated_at': 0
+    }
   }));
 }
 
@@ -630,7 +670,11 @@ export function projectPendingWithFiles (id) {
     'project_id': id,
     'master': true,
     'created_at': '2017-02-01T12:00:00.000Z',
-    'updated_at': '2017-02-01T12:00:00.000Z'
+    'updated_at': '2017-02-01T12:00:00.000Z',
+    'data': {
+      'res_gen_at': 0,
+      'rn_updated_at': 0
+    }
   }))
   .then(() => scenarioFile({
     'id': id,
@@ -696,7 +740,11 @@ export function projectPendingWithAllFiles (id) {
     'project_id': id,
     'master': true,
     'created_at': '2017-02-01T12:00:00.000Z',
-    'updated_at': '2017-02-01T12:00:00.000Z'
+    'updated_at': '2017-02-01T12:00:00.000Z',
+    'data': {
+      'res_gen_at': 0,
+      'rn_updated_at': 0
+    }
   }))
   .then(() => scenarioFile([
     {
