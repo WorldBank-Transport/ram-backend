@@ -18,6 +18,7 @@ First time setup:
 2. `yarn install` - [more on application dependencies](#install-application-dependencies)
 3. add configuration variables to `app/config/local.js`. The [example config](#config-example) should work well.
 4. `yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `yarn run setup -- --data` instead - [more on setup](#setup)
+5. `docker network create rra` to set up the Docker network
 
 After first time setup, you can start the server by using:
 
@@ -64,7 +65,6 @@ The following options must be set:
   - `connection.host` - The host. (mostly cosmetic. Default to 0.0.0.0). [PORT]
   - `connection.port` - The port where the app runs. (Default 4000). [HOST]
   - `db` - The database connection string. [DB_CONNECTION]
-  - `dbTest` - The database connection string for testing. [DB_TEST_CONNECTION]
   - `storage` - Object with storage related settings. Has to be s3 compatible.
   - `storage.host` - The host to use. (Default 0.0.0.0). [STORAGE_HOST]
   - `storage.port` - The port to use. (Default 0.0.0.0). [STORAGE_PORT]
@@ -77,8 +77,8 @@ The following options must be set:
   - `analysisProcess.hyperAccess` - Access key for Hyper. [HYPER_ACCESS]
   - `analysisProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
   - `analysisProcess.container` - The name of the rra-analysis container (Default wbtransport/rra-analysis:latest-stable) [ANL_CONTAINER]
-  - `analysisProcess.db` - The database connection string. When using Docker for the analysis process, the host will the Docker inet address ($ ifconfig). When using Hyper, this will be the IP of your hosted database [ANL_DB]
-  - `analysisProcess.storageHost` - The host of the storage service. See notes above. [ANL_STORAGE_HOST]
+  - `analysisProcess.db` - The database connection string. When using Docker for the analysis process, the host will be the name of the database container (`rra-postgis`). When using Hyper, this will be the IP of your hosted database [ANL_DB]
+  - `analysisProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`rra-minio`). When using Hyper, this will be the IP of the storage host. [ANL_STORAGE_HOST]
   - `analysisProcess.storagePort` - The port to use. [ANL_STORAGE_PORT]
 
 #### Config Example
@@ -103,8 +103,8 @@ module.exports = {
     hyperAccess: null,
     hyperSecret: null,
     container: 'wbtransport/rra-analysis:latest-stable',
-    db: 'postgresql://rra:rra@172.17.0.1:5432/rra',
-    storageHost: '172.17.0.1',
+    db: 'postgresql://rra:rra@rra-postgis:5432/rra',
+    storageHost: 'rra-minio',
     storagePort: 9000
   }
 };
@@ -129,6 +129,15 @@ Full setup with fixtures example:
 ```
 yarn run setup -- --data
 ```
+
+### Docker network
+Set up the Docker network by running:
+
+```
+docker network create rra
+```
+
+This allows containers that are not part of the Docker Compose file to connect to the database and storage more easily. This includes the container that spins up the OSRM analysis.
 
 ### Starting the containers
 

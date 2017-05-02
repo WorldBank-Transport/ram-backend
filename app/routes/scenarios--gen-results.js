@@ -170,6 +170,9 @@ function spawnAnalysisProcess (projId, scId, opId) {
   let service = config.analysisProcess.service;
   switch (service) {
     case 'docker':
+      args.push(
+        '--network', 'rra'
+      );
       break;
     case 'hyper':
       args.push(
