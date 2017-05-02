@@ -1,17 +1,27 @@
 'use strict';
+import fs from 'fs-extra';
+
 import { setupStructure as setupDb } from '../app/db/structure';
 import { setupStructure as setupS3 } from '../app/s3/structure';
 import { addData } from './fixtures/fixtures';
+import config from '../app/config';
+
+const rmOsmP2PDbs = () => {
+  console.log('Removing osm-p2p dbs:', config.osmP2PDir);
+  return fs.remove(config.osmP2PDir);
+};
 
 const arg = (a) => process.argv.indexOf(a) !== -1;
 var fns = [];
 
 if (arg('--data')) {
+  fns.push(() => rmOsmP2PDbs());
   fns.push(() => setupDb());
   fns.push(() => setupS3());
   fns.push(() => addData());
 } else {
   if (arg('--db')) {
+    fns.push(() => rmOsmP2PDbs());
     fns.push(() => setupDb());
   }
   if (arg('--bucket')) {
