@@ -28,6 +28,7 @@ before_script:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
   - docker-compose -f docker-compose-test.yml run rra-api yarn run setup -- --db --bucket
+  - yarn lint
 
 script:
   - docker-compose -f docker-compose-test.yml run rra-api yarn test
