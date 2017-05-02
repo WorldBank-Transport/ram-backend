@@ -29,6 +29,8 @@ config.connection.host = process.env.HOST || config.connection.host;
 
 config.db = process.env.DB_CONNECTION || config.db;
 
+config.osmP2PDir = process.env.OSM_P2P_DIR || config.osmP2PDir;
+
 config.storage.host = process.env.STORAGE_HOST || config.storage.host;
 config.storage.port = parseInt(process.env.STORAGE_PORT) || config.storage.port;
 config.storage.engine = process.env.STORAGE_ENGINE || config.storage.engine;

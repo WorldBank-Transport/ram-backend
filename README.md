@@ -65,6 +65,7 @@ The following options must be set:
   - `connection.host` - The host. (mostly cosmetic. Default to 0.0.0.0). [PORT]
   - `connection.port` - The port where the app runs. (Default 4000). [HOST]
   - `db` - The database connection string. [DB_CONNECTION]
+  - `osmP2PDir` - The folder to store the osm-p2p dbs. [OSM_P2P_DIR]
   - `storage` - Object with storage related settings. Has to be s3 compatible.
   - `storage.host` - The host to use. (Default 0.0.0.0). [STORAGE_HOST]
   - `storage.port` - The port to use. (Default 0.0.0.0). [STORAGE_PORT]
@@ -89,6 +90,7 @@ module.exports = {
     port: 4000
   },
   db: 'postgresql://rra:rra@localhost:5432/rra',
+  osmP2PDir: `${__dirname}/../../osm-p2p-dbs`,
   storage: {
     host: '0.0.0.0',
     port: 9000,
