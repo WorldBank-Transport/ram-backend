@@ -42,7 +42,7 @@ describe('Scenarios', function () {
       });
     });
 
-    it('should return 1 project', function () {
+    it('should return 1 scenario', function () {
       return instance.injectThen({
         method: 'GET',
         url: '/projects/1200/scenarios?limit=1&page=2'
