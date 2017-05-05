@@ -5,8 +5,9 @@ import bbox from '@turf/bbox';
 import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
-import { getFileContents, getJSONFileContents } from '../../s3/utils';
-import { importRoadNetwork } from '../rra-osm-p2p';
+import { getJSONFileContents } from '../../s3/utils';
+// import { getFileContents, getJSONFileContents } from '../../s3/utils';
+// import { importRoadNetwork } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
 
 const DEBUG = config.debug;
@@ -85,12 +86,12 @@ export function concludeProjectSetup (e) {
   let op = new Operation(db);
   op.loadById(opId)
   .then(() => Promise.all([
-    db('scenarios_files')
-      .select('*')
-      .where('project_id', projId)
-      .where('type', 'road-network')
-      .first()
-      .then(file => getFileContents(file.path)),
+    // db('scenarios_files')
+    //   .select('*')
+    //   .where('project_id', projId)
+    //   .where('type', 'road-network')
+    //   .first()
+    //   .then(file => getFileContents(file.path)),
     db('projects_files')
       .select('*')
       .where('project_id', projId)
@@ -99,7 +100,8 @@ export function concludeProjectSetup (e) {
       .then(file => getJSONFileContents(file.path))
   ]))
   .then(filesContent => {
-    let [roadNetwork, adminBoundsFc] = filesContent;
+    // let [roadNetwork, adminBoundsFc] = filesContent;
+    let [adminBoundsFc] = filesContent;
     // Run the tasks in series rather than in parallel.
     // This is better for error handling. If they run in parallel and
     // `processAdminAreas` errors, the script hangs a bit while
@@ -107,11 +109,11 @@ export function concludeProjectSetup (e) {
     // the error is captured by the promise.
     // Since processing the admin areas is a pretty fast operation, the
     // performance is not really affected.
-    return processAdminAreas(adminBoundsFc)
-      .then(() => {
-        logger && logger.log('process road network');
-        return importRoadNetwork(projId, scId, op, roadNetwork);
-      });
+    return processAdminAreas(adminBoundsFc);
+      // .then(() => {
+      //   logger && logger.log('process road network');
+      //   return importRoadNetwork(projId, scId, op, roadNetwork);
+      // });
   })
   .then(() => {
     return db.transaction(function (trx) {

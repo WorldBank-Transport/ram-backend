@@ -8,7 +8,7 @@ import { getPresignedUrl, listenForFile } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
 import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
-import { closeDatabase } from '../services/rra-osm-p2p';
+// import { closeDatabase } from '../services/rra-osm-p2p';
 
 function handler (request, reply) {
   const data = request.payload;
@@ -188,7 +188,7 @@ function createScenario (projId, scId, opId, source, data) {
     // We need to close the connection to the source scenario before cloning
     // the database. This needs to be done in this process. The process ran by
     // the service runner won't have access to it.
-    action = closeDatabase(projId, data.sourceScenarioId);
+    // action = closeDatabase(projId, data.sourceScenarioId);
   }
 
   let serviceData = Object.assign({}, {projId, scId, opId, source}, data);

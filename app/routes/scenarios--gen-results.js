@@ -10,8 +10,8 @@ import { removeFile } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
 import { getProject } from './projects--get';
 import Operation from '../utils/operation';
-import ServiceRunner from '../utils/service-runner';
-import { closeDatabase } from '../services/rra-osm-p2p';
+// import ServiceRunner from '../utils/service-runner';
+// import { closeDatabase } from '../services/rra-osm-p2p';
 
 module.exports = [
   {
@@ -106,44 +106,46 @@ function generateResults (projId, scId, opId) {
   // It will be tested in the appropriate place.
   if (process.env.DS_ENV === 'test') { return; }
 
-  process.nextTick(() => {
-    // Close the database on this process before exporting the road network.
-    closeDatabase(projId, scId).then(() => {
-      updateRN(projId, scId, opId, (err) => {
-        // The error is logged to the db inside `updateRN`.
-        // There's nothing else to do.
-        if (!err) {
-          spawnAnalysisProcess(projId, scId, opId);
-        }
-      });
-    });
-  });
+  spawnAnalysisProcess(projId, scId, opId);
+
+  // process.nextTick(() => {
+  //   // Close the database on this process before exporting the road network.
+  //   closeDatabase(projId, scId).then(() => {
+  //     updateRN(projId, scId, opId, (err) => {
+  //       // The error is logged to the db inside `updateRN`.
+  //       // There's nothing else to do.
+  //       if (!err) {
+  //         spawnAnalysisProcess(projId, scId, opId);
+  //       }
+  //     });
+  //   });
+  // });
 }
 
-function updateRN (projId, scId, opId, cb) {
-  console.log(`p${projId} s${scId}`, 'updateRN');
-  let service = new ServiceRunner('export-road-network', {projId, scId, opId});
+// function updateRN (projId, scId, opId, cb) {
+//   console.log(`p${projId} s${scId}`, 'updateRN');
+//   let service = new ServiceRunner('export-road-network', {projId, scId, opId});
 
-  service.on('complete', err => {
-    console.log(`p${projId} s${scId}`, 'updateRN complete');
-    if (err) {
-      // The operation may not have finished if the error took place outside
-      // the promise, or if the error was due to a wrong db connection.
-      let op = new Operation(db);
-      op.loadById(opId)
-        .then(op => {
-          if (!op.isCompleted()) {
-            return op.log('error', {error: err.message})
-              .then(op => op.finish());
-          }
-        })
-        .then(() => cb(err), () => cb(err));
-    } else {
-      cb();
-    }
-  })
-  .start();
-}
+//   service.on('complete', err => {
+//     console.log(`p${projId} s${scId}`, 'updateRN complete');
+//     if (err) {
+//       // The operation may not have finished if the error took place outside
+//       // the promise, or if the error was due to a wrong db connection.
+//       let op = new Operation(db);
+//       op.loadById(opId)
+//         .then(op => {
+//           if (!op.isCompleted()) {
+//             return op.log('error', {error: err.message})
+//               .then(op => op.finish());
+//           }
+//         })
+//         .then(() => cb(err), () => cb(err));
+//     } else {
+//       cb();
+//     }
+//   })
+//   .start();
+// }
 
 function spawnAnalysisProcess (projId, scId, opId) {
   console.log(`p${projId} s${scId}`, 'spawnAnalysisProcess');
