@@ -2,6 +2,8 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Promise from 'bluebird';
+const copy = Promise.promisify(fs.copy);
+const remove = Promise.promisify(fs.remove);
 
 import { setupStructure as setupDb } from '../app/db/structure';
 import { setupStructure as setupS3 } from '../app/s3/structure';
@@ -10,19 +12,19 @@ import config from '../app/config';
 
 const rmOsmP2PDbs = () => {
   console.log('Removing osm-p2p dbs:', config.osmP2PDir);
-  return Promise.promisify(fs.remove)(config.osmP2PDir);
+  return remove(config.osmP2PDir);
 };
 
 const addOsmP2PData = () => {
   console.log('Adding osm-p2p dbs:', config.osmP2PDir);
   const src = path.resolve(__dirname, '../test/utils/data-sergipe/osm-p2p-db');
-  const copy = Promise.promisify(fs.copy);
+  const copyOsmP2PDb = (pId, scId) => copy(src, path.resolve(config.osmP2PDir, `p${pId}s${scId}`));
 
   return Promise.all([
-    copy(src, path.resolve(config.osmP2PDir, `p${1100}s${1100}`)),
-    copy(src, path.resolve(config.osmP2PDir, `p${1200}s${1200}`)),
-    copy(src, path.resolve(config.osmP2PDir, `p${1200}s${1201}`)),
-    copy(src, path.resolve(config.osmP2PDir, `p${2000}s${2000}`))
+    copyOsmP2PDb(1100, 1100),
+    copyOsmP2PDb(1200, 1200),
+    copyOsmP2PDb(1200, 1201),
+    copyOsmP2PDb(2000, 2000)
   ]);
 };
 
