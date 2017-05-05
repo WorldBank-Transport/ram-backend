@@ -3,6 +3,7 @@ import { assert } from 'chai';
 
 import Server from '../app/services/server';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
+import db from '../app/db';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp } from './utils/data';
 
