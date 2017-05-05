@@ -17,13 +17,10 @@ First time setup:
 1. install Node 6, Docker, Docker Compose, python-gdal, python-lxml - [more on project dependencies](#install-project-dependencies)
 2. `yarn install` - [more on application dependencies](#install-application-dependencies)
 3. add configuration variables to `app/config/local.js`. The [example config](#config-example) should work well.
-4. `yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `yarn run setup -- --data` instead - [more on setup](#setup)
-5. `docker network create rra` to set up the Docker network
-
-After first time setup, you can start the server by using:
-
-1. `docker-compose up -d` to start the database and bucket in the background - [more on starting the containers](#starting-the-containers)
-2. `yarn start` to start the app - [more on starting the app](#starting-the-app)
+4. [sudo] `docker network create rra` to set up the Docker network
+5. [sudo] `docker-compose up -d` to start the database and bucket in the background - [more on starting the containers](#starting-the-containers)
+6. `yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `yarn run setup -- --data` instead - [more on setup](#setup)
+7. `yarn start` to start the app - [more on starting the app](#starting-the-app)
 
 ### Install Project Dependencies
 To set up the development environment for this website, you'll need to install the following on your system:
@@ -83,7 +80,7 @@ The following options must be set:
   - `analysisProcess.storagePort` - The port to use. [ANL_STORAGE_PORT]
 
 #### Config Example
-``` 
+```
 module.exports = {
   connection: {
     host: '0.0.0.0',

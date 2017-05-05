@@ -1,13 +1,10 @@
 'use strict';
 import { assert } from 'chai';
-import fs from 'fs';
-import request from 'request';
 
 import Server from '../app/services/server';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp } from './utils/data';
-import db from '../app/db';
 
 var options = {
   connection: {port: 2000, host: '0.0.0.0'}
