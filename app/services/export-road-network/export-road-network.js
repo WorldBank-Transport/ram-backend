@@ -6,7 +6,7 @@ import getMap from 'osm-p2p-server/api/get_map';
 import config from '../../config';
 import { getDatabase } from '../rra-osm-p2p';
 import db from '../../db/';
-import { putFileStream } from '../../s3/utils';
+import { putFileStream, removeFile } from '../../s3/utils';
 import Operation from '../../utils/operation';
 import AppLogger from '../../utils/app-logger';
 
@@ -70,7 +70,28 @@ export function exportRoadNetwork (e) {
       let stream = getMap(osmDb)(bbox, {order: 'type'})
         .pipe(formatTransform);
 
-      return putFileStream(filePath, stream);
+      return putFileStream(filePath, stream)
+          // Get previous file
+        .then(() => db('scenarios_files')
+          .select('path')
+          .where('type', 'road-network')
+          .where('project_id', projId)
+          .where('scenario_id', projId)
+          .first()
+        )
+        // Delete from storage.
+        .then(file => removeFile(file.path))
+        // Add entry to the database
+        .then(() => db('scenarios_files')
+          .update({
+            name: fileName,
+            path: filePath,
+            updated_at: (new Date())
+          })
+          .where('type', 'road-network')
+          .where('project_id', projId)
+          .where('scenario_id', projId)
+        );
     })
     // Note: There's no need to close the osm-p2p-db because when the process
     // terminates the connection is automatically closed.
