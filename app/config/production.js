@@ -6,6 +6,7 @@ module.exports = {
     port: 4000
   },
   db: null,
+  osmP2PDir: null,
   storage: {
     host: null,
     port: 9000,

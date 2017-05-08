@@ -5,6 +5,7 @@ module.exports = {
     port: 4000
   },
   db: 'postgresql://rratest:rratest@localhost:5432/rratest',
+  osmP2PDir: `${__dirname}/../../osm-p2p-dbs`,
   storage: {
     host: '0.0.0.0',
     port: 9000,

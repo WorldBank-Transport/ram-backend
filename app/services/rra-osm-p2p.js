@@ -19,7 +19,7 @@ function getDatabaseName (projId, scId) {
 }
 
 function getDatabaseBaseDir () {
-  return `${config.baseDir}/../osm-p2p-dbs`;
+  return config.osmP2PDir;
 }
 
 export function getRouter (projId, scId) {

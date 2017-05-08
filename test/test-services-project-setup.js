@@ -104,17 +104,20 @@ describe('Finish Project Setup', function () {
             db('operations_logs')
               .where('operation_id', op.getId())
               .then(logs => {
-                assert.lengthOf(logs, 5);
+                // assert.lengthOf(logs, 5);
+                assert.lengthOf(logs, 3);
                 assert.equal(logs[0].code, 'start');
                 assert.equal(logs[0].data.message, 'Operation started');
                 assert.equal(logs[1].code, 'process:admin-bounds');
                 assert.equal(logs[1].data.message, 'Processing admin areas');
-                assert.equal(logs[2].code, 'process:road-network');
-                assert.equal(logs[2].data.message, 'Road network processing started');
-                assert.equal(logs[3].code, 'process:road-network');
-                assert.equal(logs[3].data.message, 'Road network processing finished');
-                assert.equal(logs[4].code, 'success');
-                assert.equal(logs[4].data.message, 'Operation complete');
+                // assert.equal(logs[2].code, 'process:road-network');
+                // assert.equal(logs[2].data.message, 'Road network processing started');
+                // assert.equal(logs[3].code, 'process:road-network');
+                // assert.equal(logs[3].data.message, 'Road network processing finished');
+                // assert.equal(logs[4].code, 'success');
+                // assert.equal(logs[4].data.message, 'Operation complete');
+                assert.equal(logs[2].code, 'success');
+                assert.equal(logs[2].data.message, 'Operation complete');
               })
           ])
           .then(() => done())
@@ -174,7 +177,9 @@ describe('Finish Project Setup', function () {
       });
   });
 
-  it('should error with invalid road network file', function (done) {
+  // Without the import into osm-p2p-db the file is just uploaded
+  // to the storage. No error will happen. Skipping for now.
+  it.skip('should error with invalid road network file', function (done) {
     this.slow(250);
     this.timeout(5000);
     // There needs to be an ongoing operation to start the script.

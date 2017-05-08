@@ -3,7 +3,7 @@ import path from 'path';
 import Promise from 'bluebird';
 
 import config from '../../config';
-import { cloneDatabase, importRoadNetwork } from '../rra-osm-p2p';
+// import { cloneDatabase, importRoadNetwork } from '../rra-osm-p2p';
 import db from '../../db/';
 import { copyFile, getFileContents } from '../../s3/utils';
 import Operation from '../../utils/operation';
@@ -94,8 +94,8 @@ export function scenarioCreate (e) {
             .then(files => cloneScenarioFiles(trx, files, projId, scId))
           )
           // Copy the osm-p2p-db.
-          .then(() => op.log('files', {message: 'Cloning road network database'}))
-          .then(() => cloneOsmP2Pdb(projId, sourceScenarioId, projId, scId));
+          .then(() => op.log('files', {message: 'Cloning road network database'}));
+          // .then(() => cloneOsmP2Pdb(projId, sourceScenarioId, projId, scId));
       //
       } else if (source === 'new') {
         executor = executor
@@ -130,12 +130,12 @@ export function scenarioCreate (e) {
               .insert(data)
               .then(res => res[0]);
           })
-          .then(file => getFileContents(file.path))
+          .then(file => getFileContents(file.path));
           // Import to the osm-p2p-db.
-          .then(roadNetwork => {
-            logger && logger.log('process road network');
-            return importRoadNetwork(projId, scId, op, roadNetwork);
-          });
+          // .then(roadNetwork => {
+          //   logger && logger.log('process road network');
+          //   return importRoadNetwork(projId, scId, op, roadNetwork);
+          // });
       }
 
       return executor
@@ -196,10 +196,10 @@ function cloneScenarioFiles (trx, files, projId, scId) {
 }
 
 // Clone the osm-p2p-db.
-function cloneOsmP2Pdb (srcProjId, srcScId, destProjId, destScId) {
-  logger && logger.log('cloning osm-p2p-db');
-  return cloneDatabase(srcProjId, srcScId, destProjId, destScId);
-}
+// function cloneOsmP2Pdb (srcProjId, srcScId, destProjId, destScId) {
+//   logger && logger.log('cloning osm-p2p-db');
+//   return cloneDatabase(srcProjId, srcScId, destProjId, destScId);
+// }
 
 // TODO: Although some cleanup is good, if we delete the scenario altogether
 // we won't have messages to show the user indicating that it failed.

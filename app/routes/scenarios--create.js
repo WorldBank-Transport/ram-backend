@@ -8,7 +8,79 @@ import { getPresignedUrl, listenForFile } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
 import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
-import { closeDatabase } from '../services/rra-osm-p2p';
+// import { closeDatabase } from '../services/rra-osm-p2p';
+
+function handler (request, reply) {
+  const data = request.payload;
+  const source = data.roadNetworkSource;
+  const sourceScenarioId = data.roadNetworkSourceScenario;
+
+  db('projects')
+    .select('status')
+    .where('id', request.params.projId)
+    .then(projects => {
+      if (!projects.length) throw new ProjectNotFoundError();
+      //  It's not possible to create scenarios for pending projects.
+      if (projects[0].status === 'pending') throw new DataConflictError('Project setup not completed');
+    })
+    .then(() => {
+      // If we're cloning from a different scenario, make sure it exists.
+      if (source === 'clone') {
+        return db('scenarios')
+          .select('id')
+          .where('id', sourceScenarioId)
+          .where('project_id', request.params.projId)
+          .then((scenarios) => {
+            if (!scenarios.length) throw new ScenarioNotFoundError();
+          });
+      }
+    })
+    .then(() => {
+      // Create the scenario base to be able to start an operation for it.
+      const info = {
+        name: data.name,
+        description: data.description || '',
+        status: 'pending',
+        master: false,
+        project_id: request.params.projId,
+        created_at: (new Date()),
+        updated_at: (new Date()),
+        data: {
+          res_gen_at: 0,
+          rn_updated_at: 0
+        }
+      };
+
+      return db('scenarios')
+        .returning('*')
+        .insert(info)
+        .then(res => res[0])
+        .catch(err => {
+          if (err.constraint === 'scenarios_project_id_name_unique') {
+            throw new DataConflictError(`Scenario name already in use for this project: ${data.name}`);
+          }
+          throw err;
+        });
+    })
+    // Start operation and return data to continue.
+    .then(scenario => startOperation(request.params.projId, scenario.id).then(op => [op, scenario]))
+    .then(data => {
+      let [op, scenario] = data;
+      if (source === 'clone') {
+        return createScenario(request.params.projId, scenario.id, op.getId(), source, {sourceScenarioId})
+          .then(() => reply(scenario));
+      } else if (source === 'new') {
+        return handleRoadNetworkUpload(reply, scenario, op.getId(), source);
+      }
+    })
+    .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
+    .catch(ScenarioNotFoundError, e => reply(Boom.badRequest('Source scenario for cloning not found')))
+    .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
+    .catch(err => {
+      console.log('err', err);
+      reply(Boom.badImplementation(err));
+    });
+}
 
 module.exports = [
   {
@@ -27,72 +99,58 @@ module.exports = [
         }
       }
     },
+    handler: handler
+  },
+  {
+    path: '/projects/{projId}/scenarios/{scId}/duplicate',
+    method: 'POST',
+    config: {
+      validate: {
+        params: {
+          projId: Joi.number(),
+          scId: Joi.number()
+        }
+      }
+    },
     handler: (request, reply) => {
-      const data = request.payload;
-      const source = data.roadNetworkSource;
-      const sourceScenarioId = data.roadNetworkSourceScenario;
-
-      db('projects')
-        .select('status')
-        .where('id', request.params.projId)
-        .then(projects => {
-          if (!projects.length) throw new ProjectNotFoundError();
-          //  It's not possible to create scenarios for pending projects.
-          if (projects[0].status === 'pending') throw new DataConflictError('Project setup not completed');
-        })
-        .then(() => {
-          // If we're cloning from a different scenario, make sure it exists.
-          if (source === 'clone') {
-            return db('scenarios')
-              .select('id')
-              .where('id', sourceScenarioId)
-              .where('project_id', request.params.projId)
-              .then((scenarios) => {
-                if (!scenarios.length) throw new ScenarioNotFoundError();
-              });
-          }
-        })
-        .then(() => {
-          // Create the scenario base to be able to start an operation for it.
-          const info = {
-            name: data.name,
-            description: data.description || '',
-            status: 'pending',
-            master: false,
-            project_id: request.params.projId,
-            created_at: (new Date()),
-            updated_at: (new Date()),
-            data: {
-              res_gen_at: 0,
-              rn_updated_at: 0
-            }
-          };
-
+      const findName = (name) => {
+        let fn = (no) => {
+          let n = `${name} (${no})`;
           return db('scenarios')
-            .returning('*')
-            .insert(info)
-            .then(res => res[0])
-            .catch(err => {
-              if (err.constraint === 'scenarios_project_id_name_unique') {
-                throw new DataConflictError(`Scenario name already in use for this project: ${data.name}`);
-              }
-              throw err;
-            });
+            .select('id')
+            .where('project_id', request.params.projId)
+            .where('name', n)
+            .first()
+            .then(scenario => scenario ? fn(++no) : n);
+        };
+        return fn(2);
+      };
+
+      // Get the name and description from the scenario.
+      db('scenarios')
+        .select('name', 'description')
+        .where('id', request.params.scId)
+        .where('project_id', request.params.projId)
+        .first()
+        .then(scenario => {
+          if (!scenario) throw new ScenarioNotFoundError();
+          return scenario;
         })
-        // Start operation and return data to continue.
-        .then(scenario => startOperation(request.params.projId, scenario.id).then(op => [op, scenario]))
+        .then(scenario => {
+          // Find next available name.
+          return findName(scenario.name)
+            .then(name => ({name, description: scenario.description}));
+        })
         .then(data => {
-          let [op, scenario] = data;
-          if (source === 'clone') {
-            return createScenario(request.params.projId, scenario.id, op.getId(), source, {sourceScenarioId})
-              .then(() => reply(scenario));
-          } else if (source === 'new') {
-            return handleRoadNetworkUpload(reply, scenario, op.getId(), source);
-          }
+          request.payload = {
+            name: data.name,
+            description: data.description,
+            roadNetworkSource: 'clone',
+            roadNetworkSourceScenario: request.params.scId
+          };
+          handler(request, reply);
         })
-        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(ScenarioNotFoundError, e => reply(Boom.badRequest('Source scenario for cloning not found')))
-        .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
+        .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(err => {
           console.log('err', err);
           reply(Boom.badImplementation(err));
@@ -130,7 +188,7 @@ function createScenario (projId, scId, opId, source, data) {
     // We need to close the connection to the source scenario before cloning
     // the database. This needs to be done in this process. The process ran by
     // the service runner won't have access to it.
-    action = closeDatabase(projId, data.sourceScenarioId);
+    // action = closeDatabase(projId, data.sourceScenarioId);
   }
 
   let serviceData = Object.assign({}, {projId, scId, opId, source}, data);

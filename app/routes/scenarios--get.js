@@ -35,7 +35,10 @@ module.exports = [
         db.select('*').from('scenarios').where('project_id', request.params.projId).orderBy('created_at').offset(offset).limit(limit)
       ]).then(res => {
         const [count, scenarios] = res;
-        return Promise.map(scenarios, s => attachScenarioFiles(s))
+        return Promise.map(scenarios, s => attachScenarioFiles(s)
+            .then(s => attachOperation('generate-analysis', 'gen_analysis', s))
+            .then(s => attachOperation('scenario-create', 'scen_create', s))
+          )
           .then(scenarios => {
             request.count = parseInt(count[0].count);
             reply(scenarios);
