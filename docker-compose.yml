@@ -7,22 +7,37 @@ services:
   rra-postgis:
     image: mdillon/postgis
     ports:
-      - "5432:5432"
+      - 5432:5432
     environment:
       POSTGRES_PASSWORD: rra
       POSTGRES_USER: rra
       POSTGRES_DB: rra
-    volumes:
-      - ./setup/create-test-db.sh:/docker-entrypoint-initdb.d/create-test-db.sh
     networks:
       - rra
   rra-minio:
-    image: "minio/minio"
+    image: minio/minio
     ports:
-      - "9000:9000"
+      - 9000:9000
     environment:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: miniostorageengine
     command: server /export
     networks:
       - rra
+  rra-api:
+    build: ./
+    container_name: rra-api
+    ports:
+      - 4000:4000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: yarn start
+    environment:
+      DB_CONNECTION: postgresql://rra:rra@rra-postgis:5432/rra
+      STORAGE_HOST: rra-minio
+      ANL_CONTAINER: wbtransport/rra-analysis:latest-stable
+    networks:
+      - rra
+    links:
+      - rra-postgis
+      - rra-minio
