@@ -1,43 +1,32 @@
 version: '2'
-networks:
-  rra:
-    external:
-      name: rra
 services:
   rra-postgis:
     image: mdillon/postgis
-    ports:
-      - 5432:5432
+    network_mode: host
     environment:
       POSTGRES_PASSWORD: rra
       POSTGRES_USER: rra
       POSTGRES_DB: rra
-    networks:
-      - rra
   rra-minio:
     image: minio/minio
-    ports:
-      - 9000:9000
+    network_mode: host
     environment:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: miniostorageengine
     command: server /export
-    networks:
-      - rra
   rra-api:
     build: ./
     container_name: rra-api
-    ports:
-      - 4000:4000
+    network_mode: host
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: yarn start
     environment:
-      DB_CONNECTION: postgresql://rra:rra@rra-postgis:5432/rra
-      STORAGE_HOST: rra-minio
+      DB_CONNECTION: postgresql://rra:rra@localhost:5432/rra
+      STORAGE_HOST: localhost
       ANL_CONTAINER: wbtransport/rra-analysis:latest-stable
-    networks:
-      - rra
-    links:
-      - rra-postgis
-      - rra-minio
+      ANL_DB: postgresql://rra:rra@localhost:5432/rra
+      ANL_STORAGE_HOST: localhost
+  rra-frontend:
+    image: wbtransport/rra-frontend:latest-dev
+    network_mode: host
