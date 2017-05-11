@@ -173,7 +173,7 @@ function spawnAnalysisProcess (projId, scId, opId) {
   switch (service) {
     case 'docker':
       args.push(
-        '--net', 'host'
+        '--network', 'rra'
       );
       break;
     case 'hyper':

@@ -17,7 +17,7 @@ First time setup:
 1. install Node 6, Docker, Docker Compose, python-gdal, python-lxml - [more on project dependencies](#install-project-dependencies)
 2. `yarn install` - [more on application dependencies](#install-application-dependencies)
 3. add configuration variables to `app/config/local.js`. The [example config](#config-example) should work well.
-4. [sudo] `docker network create rra` to set up the Docker network
+4. [sudo] `docker network create --driver=bridge --subnet=172.99.99.0/24 --gateway=172.99.99.1 rra` to set up the Docker network
 5. [sudo] `docker-compose up -d` to start the database and bucket in the background - [more on starting the containers](#starting-the-containers)
 6. `yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `yarn run setup -- --data` instead - [more on setup](#setup)
 7. `yarn start` to start the app - [more on starting the app](#starting-the-app)
@@ -133,8 +133,9 @@ yarn run setup -- --data
 Set up the Docker network by running:
 
 ```
-docker network create rra
+docker network create --driver=bridge --subnet=172.99.99.0/24 --gateway=172.99.99.1 rra
 ```
+*Note: If the network already exists remove it using `docker network rm rra` and run the command again.*
 
 This allows containers that are not part of the Docker Compose file to connect to the database and storage more easily. This includes the container that spins up the OSRM analysis.
 
