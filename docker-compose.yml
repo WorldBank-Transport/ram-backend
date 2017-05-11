@@ -10,6 +10,7 @@ networks:
 services:
   rra-postgis:
     image: mdillon/postgis
+    container_name: rra-postgis
     environment:
       POSTGRES_PASSWORD: rra
       POSTGRES_USER: rra
@@ -22,6 +23,7 @@ services:
 
   rra-minio:
     image: minio/minio
+    container_name: rra-minio
     ports:
       - 9000:9000
     networks:
@@ -43,14 +45,11 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: yarn start
     environment:
-      DB_CONNECTION: postgresql://rra:rra@172.99.99.10:5432/rra
-      STORAGE_HOST: 172.99.99.15
-      ANL_CONTAINER: wbtransport/rra-analysis:latest-stable
-      ANL_DB: postgresql://rra:rra@172.99.99.10:5432/rra
-      ANL_STORAGE_HOST: 172.99.99.15
+      DS_ENV: offline
 
   rra-frontend:
-    image: wbtransport/rra-frontend:latest-dev
+    image: wbtransport/rra-frontend:latest-stable
+    container_name: rra-frontend
     ports:
       - 8080:80
     networks:

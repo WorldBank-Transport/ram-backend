@@ -22,6 +22,11 @@ if (process.env.DS_ENV === 'test') {
   config = require('./config/test');
 }
 
+// In an offline test setup, the other config files are ignored
+if (process.env.DS_ENV === 'offline') {
+  config = require('./config/offline');
+}
+
 // Overrides by ENV variables:
 config.debug = process.env.DEBUG !== undefined ? (process.env.DEBUG.toLowerCase() === 'true') : config.debug;
 config.connection.port = process.env.PORT || config.connection.port;
