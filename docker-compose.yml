@@ -1,28 +1,56 @@
+# docker network rm rra
+# docker network create --driver=bridge --subnet=172.99.99.0/24 --gateway=172.99.99.1 rra
 version: '2'
+
 networks:
   rra:
     external:
       name: rra
+
 services:
   rra-postgis:
     image: mdillon/postgis
-    ports:
-      - "5432:5432"
+    container_name: rra-postgis
     environment:
       POSTGRES_PASSWORD: rra
       POSTGRES_USER: rra
       POSTGRES_DB: rra
-    volumes:
-      - ./setup/create-test-db.sh:/docker-entrypoint-initdb.d/create-test-db.sh
-    networks:
-      - rra
-  rra-minio:
-    image: "minio/minio"
     ports:
-      - "9000:9000"
+      - 5432:5432
+    networks:
+      rra:
+        ipv4_address: 172.99.99.10
+
+  rra-minio:
+    image: minio/minio
+    container_name: rra-minio
+    ports:
+      - 9000:9000
+    networks:
+      rra:
+        ipv4_address: 172.99.99.15
     environment:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: miniostorageengine
     command: server /export
+
+  rra-api:
+    build: ./
+    container_name: rra-api
+    ports:
+      - 4000:4000
+    networks:
+      - rra
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: yarn start
+    environment:
+      DS_ENV: offline
+
+  rra-frontend:
+    image: wbtransport/rra-frontend:latest-stable
+    container_name: rra-frontend
+    ports:
+      - 8080:80
     networks:
       - rra

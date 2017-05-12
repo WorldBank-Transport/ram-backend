@@ -9,18 +9,32 @@ Apart from the RRA Server, the tool relies on the following projects:
 2. [rra-datapipeline](https://github.com/WorldBank-Transport/rra-datapipeline) that handles some of the more intensive data processing
 3. [rra-iD](https://github.com/WorldBank-Transport/rra-iD), a customized version of iD - the popular OSM editor - to allow editing of the road network
 
-## Installation and Usage
-These installation instructions focus on running the RRA Server locally. This readme also contains instructions on [deploying the application to ECS](#deployment-to-ecs).
+## Offline usage
+To run RRA analysis locally, follow these steps. On first time setup:
 
-First time setup:
+1. clone this repository
+2. install the project dependencies: node 6, Docker, Docker Compose - [more on project dependencies](#install-project-dependencies)
+3. `yarn install`
+4. `docker network create --driver=bridge --subnet=172.99.99.0/24 --gateway=172.99.99.1 rra` to set up the Docker network
+5. `docker-compose up -d` to start the full eco-system in the background
+6. `docker exec rra-api yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `docker exec rra-api yarn run setup -- --data` instead - [more on setup](#setup)
+
+Once this is done, you can access RRA in your browser on: http://localhost:8080
+
+After the first time setup, use `docker-compose down` and `docker-compose up -d` to bring the containers down and back up again.
+
+## Local development environment
+To set up a local development environment, it may be easier to run the API outside of a container. To do so, follow these steps:
 
 1. install Node 6, Docker, Docker Compose, python-gdal, python-lxml - [more on project dependencies](#install-project-dependencies)
 2. `yarn install` - [more on application dependencies](#install-application-dependencies)
 3. add configuration variables to `app/config/local.js`. The [example config](#config-example) should work well.
-4. [sudo] `docker network create rra` to set up the Docker network
-5. [sudo] `docker-compose up -d` to start the database and bucket in the background - [more on starting the containers](#starting-the-containers)
-6. `yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `yarn run setup -- --data` instead - [more on setup](#setup)
-7. `yarn start` to start the app - [more on starting the app](#starting-the-app)
+4. `docker network create rra` to set up the Docker network
+5. `docker-compose -f docker-compose-dev.yml up -d` to start the database and bucket in the background - [more on starting the containers](#starting-the-containers)
+6. `yarn start` to start the app - [more on starting the app](#starting-the-app)
+7. `yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `yarn run setup -- --data` instead - [more on setup](#setup)
+
+This will provide access to the API through http://localhost:4000.
 
 ### Install Project Dependencies
 To set up the development environment for this website, you'll need to install the following on your system:
@@ -133,8 +147,9 @@ yarn run setup -- --data
 Set up the Docker network by running:
 
 ```
-docker network create rra
+docker network create --driver=bridge --subnet=172.99.99.0/24 --gateway=172.99.99.1 rra
 ```
+*Note: If the network already exists remove it using `docker network rm rra` and run the command again.*
 
 This allows containers that are not part of the Docker Compose file to connect to the database and storage more easily. This includes the container that spins up the OSRM analysis.
 
