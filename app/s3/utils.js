@@ -1,6 +1,8 @@
 'use strict';
+import fs from 'fs';
+
 import s3, { bucket } from './';
-import { removeObject } from './structure';
+import { removeObject, putObjectFromFile } from './structure';
 
 export function getPresignedUrl (file) {
   return new Promise((resolve, reject) => {
@@ -78,6 +80,23 @@ export function putFileStream (file, stream) {
     s3.putObject(bucket, file, stream, (err, etag) => {
       if (err) return reject(err);
       return resolve(etag);
+    });
+  });
+}
+
+// Put file
+// Proxy of putObjectFromFile function, assuming the bucket.
+export function putFile (name, filepath) {
+  return putObjectFromFile(bucket, name, filepath);
+}
+
+export function removeLocalFile (path, quiet = false) {
+  return new Promise((resolve, reject) => {
+    fs.unlink(path, err => {
+      if (err && !quiet) {
+        return reject(err);
+      }
+      return resolve();
     });
   });
 }
