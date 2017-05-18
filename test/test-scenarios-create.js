@@ -1,10 +1,14 @@
 'use strict';
 import { assert } from 'chai';
+import fs from 'fs';
+import FormData from 'form-data';
+import streamToPromise from 'stream-to-promise';
 
 import Server from '../app/services/server';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
 import db from '../app/db';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
+import { listFiles as listS3Files } from '../app/s3/utils';
 import { fixMeUp } from './utils/data';
 
 var options = {
@@ -30,174 +34,272 @@ describe('Scenarios', function () {
 
   describe('POST /projects/{projId}/scenarios', function () {
     it('should fail when creating a scenario without a name', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1000/scenarios',
-        payload: {
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 400, 'Status code is 400');
-        var result = res.result;
-        assert.match(result.message, /["name" is required]/);
-      });
+      let form = new FormData();
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          var result = res.result;
+          assert.match(result.message, /["name" is required]/);
+        });
     });
 
     it('should not accept an empty name', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1000/scenarios',
-        payload: {
-          name: ''
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 400, 'Status code is 400');
-        var result = res.result;
-        assert.match(result.message, /["name" is not allowed to be empty]/);
-      });
+      let form = new FormData();
+      form.append('name', '');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          var result = res.result;
+          assert.match(result.message, /["name" is not allowed to be empty]/);
+        });
     });
 
     it('should not accept an empty description', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1000/scenarios',
-        payload: {
-          name: 'Scenario name',
-          description: ''
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 400, 'Status code is 400');
-        var result = res.result;
-        assert.match(result.message, /["description" is not allowed to be empty]/);
-      });
+      let form = new FormData();
+      form.append('name', 'Scenario name');
+      form.append('description', '');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          var result = res.result;
+          assert.match(result.message, /["description" is not allowed to be empty]/);
+        });
     });
 
     it('should require a value for road-network source', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1000/scenarios',
-        payload: {
-          name: 'Scenario name'
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 400, 'Status code is 400');
-        var result = res.result;
-        assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" is required\]/);
-      });
+      let form = new FormData();
+      form.append('name', 'Scenario name');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          var result = res.result;
+          assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" is required\]/);
+        });
     });
 
     it('should fail with invalid road-network source', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1000/scenarios',
-        payload: {
-          name: 'Scenario name',
-          roadNetworkSource: 'invalid'
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 400, 'Status code is 400');
-        var result = res.result;
-        assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" must be one of \[clone, new\]\]/);
-      });
+      let form = new FormData();
+      form.append('name', 'Scenario name');
+      form.append('roadNetworkSource', 'invalid');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          var result = res.result;
+          assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" must be one of \[clone, new\]\]/);
+        });
     });
 
     it('should require scenario id when road-network source is clone', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1000/scenarios',
-        payload: {
-          name: 'Scenario name',
-          roadNetworkSource: 'clone'
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 400, 'Status code is 400');
-        var result = res.result;
-        assert.match(result.message, /child "roadNetworkSourceScenario" fails because \["roadNetworkSourceScenario" is required\]/);
-      });
+      let form = new FormData();
+      form.append('name', 'Scenario name');
+      form.append('roadNetworkSource', 'clone');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          var result = res.result;
+          assert.match(result.message, /child "roadNetworkSourceScenario" fails because \["roadNetworkSourceScenario" is required\]/);
+        });
+    });
+
+    it('should require file when road-network source is new', function () {
+      let form = new FormData();
+      form.append('name', 'Scenario name');
+      form.append('roadNetworkSource', 'new');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          var result = res.result;
+          assert.match(result.message, /child "roadNetworkFile" fails because \["roadNetworkFile" is required\]/);
+        });
     });
 
     it('should return not found when creating a scenario for a non existent project', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/300/scenarios',
-        payload: {
-          name: 'Scenario name',
-          roadNetworkSource: 'clone',
-          roadNetworkSourceScenario: 1
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 404, 'Status code is 404');
-        assert.equal(res.result.message, 'Project not found');
-      });
+      let form = new FormData();
+      form.append('name', 'Scenario name');
+      form.append('roadNetworkSource', 'clone');
+      form.append('roadNetworkSourceScenario', 1);
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/300/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 404, 'Status code is 404');
+          assert.equal(res.result.message, 'Project not found');
+        });
     });
 
     it('should return conflict for a non set up project', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1000/scenarios',
-        payload: {
-          name: 'Scenario name',
-          roadNetworkSource: 'clone',
-          roadNetworkSourceScenario: 1
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 409, 'Status code is 409');
-        assert.equal(res.result.message, 'Project setup not completed');
-      });
+      let form = new FormData();
+      form.append('name', 'Scenario name');
+      form.append('roadNetworkSource', 'clone');
+      form.append('roadNetworkSourceScenario', 1);
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 409, 'Status code is 409');
+          assert.equal(res.result.message, 'Project setup not completed');
+        });
     });
 
     it('should return bad request when then scenario to clone from does not exist', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1200/scenarios',
-        payload: {
-          name: 'New scenario',
-          roadNetworkSource: 'clone',
-          roadNetworkSourceScenario: 1
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 400, 'Status code is 400');
-        var result = res.result;
-        assert.equal(result.message, 'Source scenario for cloning not found');
-      });
+      let form = new FormData();
+      form.append('name', 'Scenario name');
+      form.append('roadNetworkSource', 'clone');
+      form.append('roadNetworkSourceScenario', 1);
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1200/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          var result = res.result;
+          assert.equal(result.message, 'Source scenario for cloning not found');
+        });
     });
 
     it('should return a conflict when using a name that already exists for another scenario of the same project', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1200/scenarios',
-        payload: {
-          name: 'Main scenario 1200',
-          roadNetworkSource: 'clone',
-          roadNetworkSourceScenario: 1200
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 409, 'Status code is 409');
-        var result = res.result;
-        assert.equal(result.message, 'Scenario name already in use for this project: Main scenario 1200');
-      });
+      let form = new FormData();
+      form.append('name', 'Main scenario 1200');
+      form.append('roadNetworkSource', 'clone');
+      form.append('roadNetworkSourceScenario', 1200);
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1200/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 409, 'Status code is 409');
+          var result = res.result;
+          assert.equal(result.message, 'Scenario name already in use for this project: Main scenario 1200');
+        });
     });
 
     it('should create a pending scenario before starting the processing', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1200/scenarios',
-        payload: {
-          name: 'New scenario project 1200',
-          roadNetworkSource: 'clone',
-          roadNetworkSourceScenario: 1200
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 200, 'Status code is 200');
-        var result = res.result;
-        assert.equal(result.name, 'New scenario project 1200');
-        assert.equal(result.status, 'pending');
-        assert.equal(result.master, false);
-        assert.equal(result.project_id, 1200);
-        assert.equal(typeof result.roadNetworkUpload, 'undefined');
-        assert.equal(result.data.res_gen_at, 0);
-        assert.equal(result.data.rn_updated_at, 0);
+      let form = new FormData();
+      form.append('name', 'New scenario project 1200');
+      form.append('roadNetworkSource', 'clone');
+      form.append('roadNetworkSourceScenario', 1200);
 
-        return result;
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1200/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
+          var result = res.result;
+          assert.equal(result.name, 'New scenario project 1200');
+          assert.equal(result.status, 'pending');
+          assert.equal(result.master, false);
+          assert.equal(result.project_id, 1200);
+          assert.equal(typeof result.roadNetworkUpload, 'undefined');
+          assert.equal(result.data.res_gen_at, 0);
+          assert.equal(result.data.rn_updated_at, 0);
+
+          return result;
+        });
+    });
+
+    it('should create a scenario with the file', function () {
+      let form = new FormData();
+      form.append('name', 'New scenario with file project 1200');
+      form.append('roadNetworkSource', 'new');
+      form.append('roadNetworkFile', fs.createReadStream('./test/utils/data-sergipe/road-network.osm'));
+
+      return streamToPromise(form).then(payload => {
+        return instance.injectThen({
+          method: 'POST',
+          url: '/projects/1200/scenarios',
+          payload,
+          headers: form.getHeaders()
+        })
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
+          var result = res.result;
+          assert.equal(result.name, 'New scenario with file project 1200');
+          assert.equal(result.status, 'pending');
+          assert.equal(result.master, false);
+          assert.equal(result.project_id, 1200);
+          assert.equal(typeof result.roadNetworkUpload, 'undefined');
+          assert.equal(result.data.res_gen_at, 0);
+          assert.equal(result.data.rn_updated_at, 0);
+
+          return result;
+        })
+        .then(result => listS3Files(`scenario-${result.id}/road-network`)
+          .then(objects => {
+            let found = objects.some(o => o.name.match(/road-network_[0-9]+/));
+            assert.isTrue(found, 'The road-network file was not found');
+          })
+        );
       });
     });
   });

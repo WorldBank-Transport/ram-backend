@@ -2,7 +2,7 @@
 import fs from 'fs';
 
 import s3, { bucket } from './';
-import { removeObject, putObjectFromFile } from './structure';
+import { removeObject, putObjectFromFile, listObjects } from './structure';
 
 export function getPresignedUrl (file) {
   return new Promise((resolve, reject) => {
@@ -99,4 +99,10 @@ export function removeLocalFile (path, quiet = false) {
       return resolve();
     });
   });
+}
+
+// List files
+// Proxy of listObjects function, assuming the bucket.
+export function listFiles (namePrefix) {
+  return listObjects(bucket, namePrefix);
 }
