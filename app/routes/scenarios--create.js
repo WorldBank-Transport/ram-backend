@@ -4,7 +4,7 @@ import Boom from 'boom';
 import Promise from 'bluebird';
 
 import db from '../db/';
-import { getPresignedUrl, listenForFile } from '../s3/utils';
+import { putFile as putFileToS3, removeLocalFile } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
 import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
@@ -14,6 +14,7 @@ function handler (request, reply) {
   const data = request.payload;
   const source = data.roadNetworkSource;
   const sourceScenarioId = data.roadNetworkSourceScenario;
+  const roadNetworkFile = data.roadNetworkFile;
 
   db('projects')
     .select('status')
@@ -68,10 +69,19 @@ function handler (request, reply) {
       let [op, scenario] = data;
       if (source === 'clone') {
         return createScenario(request.params.projId, scenario.id, op.getId(), source, {sourceScenarioId})
-          .then(() => reply(scenario));
+          .then(() => scenario);
       } else if (source === 'new') {
-        return handleRoadNetworkUpload(reply, scenario, op.getId(), source);
+        return handleRoadNetworkUpload(scenario, op.getId(), source, roadNetworkFile)
+          .then(() => scenario);
       }
+    })
+    .then(scenario => reply(scenario))
+    .catch(err => {
+      // Delete temp file in case of error. Re-throw error to continue.
+      if (roadNetworkFile) {
+        removeLocalFile(roadNetworkFile.path, true);
+      }
+      throw err;
     })
     .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
     .catch(ScenarioNotFoundError, e => reply(Boom.badRequest('Source scenario for cloning not found')))
@@ -95,8 +105,20 @@ module.exports = [
           name: Joi.string().required(),
           description: Joi.string(),
           roadNetworkSource: Joi.string().valid('clone', 'new').required(),
-          roadNetworkSourceScenario: Joi.number().when('roadNetworkSource', {is: 'clone', then: Joi.required()})
+          roadNetworkSourceScenario: Joi.number().when('roadNetworkSource', {is: 'clone', then: Joi.required()}),
+
+          roadNetworkFile: Joi.object().keys({
+            filename: Joi.string(),
+            path: Joi.string(),
+            headers: Joi.object(),
+            bytes: Joi.number()
+          }).when('roadNetworkSource', {is: 'new', then: Joi.required()})
         }
+      },
+      payload: {
+        maxBytes: 1 * Math.pow(1024, 3), // 1GB
+        output: 'file',
+        parse: true
       }
     },
     handler: handler
@@ -218,24 +240,19 @@ function createScenario (projId, scId, opId, source, data) {
   return action;
 }
 
-// Get the presigned url for file upload and send it to the client.
-// Listen for file changes to update the database.
-function handleRoadNetworkUpload (reply, scenario, opId, source) {
+// Upload the file to S3
+function handleRoadNetworkUpload (scenario, opId, source, roadNetworkFile) {
   const type = 'road-network';
   const fileName = `${type}_${Date.now()}`;
   const filePath = `scenario-${scenario.id}/${fileName}`;
 
-  return getPresignedUrl(filePath)
-    .then(presignedUrl => {
-      scenario.roadNetworkUpload = {
-        fileName: fileName,
-        presignedUrl
-      };
-
-      return reply(scenario);
+  return Promise.resolve()
+    .then(() => {
+      // TODO: Perform needed validations.
     })
-    .then(() => listenForFile(filePath))
-    .then(record => {
-      createScenario(scenario.project_id, scenario.id, opId, source, {roadNetworkFile: fileName});
-    });
+    // Upload to S3.
+    .then(() => putFileToS3(filePath, roadNetworkFile.path))
+    // Delete temp file.
+    .then(() => removeLocalFile(roadNetworkFile.path, true))
+    .then(() => createScenario(scenario.project_id, scenario.id, opId, source, {roadNetworkFile: fileName}));
 }
