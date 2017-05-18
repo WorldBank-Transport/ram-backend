@@ -16,9 +16,6 @@ export function listObjects (bucket, objPrefix = '') {
       objects.push(obj);
     });
     stream.on('error', err => {
-      if (err.code === 'NoSuchBucket') {
-        return resolve();
-      }
       return reject(err);
     });
     stream.on('end', () => {
@@ -29,6 +26,12 @@ export function listObjects (bucket, objPrefix = '') {
 
 export function emptyBucket (bucket, objPrefix = '') {
   return listObjects(bucket, objPrefix)
+    .catch(err => {
+      if (err.code === 'NoSuchBucket') {
+        return [];
+      }
+      throw err;
+    })
     .then(objects => Promise.map(objects, o => removeObject(bucket, o.name)));
 }
 
