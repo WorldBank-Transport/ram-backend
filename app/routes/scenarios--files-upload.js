@@ -92,6 +92,11 @@ module.exports = [
         .then(() => reply({
           fileName: fileName
         }))
+        .catch(err => {
+          // Delete temp file in case of error. Re-throw error to continue.
+          removeLocalFile(file.path, true);
+          throw err;
+        })
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(FileExistsError, e => reply(Boom.conflict(e.message)))

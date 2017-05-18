@@ -75,17 +75,17 @@ module.exports = [
         })
         // Delete temp file.
         .then(() => removeLocalFile(file.path, true))
-        // .then(() => {
-        //   return new Promise(resolve => setTimeout(() => resolve(), 5000));
-        // })
         .then(() => reply({
           fileName: fileName
         }))
+        .catch(err => {
+          // Delete temp file in case of error. Re-throw error to continue.
+          removeLocalFile(file.path, true);
+          throw err;
+        })
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(FileExistsError, e => reply(Boom.conflict(e.message)))
         .catch(err => {
-          // Delete temp file.
-          removeLocalFile(file.path, true);
           console.log('err', err);
           reply(Boom.badImplementation(err));
         });
