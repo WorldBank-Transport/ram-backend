@@ -36,7 +36,7 @@ module.exports = [
             .andOn(db.raw('projects.id = :projId', {projId: request.params.projId}));
         })
         .leftJoin('scenarios_files', function () {
-          this.on('scenarios.id', '=', 'scenarios_files.project_id')
+          this.on('scenarios.id', '=', 'scenarios_files.scenario_id')
             .andOn(db.raw('scenarios_files.id = :fileId', {fileId: request.params.fileId}));
         })
         .where('scenarios.id', request.params.scId)

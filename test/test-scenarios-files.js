@@ -1,8 +1,8 @@
 'use strict';
 import { assert } from 'chai';
-import request from 'request';
 import fs from 'fs';
-import Promise from 'bluebird';
+import FormData from 'form-data';
+import streamToPromise from 'stream-to-promise';
 
 import Server from '../app/services/server';
 import db from '../app/db';
@@ -107,79 +107,140 @@ describe('Scenario files', function () {
     it('should error when type is not provided', function () {
       return instance.injectThen({
         method: 'POST',
-        url: '/projects/1000/scenarios/1000/files',
-        payload: {
-          type: 'invalid'
-        }
+        url: '/projects/1000/scenarios/1000/files'
       }).then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         assert.match(res.result.message, /["type" is required]/);
       });
     });
 
+    it('should error when file is not provided', function () {
+      let form = new FormData();
+      form.append('type', 'poi');
+
+      return streamToPromise(form).then(payload => {
+        return instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/files',
+          payload,
+          headers: form.getHeaders()
+        }).then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          assert.match(res.result.message, /"file" is required/);
+        });
+      });
+    });
+
     it('should error when type is invalid', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1000/scenarios/1000/files',
-        payload: {
-          type: 'invalid'
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 400, 'Status code is 400');
-        assert.match(res.result.message, /\["type" must be one of \[road-network, poi\]\]/);
+      let form = new FormData();
+      form.append('type', 'invalid');
+
+      return streamToPromise(form).then(payload => {
+        return instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/files',
+          payload,
+          headers: form.getHeaders()
+        }).then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          assert.match(res.result.message, /"type" must be one of \[road-network, poi\]/);
+        });
       });
     });
 
     it('should return 404 for project not found', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/300/scenarios/1000/files',
-        payload: {
-          type: 'road-network'
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 404, 'Status code is 404');
-        assert.equal(res.result.message, 'Project not found');
+      let form = new FormData();
+      form.append('type', 'poi');
+      form.append('file', fs.createReadStream('./test/utils/data-sergipe/poi-townhalls.geojson'));
+
+      return streamToPromise(form).then(payload => {
+        return instance.injectThen({
+          method: 'POST',
+          url: '/projects/300/scenarios/1000/files',
+          payload,
+          headers: form.getHeaders()
+        }).then(res => {
+          assert.equal(res.statusCode, 404, 'Status code is 404');
+          assert.equal(res.result.message, 'Project not found');
+        });
       });
     });
 
     it('should return 404 for scenario not found', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1000/scenarios/300/files',
-        payload: {
-          type: 'road-network'
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 404, 'Status code is 404');
-        assert.equal(res.result.message, 'Scenario not found');
+      let form = new FormData();
+      form.append('type', 'poi');
+      form.append('file', fs.createReadStream('./test/utils/data-sergipe/poi-townhalls.geojson'));
+
+      return streamToPromise(form).then(payload => {
+        return instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/300/files',
+          payload,
+          headers: form.getHeaders()
+        }).then(res => {
+          assert.equal(res.statusCode, 404, 'Status code is 404');
+          assert.equal(res.result.message, 'Scenario not found');
+        });
       });
     });
 
     it('should return 409 when the file already exists', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1003/scenarios/1003/files',
-        payload: {
-          type: 'road-network'
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 409, 'Status code is 409');
-        assert.equal(res.result.message, 'File already exists');
+      let form = new FormData();
+      form.append('type', 'poi');
+      form.append('file', fs.createReadStream('./test/utils/data-sergipe/poi-townhalls.geojson'));
+
+      return streamToPromise(form).then(payload => {
+        return instance.injectThen({
+          method: 'POST',
+          url: '/projects/1200/scenarios/1200/files',
+          payload,
+          headers: form.getHeaders()
+        }).then(res => {
+          assert.equal(res.statusCode, 409, 'Status code is 409');
+          assert.equal(res.result.message, 'File already exists');
+        });
       });
     });
 
-    it('should return presigned url', function () {
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1000/scenarios/1000/files',
-        payload: {
-          type: 'poi'
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 200, 'Status code is 200');
-        assert.match(res.result.fileName, /^poi_[0-9]+$/);
-        assert.match(res.result.presignedUrl, /scenario-1000\/poi_[0-9]+/);
+    it('should upload the file', function () {
+      let form = new FormData();
+      form.append('type', 'poi');
+      form.append('file', fs.createReadStream('./test/utils/data-sergipe/villages.geojson'));
+
+      return streamToPromise(form).then(payload => {
+        return instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/files',
+          payload,
+          headers: form.getHeaders()
+        })
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
+          assert.match(res.result.fileName, /^poi_[0-9]+$/);
+        })
+        .then(() => {
+          return db.select('*')
+            .from('scenarios_files')
+            .where('project_id', 1000)
+            .where('scenario_id', 1000)
+            .where('type', 'poi')
+            .then(files => {
+              assert.equal(files.length, 1);
+              assert.equal(files[0].project_id, 1000);
+              assert.match(files[0].name, /^poi_[0-9]+$/);
+              assert.match(files[0].path, /scenario-1000\/poi_[0-9]+/);
+            });
+        })
+        // Ensure that the project "updated_at" gets updated.
+        .then(() => db.select('*')
+          .from('projects')
+          .where('id', 1000)
+          .then(projects => {
+            let now = ~~((new Date()).getTime() / 1000);
+            let timestamp = ~~((new Date(projects[0].updated_at)).getTime() / 1000);
+            assert.approximately(timestamp, now, 1);
+          })
+        );
       });
     });
   });
@@ -276,86 +337,6 @@ describe('Scenario files', function () {
         assert.equal(res.statusCode, 200);
         assert.match(res.headers['content-type'], /application\/json/);
         assert.match(res.headers['content-disposition'], /poi_000000/);
-      });
-    });
-  });
-
-  describe('File upload end-to-end', function () {
-    // This tests the full file upload process:
-    // - Getting the presigned url.
-    // - Uploading the file.
-    // - Checking that the database was updated.
-    it('should upload a file', function () {
-      this.slow(150);
-      return instance.injectThen({
-        method: 'POST',
-        url: '/projects/1000/scenarios/1000/files',
-        payload: {
-          type: 'poi'
-        }
-      // Get url.
-      }).then(res => {
-        assert.equal(res.statusCode, 200, 'Status code is 200');
-        assert.match(res.result.fileName, /^poi_[0-9]+$/);
-        assert.match(res.result.presignedUrl, /scenario-1000\/poi_[0-9]+/);
-
-        return res.result.presignedUrl;
-      })
-
-      // Upload file.
-      .then(presignedUrl => {
-        let reqPromise = new Promise((resolve, reject) => {
-          let req = request.put(presignedUrl, (err, resp, body) => {
-            if (err) return reject(err);
-            return resolve();
-          });
-          let form = req.form();
-          form.append('file', fs.createReadStream('./test/utils/test-file'));
-        });
-
-        return reqPromise;
-      })
-
-      // Wait...
-      // The server is listening for the s3 notification. We have to give it
-      // time to resolve...
-      // So, try up to 3 times to check that the data is in the db.
-      .then(() => {
-        return new Promise((resolve, reject) => {
-          let tries = 3;
-          const retry = (delay, err) => {
-            if (--tries === 0) return reject(err);
-            setTimeout(() => fn(delay * 2), delay);
-          };
-
-          const fn = (delay) => {
-            db.select('*')
-              .from('scenarios_files')
-              .where('project_id', 1000)
-              .where('scenario_id', 1000)
-              .where('type', 'poi')
-              .then(files => {
-                assert.equal(files.length, 1);
-                assert.equal(files[0].project_id, 1000);
-                assert.match(files[0].name, /^poi_[0-9]+$/);
-                assert.match(files[0].path, /scenario-1000\/poi_[0-9]+/);
-              })
-              // Ensure that the project "updated_at" gets updated.
-              .then(() => db.select('*')
-                .from('projects')
-                .where('id', 1000)
-                .then(projects => {
-                  let now = ~~((new Date()).getTime() / 1000);
-                  let timestamp = ~~((new Date(projects[0].updated_at)).getTime() / 1000);
-                  assert.approximately(timestamp, now, 1);
-                })
-              )
-              .then(() => resolve())
-              .catch((err) => retry(delay, err));
-          };
-
-          fn(10);
-        });
       });
     });
   });

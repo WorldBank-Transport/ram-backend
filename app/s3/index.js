@@ -16,7 +16,12 @@ switch (engine) {
     });
     break;
   case 's3':
-    throw new Error('Storage engine S3 not implemented');
+    minioClient = new Minio.Client({
+      endPoint: 's3.amazonaws.com',
+      accessKey: config.storage.accessKey,
+      secretKey: config.storage.secretKey
+    });
+    break;
   default:
     throw new Error('Invalid storage engine. Use s3 or minio');
 }

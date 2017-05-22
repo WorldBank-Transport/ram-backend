@@ -3,12 +3,9 @@ import Joi from 'joi';
 import Boom from 'boom';
 
 import db from '../db/';
-import { getPresignedUrl, listenForFile } from '../s3/utils';
+import { putFile as putFileToS3, removeLocalFile } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, FileExistsError } from '../utils/errors';
 
-// The upload is done directly to the storage bucket.
-// This endpoint just provides the presigned url, and listens for the upload
-// completion to insert it in the database.
 module.exports = [
   {
     path: '/projects/{projId}/scenarios/{scId}/files',
@@ -20,12 +17,23 @@ module.exports = [
           scId: Joi.number()
         },
         payload: {
-          type: Joi.valid('road-network', 'poi').required()
+          type: Joi.valid('road-network', 'poi').required(),
+          file: Joi.object().keys({
+            filename: Joi.string(),
+            path: Joi.string(),
+            headers: Joi.object(),
+            bytes: Joi.number()
+          }).required()
         }
+      },
+      payload: {
+        maxBytes: 1 * Math.pow(1024, 3), // 1GB
+        output: 'file',
+        parse: true
       }
     },
     handler: (request, reply) => {
-      const type = request.payload.type;
+      const { type, file } = request.payload;
       const projId = parseInt(request.params.projId);
       const scId = parseInt(request.params.scId);
 
@@ -35,7 +43,7 @@ module.exports = [
       // Check that the project exists.
       // Check that the scenario exists.
       // Check that a file for this type doesn't exist already.
-      let dbChecks = db('projects')
+      db('projects')
         .select('projects.id',
           'projects.name as project_name',
           'scenarios.id as scenario_id',
@@ -55,18 +63,14 @@ module.exports = [
           if (res[0].scenario_id == null) throw new ScenarioNotFoundError();
           if (res[0].filename !== null) throw new FileExistsError();
           return res[0].id;
-        });
-
-      dbChecks
-        .then(() => getPresignedUrl(filePath))
-        .then(presignedUrl => reply({
-          fileName: fileName,
-          presignedUrl
-        }))
-        .then(() => listenForFile(filePath))
-        .then(record => {
-          // TODO: the "road network" will have to be processed differently.
-
+        })
+        .then(() => {
+          // TODO: Perform needed validations.
+        })
+        // Upload to S3.
+        .then(() => putFileToS3(filePath, file.path))
+        // Insert into database.
+        .then(() => {
           let data = {
             name: fileName,
             type: type,
@@ -77,16 +81,21 @@ module.exports = [
             updated_at: (new Date())
           };
 
-          db('scenarios_files')
+          return db('scenarios_files')
             .returning('*')
             .insert(data)
-            .then(res => {
-              console.log('res', res);
-            })
-            .then(() => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId))
-            .catch(err => {
-              console.log('err', err);
-            });
+            .then(() => db('scenarios').update({updated_at: (new Date())}).where('id', scId))
+            .then(() => db('projects').update({updated_at: (new Date())}).where('id', projId));
+        })
+        // Delete temp file.
+        .then(() => removeLocalFile(file.path, true))
+        .then(() => reply({
+          fileName: fileName
+        }))
+        .catch(err => {
+          // Delete temp file in case of error. Re-throw error to continue.
+          removeLocalFile(file.path, true);
+          throw err;
         })
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))

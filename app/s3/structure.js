@@ -1,4 +1,6 @@
 'use strict';
+import Promise from 'bluebird';
+
 import s3, { bucket, region } from './';
 import config from '../config';
 
@@ -6,25 +8,31 @@ const DEBUG = config.debug;
 const BUCKET = bucket;
 const REGION = region;
 
-export function emptyBucket (bucket, objPrefix = '') {
+export function listObjects (bucket, objPrefix = '') {
   return new Promise((resolve, reject) => {
-    var remove = [];
+    var objects = [];
     var stream = s3.listObjectsV2(bucket, objPrefix, true);
     stream.on('data', obj => {
-      remove.push(removeObject(bucket, obj.name));
+      objects.push(obj);
     });
     stream.on('error', err => {
-      if (err.code === 'NoSuchBucket') {
-        return resolve();
-      }
       return reject(err);
     });
     stream.on('end', () => {
-      Promise.all(remove)
-        .then(() => resolve())
-        .catch(err => reject(err));
+      return resolve(objects);
     });
   });
+}
+
+export function emptyBucket (bucket, objPrefix = '') {
+  return listObjects(bucket, objPrefix)
+    .catch(err => {
+      if (err.code === 'NoSuchBucket') {
+        return [];
+      }
+      throw err;
+    })
+    .then(objects => Promise.map(objects, o => removeObject(bucket, o.name)));
 }
 
 export function destroyBucket (bucket) {

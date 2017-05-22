@@ -3,12 +3,9 @@ import Joi from 'joi';
 import Boom from 'boom';
 
 import db from '../db/';
-import { getPresignedUrl, listenForFile } from '../s3/utils';
+import { putFile as putFileToS3, removeLocalFile } from '../s3/utils';
 import { ProjectNotFoundError, FileExistsError } from '../utils/errors';
 
-// The upload is done directly to the storage bucket.
-// This endpoint just provides the presigned url, and listens for the upload
-// completion to insert it in the database.
 module.exports = [
   {
     path: '/projects/{projId}/files',
@@ -19,12 +16,23 @@ module.exports = [
           projId: Joi.number()
         },
         payload: {
-          type: Joi.valid('profile', 'villages', 'admin-bounds').required()
+          type: Joi.valid('profile', 'villages', 'admin-bounds').required(),
+          file: Joi.object().keys({
+            filename: Joi.string(),
+            path: Joi.string(),
+            headers: Joi.object(),
+            bytes: Joi.number()
+          }).required()
         }
+      },
+      payload: {
+        maxBytes: 1 * Math.pow(1024, 3), // 1GB
+        output: 'file',
+        parse: true
       }
     },
     handler: (request, reply) => {
-      const type = request.payload.type;
+      const { type, file } = request.payload;
       const projId = parseInt(request.params.projId);
 
       const fileName = `${type}_${Date.now()}`;
@@ -32,7 +40,7 @@ module.exports = [
 
       // Check that the project exists.
       // Check that a file for this type doesn't exist already.
-      let dbChecks = db('projects')
+      db('projects')
         .select('projects.id', 'projects.name as project_name', 'projects_files.name as filename')
         .leftJoin('projects_files', function () {
           this.on('projects.id', '=', 'projects_files.project_id')
@@ -43,16 +51,14 @@ module.exports = [
           if (!res.length) throw new ProjectNotFoundError();
           if (res[0].filename !== null) throw new FileExistsError();
           return res[0].id;
-        });
-
-      dbChecks
-        .then(() => getPresignedUrl(filePath))
-        .then(presignedUrl => reply({
-          fileName: fileName,
-          presignedUrl
-        }))
-        .then(() => listenForFile(filePath))
-        .then(record => {
+        })
+        .then(() => {
+          // TODO: Perform needed validations.
+        })
+        // Upload to S3.
+        .then(() => putFileToS3(filePath, file.path))
+        // Insert into database.
+        .then(() => {
           let data = {
             name: fileName,
             type: type,
@@ -62,16 +68,20 @@ module.exports = [
             updated_at: (new Date())
           };
 
-          db('projects_files')
+          return db('projects_files')
             .returning('*')
             .insert(data)
-            .then(res => {
-              console.log('res', res);
-            })
-            .then(() => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId))
-            .catch(err => {
-              console.log('err', err);
-            });
+            .then(() => db('projects').update({updated_at: (new Date())}).where('id', projId));
+        })
+        // Delete temp file.
+        .then(() => removeLocalFile(file.path, true))
+        .then(() => reply({
+          fileName: fileName
+        }))
+        .catch(err => {
+          // Delete temp file in case of error. Re-throw error to continue.
+          removeLocalFile(file.path, true);
+          throw err;
         })
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(FileExistsError, e => reply(Boom.conflict(e.message)))
