@@ -49,3 +49,10 @@ export class MasterScenarioError extends ExtendableError {
     this.extra = extra;
   }
 }
+
+export class DataValidationError extends ExtendableError {
+  constructor (message, extra) {
+    super(message);
+    this.extra = extra;
+  }
+}

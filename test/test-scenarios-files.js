@@ -104,14 +104,31 @@ describe('Scenario files', function () {
   });
 
   describe('POST /projects/{projId}/scenarios/{scId}/files', function () {
-    it('should error when type is not provided', function () {
+    it('should error when data format is not multipart/form-data', function () {
       return instance.injectThen({
         method: 'POST',
         url: '/projects/1000/scenarios/1000/files'
       }).then(res => {
-        assert.equal(res.statusCode, 400, 'Status code is 400');
-        assert.match(res.result.message, /["type" is required]/);
+        assert.equal(res.statusCode, 415, 'Status code is 415');
+        assert.equal(res.result.error, 'Unsupported Media Type');
       });
+    });
+
+    it('should error when type is not provided', function () {
+      let form = new FormData();
+      form.append('', '');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/files',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          assert.match(res.result.message, /["type" is required]/);
+        });
     });
 
     it('should error when file is not provided', function () {
