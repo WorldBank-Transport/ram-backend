@@ -26,7 +26,9 @@ var splitEnvs = [
   'ANL_STORAGE_HOST',
   'ANL_STORAGE_PORT',
   'HYPER_ACCESS',
-  'HYPER_SECRET'
+  'HYPER_SECRET',
+  'STORAGE_ACCESS_KEY',
+  'STORAGE_SECRET_KEY'
 ];
 
 var envs = splitEnvs
