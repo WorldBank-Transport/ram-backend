@@ -8,17 +8,6 @@ rra-postgis:
     POSTGRES_DB: rra
   volumes:
     - /var/lib/postgresql/data:/var/lib/postgresql/data
-rra-minio:
-  image: minio/minio
-  ports:
-    - 9000:9000
-  environment:
-    MINIO_ACCESS_KEY: minio
-    MINIO_SECRET_KEY: miniostorageengine
-  command: server /export
-  volumes:
-    - /export:/export
-    - /root/.minio:/root/.minio
 rra-api:
   image: wbtransport/rra-api
   ports:
@@ -26,4 +15,3 @@ rra-api:
   command: node index.js
   links:
     - rra-postgis
-    - rra-minio
