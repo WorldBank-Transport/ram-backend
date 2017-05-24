@@ -5,20 +5,22 @@ import Promise from 'bluebird';
 
 import db from '../db/';
 import { putFile as putFileToS3, removeLocalFile } from '../s3/utils';
-import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
+import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError, DataValidationError } from '../utils/errors';
 import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
+import { parseFormData } from '../utils/utils';
 // import { closeDatabase } from '../services/rra-osm-p2p';
 
-function handler (request, reply) {
-  const data = request.payload;
-  const source = data.roadNetworkSource;
-  const sourceScenarioId = data.roadNetworkSourceScenario;
-  const roadNetworkFile = data.roadNetworkFile;
+function handler (params, payload, reply) {
+  const name = payload.name;
+  const description = payload.description;
+  const source = payload.roadNetworkSource;
+  const sourceScenarioId = payload.roadNetworkSourceScenario;
+  const roadNetworkFile = payload.roadNetworkFile;
 
-  db('projects')
+  return db('projects')
     .select('status')
-    .where('id', request.params.projId)
+    .where('id', params.projId)
     .then(projects => {
       if (!projects.length) throw new ProjectNotFoundError();
       //  It's not possible to create scenarios for pending projects.
@@ -30,7 +32,7 @@ function handler (request, reply) {
         return db('scenarios')
           .select('id')
           .where('id', sourceScenarioId)
-          .where('project_id', request.params.projId)
+          .where('project_id', params.projId)
           .then((scenarios) => {
             if (!scenarios.length) throw new ScenarioNotFoundError();
           });
@@ -39,11 +41,11 @@ function handler (request, reply) {
     .then(() => {
       // Create the scenario base to be able to start an operation for it.
       const info = {
-        name: data.name,
-        description: data.description || '',
+        name: name,
+        description: description || '',
         status: 'pending',
         master: false,
-        project_id: request.params.projId,
+        project_id: params.projId,
         created_at: (new Date()),
         updated_at: (new Date()),
         data: {
@@ -58,17 +60,17 @@ function handler (request, reply) {
         .then(res => res[0])
         .catch(err => {
           if (err.constraint === 'scenarios_project_id_name_unique') {
-            throw new DataConflictError(`Scenario name already in use for this project: ${data.name}`);
+            throw new DataConflictError(`Scenario name already in use for this project: ${name}`);
           }
           throw err;
         });
     })
     // Start operation and return data to continue.
-    .then(scenario => startOperation(request.params.projId, scenario.id).then(op => [op, scenario]))
+    .then(scenario => startOperation(params.projId, scenario.id).then(op => [op, scenario]))
     .then(data => {
       let [op, scenario] = data;
       if (source === 'clone') {
-        return createScenario(request.params.projId, scenario.id, op.getId(), source, {sourceScenarioId})
+        return createScenario(params.projId, scenario.id, op.getId(), source, {sourceScenarioId})
           .then(() => scenario);
       } else if (source === 'new') {
         return handleRoadNetworkUpload(scenario, op.getId(), source, roadNetworkFile)
@@ -100,28 +102,57 @@ module.exports = [
       validate: {
         params: {
           projId: Joi.number()
-        },
-        payload: {
-          name: Joi.string().required(),
-          description: Joi.string(),
-          roadNetworkSource: Joi.string().valid('clone', 'new').required(),
-          roadNetworkSourceScenario: Joi.number().when('roadNetworkSource', {is: 'clone', then: Joi.required()}),
-
-          roadNetworkFile: Joi.object().keys({
-            filename: Joi.string(),
-            path: Joi.string(),
-            headers: Joi.object(),
-            bytes: Joi.number()
-          }).when('roadNetworkSource', {is: 'new', then: Joi.required()})
         }
       },
       payload: {
         maxBytes: 1 * Math.pow(1024, 3), // 1GB
-        output: 'file',
-        parse: true
+        output: 'stream',
+        parse: false,
+        allow: 'multipart/form-data'
       }
     },
-    handler: handler
+    handler: (request, reply) => {
+      parseFormData(request.raw.req)
+        .then(result => {
+          // Create a payload object to validate.
+          let payload = {};
+          if (result.fields.name) {
+            payload.name = result.fields.name[0];
+          }
+          if (result.fields.description) {
+            payload.description = result.fields.description[0];
+          }
+          if (result.fields.roadNetworkSource) {
+            payload.roadNetworkSource = result.fields.roadNetworkSource[0];
+          }
+          if (result.fields.roadNetworkSourceScenario) {
+            payload.roadNetworkSourceScenario = result.fields.roadNetworkSourceScenario[0];
+          }
+          if (result.files.roadNetworkFile) {
+            payload.roadNetworkFile = result.files.roadNetworkFile[0];
+          }
+
+          let validation = Joi.validate(payload, Joi.object().keys({
+            name: Joi.string().required(),
+            description: Joi.string(),
+            roadNetworkSource: Joi.string().valid('clone', 'new').required(),
+            roadNetworkSourceScenario: Joi.number().when('roadNetworkSource', {is: 'clone', then: Joi.required()}),
+            roadNetworkFile: Joi.object().when('roadNetworkSource', {is: 'new', then: Joi.required()})
+          }));
+
+          if (validation.error) {
+            throw new DataValidationError(validation.error.message);
+          }
+
+          return payload;
+        })
+        .then(payload => handler(request.params, payload, reply))
+        .catch(DataValidationError, e => reply(Boom.badRequest(e.message)))
+        .catch(err => {
+          console.log('err', err);
+          reply(Boom.badImplementation(err));
+        });
+    }
   },
   {
     path: '/projects/{projId}/scenarios/{scId}/duplicate',
@@ -164,13 +195,13 @@ module.exports = [
             .then(name => ({name, description: scenario.description}));
         })
         .then(data => {
-          request.payload = {
+          let payload = {
             name: data.name,
             description: data.description,
             roadNetworkSource: 'clone',
             roadNetworkSourceScenario: request.params.scId
           };
-          handler(request, reply);
+          return handler(request.params, payload, reply);
         })
         .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(err => {
