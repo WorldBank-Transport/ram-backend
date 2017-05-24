@@ -38,7 +38,14 @@ describe('Scenarios', function () {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
         assert.equal(result.meta.found, 2);
-        assert.equal(result.results[0].name, 'Main scenario 1200');
+        let scenario = result.results[0];
+        assert.equal(scenario.name, 'Main scenario 1200');
+        assert.equal(scenario.description, 'Scenario 1200 created when the project 1200 was created');
+        assert.equal(scenario.status, 'active');
+        assert.equal(scenario.master, true);
+        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.equal(scenario.gen_analysis, null);
+        assert.equal(scenario.scen_create, null);
       });
     });
 
@@ -72,8 +79,15 @@ describe('Scenarios', function () {
         url: '/projects/1000/scenarios/1000'
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
-        assert.equal(res.result.id, 1000);
-        assert.equal(res.result.name, 'Main scenario');
+        let scenario = res.result;
+        assert.equal(scenario.id, 1000);
+        assert.equal(scenario.name, 'Main scenario');
+        assert.equal(scenario.description, 'Ghost scenario created when the project was created');
+        assert.equal(scenario.status, 'pending');
+        assert.equal(scenario.master, true);
+        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.equal(scenario.gen_analysis, null);
+        assert.equal(scenario.scen_create, null);
       });
     });
   });
@@ -280,11 +294,17 @@ describe('Scenarios', function () {
         }
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
-        var result = res.result;
-        assert.equal(result.name, 'updated name');
-        assert.equal(result.description, 'updated description');
-        assert.equal((new Date(result.created_at)).toISOString(), '2017-02-01T12:00:01.000Z');
-        assert.notEqual(result.created_at, result.updated_at);
+        var scenario = res.result;
+        assert.equal(scenario.name, 'updated name');
+        assert.equal(scenario.description, 'updated description');
+        assert.equal(scenario.status, 'pending');
+        assert.equal(scenario.master, true);
+        assert.equal(scenario.files.length, 0);
+        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.equal(scenario.gen_analysis, null);
+        assert.equal(scenario.scen_create, null);
+        assert.equal((new Date(scenario.created_at)).toISOString(), '2017-02-01T12:00:01.000Z');
+        assert.notEqual(scenario.created_at, scenario.updated_at);
       });
     });
 
