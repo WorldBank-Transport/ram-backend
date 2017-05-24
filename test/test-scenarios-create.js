@@ -35,6 +35,7 @@ describe('Scenarios', function () {
   describe('POST /projects/{projId}/scenarios', function () {
     it('should fail when creating a scenario without a name', function () {
       let form = new FormData();
+      form.append('', '');
 
       return streamToPromise(form)
         .then(payload => instance.injectThen({
