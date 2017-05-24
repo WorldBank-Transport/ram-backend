@@ -83,8 +83,6 @@ export function createProjectsFilesTable () {
     table.foreign('project_id')
       .references('projects.id')
       .onDelete('CASCADE');
-    // Arbitrary additional json data.
-    table.json('data');
     table.timestamps();
   });
 }
@@ -104,8 +102,6 @@ export function createScenariosFilesTable () {
     table.foreign('scenario_id')
       .references('scenarios.id')
       .onDelete('CASCADE');
-    // Arbitrary additional json data.
-    table.json('data');
     table.timestamps();
   });
 }
