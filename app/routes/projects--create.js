@@ -17,32 +17,48 @@ module.exports = [
       }
     },
     handler: (request, reply) => {
+      const now = new Date();
       const data = request.payload;
       const base = {
         status: 'pending',
-        created_at: (new Date()),
-        updated_at: (new Date())
+        created_at: now,
+        updated_at: now
       };
 
       db('projects')
       .returning('*')
       .insert(Object.assign({}, data, base))
-      .then(res => {
-        const projectData = res[0];
-
+      .then(projectData => {
+        projectData = projectData[0];
         // Create first scenario. This is needed to store the related files.
-        db('scenarios')
+        return db('scenarios')
+        .returning('*')
         .insert({
           name: 'Main scenario',
           project_id: projectData.id,
           status: 'pending',
           master: true,
-          created_at: (new Date()),
-          updated_at: (new Date()),
-          data: {
-            res_gen_at: 0,
-            rn_updated_at: 0
-          }
+          created_at: now,
+          updated_at: now
+        })
+        .then(scenarioData => {
+          scenarioData = scenarioData[0];
+          return db.batchInsert('scenarios_settings', [
+            {
+              scenario_id: scenarioData.id,
+              key: 'res_gen_at',
+              value: 0,
+              created_at: now,
+              updated_at: now
+            },
+            {
+              scenario_id: scenarioData.id,
+              key: 'rn_updated_at',
+              value: 0,
+              created_at: now,
+              updated_at: now
+            }
+          ]);
         })
         .then(() => reply(projectData))
         .catch(err => reply(Boom.badImplementation(err)));

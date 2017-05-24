@@ -15,7 +15,7 @@ const routeSingleScenarioConfig = {
   }
 };
 
-module.exports = [
+export default [
   {
     path: '/projects/{projId}/scenarios',
     method: 'GET',
@@ -32,13 +32,10 @@ module.exports = [
 
       Promise.all([
         db('scenarios').where('project_id', request.params.projId).count('id'),
-        db.select('*').from('scenarios').where('project_id', request.params.projId).orderBy('created_at').offset(offset).limit(limit)
+        db.select('id').from('scenarios').where('project_id', request.params.projId).orderBy('created_at').offset(offset).limit(limit)
       ]).then(res => {
         const [count, scenarios] = res;
-        return Promise.map(scenarios, s => attachScenarioFiles(s)
-            .then(s => attachOperation('generate-analysis', 'gen_analysis', s))
-            .then(s => attachOperation('scenario-create', 'scen_create', s))
-          )
+        return Promise.map(scenarios, s => loadScenario(request.params.projId, s.id))
           .then(scenarios => {
             request.count = parseInt(count[0].count);
             reply(scenarios);
@@ -78,24 +75,43 @@ module.exports = [
   }
 ];
 
-function singleScenarioHandler (request, reply) {
-  db.select('*')
+export function loadScenario (projId, scId) {
+  return db.select('*')
     .from('scenarios')
-    .where('id', request.params.scId)
-    .where('project_id', request.params.projId)
+    .where('id', scId)
+    .where('project_id', projId)
     .orderBy('created_at')
-    .then(scenarios => {
-      if (!scenarios.length) throw new ScenarioNotFoundError();
-      return scenarios[0];
+    .first()
+    .then(scenario => {
+      if (!scenario) throw new ScenarioNotFoundError();
+      return scenario;
     })
+    .then(scenario => attachScenarioSettings(scenario))
     .then(scenario => attachScenarioFiles(scenario))
     .then(scenario => attachOperation('generate-analysis', 'gen_analysis', scenario))
-    .then(scenario => attachOperation('scenario-create', 'scen_create', scenario))
+    .then(scenario => attachOperation('scenario-create', 'scen_create', scenario));
+}
+
+function singleScenarioHandler (request, reply) {
+  loadScenario(request.params.projId, request.params.scId)
     .then(scenario => reply(scenario))
     .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
     .catch(err => {
       console.log('err', err);
       reply(Boom.badImplementation(err));
+    });
+}
+
+function attachScenarioSettings (scenario) {
+  return db.select('key', 'value')
+    .from('scenarios_settings')
+    .where('scenario_id', scenario.id)
+    .then(data => {
+      scenario.data = {};
+      data.forEach(o => {
+        scenario.data[o.key] = o.value;
+      });
+      return scenario;
     });
 }
 

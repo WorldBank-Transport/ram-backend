@@ -4,7 +4,7 @@ import Boom from 'boom';
 import Promise from 'bluebird';
 
 import db from '../db/';
-
+import { loadScenario } from './scenarios--get';
 import { ScenarioNotFoundError, DataConflictError } from '../utils/errors';
 
 module.exports = [
@@ -52,7 +52,7 @@ module.exports = [
 
       executor
         .then(update => db('scenarios')
-          .returning('*')
+          .returning('id')
           .update(update)
           .where('id', request.params.scId)
           .where('project_id', request.params.projId)
@@ -61,7 +61,8 @@ module.exports = [
           if (!scenarios.length) throw new ScenarioNotFoundError();
           return scenarios[0];
         })
-        .then((scenario) => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId).then(() => scenario))
+        .then(scenarioId => loadScenario(request.params.projId, scenarioId))
+        .then(scenario => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId).then(() => scenario))
         .then(scenario => reply(scenario))
         .catch(err => {
           if (err.constraint === 'scenarios_project_id_name_unique') {
