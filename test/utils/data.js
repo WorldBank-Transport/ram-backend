@@ -73,12 +73,24 @@ export function project1000 () {
     'project_id': 1000,
     'master': true,
     'created_at': '2017-02-01T12:00:01.000Z',
-    'updated_at': '2017-02-01T12:00:01.000Z',
-    'data': {
-      'res_gen_at': 0,
-      'rn_updated_at': 0
+    'updated_at': '2017-02-01T12:00:01.000Z'
+  }))
+  .then(() => scenarioSettings([
+    {
+      'scenario_id': 1000,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1000,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
     }
-  }));
+  ]));
 }
 
 // Project 1002 in pending state with one scenario
@@ -99,12 +111,24 @@ export function project1002 () {
     'project_id': 1002,
     'master': true,
     'created_at': '2017-02-01T12:00:02.000Z',
-    'updated_at': '2017-02-01T12:00:02.000Z',
-    'data': {
-      'res_gen_at': 0,
-      'rn_updated_at': 0
+    'updated_at': '2017-02-01T12:00:02.000Z'
+  }))
+  .then(() => scenarioSettings([
+    {
+      'scenario_id': 1002,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1002,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
     }
-  }));
+  ]));
 }
 
 // Project in pending state with one scenario and a profile file
@@ -135,12 +159,24 @@ export function project1001 () {
     'project_id': 1001,
     'master': true,
     'created_at': '2017-02-01T12:00:03.000Z',
-    'updated_at': '2017-02-01T12:00:03.000Z',
-    'data': {
-      'res_gen_at': 0,
-      'rn_updated_at': 0
-    }
+    'updated_at': '2017-02-01T12:00:03.000Z'
   }))
+  .then(() => scenarioSettings([
+    {
+      'scenario_id': 1001,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1001,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    }
+  ]))
   .then(() => scenarioFile({
     'id': 1001,
     'name': 'poi_000000',
@@ -182,12 +218,24 @@ export function project1003 () {
     'project_id': 1003,
     'master': true,
     'created_at': '2017-02-01T12:00:04.000Z',
-    'updated_at': '2017-02-01T12:00:04.000Z',
-    'data': {
-      'res_gen_at': 0,
-      'rn_updated_at': 0
-    }
+    'updated_at': '2017-02-01T12:00:04.000Z'
   }))
+  .then(() => scenarioSettings([
+    {
+      'scenario_id': 1003,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1003,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    }
+  ]))
   .then(() => scenarioFile({
     'id': 1003,
     'name': 'road-network_000000',
@@ -251,12 +299,24 @@ export function project1004 () {
     'project_id': 1004,
     'master': true,
     'created_at': '2017-02-01T12:00:05.000Z',
-    'updated_at': '2017-02-01T12:00:05.000Z',
-    'data': {
-      'res_gen_at': 0,
-      'rn_updated_at': 0
-    }
+    'updated_at': '2017-02-01T12:00:05.000Z'
   }))
+  .then(() => scenarioSettings([
+    {
+      'scenario_id': 1004,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1004,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    }
+  ]))
   .then(() => scenarioFile([
     {
       'id': 1004,
@@ -335,12 +395,24 @@ export function project1100 () {
     'master': true,
     'admin_areas': JSON.stringify(ADMIN_AREAS),
     'created_at': '2017-02-01T12:00:06.000Z',
-    'updated_at': '2017-02-01T12:00:06.000Z',
-    'data': {
-      'res_gen_at': 0,
-      'rn_updated_at': 0
-    }
+    'updated_at': '2017-02-01T12:00:06.000Z'
   }))
+  .then(() => scenarioSettings([
+    {
+      'scenario_id': 1100,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1100,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    }
+  ]))
   .then(() => scenarioFile([
     {
       'id': 1100,
@@ -420,11 +492,7 @@ export function project1200 () {
       'master': true,
       'admin_areas': JSON.stringify(ADMIN_AREAS),
       'created_at': '2017-02-01T12:00:07.000Z',
-      'updated_at': '2017-02-01T12:00:07.000Z',
-      'data': {
-        'res_gen_at': 0,
-        'rn_updated_at': 0
-      }
+      'updated_at': '2017-02-01T12:00:07.000Z'
     },
     {
       'id': 1201,
@@ -435,11 +503,37 @@ export function project1200 () {
       'master': false,
       'admin_areas': JSON.stringify(ADMIN_AREAS),
       'created_at': '2017-02-01T12:00:07.000Z',
-      'updated_at': '2017-02-01T12:00:07.000Z',
-      'data': {
-        'res_gen_at': 0,
-        'rn_updated_at': 0
-      }
+      'updated_at': '2017-02-01T12:00:07.000Z'
+    }
+  ]))
+  .then(() => scenarioSettings([
+    {
+      'scenario_id': 1200,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1200,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1201,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1201,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
     }
   ]))
   .then(() => scenarioFile([
@@ -543,12 +637,24 @@ export function project2000 () {
     'master': true,
     'admin_areas': JSON.stringify(ADMIN_AREAS),
     'created_at': '2017-02-01T12:00:06.000Z',
-    'updated_at': '2017-02-01T12:00:06.000Z',
-    'data': {
-      'res_gen_at': 0,
-      'rn_updated_at': 0
-    }
+    'updated_at': '2017-02-01T12:00:06.000Z'
   }))
+  .then(() => scenarioSettings([
+    {
+      'scenario_id': 2000,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 2000,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    }
+  ]))
   .then(() => scenarioFile([
     {
       'id': 2000,
@@ -612,6 +718,10 @@ function scenarioFile (data) {
   return db.batchInsert('scenarios_files', _.isArray(data) ? data : [data]);
 }
 
+function scenarioSettings (data) {
+  return db.batchInsert('scenarios_settings', _.isArray(data) ? data : [data]);
+}
+
 //
 // Functions for project creation.
 //
@@ -634,12 +744,24 @@ export function projectBarebones (id) {
     'project_id': id,
     'master': true,
     'created_at': '2017-02-01T12:00:00.000Z',
-    'updated_at': '2017-02-01T12:00:00.000Z',
-    'data': {
-      'res_gen_at': 0,
-      'rn_updated_at': 0
+    'updated_at': '2017-02-01T12:00:00.000Z'
+  }))
+  .then(() => scenarioSettings([
+    {
+      'scenario_id': id,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': id,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
     }
-  }));
+  ]));
 }
 
 // Insert a project, a scenario, a project file and a scenario file.
@@ -670,12 +792,24 @@ export function projectPendingWithFiles (id) {
     'project_id': id,
     'master': true,
     'created_at': '2017-02-01T12:00:00.000Z',
-    'updated_at': '2017-02-01T12:00:00.000Z',
-    'data': {
-      'res_gen_at': 0,
-      'rn_updated_at': 0
-    }
+    'updated_at': '2017-02-01T12:00:00.000Z'
   }))
+  .then(() => scenarioSettings([
+    {
+      'scenario_id': id,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': id,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    }
+  ]))
   .then(() => scenarioFile({
     'id': id,
     'name': 'poi_000000',
@@ -740,12 +874,24 @@ export function projectPendingWithAllFiles (id) {
     'project_id': id,
     'master': true,
     'created_at': '2017-02-01T12:00:00.000Z',
-    'updated_at': '2017-02-01T12:00:00.000Z',
-    'data': {
-      'res_gen_at': 0,
-      'rn_updated_at': 0
-    }
+    'updated_at': '2017-02-01T12:00:00.000Z'
   }))
+  .then(() => scenarioSettings([
+    {
+      'scenario_id': id,
+      'key': 'res_gen_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': id,
+      'key': 'rn_updated_at',
+      'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    }
+  ]))
   .then(() => scenarioFile([
     {
       'id': id,

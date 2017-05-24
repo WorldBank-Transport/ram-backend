@@ -24,6 +24,11 @@ export function dropScenariosFiles () {
   return db.schema.dropTableIfExists('scenarios_files');
 }
 
+export function dropScenariosSettings () {
+  DEBUG && console.log('Dropping table: scenarios_settings');
+  return db.schema.dropTableIfExists('scenarios_settings');
+}
+
 export function dropOperations () {
   DEBUG && console.log('Dropping table: operations');
   return db.schema.dropTableIfExists('operations');
@@ -61,8 +66,6 @@ export function createScenariosTable () {
       .references('projects.id')
       .onDelete('CASCADE');
     table.json('admin_areas');
-    // Arbitrary additional json data.
-    table.json('data');
     table.timestamps();
 
     table.unique(['project_id', 'name']);
@@ -107,6 +110,20 @@ export function createScenariosFilesTable () {
   });
 }
 
+export function createScenariosSettingsTable () {
+  DEBUG && console.log('Creating table: scenarios_settings');
+  return db.schema.createTable('scenarios_settings', table => {
+    table.string('key');
+    table.string('value');
+    table.integer('scenario_id').unsigned();
+    table.foreign('scenario_id')
+      .references('scenarios.id')
+      .onDelete('CASCADE');
+    table.timestamps();
+    table.primary(['scenario_id', 'key']);
+  });
+}
+
 export function createOperationsTable () {
   DEBUG && console.log('Creating table: operations');
   return db.schema.createTable('operations', table => {
@@ -144,10 +161,12 @@ export function setupStructure () {
   .then(() => dropProjectsFiles())
   .then(() => dropOperationsLogs())
   .then(() => dropOperations())
+  .then(() => dropScenariosSettings())
   .then(() => dropScenarios())
   .then(() => dropProjects())
   .then(() => createProjectsTable())
   .then(() => createScenariosTable())
+  .then(() => createScenariosSettingsTable())
   .then(() => createOperationsTable())
   .then(() => createOperationsLogsTable())
   .then(() => createProjectsFilesTable())
