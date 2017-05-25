@@ -85,6 +85,57 @@ describe('Scenarios', function () {
         assert.equal(scenario.description, 'Ghost scenario created when the project was created');
         assert.equal(scenario.status, 'pending');
         assert.equal(scenario.master, true);
+        assert.equal(scenario.admin_areas, null);
+        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.equal(scenario.gen_analysis, null);
+        assert.equal(scenario.scen_create, null);
+      });
+    });
+
+    it('should return the correct scenario - active', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/2000/scenarios/2000'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        let scenario = res.result;
+        assert.equal(scenario.id, 2000);
+        assert.equal(scenario.name, 'Main scenario for Sergipe');
+        assert.equal(scenario.description, '');
+        assert.equal(scenario.status, 'active');
+        assert.equal(scenario.master, true);
+        assert.deepEqual(scenario.admin_areas, [
+          { 'id': 200001, 'name': 'Arauá', 'type': 'boundary', 'selected': false },
+          { 'id': 200002, 'name': 'Boquim', 'type': 'boundary', 'selected': false },
+          { 'id': 200003, 'name': 'Campo do Brito', 'type': 'boundary', 'selected': false },
+          { 'id': 200004, 'name': 'Cristinápolis', 'type': 'boundary', 'selected': false },
+          { 'id': 200005, 'name': 'Distrito de Abadia', 'type': 'boundary', 'selected': false },
+          { 'id': 200006, 'name': 'Distrito de Buril', 'type': 'boundary', 'selected': false },
+          { 'id': 200007, 'name': 'Distrito de Conceição de Campinas', 'type': 'boundary', 'selected': false },
+          { 'id': 200008, 'name': 'Distrito de Itamira', 'type': 'boundary', 'selected': false },
+          { 'id': 200009, 'name': 'Distrito de Itanhi', 'type': 'boundary', 'selected': false },
+          { 'id': 2000010, 'name': 'Distrito de Sambaíba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000011, 'name': 'Estância', 'type': 'boundary', 'selected': false },
+          { 'id': 2000012, 'name': 'Indiaroba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000013, 'name': 'Itabaiana', 'type': 'boundary', 'selected': true },
+          { 'id': 2000014, 'name': 'Itabaianinha', 'type': 'boundary', 'selected': false },
+          { 'id': 2000015, 'name': 'Itaporanga d\'Ajuda', 'type': 'boundary', 'selected': false },
+          { 'id': 2000016, 'name': 'Lagarto', 'type': 'boundary', 'selected': true },
+          { 'id': 2000017, 'name': 'Macambira', 'type': 'boundary', 'selected': false },
+          { 'id': 2000018, 'name': 'Palmares', 'type': 'boundary', 'selected': false },
+          { 'id': 2000019, 'name': 'Pedra Mole', 'type': 'boundary', 'selected': false },
+          { 'id': 2000020, 'name': 'Pedrinhas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000021, 'name': 'Poço Verde', 'type': 'boundary', 'selected': true },
+          { 'id': 2000022, 'name': 'Riachão do Dantas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000023, 'name': 'Salgado', 'type': 'boundary', 'selected': true },
+          { 'id': 2000024, 'name': 'Samambaia', 'type': 'boundary', 'selected': false },
+          { 'id': 2000025, 'name': 'Santa Luzia do Itanhy', 'type': 'boundary', 'selected': false },
+          { 'id': 2000026, 'name': 'São Domingos', 'type': 'boundary', 'selected': false },
+          { 'id': 2000027, 'name': 'Simão Dias', 'type': 'boundary', 'selected': false },
+          { 'id': 2000028, 'name': 'Tobias Barreto', 'type': 'boundary', 'selected': false },
+          { 'id': 2000029, 'name': 'Tomar do Geru', 'type': 'boundary', 'selected': false },
+          { 'id': 2000030, 'name': 'Umbaúba', 'type': 'boundary', 'selected': false }
+        ]);
         assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
         assert.equal(scenario.gen_analysis, null);
         assert.equal(scenario.scen_create, null);
@@ -313,44 +364,42 @@ describe('Scenarios', function () {
         method: 'PATCH',
         url: '/projects/2000/scenarios/2000',
         payload: {
-          selectedAdminAreas: [
-            'Salgado', 'Itabaiana', 'Lagarto', 'Poço Verde'
-          ]
+          selectedAdminAreas: [200001, 200002, 200003, 200004]
         }
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
         let adminAreas = [
-          {'name': 'Distrito de Abadia', 'selected': false},
-          {'name': 'Distrito de Itanhi', 'selected': false},
-          {'name': 'Distrito de Conceição de Campinas', 'selected': false},
-          {'name': 'Distrito de Sambaíba', 'selected': false},
-          {'name': 'Distrito de Buril', 'selected': false},
-          {'name': 'Distrito de Itamira', 'selected': false},
-          {'name': 'Estância', 'selected': false},
-          {'name': 'Itaporanga d\'Ajuda', 'selected': false},
-          {'name': 'Salgado', 'selected': true},
-          {'name': 'Arauá', 'selected': false},
-          {'name': 'Boquim', 'selected': false},
-          {'name': 'Cristinápolis', 'selected': false},
-          {'name': 'Indiaroba', 'selected': false},
-          {'name': 'Itabaianinha', 'selected': false},
-          {'name': 'Pedrinhas', 'selected': false},
-          {'name': 'Santa Luzia do Itanhy', 'selected': false},
-          {'name': 'Tomar do Geru', 'selected': false},
-          {'name': 'Umbaúba', 'selected': false},
-          {'name': 'Pedra Mole', 'selected': false},
-          {'name': 'Campo do Brito', 'selected': false},
-          {'name': 'Itabaiana', 'selected': true},
-          {'name': 'Lagarto', 'selected': true},
-          {'name': 'Macambira', 'selected': false},
-          {'name': 'Poço Verde', 'selected': true},
-          {'name': 'Simão Dias', 'selected': false},
-          {'name': 'São Domingos', 'selected': false},
-          {'name': 'Palmares', 'selected': false},
-          {'name': 'Riachão do Dantas', 'selected': false},
-          {'name': 'Samambaia', 'selected': false},
-          {'name': 'Tobias Barreto', 'selected': false}
+          { 'id': 200001, 'name': 'Arauá', 'type': 'boundary', 'selected': true },
+          { 'id': 200002, 'name': 'Boquim', 'type': 'boundary', 'selected': true },
+          { 'id': 200003, 'name': 'Campo do Brito', 'type': 'boundary', 'selected': true },
+          { 'id': 200004, 'name': 'Cristinápolis', 'type': 'boundary', 'selected': true },
+          { 'id': 200005, 'name': 'Distrito de Abadia', 'type': 'boundary', 'selected': false },
+          { 'id': 200006, 'name': 'Distrito de Buril', 'type': 'boundary', 'selected': false },
+          { 'id': 200007, 'name': 'Distrito de Conceição de Campinas', 'type': 'boundary', 'selected': false },
+          { 'id': 200008, 'name': 'Distrito de Itamira', 'type': 'boundary', 'selected': false },
+          { 'id': 200009, 'name': 'Distrito de Itanhi', 'type': 'boundary', 'selected': false },
+          { 'id': 2000010, 'name': 'Distrito de Sambaíba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000011, 'name': 'Estância', 'type': 'boundary', 'selected': false },
+          { 'id': 2000012, 'name': 'Indiaroba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000013, 'name': 'Itabaiana', 'type': 'boundary', 'selected': false },
+          { 'id': 2000014, 'name': 'Itabaianinha', 'type': 'boundary', 'selected': false },
+          { 'id': 2000015, 'name': 'Itaporanga d\'Ajuda', 'type': 'boundary', 'selected': false },
+          { 'id': 2000016, 'name': 'Lagarto', 'type': 'boundary', 'selected': false },
+          { 'id': 2000017, 'name': 'Macambira', 'type': 'boundary', 'selected': false },
+          { 'id': 2000018, 'name': 'Palmares', 'type': 'boundary', 'selected': false },
+          { 'id': 2000019, 'name': 'Pedra Mole', 'type': 'boundary', 'selected': false },
+          { 'id': 2000020, 'name': 'Pedrinhas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000021, 'name': 'Poço Verde', 'type': 'boundary', 'selected': false },
+          { 'id': 2000022, 'name': 'Riachão do Dantas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000023, 'name': 'Salgado', 'type': 'boundary', 'selected': false },
+          { 'id': 2000024, 'name': 'Samambaia', 'type': 'boundary', 'selected': false },
+          { 'id': 2000025, 'name': 'Santa Luzia do Itanhy', 'type': 'boundary', 'selected': false },
+          { 'id': 2000026, 'name': 'São Domingos', 'type': 'boundary', 'selected': false },
+          { 'id': 2000027, 'name': 'Simão Dias', 'type': 'boundary', 'selected': false },
+          { 'id': 2000028, 'name': 'Tobias Barreto', 'type': 'boundary', 'selected': false },
+          { 'id': 2000029, 'name': 'Tomar do Geru', 'type': 'boundary', 'selected': false },
+          { 'id': 2000030, 'name': 'Umbaúba', 'type': 'boundary', 'selected': false }
         ];
         assert.deepEqual(result.admin_areas, adminAreas);
       });
@@ -367,36 +416,36 @@ describe('Scenarios', function () {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
         let adminAreas = [
-          {'name': 'Distrito de Abadia', 'selected': false},
-          {'name': 'Distrito de Itanhi', 'selected': false},
-          {'name': 'Distrito de Conceição de Campinas', 'selected': false},
-          {'name': 'Distrito de Sambaíba', 'selected': false},
-          {'name': 'Distrito de Buril', 'selected': false},
-          {'name': 'Distrito de Itamira', 'selected': false},
-          {'name': 'Estância', 'selected': false},
-          {'name': 'Itaporanga d\'Ajuda', 'selected': false},
-          {'name': 'Salgado', 'selected': false},
-          {'name': 'Arauá', 'selected': false},
-          {'name': 'Boquim', 'selected': false},
-          {'name': 'Cristinápolis', 'selected': false},
-          {'name': 'Indiaroba', 'selected': false},
-          {'name': 'Itabaianinha', 'selected': false},
-          {'name': 'Pedrinhas', 'selected': false},
-          {'name': 'Santa Luzia do Itanhy', 'selected': false},
-          {'name': 'Tomar do Geru', 'selected': false},
-          {'name': 'Umbaúba', 'selected': false},
-          {'name': 'Pedra Mole', 'selected': false},
-          {'name': 'Campo do Brito', 'selected': false},
-          {'name': 'Itabaiana', 'selected': false},
-          {'name': 'Lagarto', 'selected': false},
-          {'name': 'Macambira', 'selected': false},
-          {'name': 'Poço Verde', 'selected': false},
-          {'name': 'Simão Dias', 'selected': false},
-          {'name': 'São Domingos', 'selected': false},
-          {'name': 'Palmares', 'selected': false},
-          {'name': 'Riachão do Dantas', 'selected': false},
-          {'name': 'Samambaia', 'selected': false},
-          {'name': 'Tobias Barreto', 'selected': false}
+          { 'id': 200001, 'name': 'Arauá', 'type': 'boundary', 'selected': false },
+          { 'id': 200002, 'name': 'Boquim', 'type': 'boundary', 'selected': false },
+          { 'id': 200003, 'name': 'Campo do Brito', 'type': 'boundary', 'selected': false },
+          { 'id': 200004, 'name': 'Cristinápolis', 'type': 'boundary', 'selected': false },
+          { 'id': 200005, 'name': 'Distrito de Abadia', 'type': 'boundary', 'selected': false },
+          { 'id': 200006, 'name': 'Distrito de Buril', 'type': 'boundary', 'selected': false },
+          { 'id': 200007, 'name': 'Distrito de Conceição de Campinas', 'type': 'boundary', 'selected': false },
+          { 'id': 200008, 'name': 'Distrito de Itamira', 'type': 'boundary', 'selected': false },
+          { 'id': 200009, 'name': 'Distrito de Itanhi', 'type': 'boundary', 'selected': false },
+          { 'id': 2000010, 'name': 'Distrito de Sambaíba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000011, 'name': 'Estância', 'type': 'boundary', 'selected': false },
+          { 'id': 2000012, 'name': 'Indiaroba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000013, 'name': 'Itabaiana', 'type': 'boundary', 'selected': false },
+          { 'id': 2000014, 'name': 'Itabaianinha', 'type': 'boundary', 'selected': false },
+          { 'id': 2000015, 'name': 'Itaporanga d\'Ajuda', 'type': 'boundary', 'selected': false },
+          { 'id': 2000016, 'name': 'Lagarto', 'type': 'boundary', 'selected': false },
+          { 'id': 2000017, 'name': 'Macambira', 'type': 'boundary', 'selected': false },
+          { 'id': 2000018, 'name': 'Palmares', 'type': 'boundary', 'selected': false },
+          { 'id': 2000019, 'name': 'Pedra Mole', 'type': 'boundary', 'selected': false },
+          { 'id': 2000020, 'name': 'Pedrinhas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000021, 'name': 'Poço Verde', 'type': 'boundary', 'selected': false },
+          { 'id': 2000022, 'name': 'Riachão do Dantas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000023, 'name': 'Salgado', 'type': 'boundary', 'selected': false },
+          { 'id': 2000024, 'name': 'Samambaia', 'type': 'boundary', 'selected': false },
+          { 'id': 2000025, 'name': 'Santa Luzia do Itanhy', 'type': 'boundary', 'selected': false },
+          { 'id': 2000026, 'name': 'São Domingos', 'type': 'boundary', 'selected': false },
+          { 'id': 2000027, 'name': 'Simão Dias', 'type': 'boundary', 'selected': false },
+          { 'id': 2000028, 'name': 'Tobias Barreto', 'type': 'boundary', 'selected': false },
+          { 'id': 2000029, 'name': 'Tomar do Geru', 'type': 'boundary', 'selected': false },
+          { 'id': 2000030, 'name': 'Umbaúba', 'type': 'boundary', 'selected': false }
         ];
         assert.deepEqual(result.admin_areas, adminAreas);
       });

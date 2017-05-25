@@ -4,7 +4,7 @@ import { assert } from 'chai';
 import Server from '../app/services/server';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
-import { fixMeUp, ADMIN_AREAS } from './utils/data';
+import { fixMeUp, getSelectedAdminAreas } from './utils/data';
 import db from '../app/db';
 
 var options = {
@@ -61,11 +61,12 @@ describe('Result generation', function () {
 
     it('should return error when no admin areas are selected', function () {
       // Modify db entry.
-      return db('scenarios')
+      return db('scenarios_settings')
         .update({
-          admin_areas: JSON.stringify([{name: 'test-area', selected: false}])
+          value: '[]'
         })
-        .where('id', 2000)
+        .where('scenario_id', 2000)
+        .where('key', 'admin_areas')
         .then(() => instance.injectThen({
           method: 'POST',
           url: '/projects/2000/scenarios/2000/generate'
@@ -75,9 +76,10 @@ describe('Result generation', function () {
           assert.equal(res.result.message, 'No admin areas selected');
         })
         // Set admin areas back to original.
-        .then(() => db('scenarios')
-          .update({admin_areas: JSON.stringify(ADMIN_AREAS)})
-          .where('id', 2000)
+        .then(() => db('scenarios_settings')
+          .update({value: JSON.stringify(getSelectedAdminAreas(2000))})
+          .where('scenario_id', 2000)
+          .where('key', 'admin_areas')
         );
     });
 

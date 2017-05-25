@@ -61,39 +61,51 @@ describe('Finish Project Setup', function () {
               .first()
               .then(scenario => {
                 assert.equal(scenario.status, 'active');
+              }),
+            db('scenarios_settings')
+              .where('scenario_id', 3000)
+              .where('key', 'admin_areas')
+              .first()
+              .then(setting => {
+                assert.equal(setting.value, '[]');
+              }),
+            db('projects_aa')
+              .select('name', 'project_id', 'type')
+              .where('project_id', 3000)
+              .then(aa => {
                 let adminAreas = [
-                  {'name': 'Distrito de Abadia', 'selected': false},
-                  {'name': 'Distrito de Itanhi', 'selected': false},
-                  {'name': 'Distrito de Conceição de Campinas', 'selected': false},
-                  {'name': 'Distrito de Sambaíba', 'selected': false},
-                  {'name': 'Distrito de Buril', 'selected': false},
-                  {'name': 'Distrito de Itamira', 'selected': false},
-                  {'name': 'Estância', 'selected': false},
-                  {'name': 'Itaporanga d\'Ajuda', 'selected': false},
-                  {'name': 'Salgado', 'selected': false},
-                  {'name': 'Arauá', 'selected': false},
-                  {'name': 'Boquim', 'selected': false},
-                  {'name': 'Cristinápolis', 'selected': false},
-                  {'name': 'Indiaroba', 'selected': false},
-                  {'name': 'Itabaianinha', 'selected': false},
-                  {'name': 'Pedrinhas', 'selected': false},
-                  {'name': 'Santa Luzia do Itanhy', 'selected': false},
-                  {'name': 'Tomar do Geru', 'selected': false},
-                  {'name': 'Umbaúba', 'selected': false},
-                  {'name': 'Pedra Mole', 'selected': false},
-                  {'name': 'Campo do Brito', 'selected': false},
-                  {'name': 'Itabaiana', 'selected': false},
-                  {'name': 'Lagarto', 'selected': false},
-                  {'name': 'Macambira', 'selected': false},
-                  {'name': 'Poço Verde', 'selected': false},
-                  {'name': 'Simão Dias', 'selected': false},
-                  {'name': 'São Domingos', 'selected': false},
-                  {'name': 'Palmares', 'selected': false},
-                  {'name': 'Riachão do Dantas', 'selected': false},
-                  {'name': 'Samambaia', 'selected': false},
-                  {'name': 'Tobias Barreto', 'selected': false}
+                  {'name': 'Arauá', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Boquim', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Campo do Brito', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Cristinápolis', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Distrito de Abadia', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Distrito de Buril', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Distrito de Conceição de Campinas', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Distrito de Itamira', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Distrito de Itanhi', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Distrito de Sambaíba', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Estância', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Indiaroba', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Itabaiana', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Itabaianinha', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Itaporanga d\'Ajuda', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Lagarto', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Macambira', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Palmares', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Pedra Mole', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Pedrinhas', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Poço Verde', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Riachão do Dantas', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Salgado', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Samambaia', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Santa Luzia do Itanhy', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'São Domingos', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Simão Dias', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Tobias Barreto', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Tomar do Geru', 'type': 'boundary', 'project_id': 3000},
+                  {'name': 'Umbaúba', 'type': 'boundary', 'project_id': 3000}
                 ];
-                assert.deepEqual(scenario.admin_areas, adminAreas);
+                assert.deepEqual(aa, adminAreas);
               }),
             db('operations')
               .where('id', op.getId())
@@ -160,10 +172,10 @@ describe('Finish Project Setup', function () {
                 .where('operation_id', op.getId())
                 .orderBy('id', 'desc')
                 .then(logs => {
-                  assert.equal(err, "Cannot read property 'filter' of undefined");
+                  assert.equal(err, 'Invalid administrative boundaries file');
                   assert.lengthOf(logs, 3);
                   assert.equal(logs[0].code, 'error');
-                  assert.equal(logs[0].data.error, "Cannot read property 'filter' of undefined");
+                  assert.equal(logs[0].data.error, 'Invalid administrative boundaries file');
                 })
                 .then(() => done())
                 .catch(err => done(err));
