@@ -21,39 +21,31 @@ const FILE_POI = path.join(__dirname, 'data-sergipe/poi-townhalls.geojson');
 
 const ADMIN_AREAS_BBOX = bbox(readJSONSync(FILE_ADMIN));
 
-// Admin areas from admin-boundaries.geojson
-export const ADMIN_AREAS = [
-  {'name': 'Distrito de Abadia', 'selected': false},
-  {'name': 'Distrito de Itanhi', 'selected': false},
-  {'name': 'Distrito de Conceição de Campinas', 'selected': false},
-  {'name': 'Distrito de Sambaíba', 'selected': false},
-  {'name': 'Distrito de Buril', 'selected': false},
-  {'name': 'Distrito de Itamira', 'selected': false},
-  {'name': 'Estância', 'selected': false},
-  {'name': 'Itaporanga d\'Ajuda', 'selected': false},
-  {'name': 'Salgado', 'selected': true},
-  {'name': 'Arauá', 'selected': false},
-  {'name': 'Boquim', 'selected': false},
-  {'name': 'Cristinápolis', 'selected': false},
-  {'name': 'Indiaroba', 'selected': false},
-  {'name': 'Itabaianinha', 'selected': false},
-  {'name': 'Pedrinhas', 'selected': false},
-  {'name': 'Santa Luzia do Itanhy', 'selected': false},
-  {'name': 'Tomar do Geru', 'selected': false},
-  {'name': 'Umbaúba', 'selected': false},
-  {'name': 'Pedra Mole', 'selected': false},
-  {'name': 'Campo do Brito', 'selected': false},
-  {'name': 'Itabaiana', 'selected': true},
-  {'name': 'Lagarto', 'selected': true},
-  {'name': 'Macambira', 'selected': false},
-  {'name': 'Poço Verde', 'selected': true},
-  {'name': 'Simão Dias', 'selected': false},
-  {'name': 'São Domingos', 'selected': false},
-  {'name': 'Palmares', 'selected': false},
-  {'name': 'Riachão do Dantas', 'selected': false},
-  {'name': 'Samambaia', 'selected': false},
-  {'name': 'Tobias Barreto', 'selected': false}
-];
+// Parse admin areas.
+let adminAreas = readJSONSync(FILE_ADMIN);
+adminAreas = _(adminAreas.features)
+  .filter(o => !!o.properties.name && o.geometry.type !== 'Point')
+  .sortBy(o => _.kebabCase(o.properties.name))
+  .map(o => {
+    return {
+      name: o.properties.name,
+      type: o.properties.type || 'Admin Area',
+      geometry: JSON.stringify(o.geometry.coordinates)
+    };
+  })
+  .value();
+
+export function getAdminAreasForProject (projId) {
+  return _.cloneDeep(adminAreas).map((o, i) => {
+    o.id = parseInt(`${projId}0${i + 1}`);
+    o.project_id = projId;
+    return o;
+  });
+}
+
+export function getSelectedAdminAreas (projId) {
+  return [13, 16, 21, 23].map(o => parseInt(`${projId}0${o}`));
+}
 
 // Project in pending state with one scenario.
 export function project1000 () {
@@ -383,6 +375,7 @@ export function project1100 () {
       'updated_at': '2017-02-01T12:00:06.000Z'
     }
   ]))
+  .then(() => projectAA(getAdminAreasForProject(1100)))
   .then(() => putObjectFromFile(bucket, 'project-1100/profile_000000', FILE_PROFILE))
   .then(() => putObjectFromFile(bucket, 'project-1100/villages_000000', FILE_VILLAGES))
   .then(() => putObjectFromFile(bucket, 'project-1100/admin-bounds_000000', FILE_ADMIN))
@@ -393,7 +386,6 @@ export function project1100 () {
     'status': 'active',
     'project_id': 1100,
     'master': true,
-    'admin_areas': JSON.stringify(ADMIN_AREAS),
     'created_at': '2017-02-01T12:00:06.000Z',
     'updated_at': '2017-02-01T12:00:06.000Z'
   }))
@@ -409,6 +401,13 @@ export function project1100 () {
       'scenario_id': 1100,
       'key': 'rn_updated_at',
       'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1100,
+      'key': 'admin_areas',
+      'value': JSON.stringify(getSelectedAdminAreas(1100)),
       'created_at': '2017-02-01T12:00:01.000Z',
       'updated_at': '2017-02-01T12:00:01.000Z'
     }
@@ -479,6 +478,7 @@ export function project1200 () {
       'updated_at': '2017-02-01T12:00:07.000Z'
     }
   ]))
+  .then(() => projectAA(getAdminAreasForProject(1200)))
   .then(() => putObjectFromFile(bucket, 'project-1200/profile_000000', FILE_PROFILE))
   .then(() => putObjectFromFile(bucket, 'project-1200/villages_000000', FILE_VILLAGES))
   .then(() => putObjectFromFile(bucket, 'project-1200/admin-bounds_000000', FILE_ADMIN))
@@ -490,7 +490,6 @@ export function project1200 () {
       'status': 'active',
       'project_id': 1200,
       'master': true,
-      'admin_areas': JSON.stringify(ADMIN_AREAS),
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
     },
@@ -501,7 +500,6 @@ export function project1200 () {
       'status': 'active',
       'project_id': 1200,
       'master': false,
-      'admin_areas': JSON.stringify(ADMIN_AREAS),
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
     }
@@ -522,6 +520,13 @@ export function project1200 () {
       'updated_at': '2017-02-01T12:00:01.000Z'
     },
     {
+      'scenario_id': 1200,
+      'key': 'admin_areas',
+      'value': JSON.stringify(getSelectedAdminAreas(1200)),
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
       'scenario_id': 1201,
       'key': 'res_gen_at',
       'value': 0,
@@ -532,6 +537,13 @@ export function project1200 () {
       'scenario_id': 1201,
       'key': 'rn_updated_at',
       'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1201,
+      'key': 'admin_areas',
+      'value': JSON.stringify(getSelectedAdminAreas(1200)),
       'created_at': '2017-02-01T12:00:01.000Z',
       'updated_at': '2017-02-01T12:00:01.000Z'
     }
@@ -625,6 +637,7 @@ export function project2000 () {
       'updated_at': '2017-02-01T12:00:06.000Z'
     }
   ]))
+  .then(() => projectAA(getAdminAreasForProject(2000)))
   .then(() => putObjectFromFile(bucket, 'project-2000/profile_000000', FILE_PROFILE))
   .then(() => putObjectFromFile(bucket, 'project-2000/villages_000000', FILE_VILLAGES))
   .then(() => putObjectFromFile(bucket, 'project-2000/admin-bounds_000000', FILE_ADMIN))
@@ -635,7 +648,6 @@ export function project2000 () {
     'status': 'active',
     'project_id': 2000,
     'master': true,
-    'admin_areas': JSON.stringify(ADMIN_AREAS),
     'created_at': '2017-02-01T12:00:06.000Z',
     'updated_at': '2017-02-01T12:00:06.000Z'
   }))
@@ -651,6 +663,13 @@ export function project2000 () {
       'scenario_id': 2000,
       'key': 'rn_updated_at',
       'value': 0,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 2000,
+      'key': 'admin_areas',
+      'value': JSON.stringify(getSelectedAdminAreas(2000)),
       'created_at': '2017-02-01T12:00:01.000Z',
       'updated_at': '2017-02-01T12:00:01.000Z'
     }
@@ -720,6 +739,10 @@ function scenarioFile (data) {
 
 function scenarioSettings (data) {
   return db.batchInsert('scenarios_settings', _.isArray(data) ? data : [data]);
+}
+
+function projectAA (data) {
+  return db.batchInsert('projects_aa', _.isArray(data) ? data : [data]);
 }
 
 //
