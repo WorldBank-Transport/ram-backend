@@ -36,22 +36,24 @@ module.exports = [
       let executor = Promise.resolve(update);
 
       if (typeof data.selectedAdminAreas !== 'undefined') {
-        executor = db('scenarios')
-          .select('admin_areas')
-          .where('id', request.params.scId)
+        // Get all the admin areas ids to perform some validation.
+        executor = db('projects_aa')
+          .select('id')
           .where('project_id', request.params.projId)
-          .then(res => {
-            let adminAreas = res[0].admin_areas.map(o => {
-              o.selected = data.selectedAdminAreas.indexOf(o.name) !== -1;
-              return o;
-            });
-            update.admin_areas = JSON.stringify(adminAreas);
-            return update;
-          });
+          .then(aa => aa.filter(o => data.selectedAdminAreas
+            .indexOf(o.id) !== -1)
+            .map(o => o.id)
+          )
+          // Store the selected admin areas in the settings table as an array.
+          .then(adminAreas => db('scenarios_settings')
+            .update({ value: JSON.stringify(adminAreas) })
+            .where('key', 'admin_areas')
+            .where('scenario_id', request.params.scId)
+          );
       }
 
       executor
-        .then(update => db('scenarios')
+        .then(() => db('scenarios')
           .returning('id')
           .update(update)
           .where('id', request.params.scId)

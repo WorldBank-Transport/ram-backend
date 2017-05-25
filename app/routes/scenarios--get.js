@@ -86,6 +86,7 @@ export function loadScenario (projId, scId) {
       if (!scenario) throw new ScenarioNotFoundError();
       return scenario;
     })
+    .then(scenario => attachAdminAreas(scenario))
     .then(scenario => attachScenarioSettings(scenario))
     .then(scenario => attachScenarioFiles(scenario))
     .then(scenario => attachOperation('generate-analysis', 'gen_analysis', scenario))
@@ -105,6 +106,7 @@ function singleScenarioHandler (request, reply) {
 function attachScenarioSettings (scenario) {
   return db.select('key', 'value')
     .from('scenarios_settings')
+    .whereIn('key', ['res_gen_at', 'rn_updated_at'])
     .where('scenario_id', scenario.id)
     .then(data => {
       scenario.data = {};
@@ -123,6 +125,39 @@ function attachScenarioFiles (scenario) {
       scenario.files = files || [];
       return scenario;
     });
+}
+
+function attachAdminAreas (scenario) {
+  return Promise.all([
+    // Get admin areas.
+    db('projects_aa')
+      .select('id', 'name', 'type')
+      .where('project_id', scenario.project_id),
+    // Get selected ids.
+    db('scenarios_settings')
+      .select('value')
+      .where('key', 'admin_areas')
+      .where('scenario_id', scenario.id)
+      .first()
+  ])
+  .then(data => {
+    let [aa, selected] = data;
+
+    if (!aa.length) {
+      scenario.admin_areas = null;
+    } else {
+      selected = selected ? JSON.parse(selected.value) : [];
+
+      // Mark selected as selected.
+      aa = aa.map(o => {
+        o.selected = selected.indexOf(o.id) !== -1;
+        return o;
+      });
+      scenario.admin_areas = aa;
+    }
+
+    return scenario;
+  });
 }
 
 function attachOperation (opName, prop, scenario) {

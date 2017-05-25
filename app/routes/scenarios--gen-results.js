@@ -49,7 +49,6 @@ module.exports = [
           return project;
         })
         // Valid scenario ?
-        // Admin areas selected ?
         .then(() => db.select('*')
           .from('scenarios')
           .where('id', scId)
@@ -58,12 +57,17 @@ module.exports = [
             if (!scenarios.length) throw new ScenarioNotFoundError();
             return scenarios[0];
           })
-          .then(scenario => {
-            let hasSelected = scenario.admin_areas.some(o => o.selected);
-            if (!hasSelected) {
-              throw new DataConflictError('No admin areas selected');
-            }
-          })
+          // Admin areas selected ?
+          .then(scenario => db('scenarios_settings')
+            .select('value')
+            .where('key', 'admin_areas')
+            .where('scenario_id', scenario.id)
+            .first()
+            .then(setting => {
+              if (setting.value === '[]') {
+                throw new DataConflictError('No admin areas selected');
+              }
+            })
         )
         // Good to go.
         // Delete all existing results. (s3 and database)
@@ -79,7 +83,7 @@ module.exports = [
               .then(() => db('scenarios_files')
                 .whereIn('id', ids)
                 .del());
-          })
+          }))
         )
         // Create an operation.
         .then(() => {

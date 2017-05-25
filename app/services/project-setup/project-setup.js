@@ -1,6 +1,7 @@
 'use strict';
 import path from 'path';
 import bbox from '@turf/bbox';
+import _ from 'lodash';
 
 import config from '../../config';
 import db from '../../db/';
@@ -56,9 +57,21 @@ export function concludeProjectSetup (e) {
 
     let adminAreaTask = () => {
       return db.transaction(function (trx) {
-        let adminAreas = adminBoundsFc.features
+        if (!adminBoundsFc.features) {
+          throw new Error('Invalid administrative boundaries file');
+        }
+        let adminAreas = _(adminBoundsFc.features)
           .filter(o => !!o.properties.name && o.geometry.type !== 'Point')
-          .map(o => ({name: o.properties.name, selected: false}));
+          .sortBy(o => _.kebabCase(o.properties.name))
+          .map(o => {
+            return {
+              name: o.properties.name,
+              type: o.properties.type || 'Admin Area',
+              geometry: JSON.stringify(o.geometry.coordinates),
+              project_id: projId
+            };
+          })
+          .value();
 
         let adminAreasBbox = bbox(adminBoundsFc);
 
@@ -69,12 +82,19 @@ export function concludeProjectSetup (e) {
               updated_at: (new Date())
             })
             .where('id', projId),
-          trx('scenarios')
-            .update({
-              admin_areas: JSON.stringify(adminAreas),
+
+          trx.batchInsert('projects_aa', adminAreas)
+            .returning('id'),
+
+          trx('scenarios_settings')
+            .insert({
+              scenario_id: scId,
+              key: 'admin_areas',
+              value: '[]',
+              created_at: (new Date()),
               updated_at: (new Date())
             })
-            .where('id', scId)
+            .where('id', projId)
         ]);
       });
     };
