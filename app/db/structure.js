@@ -112,6 +112,7 @@ export function createScenariosFilesTable () {
     table.increments('id').primary();
     table.string('name');
     table.string('type');
+    table.string('subtype');
     table.string('path');
     table.integer('project_id').unsigned();
     table.foreign('project_id')

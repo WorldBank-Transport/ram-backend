@@ -118,7 +118,7 @@ function attachScenarioSettings (scenario) {
 }
 
 function attachScenarioFiles (scenario) {
-  return db.select('id', 'name', 'type', 'path', 'created_at')
+  return db.select('id', 'name', 'type', 'subtype', 'path', 'created_at')
     .from('scenarios_files')
     .where('scenario_id', scenario.id)
     .then(files => {
