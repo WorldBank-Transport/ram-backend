@@ -64,23 +64,7 @@ export function scenarioCreate (e) {
   op.loadById(opId)
     .then(op => op.log('admin-areas', {message: 'Cloning admin areas'}))
     .then(() => db.transaction(function (trx) {
-      // Get the admin areas from the master scenario.
-      let executor = trx('scenarios')
-        .select('*')
-        .where('project_id', projId)
-        .where('master', true)
-        .first()
-        .then(scenario => scenario.admin_areas.map(o => {
-          o.selected = false;
-          return o;
-        }))
-        .then(adminAreas => trx('scenarios')
-          .update({
-            admin_areas: JSON.stringify(adminAreas),
-            updated_at: (new Date())
-          })
-          .where('id', scId)
-        );
+      let executor = Promise.resolve();
 
       if (source === 'clone') {
         executor = executor

@@ -76,6 +76,13 @@ function handler (params, payload, reply) {
               value: 0,
               created_at: now,
               updated_at: now
+            },
+            {
+              scenario_id: scenario.id,
+              key: 'admin_areas',
+              value: '[]',
+              created_at: now,
+              updated_at: now
             }
           ])
           .then(() => scenario);
@@ -85,6 +92,7 @@ function handler (params, payload, reply) {
             res_gen_at: 0,
             rn_updated_at: 0
           };
+          scenario.admin_areas = '[]';
           return scenario;
         });
     })
