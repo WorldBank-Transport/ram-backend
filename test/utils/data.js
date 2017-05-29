@@ -14,7 +14,7 @@ function readJSONSync (file) {
 }
 
 const FILE_PROFILE = path.join(__dirname, 'data-sergipe/profile.lua');
-const FILE_VILLAGES = path.join(__dirname, 'data-sergipe/villages.geojson');
+const FILE_ORIGINS = path.join(__dirname, 'data-sergipe/villages.geojson');
 const FILE_ADMIN = path.join(__dirname, 'data-sergipe/admin-boundaries.geojson');
 const FILE_ROAD_NETWORK = path.join(__dirname, 'data-sergipe/road-network.osm');
 const FILE_POI = path.join(__dirname, 'data-sergipe/poi-townhalls.geojson');
@@ -183,26 +183,26 @@ export function project1001 () {
   .then(() => putObjectFromFile(bucket, 'scenario-1001/poi_000000', FILE_POI));
 }
 
-// Project 1003 in pending state with one scenario and a villages file
+// Project 1003 in pending state with one scenario and a origins file
 export function project1003 () {
   return project({
     'id': 1003,
     'name': 'Project 1003',
-    'description': 'Project 1003 in pending state with one scenario and a villages file',
+    'description': 'Project 1003 in pending state with one scenario and a origins file',
     'status': 'pending',
     'created_at': '2017-02-01T12:00:04.000Z',
     'updated_at': '2017-02-01T12:00:04.000Z'
   })
   .then(() => projectFile({
     'id': 1003,
-    'name': 'villages_000000',
-    'type': 'villages',
-    'path': 'project-1003/villages_000000',
+    'name': 'origins_000000',
+    'type': 'origins',
+    'path': 'project-1003/origins_000000',
     'project_id': 1003,
     'created_at': '2017-02-01T12:00:04.000Z',
     'updated_at': '2017-02-01T12:00:04.000Z'
   }))
-  .then(() => putObjectFromFile(bucket, 'project-1003/villages_000000', FILE_VILLAGES))
+  .then(() => putObjectFromFile(bucket, 'project-1003/origins_000000', FILE_ORIGINS))
   .then(() => scenario({
     'id': 1003,
     'name': 'Main scenario 1003',
@@ -264,9 +264,9 @@ export function project1004 () {
     },
     {
       'id': 1005,
-      'name': 'villages_000000',
-      'type': 'villages',
-      'path': 'project-1004/villages_000000',
+      'name': 'origins_000000',
+      'type': 'origins',
+      'path': 'project-1004/origins_000000',
       'project_id': 1004,
       'created_at': '2017-02-01T12:00:05.000Z',
       'updated_at': '2017-02-01T12:00:05.000Z'
@@ -282,7 +282,7 @@ export function project1004 () {
     }
   ]))
   .then(() => putObjectFromFile(bucket, 'project-1004/profile_000000', FILE_PROFILE))
-  .then(() => putObjectFromFile(bucket, 'project-1004/villages_000000', FILE_VILLAGES))
+  .then(() => putObjectFromFile(bucket, 'project-1004/origins_000000', FILE_ORIGINS))
   .then(() => putObjectFromFile(bucket, 'project-1004/admin-bounds_000000', FILE_ADMIN))
   .then(() => scenario({
     'id': 1004,
@@ -360,9 +360,9 @@ export function project1100 () {
     },
     {
       'id': 1101,
-      'name': 'villages_000000',
-      'type': 'villages',
-      'path': 'project-1100/villages_000000',
+      'name': 'origins_000000',
+      'type': 'origins',
+      'path': 'project-1100/origins_000000',
       'project_id': 1100,
       'created_at': '2017-02-01T12:00:06.000Z',
       'updated_at': '2017-02-01T12:00:06.000Z'
@@ -379,7 +379,7 @@ export function project1100 () {
   ]))
   .then(() => projectAA(getAdminAreasForProject(1100)))
   .then(() => putObjectFromFile(bucket, 'project-1100/profile_000000', FILE_PROFILE))
-  .then(() => putObjectFromFile(bucket, 'project-1100/villages_000000', FILE_VILLAGES))
+  .then(() => putObjectFromFile(bucket, 'project-1100/origins_000000', FILE_ORIGINS))
   .then(() => putObjectFromFile(bucket, 'project-1100/admin-bounds_000000', FILE_ADMIN))
   .then(() => scenario({
     'id': 1100,
@@ -464,9 +464,9 @@ export function project1200 () {
     },
     {
       'id': 1201,
-      'name': 'villages_000000',
-      'type': 'villages',
-      'path': 'project-1200/villages_000000',
+      'name': 'origins_000000',
+      'type': 'origins',
+      'path': 'project-1200/origins_000000',
       'project_id': 1200,
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
@@ -483,7 +483,7 @@ export function project1200 () {
   ]))
   .then(() => projectAA(getAdminAreasForProject(1200)))
   .then(() => putObjectFromFile(bucket, 'project-1200/profile_000000', FILE_PROFILE))
-  .then(() => putObjectFromFile(bucket, 'project-1200/villages_000000', FILE_VILLAGES))
+  .then(() => putObjectFromFile(bucket, 'project-1200/origins_000000', FILE_ORIGINS))
   .then(() => putObjectFromFile(bucket, 'project-1200/admin-bounds_000000', FILE_ADMIN))
   .then(() => scenario([
     {
@@ -625,9 +625,9 @@ export function project2000 () {
     },
     {
       'id': 2001,
-      'name': 'villages_000000',
-      'type': 'villages',
-      'path': 'project-2000/villages_000000',
+      'name': 'origins_000000',
+      'type': 'origins',
+      'path': 'project-2000/origins_000000',
       'project_id': 2000,
       'created_at': '2017-02-01T12:00:06.000Z',
       'updated_at': '2017-02-01T12:00:06.000Z'
@@ -644,7 +644,7 @@ export function project2000 () {
   ]))
   .then(() => projectAA(getAdminAreasForProject(2000)))
   .then(() => putObjectFromFile(bucket, 'project-2000/profile_000000', FILE_PROFILE))
-  .then(() => putObjectFromFile(bucket, 'project-2000/villages_000000', FILE_VILLAGES))
+  .then(() => putObjectFromFile(bucket, 'project-2000/origins_000000', FILE_ORIGINS))
   .then(() => putObjectFromFile(bucket, 'project-2000/admin-bounds_000000', FILE_ADMIN))
   .then(() => scenario({
     'id': 2000,
@@ -875,9 +875,9 @@ export function projectPendingWithAllFiles (id) {
     },
     {
       'id': id + 1,
-      'name': 'villages_000000',
-      'type': 'villages',
-      'path': `project-${id}/villages_000000`,
+      'name': 'origins_000000',
+      'type': 'origins',
+      'path': `project-${id}/origins_000000`,
       'project_id': id,
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
@@ -893,7 +893,7 @@ export function projectPendingWithAllFiles (id) {
     }
   ]))
   .then(() => putObjectFromFile(bucket, `project-${id}/profile_000000`, FILE_PROFILE))
-  .then(() => putObjectFromFile(bucket, `project-${id}/villages_000000`, FILE_VILLAGES))
+  .then(() => putObjectFromFile(bucket, `project-${id}/origins_000000`, FILE_ORIGINS))
   .then(() => putObjectFromFile(bucket, `project-${id}/admin-bounds_000000`, FILE_ADMIN))
   .then(() => scenario({
     'id': id,

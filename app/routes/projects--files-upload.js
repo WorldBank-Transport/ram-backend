@@ -39,7 +39,7 @@ module.exports = [
 
           type = result.fields.type[0];
 
-          let allowedTypes = ['profile', 'villages', 'admin-bounds'];
+          let allowedTypes = ['profile', 'origins', 'admin-bounds'];
           if (allowedTypes.indexOf(type) === -1) {
             throw new DataValidationError(`"type" must be one of [${allowedTypes.join(', ')}]`);
           }

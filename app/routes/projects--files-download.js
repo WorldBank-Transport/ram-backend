@@ -42,7 +42,7 @@ module.exports = [
                 case 'profile':
                   mime = 'text/x-lua';
                   break;
-                case 'villages':
+                case 'origins':
                 case 'admin-bounds':
                   mime = 'application/json';
                   break;
