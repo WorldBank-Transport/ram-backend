@@ -83,6 +83,22 @@ module.exports = [
             updated_at: (new Date())
           };
 
+          if (type === 'origins') {
+            // When uploading an origins file, the user has to specify
+            // what attributes have population data, and a label for them.
+            // This will later be used for running analysis on subgroups
+            // of population.
+            // TODO: Get the values from the form.
+            data.data = JSON.stringify({
+              indicators: [
+                {
+                  key: 'population',
+                  label: 'Total population'
+                }
+              ]
+            });
+          }
+
           return db('projects_files')
             .returning('*')
             .insert(data)
