@@ -47,6 +47,47 @@ export function getSelectedAdminAreas (projId) {
   return [13, 16, 21, 23].map(o => parseInt(`${projId}0${o}`));
 }
 
+// Parse origins.
+let originsFC = readJSONSync(FILE_ORIGINS);
+let neededProps = ['name', 'population'];
+let originFeatures = originsFC.features.filter(feat => {
+  let props = Object.keys(feat.properties);
+  return neededProps.every(o => props.indexOf(o) !== -1);
+});
+
+export function getOriginsForProject (projId) {
+  let originsIndicators = [];
+  let origins = originFeatures.map((feat, idx) => {
+    let id = parseInt(`${projId}0${idx + 1}`);
+
+    let indicators = [
+      {
+        key: 'population',
+        label: 'Total population'
+      }
+    ];
+    let featureIndicators = indicators.map((ind, idx2) => ({
+      id: parseInt(`${id}0${idx2 + 1}`),
+      origin_id: id,
+      key: ind.key,
+      label: ind.label,
+      value: parseInt(feat.properties[ind.key])
+    }));
+    originsIndicators = originsIndicators.concat(featureIndicators);
+
+    return {
+      id: id,
+      project_id: projId,
+      name: feat.properties.name,
+      coordinates: JSON.stringify(feat.geometry.coordinates)
+    };
+  });
+
+  return { originsIndicators, origins };
+}
+
+// ////////////////////////////////////////////////////////////////////////// //
+
 // Project in pending state with one scenario.
 export function project1000 () {
   return project({
@@ -199,6 +240,7 @@ export function project1003 () {
     'type': 'origins',
     'path': 'project-1003/origins_000000',
     'project_id': 1003,
+    'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
     'created_at': '2017-02-01T12:00:04.000Z',
     'updated_at': '2017-02-01T12:00:04.000Z'
   }))
@@ -268,6 +310,7 @@ export function project1004 () {
       'type': 'origins',
       'path': 'project-1004/origins_000000',
       'project_id': 1004,
+      'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
       'created_at': '2017-02-01T12:00:05.000Z',
       'updated_at': '2017-02-01T12:00:05.000Z'
     },
@@ -364,6 +407,7 @@ export function project1100 () {
       'type': 'origins',
       'path': 'project-1100/origins_000000',
       'project_id': 1100,
+      'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
       'created_at': '2017-02-01T12:00:06.000Z',
       'updated_at': '2017-02-01T12:00:06.000Z'
     },
@@ -378,6 +422,7 @@ export function project1100 () {
     }
   ]))
   .then(() => projectAA(getAdminAreasForProject(1100)))
+  .then(() => projectOrigins(getOriginsForProject(1100)))
   .then(() => putObjectFromFile(bucket, 'project-1100/profile_000000', FILE_PROFILE))
   .then(() => putObjectFromFile(bucket, 'project-1100/origins_000000', FILE_ORIGINS))
   .then(() => putObjectFromFile(bucket, 'project-1100/admin-bounds_000000', FILE_ADMIN))
@@ -468,6 +513,7 @@ export function project1200 () {
       'type': 'origins',
       'path': 'project-1200/origins_000000',
       'project_id': 1200,
+      'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
     },
@@ -482,6 +528,7 @@ export function project1200 () {
     }
   ]))
   .then(() => projectAA(getAdminAreasForProject(1200)))
+  .then(() => projectOrigins(getOriginsForProject(1200)))
   .then(() => putObjectFromFile(bucket, 'project-1200/profile_000000', FILE_PROFILE))
   .then(() => putObjectFromFile(bucket, 'project-1200/origins_000000', FILE_ORIGINS))
   .then(() => putObjectFromFile(bucket, 'project-1200/admin-bounds_000000', FILE_ADMIN))
@@ -629,6 +676,7 @@ export function project2000 () {
       'type': 'origins',
       'path': 'project-2000/origins_000000',
       'project_id': 2000,
+      'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
       'created_at': '2017-02-01T12:00:06.000Z',
       'updated_at': '2017-02-01T12:00:06.000Z'
     },
@@ -643,6 +691,7 @@ export function project2000 () {
     }
   ]))
   .then(() => projectAA(getAdminAreasForProject(2000)))
+  .then(() => projectOrigins(getOriginsForProject(2000)))
   .then(() => putObjectFromFile(bucket, 'project-2000/profile_000000', FILE_PROFILE))
   .then(() => putObjectFromFile(bucket, 'project-2000/origins_000000', FILE_ORIGINS))
   .then(() => putObjectFromFile(bucket, 'project-2000/admin-bounds_000000', FILE_ADMIN))
@@ -749,6 +798,11 @@ function scenarioSettings (data) {
 
 function projectAA (data) {
   return db.batchInsert('projects_aa', _.isArray(data) ? data : [data]);
+}
+
+function projectOrigins ({ originsIndicators, origins }) {
+  return db.batchInsert('projects_origins', origins)
+    .then(() => db.batchInsert('projects_origins_indicators', originsIndicators));
 }
 
 //
@@ -879,6 +933,7 @@ export function projectPendingWithAllFiles (id) {
       'type': 'origins',
       'path': `project-${id}/origins_000000`,
       'project_id': id,
+      'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
     },

@@ -44,6 +44,26 @@ export function dropOperationsLogs () {
   return db.schema.dropTableIfExists('operations_logs');
 }
 
+export function dropResults () {
+  DEBUG && console.log('Dropping table: results');
+  return db.schema.dropTableIfExists('results');
+}
+
+export function dropResultsPoi () {
+  DEBUG && console.log('Dropping table: results_poi');
+  return db.schema.dropTableIfExists('results_poi');
+}
+
+export function dropProjectsOrigins () {
+  DEBUG && console.log('Dropping table: projects_origins');
+  return db.schema.dropTableIfExists('projects_origins');
+}
+
+export function dropProjectsOriginsIndicators () {
+  DEBUG && console.log('Dropping table: projects_origins_indicators');
+  return db.schema.dropTableIfExists('projects_origins_indicators');
+}
+
 export function createProjectsTable () {
   DEBUG && console.log('Creating table: projects');
   return db.schema.createTable('projects', table => {
@@ -69,6 +89,7 @@ export function createProjectsFilesTable () {
     table.foreign('project_id')
       .references('projects.id')
       .onDelete('CASCADE');
+    table.json('data');
     table.timestamps();
   });
 }
@@ -172,14 +193,79 @@ export function createOperationsLogsTable () {
   });
 }
 
+export function createResultsTable () {
+  DEBUG && console.log('Creating table: results');
+  return db.schema.createTable('results', table => {
+    table.increments('id').primary();
+    table.integer('project_id').unsigned();
+    table.foreign('project_id')
+      .references('projects.id')
+      .onDelete('CASCADE');
+    table.integer('scenario_id').unsigned();
+    table.foreign('scenario_id')
+      .references('scenarios.id')
+      .onDelete('CASCADE');
+    table.integer('origin_id').unsigned();
+    table.foreign('origin_id')
+      .references('projects_origins.id')
+      .onDelete('CASCADE');
+    table.integer('project_aa_id').unsigned();
+    table.foreign('project_aa_id')
+      .references('projects_aa.id')
+      .onDelete('CASCADE');
+  });
+}
+
+export function createResultsPoiTable () {
+  DEBUG && console.log('Creating table: results_poi');
+  return db.schema.createTable('results_poi', table => {
+    table.increments('id').primary();
+    table.integer('result_id').unsigned();
+    table.foreign('result_id')
+      .references('results.id')
+      .onDelete('CASCADE');
+    table.string('type');
+    table.integer('time');
+  });
+}
+
+export function createProjectsOriginsTable () {
+  DEBUG && console.log('Creating table: projects_origins');
+  return db.schema.createTable('projects_origins', table => {
+    table.increments('id').primary();
+    table.integer('project_id').unsigned();
+    table.foreign('project_id')
+      .references('projects.id');
+    table.string('name');
+    table.json('coordinates');
+  });
+}
+
+export function createProjectsOriginsIndicatorsTable () {
+  DEBUG && console.log('Creating table: projects_origins_indicators');
+  return db.schema.createTable('projects_origins_indicators', table => {
+    table.increments('id').primary();
+    table.integer('origin_id').unsigned();
+    table.foreign('origin_id')
+      .references('projects_origins.id');
+    table.string('key');
+    table.string('label');
+    table.integer('value');
+  });
+}
+
 export function setupStructure () {
   return dropScenariosFiles()
   .then(() => dropProjectsFiles())
+  .then(() => dropResultsPoi())
+  .then(() => dropResults())
   .then(() => dropProjectsAA())
   .then(() => dropOperationsLogs())
   .then(() => dropOperations())
   .then(() => dropScenariosSettings())
   .then(() => dropScenarios())
+  .then(() => dropProjectsOriginsIndicators())
+  .then(() => dropProjectsOrigins())
   .then(() => dropProjects())
   .then(() => createProjectsTable())
   .then(() => createProjectsAATable())
@@ -188,5 +274,9 @@ export function setupStructure () {
   .then(() => createOperationsTable())
   .then(() => createOperationsLogsTable())
   .then(() => createProjectsFilesTable())
-  .then(() => createScenariosFilesTable());
+  .then(() => createScenariosFilesTable())
+  .then(() => createProjectsOriginsTable())
+  .then(() => createProjectsOriginsIndicatorsTable())
+  .then(() => createResultsTable())
+  .then(() => createResultsPoiTable());
 }
