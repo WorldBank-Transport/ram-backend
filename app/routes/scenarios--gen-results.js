@@ -61,7 +61,7 @@ module.exports = [
           .then(scenario => db('scenarios_settings')
             .select('value')
             .where('key', 'admin_areas')
-            .where('scenario_id', scenario.id)
+            .where('scenario_id', scId)
             .first()
             .then(setting => {
               if (setting.value === '[]') {
@@ -82,7 +82,13 @@ module.exports = [
             return Promise.all(tasks)
               .then(() => db('scenarios_files')
                 .whereIn('id', ids)
-                .del());
+                .del()
+              )
+              .then(() => db('results')
+                .where('project_id', projId)
+                .where('scenario_id', scId)
+                .del()
+              );
           }))
         )
         // Create an operation.
