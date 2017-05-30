@@ -1,6 +1,7 @@
 'use strict';
 import path from 'path';
 import bbox from '@turf/bbox';
+import centerOfMass from '@turf/center-of-mass';
 import _ from 'lodash';
 
 import config from '../../config';
@@ -103,6 +104,64 @@ export function concludeProjectSetup (e) {
       .then(() => adminAreaTask());
   }
 
+  function processOrigins (originsData) {
+    logger && logger.log('process origins');
+    let indicators = originsData.data.indicators;
+    let neededProps = indicators.map(o => o.key);
+    neededProps.push('name');
+
+    return getJSONFileContents(originsData.path)
+      .then(originsFC => {
+        logger && logger.log('origins before filter', originsFC.features.length);
+        let features = originsFC.features.filter(feat => {
+          let props = Object.keys(feat.properties);
+          return neededProps.every(o => props.indexOf(o) !== -1);
+        });
+
+        logger && logger.log('origins after filter', features.length);
+
+        let originsIndicators = [];
+        let origins = features.map(feat => {
+          let coordinates = feat.geometry.type === 'Point'
+            ? feat.geometry.coordinates
+            : centerOfMass(feat).geometry.coordinates;
+
+          // Will be flattened later.
+          // The array is constructed in this way so we can match the index of the
+          // results array and attribute the correct id.
+          let featureIndicators = indicators.map(ind => ({
+            key: ind.key,
+            label: ind.label,
+            value: parseInt(feat.properties[ind.key])
+          }));
+          originsIndicators.push(featureIndicators);
+
+          return {
+            project_id: projId,
+            name: feat.properties.name,
+            coordinates: JSON.stringify(coordinates)
+          };
+        });
+
+        return db.transaction(function (trx) {
+          return trx.batchInsert('projects_origins', origins)
+            .returning('id')
+            .then(ids => {
+              // Add ids to the originsIndicators and flatten the array in the process.
+              let flat = [];
+              originsIndicators.forEach((resInd, resIdx) => {
+                resInd.forEach(ind => {
+                  ind.origin_id = ids[resIdx];
+                  flat.push(ind);
+                });
+              });
+              return flat;
+            })
+            .then(data => trx.batchInsert('projects_origins_indicators', data));
+        });
+      });
+  }
+
   let op = new Operation(db);
   op.loadById(opId)
   .then(() => Promise.all([
@@ -115,13 +174,21 @@ export function concludeProjectSetup (e) {
     db('projects_files')
       .select('*')
       .where('project_id', projId)
-      .where('type', 'admin-bounds')
-      .first()
-      .then(file => getJSONFileContents(file.path))
+      .whereIn('type', ['admin-bounds', 'origins'])
+      .orderBy('type')
+      .then(files => {
+        // Get the data from the admin bounds file immediately but pass
+        // the full data for the origins file because other values from the db
+        // are needed.
+        let [adminBoundsData, originsData] = files;
+        return getJSONFileContents(adminBoundsData.path)
+          .then(adminBoundsContent => ([adminBoundsContent, originsData]));
+      })
   ]))
   .then(filesContent => {
-    // let [roadNetwork, adminBoundsFc] = filesContent;
-    let [adminBoundsFc] = filesContent;
+    // let [roadNetwork, [adminBoundsFc, originsData]] = filesContent;
+    let [[adminBoundsFc, originsData]] = filesContent;
+
     // Run the tasks in series rather than in parallel.
     // This is better for error handling. If they run in parallel and
     // `processAdminAreas` errors, the script hangs a bit while
@@ -129,7 +196,10 @@ export function concludeProjectSetup (e) {
     // the error is captured by the promise.
     // Since processing the admin areas is a pretty fast operation, the
     // performance is not really affected.
-    return processAdminAreas(adminBoundsFc);
+    return Promise.all([
+      processAdminAreas(adminBoundsFc),
+      processOrigins(originsData)
+    ]);
       // .then(() => {
       //   logger && logger.log('process road network');
       //   return importRoadNetwork(projId, scId, op, roadNetwork);
