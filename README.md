@@ -88,7 +88,7 @@ The following options must be set:
   - `analysisProcess.service` - The service to run the analysis on. Either `docker` (for local development and off-line) or `hyper`. [ANL_SERVICE]
   - `analysisProcess.hyperAccess` - Access key for Hyper. [HYPER_ACCESS]
   - `analysisProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
-  - `analysisProcess.hyperSize` - The size of the Hyper container. If not specified, it will use Hyper's default container. [HYPER_SIZE]
+  - `analysisProcess.hyperSize` - The size of the Hyper container. If not specified, it will use [Hyper's](https://hyper.sh) default container. [HYPER_SIZE]
   - `analysisProcess.container` - The name of the rra-analysis container (Default wbtransport/rra-analysis:latest-stable) [ANL_CONTAINER]
   - `analysisProcess.db` - The database connection string. When using Docker for the analysis process, the host will be the name of the database container (`rra-postgis`). When using Hyper, this will be the IP of your hosted database [ANL_DB]
   - `analysisProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`rra-minio`). When using Hyper, this will be the IP of the storage host. [ANL_STORAGE_HOST]
