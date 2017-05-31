@@ -19,6 +19,7 @@ module.exports = {
     service: null,
     hyperAccess: null,
     hyperSecret: null,
+    hyperSize: null,
     container: null,
     db: null,
     storageHost: null,
