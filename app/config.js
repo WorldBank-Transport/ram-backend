@@ -51,6 +51,7 @@ config.analysisProcess.storageHost = process.env.ANL_STORAGE_HOST || config.anal
 config.analysisProcess.storagePort = process.env.ANL_STORAGE_PORT || config.analysisProcess.storagePort;
 config.analysisProcess.hyperAccess = process.env.HYPER_ACCESS || config.analysisProcess.hyperAccess;
 config.analysisProcess.hyperSecret = process.env.HYPER_SECRET || config.analysisProcess.hyperSecret;
+config.analysisProcess.hyperSize = process.env.HYPER_SIZE || config.analysisProcess.hyperSize;
 
 config.baseDir = __dirname;
 
