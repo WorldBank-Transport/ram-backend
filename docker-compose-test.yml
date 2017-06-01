@@ -27,6 +27,8 @@ services:
       - 4000
     environment:
       DS_ENV: test
+      DB_CONNECTION: postgresql://rratest:rratest@rra-postgis:5432/rratest
+      STORAGE_HOST: rra-minio
     links:
       - rra-postgis
       - rra-minio

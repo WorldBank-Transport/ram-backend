@@ -28,16 +28,17 @@ if (process.env.DS_ENV === 'offline') {
 }
 
 // Overrides by ENV variables.
-// When Travis runs the tests, the ENV variables are ignored
+config.db = process.env.DB_CONNECTION || config.db;
+config.storage.host = process.env.STORAGE_HOST || config.storage.host;
+
+// When Travis runs the tests, most of the ENV variables are ignored
 if (!(process.env.DS_ENV === 'test' && process.env.TRAVIS)) {
   config.debug = process.env.DEBUG !== undefined ? (process.env.DEBUG.toLowerCase() === 'true') : config.debug;
-  config.db = process.env.DB_CONNECTION || config.db;
   config.connection.port = process.env.PORT || config.connection.port;
   config.connection.host = process.env.HOST || config.connection.host;
 
   config.osmP2PDir = process.env.OSM_P2P_DIR || config.osmP2PDir;
 
-  config.storage.host = process.env.STORAGE_HOST || config.storage.host;
   config.storage.port = parseInt(process.env.STORAGE_PORT) || config.storage.port;
   config.storage.engine = process.env.STORAGE_ENGINE || config.storage.engine;
   config.storage.accessKey = process.env.STORAGE_ACCESS_KEY || config.storage.accessKey;
