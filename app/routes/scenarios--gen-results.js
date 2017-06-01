@@ -181,6 +181,11 @@ function spawnAnalysisProcess (projId, scId, opId) {
         '-e', `HYPER_ACCESS=${config.analysisProcess.hyperAccess}`,
         '-e', `HYPER_SECRET=${config.analysisProcess.hyperSecret}`
       );
+      if (config.analysisProcess.hyperSize) {
+        args.push(
+          `--size=${config.analysisProcess.hyperSize}`
+        );
+      }
       break;
     default:
       throw new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`);

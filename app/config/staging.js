@@ -20,6 +20,7 @@ module.exports = {
     service: 'hyper',
     hyperAccess: null,
     hyperSecret: null,
+    hyperSize: null,
     container: 'wbtransport/rra-analysis:latest-dev',
     db: null,
     storageHost: '34.207.194.24',

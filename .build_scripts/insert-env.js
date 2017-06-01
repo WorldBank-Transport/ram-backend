@@ -28,7 +28,8 @@ var splitEnvs = [
   'HYPER_ACCESS',
   'HYPER_SECRET',
   'STORAGE_ACCESS_KEY',
-  'STORAGE_SECRET_KEY'
+  'STORAGE_SECRET_KEY',
+  'HYPER_SIZE'
 ];
 
 var envs = splitEnvs
