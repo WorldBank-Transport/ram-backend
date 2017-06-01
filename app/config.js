@@ -22,24 +22,22 @@ if (process.env.DS_ENV === 'test') {
   config = require('./config/test');
 }
 
-// In an offline test setup, the other config files are ignored
+// In an offline setup, the other config files are ignored
 if (process.env.DS_ENV === 'offline') {
   config = require('./config/offline');
 }
 
-// Overrides by ENV variables:
-config.db = process.env.DB_CONNECTION || config.db;
-config.storage.host = process.env.STORAGE_HOST || config.storage.host;
-
-// In a dockerized test environment (Travis), most of the environment variables
-// should be ignored.
-if (process.env.DS_ENV !== 'test') {
+// Overrides by ENV variables.
+// When Travis runs the tests, the ENV variables are ignored
+if (!(process.env.DS_ENV === 'test' && process.env.TRAVIS)) {
   config.debug = process.env.DEBUG !== undefined ? (process.env.DEBUG.toLowerCase() === 'true') : config.debug;
+  config.db = process.env.DB_CONNECTION || config.db;
   config.connection.port = process.env.PORT || config.connection.port;
   config.connection.host = process.env.HOST || config.connection.host;
 
   config.osmP2PDir = process.env.OSM_P2P_DIR || config.osmP2PDir;
 
+  config.storage.host = process.env.STORAGE_HOST || config.storage.host;
   config.storage.port = parseInt(process.env.STORAGE_PORT) || config.storage.port;
   config.storage.engine = process.env.STORAGE_ENGINE || config.storage.engine;
   config.storage.accessKey = process.env.STORAGE_ACCESS_KEY || config.storage.accessKey;
