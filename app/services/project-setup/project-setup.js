@@ -100,66 +100,96 @@ export function concludeProjectSetup (e) {
       });
     };
 
+    // Clean the tables so any remnants of previous attempts are removed.
+    // This avoids primary keys collisions.
+    let cleanAATable = () => {
+      return Promise.all([
+        db('projects_aa')
+          .where('project_id', projId)
+          .del(),
+        db('scenarios_settings')
+          .where('scenario_id', scId)
+          .where('key', 'admin_areas')
+          .del()
+      ]);
+    };
+
     return op.log('process:admin-bounds', {message: 'Processing admin areas'})
+      .then(() => cleanAATable())
       .then(() => adminAreaTask());
   }
 
   function processOrigins (originsData) {
     logger && logger.log('process origins');
-    let indicators = originsData.data.indicators;
-    let neededProps = indicators.map(o => o.key);
-    neededProps.push('name');
 
-    return getJSONFileContents(originsData.path)
-      .then(originsFC => {
-        logger && logger.log('origins before filter', originsFC.features.length);
-        let features = originsFC.features.filter(feat => {
-          let props = Object.keys(feat.properties);
-          return neededProps.every(o => props.indexOf(o) !== -1);
-        });
+    let originsTask = () => {
+      let indicators = originsData.data.indicators;
+      let neededProps = indicators.map(o => o.key);
+      neededProps.push('name');
 
-        logger && logger.log('origins after filter', features.length);
+      return getJSONFileContents(originsData.path)
+        .then(originsFC => {
+          logger && logger.log('origins before filter', originsFC.features.length);
+          let features = originsFC.features.filter(feat => {
+            let props = Object.keys(feat.properties);
+            return neededProps.every(o => props.indexOf(o) !== -1);
+          });
 
-        let originsIndicators = [];
-        let origins = features.map(feat => {
-          let coordinates = feat.geometry.type === 'Point'
-            ? feat.geometry.coordinates
-            : centerOfMass(feat).geometry.coordinates;
+          logger && logger.log('origins after filter', features.length);
 
-          // Will be flattened later.
-          // The array is constructed in this way so we can match the index of the
-          // results array and attribute the correct id.
-          let featureIndicators = indicators.map(ind => ({
-            key: ind.key,
-            label: ind.label,
-            value: parseInt(feat.properties[ind.key])
-          }));
-          originsIndicators.push(featureIndicators);
+          let originsIndicators = [];
+          let origins = features.map(feat => {
+            let coordinates = feat.geometry.type === 'Point'
+              ? feat.geometry.coordinates
+              : centerOfMass(feat).geometry.coordinates;
 
-          return {
-            project_id: projId,
-            name: feat.properties.name,
-            coordinates: JSON.stringify(coordinates)
-          };
-        });
+            // Will be flattened later.
+            // The array is constructed in this way so we can match the index of the
+            // results array and attribute the correct id.
+            let featureIndicators = indicators.map(ind => ({
+              key: ind.key,
+              label: ind.label,
+              value: parseInt(feat.properties[ind.key])
+            }));
+            originsIndicators.push(featureIndicators);
 
-        return db.transaction(function (trx) {
-          return trx.batchInsert('projects_origins', origins)
-            .returning('id')
-            .then(ids => {
-              // Add ids to the originsIndicators and flatten the array in the process.
-              let flat = [];
-              originsIndicators.forEach((resInd, resIdx) => {
-                resInd.forEach(ind => {
-                  ind.origin_id = ids[resIdx];
-                  flat.push(ind);
+            return {
+              project_id: projId,
+              name: feat.properties.name,
+              coordinates: JSON.stringify(coordinates)
+            };
+          });
+
+          return db.transaction(function (trx) {
+            return trx.batchInsert('projects_origins', origins)
+              .returning('id')
+              .then(ids => {
+                // Add ids to the originsIndicators and flatten the array in the process.
+                let flat = [];
+                originsIndicators.forEach((resInd, resIdx) => {
+                  resInd.forEach(ind => {
+                    ind.origin_id = ids[resIdx];
+                    flat.push(ind);
+                  });
                 });
-              });
-              return flat;
-            })
-            .then(data => trx.batchInsert('projects_origins_indicators', data));
+                return flat;
+              })
+              .then(data => trx.batchInsert('projects_origins_indicators', data));
+          });
         });
-      });
+    };
+
+    // Clean the tables so any remnants of previous attempts are removed.
+    // This avoids primary keys collisions.
+    let cleanOriginsTable = () => {
+      return db('projects_origins')
+        .where('project_id', projId)
+        .del();
+    };
+
+    return op.log('process:origins', {message: 'Processing origins'})
+      .then(() => cleanOriginsTable())
+      .then(() => originsTask());
   }
 
   let op = new Operation(db);

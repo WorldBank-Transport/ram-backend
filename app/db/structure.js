@@ -247,7 +247,8 @@ export function createProjectsOriginsIndicatorsTable () {
     table.increments('id').primary();
     table.integer('origin_id').unsigned();
     table.foreign('origin_id')
-      .references('projects_origins.id');
+      .references('projects_origins.id')
+      .onDelete('CASCADE');
     table.string('key');
     table.string('label');
     table.integer('value');
