@@ -5,7 +5,7 @@ node_js:
 env:
   global:
   - STABLE_BRANCH=master
-  - DEVELOP_BRANCH=v0.2.0
+  - DEVELOP_BRANCH=develop
   - DOCKER_SRC_IMAGE=rra-api
   - DOCKER_REPOSITORY=wbtransport/rra-api
   - DOCKER_USERNAME=olafveerman
