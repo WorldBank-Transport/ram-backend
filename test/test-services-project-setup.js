@@ -117,19 +117,21 @@ describe('Finish Project Setup', function () {
               .where('operation_id', op.getId())
               .then(logs => {
                 // assert.lengthOf(logs, 5);
-                assert.lengthOf(logs, 3);
+                assert.lengthOf(logs, 4);
                 assert.equal(logs[0].code, 'start');
                 assert.equal(logs[0].data.message, 'Operation started');
                 assert.equal(logs[1].code, 'process:admin-bounds');
                 assert.equal(logs[1].data.message, 'Processing admin areas');
+                assert.equal(logs[2].code, 'process:origins');
+                assert.equal(logs[2].data.message, 'Processing origins');
                 // assert.equal(logs[2].code, 'process:road-network');
                 // assert.equal(logs[2].data.message, 'Road network processing started');
                 // assert.equal(logs[3].code, 'process:road-network');
                 // assert.equal(logs[3].data.message, 'Road network processing finished');
                 // assert.equal(logs[4].code, 'success');
                 // assert.equal(logs[4].data.message, 'Operation complete');
-                assert.equal(logs[2].code, 'success');
-                assert.equal(logs[2].data.message, 'Operation complete');
+                assert.equal(logs[3].code, 'success');
+                assert.equal(logs[3].data.message, 'Operation complete');
               })
           ])
           .then(() => done())
@@ -173,7 +175,7 @@ describe('Finish Project Setup', function () {
                 .orderBy('id', 'desc')
                 .then(logs => {
                   assert.equal(err, 'Invalid administrative boundaries file');
-                  assert.lengthOf(logs, 3);
+                  assert.lengthOf(logs, 4);
                   assert.equal(logs[0].code, 'error');
                   assert.equal(logs[0].data.error, 'Invalid administrative boundaries file');
                 })
