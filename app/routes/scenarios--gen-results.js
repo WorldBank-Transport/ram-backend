@@ -194,35 +194,39 @@ function spawnAnalysisProcess (projId, scId, opId) {
   // Append the name of the image last
   args.push(config.analysisProcess.container);
 
-  // Spawn the processing script. It will take care of updating
-  // the database with progress.
-  let analysisProc = cp.spawn(service, args);
-  analysisProc.stdout.on('data', (data) => {
-    console.log(`[ANALYSIS P${projId} S${scId}]`, data.toString());
-  });
+  // Make sure the latest image (dev / stable) is used
+  let pullImage = cp.spawn(service, ['pull', config.analysisProcess.container]);
+  pullImage.on('close', () => {
+    // Spawn the processing script. It will take care of updating
+    // the database with progress.
+    let analysisProc = cp.spawn(service, args);
+    analysisProc.stdout.on('data', (data) => {
+      console.log(`[ANALYSIS P${projId} S${scId}]`, data.toString());
+    });
 
-  let error;
-  analysisProc.stderr.on('data', (data) => {
-    error = data.toString();
-    console.log(`[ANALYSIS P${projId} S${scId}][ERROR]`, data.toString());
-  });
+    let error;
+    analysisProc.stderr.on('data', (data) => {
+      error = data.toString();
+      console.log(`[ANALYSIS P${projId} S${scId}][ERROR]`, data.toString());
+    });
 
-  analysisProc.on('close', (code) => {
-    if (code !== 0) {
-      // The operation may not have finished if the error took place outside
-      // the promise, or if the error was due to a wrong db connection.
-      let op = new Operation(db);
-      op.loadById(opId)
-        .then(op => {
-          if (!op.isCompleted()) {
-            return op.log('error', {error: error})
-              .then(op => op.finish());
-          }
-        });
-    }
-    // Remove the container once the process is finished. Especially important
-    // for a hosted scenario, in which stopped containers may incur costs.
-    cp.spawn(service, ['rm', containerName]);
-    console.log(`[ANALYSIS P${projId} S${scId}][EXIT]`, code.toString());
+    analysisProc.on('close', (code) => {
+      if (code !== 0) {
+        // The operation may not have finished if the error took place outside
+        // the promise, or if the error was due to a wrong db connection.
+        let op = new Operation(db);
+        op.loadById(opId)
+          .then(op => {
+            if (!op.isCompleted()) {
+              return op.log('error', {error: error})
+                .then(op => op.finish());
+            }
+          });
+      }
+      // Remove the container once the process is finished. Especially important
+      // for a hosted scenario, in which stopped containers may incur costs.
+      cp.spawn(service, ['rm', containerName]);
+      console.log(`[ANALYSIS P${projId} S${scId}][EXIT]`, code.toString());
+    });
   });
 }
