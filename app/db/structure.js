@@ -151,7 +151,7 @@ export function createScenariosSettingsTable () {
   DEBUG && console.log('Creating table: scenarios_settings');
   return db.schema.createTable('scenarios_settings', table => {
     table.string('key');
-    table.string('value');
+    table.text('value');
     table.integer('scenario_id').unsigned();
     table.foreign('scenario_id')
       .references('scenarios.id')
