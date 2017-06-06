@@ -235,7 +235,8 @@ export function createProjectsOriginsTable () {
     table.increments('id').primary();
     table.integer('project_id').unsigned();
     table.foreign('project_id')
-      .references('projects.id');
+      .references('projects.id')
+      .onDelete('CASCADE');
     table.string('name');
     table.json('coordinates');
   });
