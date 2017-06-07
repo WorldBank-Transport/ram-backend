@@ -6,6 +6,7 @@ import { setupStructure as setupDdStructure } from '../app/db/structure';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp, getSelectedAdminAreas } from './utils/data';
 import db from '../app/db';
+import Operation from '../app/utils/operation';
 
 var options = {
   connection: {port: 2000, host: '0.0.0.0'}
@@ -143,6 +144,74 @@ describe('Result generation', function () {
         assert.equal(res.statusCode, 409, 'Status code is 409');
         assert.equal(res.result.message, 'Result generation already running');
       });
+    });
+
+    after(function () {
+      // Clean operations table for project/scenario 2000
+      return db('operations')
+        .where('project_id', 2000)
+        .where('scenario_id', 2000)
+        .del();
+    });
+  });
+
+  describe('DELETE /projects/{projId}/scenarios/{scId}/generate', function () {
+    it('should return conflict when getting non existent project', function () {
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/300/scenarios/300/generate'
+      }).then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        assert.equal(res.result.message, 'Result generation not running');
+      });
+    });
+
+    it('should return conflict when getting non existent scenario', function () {
+      return instance.injectThen({
+        method: 'DELETE',
+        url: '/projects/2000/scenarios/300/generate'
+      }).then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        assert.equal(res.result.message, 'Result generation not running');
+      });
+    });
+
+    it('should stop the operation and add an error log', function () {
+      // There needs to be an ongoing operation to start the script.
+      // Operation is fully tested on another file so it's safe to use.
+      let op = new Operation(db);
+      return op.start('generate-analysis', 2000, 2000)
+        .then(() => op.log('start', {message: 'Operation started'}))
+        .then(() => instance.injectThen({
+          method: 'DELETE',
+          url: '/projects/2000/scenarios/2000/generate'
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
+          assert.equal(res.result.message, 'Result generation aborted');
+        })
+        // Check the operations table.
+        .then(() => db('operations')
+          .select('*')
+          .where('scenario_id', 2000)
+          .where('project_id', 2000)
+          .where('name', 'generate-analysis')
+          .orderBy('id')
+          .first()
+          .then(op => {
+            assert.equal(op.status, 'complete');
+            return op.id;
+          })
+        )
+        // Check the operations_logs table.
+        .then(opId => db('operations_logs')
+          .select('*')
+          .where('operation_id', opId)
+          .then(opLogs => {
+            assert.deepEqual(opLogs[0].data, { message: 'Operation started' });
+            assert.deepEqual(opLogs[1].data, { error: 'Operation aborted' });
+          })
+        );
     });
   });
 });
