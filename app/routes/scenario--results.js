@@ -165,7 +165,10 @@ export default [
       `)
       .then(res => res.rows);
 
+      // Sum by pop_value.
       const sumPop = (arr) => arr.reduce((acc, o) => acc + (parseInt(o.pop_value) || 1), 0);
+      // Check if given time is less that given nimutes accounting for nulls.
+      const isLessThanMinutes = (time, min) => time === null ? false : time <= min * 60;
 
       // Compute the results.
       Promise.all([_accessibilityTime, _all])
@@ -178,7 +181,7 @@ export default [
 
               if (filtered.length) {
                 let totalPop = sumPop(filtered);
-                let pop = poi.analysisMins.map(time => sumPop(filtered.filter(o => o.time_to_poi <= time * 60)));
+                let pop = poi.analysisMins.map(time => sumPop(filtered.filter(o => isLessThanMinutes(o.time_to_poi, time))));
                 aa.data = pop.map(o => o / totalPop * 100);
               } else {
                 aa.data = [];
