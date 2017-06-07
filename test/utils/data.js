@@ -769,7 +769,21 @@ export function fixMeUp () {
     project1100(),
     project1200(),
     project2000()
-  ]);
+  ])
+  // Reset counters.
+  .then(() => db.raw(`
+    select setval('operations_id_seq', (SELECT MAX(id) FROM operations));
+    select setval('operations_logs_id_seq', (SELECT MAX(id) FROM operations_logs));
+    select setval('projects_aa_id_seq', (SELECT MAX(id) FROM projects_aa));
+    select setval('projects_files_id_seq', (SELECT MAX(id) FROM projects_files));
+    select setval('projects_id_seq', (SELECT MAX(id) FROM projects));
+    select setval('projects_origins_id_seq', (SELECT MAX(id) FROM projects_origins));
+    select setval('projects_origins_indicators_id_seq', (SELECT MAX(id) FROM projects_origins_indicators));
+    select setval('results_id_seq', (SELECT MAX(id) FROM results));
+    select setval('results_poi_id_seq', (SELECT MAX(id) FROM results_poi));
+    select setval('scenarios_files_id_seq', (SELECT MAX(id) FROM scenarios_files));
+    select setval('scenarios_id_seq', (SELECT MAX(id) FROM scenarios));
+  `));
 }
 
 //
