@@ -1101,6 +1101,13 @@ export function projectPendingWithFiles (id) {
     'updated_at': '2017-02-01T12:00:00.000Z'
   }))
   .then(() => putObjectFromFile(bucket, `project-${id}/profile_000000`, FILE_PROFILE))
+  .then(() => projectSourceData({
+    'id': id,
+    'name': 'profile',
+    'type': 'file',
+    'project_id': id
+    // 'data':
+  }))
   .then(() => scenario({
     'id': id,
     'name': `Scenario ${id}`,
@@ -1137,7 +1144,15 @@ export function projectPendingWithFiles (id) {
     'created_at': '2017-02-01T12:00:00.000Z',
     'updated_at': '2017-02-01T12:00:00.000Z'
   }))
-  .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE_POI));
+  .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE_POI))
+  .then(() => scenarioSourceData({
+    'id': id,
+    'name': 'poi',
+    'type': 'file',
+    'project_id': id,
+    'scenario_id': id
+    // 'data':
+  }));
 }
 
 // Insert a project, a scenario, and all files.
@@ -1184,6 +1199,29 @@ export function projectPendingWithAllFiles (id) {
   .then(() => putObjectFromFile(bucket, `project-${id}/profile_000000`, FILE_PROFILE))
   .then(() => putObjectFromFile(bucket, `project-${id}/origins_000000`, FILE_ORIGINS))
   .then(() => putObjectFromFile(bucket, `project-${id}/admin-bounds_000000`, FILE_ADMIN))
+  .then(() => projectSourceData([
+    {
+      'id': id,
+      'name': 'profile',
+      'type': 'file',
+      'project_id': id
+      // 'data':
+    },
+    {
+      'id': id + 1,
+      'name': 'origins',
+      'type': 'file',
+      'project_id': id
+      // 'data':
+    },
+    {
+      'id': id + 2,
+      'name': 'admin-bounds',
+      'type': 'file',
+      'project_id': id
+      // 'data':
+    }
+  ]))
   .then(() => scenario({
     'id': id,
     'name': `Scenario ${id}`,
@@ -1234,7 +1272,25 @@ export function projectPendingWithAllFiles (id) {
     }
   ]))
   .then(() => putObjectFromFile(bucket, `scenario-${id}/road-network_000000`, FILE_ROAD_NETWORK))
-  .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE_POI));
+  .then(() => putObjectFromFile(bucket, `scenario-${id}/poi_000000`, FILE_POI))
+  .then(() => scenarioSourceData([
+    {
+      'id': id,
+      'name': 'road-network',
+      'type': 'file',
+      'project_id': id,
+      'scenario_id': id
+      // 'data':
+    },
+    {
+      'id': id + 1,
+      'name': 'poi',
+      'type': 'file',
+      'project_id': id,
+      'scenario_id': id
+      // 'data':
+    }
+  ]));
 }
 
 export function projectPendingWithAllFilesAndOperation (id) {
