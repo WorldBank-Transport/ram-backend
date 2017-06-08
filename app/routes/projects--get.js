@@ -53,7 +53,7 @@ function attachProjectFiles (project) {
   return db.select('id', 'name', 'type', 'path', 'created_at')
     .from('projects_files')
     .where('project_id', project.id)
-    .whereIn('type', ['profile', 'villages', 'admin-bounds'])
+    .whereIn('type', ['profile', 'origins', 'admin-bounds'])
     .then(files => {
       project.files = files || [];
       return project;

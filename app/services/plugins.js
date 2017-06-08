@@ -43,7 +43,8 @@ module.exports = function (hapiServer, cb) {
         limit: 100,
         routes: [
           {route: '/projects', methods: 'GET'},
-          {route: '/projects/{projId}/scenarios', methods: 'GET'}
+          {route: '/projects/{projId}/scenarios', methods: 'GET'},
+          {route: '/projects/{projId}/scenarios/{scId}/results/raw', methods: 'GET'}
         ]
       }
     }

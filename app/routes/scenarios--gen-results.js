@@ -49,7 +49,6 @@ module.exports = [
           return project;
         })
         // Valid scenario ?
-        // Admin areas selected ?
         .then(() => db.select('*')
           .from('scenarios')
           .where('id', scId)
@@ -58,12 +57,17 @@ module.exports = [
             if (!scenarios.length) throw new ScenarioNotFoundError();
             return scenarios[0];
           })
-          .then(scenario => {
-            let hasSelected = scenario.admin_areas.some(o => o.selected);
-            if (!hasSelected) {
-              throw new DataConflictError('No admin areas selected');
-            }
-          })
+          // Admin areas selected ?
+          .then(scenario => db('scenarios_settings')
+            .select('value')
+            .where('key', 'admin_areas')
+            .where('scenario_id', scId)
+            .first()
+            .then(setting => {
+              if (setting.value === '[]') {
+                throw new DataConflictError('No admin areas selected');
+              }
+            })
         )
         // Good to go.
         // Delete all existing results. (s3 and database)
@@ -78,8 +82,14 @@ module.exports = [
             return Promise.all(tasks)
               .then(() => db('scenarios_files')
                 .whereIn('id', ids)
-                .del());
-          })
+                .del()
+              )
+              .then(() => db('results')
+                .where('project_id', projId)
+                .where('scenario_id', scId)
+                .del()
+              );
+          }))
         )
         // Create an operation.
         .then(() => {
@@ -92,6 +102,45 @@ module.exports = [
         .then(() => reply({statusCode: 200, message: 'Result generation started'}))
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
+        .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
+        .catch(err => {
+          console.log('err', err);
+          reply(Boom.badImplementation(err));
+        });
+    }
+  },
+  {
+    path: '/projects/{projId}/scenarios/{scId}/generate',
+    method: 'DELETE',
+    config: {
+      validate: {
+        params: {
+          projId: Joi.number(),
+          scId: Joi.number()
+        }
+      }
+    },
+    handler: (request, reply) => {
+      const { projId, scId } = request.params;
+
+      let op = new Operation(db);
+      op.loadByData('generate-analysis', projId, scId)
+        .then(op => {
+          if (!op.isStarted()) {
+            throw new DataConflictError('Result generation not running');
+          }
+        }, err => {
+          // In this case if the operation doesn't exist is not a problem.
+          if (err.message.match(/not exist/)) {
+            throw new DataConflictError('Result generation not running');
+          }
+          throw err;
+        })
+        // Send kill signal to generation process.
+        .then(() => killAnalysisProcess(projId, scId))
+        // Abort operation.
+        .then(() => op.log('error', {error: 'Operation aborted'}).then(op => op.finish()))
+        .then(() => reply({statusCode: 200, message: 'Result generation aborted'}))
         .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
         .catch(err => {
           console.log('err', err);
@@ -227,6 +276,46 @@ function spawnAnalysisProcess (projId, scId, opId) {
       // for a hosted scenario, in which stopped containers may incur costs.
       cp.spawn(service, ['rm', containerName]);
       console.log(`[ANALYSIS P${projId} S${scId}][EXIT]`, code.toString());
+    });
+  });
+}
+
+function killAnalysisProcess (projId, scId) {
+  if (process.env.DS_ENV === 'test') { return Promise.resolve(); }
+
+  return new Promise(resolve => {
+    let containerName = `analysisp${projId}s${scId}`;
+    let args = [];
+
+    let service = config.analysisProcess.service;
+    switch (service) {
+      case 'hyper':
+        args.push(
+          '-e', `HYPER_ACCESS=${config.analysisProcess.hyperAccess}`,
+          '-e', `HYPER_SECRET=${config.analysisProcess.hyperSecret}`,
+          '-t', '1'
+        );
+        break;
+      case 'docker':
+        args.push('-t', '1');
+        break;
+      default:
+        throw new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`);
+    }
+
+    cp.exec(`${service} stop ${args.join(' ')} ${containerName}`, (errStop) => {
+      if (errStop) {
+        console.log(`[ANALYSIS P${projId} S${scId}][ABORT] stop`, errStop);
+      }
+      cp.exec(`${service} rm ${containerName}`, (errRm) => {
+        // This is likely to throw an error because stopping the container
+        // will trigger the remove action on the close listener of the analysis
+        // process. In any case better safe than sorry.
+        if (errRm) {
+          console.log(`[ANALYSIS P${projId} S${scId}][ABORT] rm`, errRm);
+        }
+        resolve();
+      });
     });
   });
 }

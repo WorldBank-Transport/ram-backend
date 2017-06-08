@@ -12,6 +12,7 @@ import { parseFormData } from '../utils/utils';
 // import { closeDatabase } from '../services/rra-osm-p2p';
 
 function handler (params, payload, reply) {
+  const now = new Date();
   const name = payload.name;
   const description = payload.description;
   const source = payload.roadNetworkSource;
@@ -46,23 +47,53 @@ function handler (params, payload, reply) {
         status: 'pending',
         master: false,
         project_id: params.projId,
-        created_at: (new Date()),
-        updated_at: (new Date()),
-        data: {
-          res_gen_at: 0,
-          rn_updated_at: 0
-        }
+        created_at: now,
+        updated_at: now
       };
 
       return db('scenarios')
         .returning('*')
         .insert(info)
-        .then(res => res[0])
         .catch(err => {
           if (err.constraint === 'scenarios_project_id_name_unique') {
             throw new DataConflictError(`Scenario name already in use for this project: ${name}`);
           }
           throw err;
+        })
+        .then(scenarios => {
+          let scenario = scenarios[0];
+          return db.batchInsert('scenarios_settings', [
+            {
+              scenario_id: scenario.id,
+              key: 'res_gen_at',
+              value: 0,
+              created_at: now,
+              updated_at: now
+            },
+            {
+              scenario_id: scenario.id,
+              key: 'rn_updated_at',
+              value: 0,
+              created_at: now,
+              updated_at: now
+            },
+            {
+              scenario_id: scenario.id,
+              key: 'admin_areas',
+              value: '[]',
+              created_at: now,
+              updated_at: now
+            }
+          ])
+          .then(() => scenario);
+        })
+        .then(scenario => {
+          scenario.data = {
+            res_gen_at: 0,
+            rn_updated_at: 0
+          };
+          scenario.admin_areas = '[]';
+          return scenario;
         });
     })
     // Start operation and return data to continue.
@@ -94,7 +125,7 @@ function handler (params, payload, reply) {
     });
 }
 
-module.exports = [
+export default [
   {
     path: '/projects/{projId}/scenarios',
     method: 'POST',
@@ -166,6 +197,8 @@ module.exports = [
       }
     },
     handler: (request, reply) => {
+      // Recursively search for an available name by appending a (n) suffix
+      // to the input value.
       const findName = (name) => {
         let fn = (no) => {
           let n = `${name} (${no})`;

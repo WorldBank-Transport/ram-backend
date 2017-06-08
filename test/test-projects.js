@@ -334,6 +334,17 @@ describe('Projects', function () {
           .where('project_id', result.id)
           .where('master', true)
           .first()
+          .then(scenario => db.select('key', 'value')
+            .from('scenarios_settings')
+            .where('scenario_id', scenario.id)
+            .then(data => {
+              scenario.data = {};
+              data.forEach(o => {
+                scenario.data[o.key] = o.value;
+              });
+              return scenario;
+            })
+          )
           .then(scenario => {
             assert.equal(scenario.name, 'Main scenario');
             assert.equal(scenario.data.res_gen_at, 0);
