@@ -283,9 +283,11 @@ function killAnalysisProcess (projId, scId) {
       case 'hyper':
         args.push(
           '-e', `HYPER_ACCESS=${config.analysisProcess.hyperAccess}`,
-          '-e', `HYPER_SECRET=${config.analysisProcess.hyperSecret}`
+          '-e', `HYPER_SECRET=${config.analysisProcess.hyperSecret}`,
+          '-t', '1'
         );
-      case 'docker': // eslint-disable-line
+        break;
+      case 'docker':
         args.push('-t', '1');
         break;
       default:
