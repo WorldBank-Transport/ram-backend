@@ -5,6 +5,7 @@ import Promise from 'bluebird';
 
 import db from '../db/';
 import { ProjectNotFoundError } from '../utils/errors';
+import { getSourceData } from '../utils/utils';
 
 module.exports = [
   {
@@ -19,7 +20,7 @@ module.exports = [
         db.select('*').from('projects').orderBy('created_at').offset(offset).limit(limit)
       ]).then(res => {
         const [count, projects] = res;
-        return Promise.map(projects, p => attachProjectFiles(p).then(p => attachScenarioCount(p)))
+        return Promise.map(projects, p => attachProjectSourceData(p).then(p => attachScenarioCount(p)))
           .then(projects => {
             request.count = parseInt(count[0].count);
             reply(projects);
@@ -49,13 +50,10 @@ module.exports = [
   }
 ];
 
-function attachProjectFiles (project) {
-  return db.select('id', 'name', 'type', 'path', 'created_at')
-    .from('projects_files')
-    .where('project_id', project.id)
-    .whereIn('type', ['profile', 'origins', 'admin-bounds'])
-    .then(files => {
-      project.files = files || [];
+function attachProjectSourceData (project) {
+  return getSourceData(db, 'project', project.id)
+    .then(sourceData => {
+      project.sourceData = sourceData;
       return project;
     });
 }
@@ -74,31 +72,35 @@ function getProject (id) {
   return db.select('*')
     .from('projects')
     .where('id', id)
-    .orderBy('created_at')
-    .then(projects => {
-      if (!projects.length) throw new ProjectNotFoundError();
-      return projects[0];
+    .first()
+    .then(project => {
+      if (!project) throw new ProjectNotFoundError();
+      return project;
     })
-    .then(project => attachProjectFiles(project))
+    .then(project => attachProjectSourceData(project))
     .then(project => attachFinishSetupOperation(project))
     .then(project => {
-      // Check if a project is ready to move out of the setup phase.
-      // Get 1st scenario files.
-      return db('scenarios_files')
+      // GetId of first scenario.
+      return db('scenarios')
+        .select('id')
         .where('project_id', project.id)
-        .whereIn('type', ['road-network', 'poi'])
-        .where('scenario_id', function () {
-          this.select('id')
-            .from('scenarios')
-            .where('project_id', project.id)
-            .where('master', true);
-        }).then(scenarioFiles => {
-          // For a file to be ready it need 5 files:
-          // - 3 on the project
-          // - 2 on the ghost scenario.
-          // There's no need for file type validation because it's all
-          // done on file upload.
-          project.readyToEndSetup = scenarioFiles.length === 2 && project.files.length === 3;
+        .where('master', true)
+        .first()
+        .then(scenario => getSourceData(db, 'scenario', scenario.id))
+        .then(scenarioSourceData => {
+          let sources = Object.assign({}, project.sourceData, scenarioSourceData);
+
+          // Check if all sources are valid.
+          // If source is osm is OK.
+          // If is file, there has to be at least one.
+          project.readyToEndSetup = Object.keys(sources)
+            .every(k => {
+              let src = sources[k];
+              if (src.type === null) return false;
+              if (src.type === 'file') return src.files.length >= 1;
+              return true;
+            });
+
           return project;
         });
     })

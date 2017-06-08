@@ -5,6 +5,7 @@ import Promise from 'bluebird';
 
 import db from '../db/';
 import { ScenarioNotFoundError, ProjectNotFoundError } from '../utils/errors';
+import { getSourceData } from '../utils/utils';
 
 const routeSingleScenarioConfig = {
   validate: {
@@ -88,7 +89,7 @@ export function loadScenario (projId, scId) {
     })
     .then(scenario => attachAdminAreas(scenario))
     .then(scenario => attachScenarioSettings(scenario))
-    .then(scenario => attachScenarioFiles(scenario))
+    .then(scenario => attachScenarioSourceData(scenario))
     .then(scenario => attachOperation('generate-analysis', 'gen_analysis', scenario))
     .then(scenario => attachOperation('scenario-create', 'scen_create', scenario));
 }
@@ -117,12 +118,10 @@ function attachScenarioSettings (scenario) {
     });
 }
 
-function attachScenarioFiles (scenario) {
-  return db.select('id', 'name', 'type', 'subtype', 'path', 'created_at')
-    .from('scenarios_files')
-    .where('scenario_id', scenario.id)
-    .then(files => {
-      scenario.files = files || [];
+function attachScenarioSourceData (scenario) {
+  return getSourceData(db, 'scenario', scenario.id)
+    .then(sourceData => {
+      scenario.sourceData = sourceData;
       return scenario;
     });
 }
