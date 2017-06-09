@@ -114,3 +114,41 @@ export function getSourceData (db, contentType, id) {
         });
     });
 }
+
+export function getOperationData (db, opName, prop, id) {
+  return db.select('*')
+    .from('operations')
+    .where('operations.scenario_id', id)
+    .where('operations.name', opName)
+    .orderBy('created_at', 'desc')
+    .first()
+    .then(op => {
+      if (!op) {
+        return null;
+      }
+
+      return db.select('*')
+        .from('operations_logs')
+        .where('operation_id', op.id)
+        .orderBy('created_at')
+        .then(logs => {
+          let errored = false;
+          if (logs.length) {
+            errored = logs[logs.length - 1].code === 'error';
+          }
+          return {
+            id: op.id,
+            status: op.status,
+            created_at: op.created_at,
+            updated_at: op.updated_at,
+            errored,
+            logs: logs.map(l => ({
+              id: l.id,
+              code: l.code,
+              data: l.data,
+              created_at: l.created_at
+            }))
+          };
+        });
+    });
+}

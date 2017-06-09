@@ -5,7 +5,7 @@ import Promise from 'bluebird';
 
 import db from '../db/';
 import { ScenarioNotFoundError, ProjectNotFoundError } from '../utils/errors';
-import { getSourceData } from '../utils/utils';
+import { getSourceData, getOperationData } from '../utils/utils';
 
 const routeSingleScenarioConfig = {
   validate: {
@@ -160,42 +160,9 @@ function attachAdminAreas (scenario) {
 }
 
 function attachOperation (opName, prop, scenario) {
-  return db.select('*')
-    .from('operations')
-    .where('operations.scenario_id', scenario.id)
-    .where('operations.name', opName)
-    .orderBy('created_at', 'desc')
-    .limit(1)
-    .then(op => {
-      if (!op.length) {
-        scenario[prop] = null;
-        return scenario;
-      }
-      op = op[0];
-
-      return db.select('*')
-        .from('operations_logs')
-        .where('operation_id', op.id)
-        .orderBy('created_at')
-        .then(logs => {
-          let errored = false;
-          if (logs.length) {
-            errored = logs[logs.length - 1].code === 'error';
-          }
-          scenario[prop] = {
-            id: op.id,
-            status: op.status,
-            created_at: op.created_at,
-            updated_at: op.updated_at,
-            errored,
-            logs: logs.map(l => ({
-              id: l.id,
-              code: l.code,
-              data: l.data,
-              created_at: l.created_at
-            }))
-          };
-          return scenario;
-        });
+  return getOperationData(db, opName, prop, scenario.id)
+    .then(opData => {
+      scenario[prop] = opData;
+      return scenario;
     });
 }

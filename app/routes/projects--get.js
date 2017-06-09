@@ -5,7 +5,7 @@ import Promise from 'bluebird';
 
 import db from '../db/';
 import { ProjectNotFoundError } from '../utils/errors';
-import { getSourceData } from '../utils/utils';
+import { getSourceData, getOperationData } from '../utils/utils';
 
 module.exports = [
   {
@@ -108,48 +108,15 @@ function getProject (id) {
 }
 
 function attachFinishSetupOperation (project) {
-  return db.select('*')
-    .from('operations')
-    .where('operations.project_id', project.id)
-    .where('operations.scenario_id', function () {
-      this.select('id')
-        .from('scenarios')
-        .where('project_id', project.id)
-        .where('master', true);
-    })
-    .where('operations.name', 'project-setup-finish')
-    .orderBy('created_at', 'desc')
-    .limit(1)
+  return db('scenarios')
+    .select('id')
+    .where('project_id', project.id)
+    .where('master', true)
     .first()
-    .then(op => {
-      if (!op) {
-        project.finish_setup = null;
-        return project;
-      }
-
-      return db.select('*')
-        .from('operations_logs')
-        .where('operation_id', op.id)
-        .then(logs => {
-          let errored = false;
-          if (logs.length) {
-            errored = logs[logs.length - 1].code === 'error';
-          }
-          project.finish_setup = {
-            id: op.id,
-            status: op.status,
-            created_at: op.created_at,
-            updated_at: op.updated_at,
-            errored,
-            logs: logs.map(l => ({
-              id: l.id,
-              code: l.code,
-              data: l.data,
-              created_at: l.created_at
-            }))
-          };
-          return project;
-        });
+    .then(scenario => getOperationData(db, 'project-setup-finish', 'finish_setup', scenario.id))
+    .then(opData => {
+      project.finish_setup = opData;
+      return project;
     });
 }
 
