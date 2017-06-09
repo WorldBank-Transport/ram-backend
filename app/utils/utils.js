@@ -38,7 +38,7 @@ export function getSourceData (db, contentType, id) {
         .where('project_id', id);
 
       filesQ = db('projects_files')
-        .select('id', 'name', 'type', 'path', 'created_at')
+        .select('id', 'name', 'type', 'data', 'path', 'created_at')
         .where('project_id', id);
 
       structure = {

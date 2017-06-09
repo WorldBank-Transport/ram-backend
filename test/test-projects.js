@@ -142,6 +142,7 @@ describe('Projects', function () {
                 'name': 'profile_000000',
                 'type': 'profile',
                 'path': 'project-2000/profile_000000',
+                'data': null,
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
             ]
@@ -154,6 +155,7 @@ describe('Projects', function () {
                 'name': 'admin-bounds_000000',
                 'type': 'admin-bounds',
                 'path': 'project-2000/admin-bounds_000000',
+                'data': null,
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
             ]
@@ -166,6 +168,9 @@ describe('Projects', function () {
                 'name': 'origins_000000',
                 'type': 'origins',
                 'path': 'project-2000/origins_000000',
+                'data': {
+                  'indicators': [ { 'key': 'population', 'label': 'Total population' } ]
+                },
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
             ]
