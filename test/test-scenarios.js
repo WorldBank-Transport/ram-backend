@@ -542,7 +542,7 @@ describe('Scenarios', function () {
       db.insert({
         id: 10000001,
         name: 'results_000000',
-        type: 'results',
+        type: 'results-csv',
         path: 'scenario-1000/results_000000',
         project_id: 1000,
         scenario_id: 1000
@@ -559,20 +559,50 @@ describe('Scenarios', function () {
       .then(() => done());
     });
 
+    it('should return 400 when download is missing', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/results?type=csv'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "download" fails because ["download" is required]');
+      });
+    });
+
+    it('should return 400 when type is missing', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/results?download=true'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "type" fails because ["type" is required]');
+      });
+    });
+
     it('should return 400 when download flag not true', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1000/scenarios/1000/results?download=false'
+        url: '/projects/1000/scenarios/1000/results?download=false&type=geojson'
       }).then(res => {
-        assert.equal(res.statusCode, 501, 'Status code is 404');
-        assert.equal(res.result.message, 'Query parameter "download" missing');
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "download" fails because ["download" must be one of [true]]');
+      });
+    });
+
+    it('should return 400 when type is incorrect', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/results?download=true&type=csvjson '
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "type" fails because ["type" must be one of [csv, geojson]]');
       });
     });
 
     it('should return 404 when a file is not found', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/8888/scenarios/8888/results?download=true'
+        url: '/projects/8888/scenarios/8888/results?download=true&type=csv'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'Results not found');
@@ -582,7 +612,7 @@ describe('Scenarios', function () {
     it('should return 404 when a file is not found on s3', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1000/scenarios/1000/results?download=true'
+        url: '/projects/1000/scenarios/1000/results?download=true&type=csv'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'File not found in storage bucket');

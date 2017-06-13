@@ -20,22 +20,20 @@ export default [
           scId: Joi.number()
         },
         query: {
-          download: Joi.boolean().truthy('true').falsy('false')
+          download: Joi.boolean().truthy('true').falsy('false').valid('true').required(),
+          type: Joi.string().valid(['csv', 'geojson']).required()
         }
       }
     },
     handler: (request, reply) => {
-      if (!request.query.download) {
-        return reply(Boom.notImplemented('Query parameter "download" missing'));
-      }
-
       const { projId, scId } = request.params;
+      const { type } = request.query;
 
       db('scenarios_files')
         .select('*')
         .where('project_id', projId)
         .where('scenario_id', scId)
-        .where('type', 'results')
+        .where('type', `results-${type}`)
         .then(files => {
           if (!files.length) throw new FileNotFoundError('Results not found');
           return files;
@@ -52,7 +50,7 @@ export default [
         .then(files => {
           let zip = new Zip();
           files.forEach(f => {
-            zip.file(`${f.name}.csv`, f.content);
+            zip.file(`${f.name}.${type}`, f.content);
           });
 
           return zip.generate({ base64: false, compression: 'DEFLATE' });
@@ -61,7 +59,7 @@ export default [
         .then(data => reply(data)
           .type('application/zip')
           .encoding('binary')
-          .header('Content-Disposition', `attachment; filename=results-p${projId}s${scId}.zip`)
+          .header('Content-Disposition', `attachment; filename=results-${type}-p${projId}s${scId}.zip`)
         )
         .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(err => {
