@@ -83,9 +83,9 @@ export default [
               let fileName;
 
               if (subtype) {
-                fileName = `${sourceType}_${subtype}_${Date.now()}`;
+                fileName = `${sourceName}_${subtype}_${Date.now()}`;
               } else {
-                fileName = `${sourceType}_${Date.now()}`;
+                fileName = `${sourceName}_${Date.now()}`;
               }
 
               let filePath = `scenario-${scId}/${fileName}`;
