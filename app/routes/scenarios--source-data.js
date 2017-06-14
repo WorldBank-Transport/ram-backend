@@ -74,7 +74,7 @@ export default [
               }
 
               // With poi source the subtype is required.
-              let subtype = result.fields['subtype'][0];
+              let subtype = result.fields['subtype'] ? result.fields['subtype'][0] : null;
               if (sourceName === 'poi' && !subtype) {
                 throw new DataValidationError('"subtype" is required for source "poi"');
               }
