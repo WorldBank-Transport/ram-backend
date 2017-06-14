@@ -28,6 +28,7 @@ module.exports = [
     handler: (request, reply) => {
       return reply(Boom.notImplemented('This method is deprecated'));
 
+      /* eslint-disable */
       const projId = parseInt(request.params.projId);
       let file;
       let type;
