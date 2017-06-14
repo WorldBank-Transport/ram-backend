@@ -752,7 +752,47 @@ export function project2000 () {
     }
   ]))
   .then(() => putObjectFromFile(bucket, 'scenario-2000/road-network_000000', FILE_ROAD_NETWORK))
-  .then(() => putObjectFromFile(bucket, 'scenario-2000/poi_000000', FILE_POI));
+  .then(() => putObjectFromFile(bucket, 'scenario-2000/poi_000000', FILE_POI))
+  .then(() => scenarioResults(
+    [
+      {
+        'id': 1,
+        'project_id': 2000,
+        'scenario_id': 2000,
+        'origin_id': 200001,
+        'project_aa_id': 200001
+      },
+      {
+        'id': 2,
+        'project_id': 2000,
+        'scenario_id': 2000,
+        'origin_id': 200002,
+        'project_aa_id': 200001
+      }
+    ]
+  ))
+  .then(() => scenarioResultsPOI(
+    [
+      {
+        id: 1,
+        result_id: 1,
+        type: 'school',
+        time: 5000
+      },
+      {
+        id: 2,
+        result_id: 2,
+        type: 'school',
+        time: 54700
+      },
+      {
+        id: 3,
+        result_id: 1,
+        type: 'church',
+        time: 3500
+      }
+    ]
+  ));
 }
 
 //
@@ -817,6 +857,14 @@ function projectAA (data) {
 function projectOrigins ({ originsIndicators, origins }) {
   return db.batchInsert('projects_origins', origins)
     .then(() => db.batchInsert('projects_origins_indicators', originsIndicators));
+}
+
+function scenarioResults (data) {
+  return db.batchInsert('results', _.isArray(data) ? data : [data]);
+}
+
+function scenarioResultsPOI (data) {
+  return db.batchInsert('results_poi', _.isArray(data) ? data : [data]);
 }
 
 //

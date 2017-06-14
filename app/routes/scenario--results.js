@@ -274,5 +274,90 @@ export default [
           reply(Boom.badImplementation(err));
         });
     }
+  },
+  {
+    path: '/projects/{projId}/scenarios/{scId}/results/geojson',
+    method: 'GET',
+    config: {
+      validate: {
+        params: {
+          projId: Joi.number(),
+          scId: Joi.number()
+        }
+      }
+    },
+    handler: (request, reply) => {
+      const { projId, scId } = request.params;
+
+      let _results = db('results')
+        .select(
+          'projects_origins.id as origin_id',
+          'projects_origins.name as origin_name',
+          'projects_origins.coordinates as origin_coords',
+          'projects_origins_indicators.value as pop_value',
+          'projects_origins_indicators.key as pop_key',
+          'results_poi.type as poi_type',
+          'results_poi.time as time_to_poi'
+        )
+        .innerJoin('results_poi', 'results.id', 'results_poi.result_id')
+        .innerJoin('projects_origins', 'projects_origins.id', 'results.origin_id')
+        .innerJoin('projects_origins_indicators', 'projects_origins_indicators.origin_id', 'projects_origins.id')
+        .where('results.project_id', projId)
+        .where('results.scenario_id', scId);
+      Promise.all(_results)
+        .then(res => mergeOriginETA(res))
+        .then(res => {
+          reply({
+            'type': 'FeatureCollection',
+            'features': res
+          });
+        }).catch(err => {
+          console.log('err', err);
+          reply(Boom.badImplementation(err));
+        });
+    }
   }
 ];
+
+/**
+ * Turn an array of results into a proper GeoJSON features. Each feature refers
+ * to a unique origin, and can have multiple ETA for each POI types.
+ */
+function mergeOriginETA (results) {
+  return new Promise((resolve, reject) => {
+    return resolve(results.reduce((a, b) => {
+      // Check if the accumulator already has an object for the origin
+      let match = a.findIndex(o => o.properties.id === b.origin_id);
+      if (match === -1) {
+        // Create the feature
+        a.push({
+          'type': 'Feature',
+          'properties': {
+            'id': b.origin_id,
+            'n': b.origin_name,
+            'pk': b.pop_key,
+            'pv': b.pop_value,
+            'e': [
+              {
+                't': b.poi_type,
+                'v': b.time_to_poi
+              }
+            ]
+          },
+          'geometry': {
+            'type': 'Point',
+            'coordinates': b.origin_coords
+          }
+        });
+      } else {
+        // Update an existing feature with an ETA
+        a[match].properties.e.push({
+          't': b.poi_type,
+          'v': b.time_to_poi
+        });
+        return a;
+      }
+      return a;
+    }, []));
+  });
+}
