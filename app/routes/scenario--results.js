@@ -240,7 +240,6 @@ export default [
         .where('results.project_id', projId)
         .where('results.scenario_id', scId)
         .where('projects_origins_indicators.key', 'population')
-        .where('results_poi.type', 'pointOfInterest')
         .first();
 
       let _results = db('results')
@@ -261,7 +260,6 @@ export default [
         .where('results.project_id', projId)
         .where('results.scenario_id', scId)
         .where('projects_origins_indicators.key', 'population')
-        .where('results_poi.type', 'pointOfInterest')
         .orderBy(sortBy, sortDir)
         .offset(offset).limit(limit);
 
