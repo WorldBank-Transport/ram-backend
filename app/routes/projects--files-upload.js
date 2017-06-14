@@ -18,13 +18,16 @@ module.exports = [
         }
       },
       payload: {
-        maxBytes: 1 * Math.pow(1024, 3), // 1GB
+        // maxBytes: 1 * Math.pow(1024, 3), // 1GB
+        maxBytes: 1,
         output: 'stream',
         parse: false,
         allow: 'multipart/form-data'
       }
     },
     handler: (request, reply) => {
+      return reply(Boom.notImplemented('This method is deprecated'));
+
       const projId = parseInt(request.params.projId);
       let file;
       let type;
