@@ -1,8 +1,11 @@
 'use strict';
 import fs from 'fs';
+import Promise from 'bluebird';
 
 import s3, { bucket } from './';
 import { removeObject, putObjectFromFile, listObjects } from './structure';
+
+const readFile = Promise.promisify(fs.readFile);
 
 export function getPresignedUrl (file) {
   return new Promise((resolve, reject) => {
@@ -99,6 +102,15 @@ export function removeLocalFile (path, quiet = false) {
       return resolve();
     });
   });
+}
+
+export function getLocalFileContents (path) {
+  return readFile(path, 'utf8');
+}
+
+export function getLocalJSONFileContents (path) {
+  return getLocalFileContents(path)
+    .then(result => JSON.parse(result));
 }
 
 // List files
