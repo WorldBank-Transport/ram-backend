@@ -255,7 +255,7 @@ export function project1003 () {
     'type': 'origins',
     'path': 'project-1003/origins_000000',
     'project_id': 1003,
-    'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
+    'data': {indicators: [ { key: 'population', label: 'Total population' } ], availableInd: ['population']},
     'created_at': '2017-02-01T12:00:04.000Z',
     'updated_at': '2017-02-01T12:00:04.000Z'
   }))
@@ -340,7 +340,7 @@ export function project1004 () {
       'type': 'origins',
       'path': 'project-1004/origins_000000',
       'project_id': 1004,
-      'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
+      'data': {indicators: [ { key: 'population', label: 'Total population' } ], availableInd: ['population']},
       'created_at': '2017-02-01T12:00:05.000Z',
       'updated_at': '2017-02-01T12:00:05.000Z'
     },
@@ -478,7 +478,7 @@ export function project1100 () {
       'type': 'origins',
       'path': 'project-1100/origins_000000',
       'project_id': 1100,
-      'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
+      'data': {indicators: [ { key: 'population', label: 'Total population' } ], availableInd: ['population']},
       'created_at': '2017-02-01T12:00:06.000Z',
       'updated_at': '2017-02-01T12:00:06.000Z'
     },
@@ -625,7 +625,7 @@ export function project1200 () {
       'type': 'origins',
       'path': 'project-1200/origins_000000',
       'project_id': 1200,
-      'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
+      'data': {indicators: [ { key: 'population', label: 'Total population' } ], availableInd: ['population']},
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
     },
@@ -845,7 +845,7 @@ export function project2000 () {
       'type': 'origins',
       'path': 'project-2000/origins_000000',
       'project_id': 2000,
-      'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
+      'data': {indicators: [ { key: 'population', label: 'Total population' } ], availableInd: ['population']},
       'created_at': '2017-02-01T12:00:06.000Z',
       'updated_at': '2017-02-01T12:00:06.000Z'
     },
@@ -1182,7 +1182,7 @@ export function projectPendingWithAllFiles (id) {
       'type': 'origins',
       'path': `project-${id}/origins_000000`,
       'project_id': id,
-      'data': {indicators: [ { key: 'population', label: 'Total population' } ]},
+      'data': {indicators: [ { key: 'population', label: 'Total population' } ], availableInd: ['population']},
       'created_at': '2017-02-01T12:00:07.000Z',
       'updated_at': '2017-02-01T12:00:07.000Z'
     },
