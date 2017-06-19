@@ -28,7 +28,7 @@ describe('Scenario results', function () {
   });
 
   describe('GET /projects/{projId}/scenarios/{scId}/results/geojson', function () {
-    it('should return the correct scenario - active', function () {
+    it.only('should return the correct scenario - active', function () {
       return instance.injectThen({
         method: 'GET',
         url: '/projects/2000/scenarios/2000/results/geojson'
@@ -40,22 +40,11 @@ describe('Scenario results', function () {
         assert.equal(ft.length, 2);
         assert.equal(ft[0].type, 'Feature');
         assert.equal(ft[0].properties.id, 200001);
-        assert.deepEqual(ft[0].properties.e, [
-          {
-            't': 'school',
-            'v': 5000
-          },
-          {
-            't': 'church',
-            'v': 3500
-          }
-        ]);
-        assert.deepEqual(ft[1].properties.e, [
-          {
-            't': 'school',
-            'v': 54700
-          }
-        ]);
+        assert.equal(ft[0].properties.eta0, 5000);
+        assert.equal(ft[0].properties.eta1, 3500);
+        assert.deepEqual(ft[0].properties.poi, ['school', 'church']);
+        assert.equal(ft[1].properties.eta0, 54700);
+        assert.deepEqual(ft[1].properties.poi, ['school']);
       });
     });
   });

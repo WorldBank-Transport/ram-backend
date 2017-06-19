@@ -322,6 +322,8 @@ export default [
 /**
  * Turn an array of results into a proper GeoJSON features. Each feature refers
  * to a unique origin, and can have multiple ETA for each POI types.
+ * This will mostly be used to visualize results on a map. ETA and population
+ * data are stored flatly in the properties object.
  */
 function mergeOriginETA (results) {
   return new Promise((resolve, reject) => {
@@ -335,27 +337,24 @@ function mergeOriginETA (results) {
           'properties': {
             'id': b.origin_id,
             'n': b.origin_name,
-            'pk': b.pop_key,
-            'pv': b.pop_value,
-            'e': [
-              {
-                't': b.poi_type,
-                'v': b.time_to_poi
-              }
-            ]
+            'pop0': b.pop_value,
+            'pop': [ b.pop_key ],
+            'eta0': b.time_to_poi,
+            'poi': [ b.poi_type ]
           },
           'geometry': {
             'type': 'Point',
             'coordinates': b.origin_coords
           }
         });
-      } else {
-        // Update an existing feature with an ETA
-        a[match].properties.e.push({
-          't': b.poi_type,
-          'v': b.time_to_poi
-        });
-        return a;
+      } else if (a[match].properties.poi.indexOf(b.poi_type) === -1) {
+        // Update an existing feature with an ETA for a different POI
+        a[match].properties[`eta${a[match].properties.poi.length}`] = b.time_to_poi;
+        a[match].properties.poi.push(b.poi_type);
+      } else if (a[match].properties.pop.indexOf(b.pop_type) === -1) {
+        // Update an existing feature with a population for a different sub-set
+        a[match].properties[`pop${a[match].properties.pop.length}`] = b.pop_value;
+        a[match].properties.pop.push(b.pop_key);
       }
       return a;
     }, []));
