@@ -323,13 +323,42 @@ export default [
  * Turn an array of results into a proper GeoJSON features. Each feature refers
  * to a unique origin, and can have multiple ETA for each POI types.
  * This will mostly be used to visualize results on a map. ETA and population
- * data are stored flatly in the properties object.
+ * data are stored flatly in the properties object so mapbox-gl can use them.
  */
 function mergeOriginETA (results) {
   return new Promise((resolve, reject) => {
+    // build array of unique POI types in the results
+    let poiTypes = results.reduce((a, b) => {
+      if (a.indexOf(b.poi_type) === -1) {
+        a.push(b.poi_type);
+      }
+      return a;
+    }, []);
+
+    // build array of unique population types in the results
+    let popTypes = results.reduce((a, b) => {
+      if (a.indexOf(b.pop_key) === -1) {
+        a.push(b.pop_key);
+      }
+      return a;
+    }, []);
+
+    // return max population count for each population type
+    // values are stored in the same order as the types in popTypes
+    let maxPop = popTypes.map(p => Math.max(...results
+      .filter(r => r.pop_key === p)
+      .map(r => {
+        if (r.pop_key) return r.pop_value;
+      })
+    ));
+
+    // Build a GeoJSON feature array, with each origin in its own feature
     return resolve(results.reduce((a, b) => {
       // Check if the accumulator already has an object for the origin
       let match = a.findIndex(o => o.properties.id === b.origin_id);
+      let poiIndex = poiTypes.indexOf(b.poi_type);
+      let popIndex = popTypes.indexOf(b.pop_key);
+
       if (match === -1) {
         // Create the feature
         a.push({
@@ -337,25 +366,27 @@ function mergeOriginETA (results) {
           'properties': {
             'id': b.origin_id,
             'n': b.origin_name,
-            'pop0': b.pop_value,
-            'pop': [ b.pop_key ],
-            'eta0': b.time_to_poi,
-            'poi': [ b.poi_type ]
+            'pop': popTypes,
+            'poi': poiTypes,
+            [`e${poiIndex}`]: b.time_to_poi,
+            [`p${popIndex}`]: b.pop_value,
+            [`pn${popIndex}`]: parseInt(b.pop_value / maxPop[popIndex] * 100) / 100
           },
           'geometry': {
             'type': 'Point',
             'coordinates': b.origin_coords
           }
         });
-      } else if (a[match].properties.poi.indexOf(b.poi_type) === -1) {
+      } else if (!a[match].properties[`e${poiIndex}`]) {
         // Update an existing feature with an ETA for a different POI
-        a[match].properties[`eta${a[match].properties.poi.length}`] = b.time_to_poi;
-        a[match].properties.poi.push(b.poi_type);
-      } else if (a[match].properties.pop.indexOf(b.pop_type) === -1) {
-        // Update an existing feature with a population for a different sub-set
-        a[match].properties[`pop${a[match].properties.pop.length}`] = b.pop_value;
-        a[match].properties.pop.push(b.pop_key);
+        a[match].properties[`e${poiIndex}`] = b.time_to_poi;
+      } else if (!a[match].properties[`e${popIndex}`]) {
+        // Update an existing feature with a population count for a different
+        // sub-set
+        a[match].properties[`p${popIndex}`] = b.pop_value;
+        a[match].properties[`pn${popIndex}`] = b.pop_value / maxPop[popIndex];
       }
+
       return a;
     }, []));
   });
