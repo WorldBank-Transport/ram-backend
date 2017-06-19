@@ -169,6 +169,7 @@ describe('Projects', function () {
                 'type': 'origins',
                 'path': 'project-2000/origins_000000',
                 'data': {
+                  'availableInd': ['population'],
                   'indicators': [ { 'key': 'population', 'label': 'Total population' } ]
                 },
                 'created_at': new Date('2017-02-01T12:00:06.000Z')

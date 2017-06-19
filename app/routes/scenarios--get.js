@@ -151,7 +151,7 @@ function attachAdminAreas (scenario) {
       aa = aa.map(o => {
         o.selected = selected.indexOf(o.id) !== -1;
         return o;
-      });
+      }).sort((a, b) => a.id - b.id);
       scenario.admin_areas = aa;
     }
 

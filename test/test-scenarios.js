@@ -463,7 +463,7 @@ describe('Scenarios', function () {
       });
     });
 
-    it('should update the deselect all admin areas', function () {
+    it('should deselect all admin areas', function () {
       return instance.injectThen({
         method: 'PATCH',
         url: '/projects/2000/scenarios/2000',
