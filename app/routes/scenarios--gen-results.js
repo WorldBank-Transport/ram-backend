@@ -75,7 +75,7 @@ module.exports = [
           .select('*')
           .where('scenario_id', scId)
           .where('project_id', projId)
-          .whereIn('type', ['results', 'results-all'])
+          .whereIn('type', ['results-csv', 'results-json', 'results-geojson'])
           .then(files => {
             let tasks = files.map(f => removeFile(f.path));
             let ids = files.map(f => f.id);
@@ -244,7 +244,11 @@ function spawnAnalysisProcess (projId, scId, opId) {
   args.push(config.analysisProcess.container);
 
   // Make sure the latest image (dev / stable) is used
-  let pullImage = cp.spawn(service, ['pull', config.analysisProcess.container]);
+  let pullImage = cp.spawn(service, [
+    'pull', config.analysisProcess.container,
+    '-e', `HYPER_ACCESS=${config.analysisProcess.hyperAccess}`,
+    '-e', `HYPER_SECRET=${config.analysisProcess.hyperSecret}`
+  ]);
   pullImage.on('close', () => {
     // Spawn the processing script. It will take care of updating
     // the database with progress.
