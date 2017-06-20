@@ -75,7 +75,7 @@ module.exports = [
           .select('*')
           .where('scenario_id', scId)
           .where('project_id', projId)
-          .whereIn('type', ['results', 'results-all'])
+          .whereIn('type', ['results-csv', 'results-json', 'results-geojson'])
           .then(files => {
             let tasks = files.map(f => removeFile(f.path));
             let ids = files.map(f => f.id);
