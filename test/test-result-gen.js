@@ -89,7 +89,7 @@ describe('Result generation', function () {
       return db.batchInsert('scenarios_files', [
         {
           'name': 'results',
-          'type': 'results',
+          'type': 'results-json',
           'path': 'scenario-2000/results_000000',
           'project_id': 2000,
           'scenario_id': 2000,
@@ -98,7 +98,7 @@ describe('Result generation', function () {
         },
         {
           'name': 'results-all',
-          'type': 'results-all',
+          'type': 'results-csv',
           'path': 'scenario-2000/results-all_000000',
           'project_id': 2000,
           'scenario_id': 2000,
@@ -118,7 +118,7 @@ describe('Result generation', function () {
       .then(() => db('scenarios_files')
         .select('*')
         .where('scenario_id', 2000)
-        .whereIn('type', ['results', 'results-all'])
+        .whereIn('type', ['results-json', 'results-csv'])
       )
       .then(files => {
         assert.lengthOf(files, 0, 'Scenario results is empty');
