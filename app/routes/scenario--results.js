@@ -276,7 +276,7 @@ export default [
     }
   },
   {
-    path: '/projects/{projId}/scenarios/{scId}/results/geojson',
+    path: '/projects/{projId}/scenarios/{scId}/results/mini',
     method: 'GET',
     config: {
       validate: {
@@ -306,12 +306,8 @@ export default [
         .where('results.scenario_id', scId);
       Promise.all(_results)
         .then(res => mergeOriginETA(res))
-        .then(res => {
-          reply({
-            'type': 'FeatureCollection',
-            'features': res
-          });
-        }).catch(err => {
+        .then(res => reply(res))
+        .catch(err => {
           console.log('err', err);
           reply(Boom.badImplementation(err));
         });
@@ -320,74 +316,64 @@ export default [
 ];
 
 /**
- * Turn an array of results into a proper GeoJSON features. Each feature refers
- * to a unique origin, and can have multiple ETA for each POI types.
- * This will mostly be used to visualize results on a map. ETA and population
- * data are stored flatly in the properties object so mapbox-gl can use them.
+ * Merge result objects from same origin together. This is primarily to support
+ * visualization of the results on the map. GeoJSON is built client-side, so
+ * the response is kept to a minimum.
+ * To support data driven styling with mapbox-gl, properties are stored as flat
+ * k:v pairs, instead of nesting them in another object.
  */
 function mergeOriginETA (results) {
-  return new Promise((resolve, reject) => {
-    // build array of unique POI types in the results
-    let poiTypes = results.reduce((a, b) => {
-      if (a.indexOf(b.poi_type) === -1) {
-        a.push(b.poi_type);
-      }
-      return a;
-    }, []);
+  let metaData = {
+    'poi_type': [],
+    'pop_type': [],
+    'maxPop': []
+  };
 
-    // build array of unique population types in the results
-    let popTypes = results.reduce((a, b) => {
-      if (a.indexOf(b.pop_key) === -1) {
-        a.push(b.pop_key);
-      }
-      return a;
-    }, []);
+  // build array of unique POI and population types in the results
+  results.map(r => {
+    if (metaData.poi_type.indexOf(r.poi_type) === -1) metaData.poi_type.push(r.poi_type);
+    if (metaData.pop_type.indexOf(r.pop_key) === -1) metaData.pop_type.push(r.pop_key);
+  });
 
-    // return max population count for each population type
-    // values are stored in the same order as the types in popTypes
-    let maxPop = popTypes.map(p => Math.max(...results
-      .filter(r => r.pop_key === p)
+  // return max population count for each population type
+  // values are stored in the same order as the types in popTypes
+  metaData.maxPop = metaData.pop_type.map(p =>
+    Math.max(...results.filter(r => r.pop_key === p)
       .map(r => {
         if (r.pop_key) return r.pop_value;
       })
-    ));
+  ));
 
-    // Build a GeoJSON feature array, with each origin in its own feature
-    return resolve(results.reduce((a, b) => {
-      // Check if the accumulator already has an object for the origin
-      let match = a.findIndex(o => o.properties.id === b.origin_id);
-      let poiIndex = poiTypes.indexOf(b.poi_type);
-      let popIndex = popTypes.indexOf(b.pop_key);
+  // Build a GeoJSON feature array, with each origin in its own feature
+  let resultData = results.reduce((a, b) => {
+    // Check if the accumulator already has an object for the origin
+    let match = a.findIndex(o => o.i === b.origin_id);
+    let poiIndex = metaData.poi_type.indexOf(b.poi_type);
+    let popIndex = metaData.pop_type.indexOf(b.pop_key);
 
-      if (match === -1) {
-        // Create the feature
-        a.push({
-          'type': 'Feature',
-          'properties': {
-            'id': b.origin_id,
-            'n': b.origin_name,
-            'pop': popTypes,
-            'poi': poiTypes,
-            [`e${poiIndex}`]: b.time_to_poi,
-            [`p${popIndex}`]: b.pop_value,
-            [`pn${popIndex}`]: parseInt(b.pop_value / maxPop[popIndex] * 100) / 100
-          },
-          'geometry': {
-            'type': 'Point',
-            'coordinates': b.origin_coords
-          }
-        });
-      } else if (!a[match].properties[`e${poiIndex}`]) {
-        // Update an existing feature with an ETA for a different POI
-        a[match].properties[`e${poiIndex}`] = b.time_to_poi;
-      } else if (!a[match].properties[`e${popIndex}`]) {
-        // Update an existing feature with a population count for a different
-        // sub-set
-        a[match].properties[`p${popIndex}`] = b.pop_value;
-        a[match].properties[`pn${popIndex}`] = b.pop_value / maxPop[popIndex];
-      }
+    if (match === -1) {
+      // Create the feature
+      a.push({
+        'i': b.origin_id,
+        'n': b.origin_name,
+        [`e-${poiIndex}`]: b.time_to_poi,
+        [`p-${popIndex}`]: b.pop_value,
+        'c': [parseInt(b.origin_coords[0] * 100000) / 100000, parseInt(b.origin_coords[1] * 100000) / 100000]
+      });
+    } else if (!a[match][`e-${poiIndex}`]) {
+      // Update an existing feature with an ETA for a different POI
+      a[match][`e-${poiIndex}`] = b.time_to_poi;
+    } else if (!a[match][`p-${popIndex}`]) {
+      // Update an existing feature with a population count for a different
+      // sub-set
+      a[match][`p-${popIndex}`] = b.pop_value;
+    }
 
-      return a;
-    }, []));
-  });
+    return a;
+  }, []);
+
+  return {
+    'meta': metaData,
+    'results': resultData
+  };
 }

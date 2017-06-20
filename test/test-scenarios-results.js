@@ -27,28 +27,31 @@ describe('Scenario results', function () {
       .then(() => fixMeUp());
   });
 
-  describe('GET /projects/{projId}/scenarios/{scId}/results/geojson', function () {
-    it('should return the correct scenario - active', function () {
+  describe('GET /projects/{projId}/scenarios/{scId}/results/mini', function () {
+    it('should return the correct results for a scenario', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/2000/scenarios/2000/results/geojson'
+        url: '/projects/2000/scenarios/2000/results/mini'
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
-        assert.deepEqual(res.result.type, 'FeatureCollection');
+        assert.deepEqual(res.result.meta, {
+          'poi_type': [ 'school', 'church' ],
+          'pop_type': [ 'population' ],
+          'maxPop': [ 48733 ]
+        });
 
-        let ft = res.result.features;
-        assert.equal(ft.length, 2);
-        assert.equal(ft[0].type, 'Feature');
-        assert.equal(ft[0].properties.id, 200001);
-        assert.equal(ft[0].properties.e0, 5000);
-        assert.equal(ft[0].properties.e1, 3500);
-        assert.deepEqual(ft[0].properties.poi, ['school', 'church']);
-        assert.equal(ft[1].properties.e0, 54700);
-        assert.equal(ft[1].properties.e1, undefined);
-        assert.deepEqual(ft[1].properties.poi, ['school', 'church']);
-        assert.equal(ft[0].properties.p0, 29459);
-        assert.equal(ft[0].properties.pn0, 1);
-        assert.deepEqual(ft[0].properties.pop, ['population']);
+        let ft = res.result.results;
+        assert.equal(ft.length, 3);
+        assert.deepEqual(ft[0], {
+          'n': 'Paripiranga',
+          'i': 200001,
+          'e-0': 5000,
+          'e-1': 3500,
+          'p-0': 29459,
+          'c': [-37.86215, -10.68289]
+        });
+        assert.equal(ft[1]['e-0'], 54700);
+        assert.equal(ft[1]['e-1'], undefined);
       });
     });
   });

@@ -768,6 +768,13 @@ export function project2000 () {
         'scenario_id': 2000,
         'origin_id': 200002,
         'project_aa_id': 200001
+      },
+      {
+        'id': 3,
+        'project_id': 2000,
+        'scenario_id': 2000,
+        'origin_id': 200003,
+        'project_aa_id': 200001
       }
     ]
   ))
@@ -790,6 +797,18 @@ export function project2000 () {
         result_id: 1,
         type: 'church',
         time: 3500
+      },
+      {
+        id: 4,
+        result_id: 3,
+        type: 'school',
+        time: 0
+      },
+      {
+        id: 5,
+        result_id: 3,
+        type: 'church',
+        time: 350000
       }
     ]
   ));
