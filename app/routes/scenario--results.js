@@ -276,7 +276,7 @@ export default [
     }
   },
   {
-    path: '/projects/{projId}/scenarios/{scId}/results/mini',
+    path: '/projects/{projId}/scenarios/{scId}/results/geo',
     method: 'GET',
     config: {
       validate: {
@@ -358,6 +358,7 @@ function mergeOriginETA (results) {
         'n': b.origin_name,
         [`e-${poiIndex}`]: b.time_to_poi,
         [`p-${popIndex}`]: b.pop_value,
+        [`pn-${popIndex}`]: parseInt(b.pop_value / metaData.maxPop[popIndex] * 100) / 100,
         'c': [parseInt(b.origin_coords[0] * 100000) / 100000, parseInt(b.origin_coords[1] * 100000) / 100000]
       });
     } else if (!a[match][`e-${poiIndex}`]) {
@@ -367,6 +368,7 @@ function mergeOriginETA (results) {
       // Update an existing feature with a population count for a different
       // sub-set
       a[match][`p-${popIndex}`] = b.pop_value;
+      a[match][`pn-${popIndex}`] = parseInt(b.pop_value / metaData.maxPop[popIndex] * 100) / 100;
     }
 
     return a;
