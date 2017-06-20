@@ -1,15 +1,18 @@
 'use strict';
 import Joi from 'joi';
 import Boom from 'boom';
+import Promise from 'bluebird';
+import Zip from 'node-zip';
 
 import db from '../db/';
-import { putFile as putFileToS3, removeLocalFile } from '../s3/utils';
+import { putFile as putFileToS3, removeLocalFile, getFileContents } from '../s3/utils';
 import {
   ProjectNotFoundError,
   ScenarioNotFoundError,
   FileExistsError,
   DataValidationError,
-  ProjectStatusError
+  ProjectStatusError,
+  FileNotFoundError
 } from '../utils/errors';
 import { parseFormData } from '../utils/utils';
 
@@ -175,6 +178,67 @@ export default [
         .catch(FileExistsError, e => reply(Boom.conflict(e.message)))
         .catch(DataValidationError, e => reply(Boom.badRequest(e.message)))
         .catch(err => {
+          console.log('err', err);
+          reply(Boom.badImplementation(err));
+        });
+    }
+  },
+  {
+    path: '/projects/{projId}/scenarios/{scId}/source-data',
+    method: 'GET',
+    config: {
+      validate: {
+        params: {
+          projId: Joi.number(),
+          scId: Joi.number()
+        },
+        query: {
+          download: Joi.boolean().truthy('true').falsy('false').required(),
+          type: Joi.string().valid(['poi', 'road-network']).required()
+        }
+      }
+    },
+    handler: (request, reply) => {
+      const { projId, scId } = request.params;
+
+      db('scenarios_files')
+        .select('*')
+        .where('type', request.query.type)
+        .where('project_id', projId)
+        .where('scenario_id', scId)
+        .then(files => {
+          if (!files.length) throw new FileNotFoundError();
+          return files;
+        })
+        .then(files => {
+          let zip = new Zip();
+          return Promise.map(files, file => getFileContents(file.path)
+            .then(content => {
+              let name;
+              switch (file.type) {
+                case 'poi':
+                  name = `${file.name}.geojson`;
+                  break;
+                case 'road-network':
+                  name = `${file.name}.osm`;
+                  break;
+              }
+              zip.file(name, content);
+            })
+          )
+          .then(() => zip.generate({ base64: false, compression: 'DEFLATE' }))
+          // Send!
+          .then(data => reply(data)
+            .type('application/zip')
+            .encoding('binary')
+            .header('Content-Disposition', `attachment; filename=${files[0].type}-p${projId}s${scId}.zip`)
+          );
+        })
+        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
+        .catch(err => {
+          if (err.code === 'NoSuchKey') {
+            return reply(Boom.notFound('File not found in storage bucket'));
+          }
           console.log('err', err);
           reply(Boom.badImplementation(err));
         });
