@@ -244,6 +244,12 @@ function handleOrigins (result, projId) {
           })
           .then(() => getLocalJSONFileContents(file.path))
           .then(contents => {
+            // Every feature must have a name attribute.
+            let hasName = contents.features.every(f => !!f.properties.name);
+            if (!hasName) {
+              throw new DataValidationError('All features in submitted file must have a name');
+            }
+
             // Get the indicator common to every feature. Number indicators only.
             let indicatorsInFile = contents.features.map(o => {
               let numberKeys = [];
