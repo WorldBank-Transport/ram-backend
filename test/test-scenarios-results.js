@@ -35,8 +35,8 @@ describe('Scenario results', function () {
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         assert.deepEqual(res.result.meta, {
-          'poi_type': [ 'school', 'church' ],
-          'pop_type': [ 'population' ],
+          'poiType': [ 'school', 'church' ],
+          'popType': [ 'population' ],
           'maxPop': [ 48733 ]
         });
 
