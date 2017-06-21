@@ -64,6 +64,16 @@ export function dropProjectsOriginsIndicators () {
   return db.schema.dropTableIfExists('projects_origins_indicators');
 }
 
+export function dropProjectsSourceData () {
+  DEBUG && console.log('Dropping table: projects_source_data');
+  return db.schema.dropTableIfExists('projects_source_data');
+}
+
+export function dropScenariosSourceData () {
+  DEBUG && console.log('Dropping table: scenarios_source_data');
+  return db.schema.dropTableIfExists('scenarios_source_data');
+}
+
 export function createProjectsTable () {
   DEBUG && console.log('Creating table: projects');
   return db.schema.createTable('projects', table => {
@@ -256,6 +266,38 @@ export function createProjectsOriginsIndicatorsTable () {
   });
 }
 
+export function createProjectsSourceData () {
+  DEBUG && console.log('Creating table: projects_source_data');
+  return db.schema.createTable('projects_source_data', table => {
+    table.increments('id').primary();
+    table.integer('project_id').unsigned();
+    table.foreign('project_id')
+      .references('projects.id')
+      .onDelete('CASCADE');
+    table.string('name');
+    table.string('type');
+    table.json('data');
+  });
+}
+
+export function createScenariosSourceData () {
+  DEBUG && console.log('Creating table: scenarios_source_data');
+  return db.schema.createTable('scenarios_source_data', table => {
+    table.increments('id').primary();
+    table.integer('project_id').unsigned();
+    table.foreign('project_id')
+      .references('projects.id')
+      .onDelete('CASCADE');
+    table.integer('scenario_id').unsigned();
+    table.foreign('scenario_id')
+      .references('scenarios.id')
+      .onDelete('CASCADE');
+    table.string('name');
+    table.string('type');
+    table.json('data');
+  });
+}
+
 export function setupStructure () {
   return dropScenariosFiles()
   .then(() => dropProjectsFiles())
@@ -265,7 +307,9 @@ export function setupStructure () {
   .then(() => dropOperationsLogs())
   .then(() => dropOperations())
   .then(() => dropScenariosSettings())
+  .then(() => dropScenariosSourceData())
   .then(() => dropScenarios())
+  .then(() => dropProjectsSourceData())
   .then(() => dropProjectsOriginsIndicators())
   .then(() => dropProjectsOrigins())
   .then(() => dropProjects())
@@ -280,5 +324,7 @@ export function setupStructure () {
   .then(() => createProjectsOriginsTable())
   .then(() => createProjectsOriginsIndicatorsTable())
   .then(() => createResultsTable())
-  .then(() => createResultsPoiTable());
+  .then(() => createResultsPoiTable())
+  .then(() => createScenariosSourceData())
+  .then(() => createProjectsSourceData());
 }

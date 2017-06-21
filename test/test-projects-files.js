@@ -95,7 +95,7 @@ describe('Project files', function () {
     });
   });
 
-  describe('POST /projects/{projId}/files', function () {
+  describe.skip('POST /projects/{projId}/files', function () {
     it('should error when data format is not multipart/form-data', function () {
       return instance.injectThen({
         method: 'POST',

@@ -141,6 +141,64 @@ describe('Scenarios', function () {
         assert.equal(scenario.scen_create, null);
       });
     });
+
+    it('should have the correct source data with no files', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        let scenario = res.result;
+        assert.deepEqual(scenario.sourceData, {
+          'road-network': {
+            type: null,
+            files: []
+          },
+          poi: {
+            type: null,
+            files: []
+          }
+        });
+      });
+    });
+
+    it('should have the correct source data with all files', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/2000/scenarios/2000'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        let scenario = res.result;
+        assert.deepEqual(scenario.sourceData, {
+          'road-network': {
+            type: 'file',
+            files: [
+              {
+                'id': 2000,
+                'name': 'road-network_000000',
+                'type': 'road-network',
+                'subtype': null,
+                'path': 'scenario-2000/road-network_000000',
+                'created_at': new Date('2017-02-01T12:00:06.000Z')
+              }
+            ]
+          },
+          poi: {
+            type: 'file',
+            files: [
+              {
+                'id': 2001,
+                'name': 'poi_000000',
+                'type': 'poi',
+                'subtype': 'pointOfInterest',
+                'path': 'scenario-2000/poi_000000',
+                'created_at': new Date('2017-02-01T12:00:06.000Z')
+              }
+            ]
+          }
+        });
+      });
+    });
   });
 
   describe('GET /projects/{projId}/scenarios/0', function () {
@@ -350,7 +408,7 @@ describe('Scenarios', function () {
         assert.equal(scenario.description, 'updated description');
         assert.equal(scenario.status, 'pending');
         assert.equal(scenario.master, true);
-        assert.equal(scenario.files.length, 0);
+        assert.isTrue(typeof scenario.sourceData !== undefined);
         assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
         assert.equal(scenario.gen_analysis, null);
         assert.equal(scenario.scen_create, null);
@@ -405,7 +463,7 @@ describe('Scenarios', function () {
       });
     });
 
-    it('should update the deselect all admin areas', function () {
+    it('should deselect all admin areas', function () {
       return instance.injectThen({
         method: 'PATCH',
         url: '/projects/2000/scenarios/2000',
@@ -542,7 +600,7 @@ describe('Scenarios', function () {
       db.insert({
         id: 10000001,
         name: 'results_000000',
-        type: 'results',
+        type: 'results-csv',
         path: 'scenario-1000/results_000000',
         project_id: 1000,
         scenario_id: 1000
@@ -559,20 +617,50 @@ describe('Scenarios', function () {
       .then(() => done());
     });
 
+    it('should return 400 when download is missing', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/results?type=csv'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "download" fails because ["download" is required]');
+      });
+    });
+
+    it('should return 400 when type is missing', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/results?download=true'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "type" fails because ["type" is required]');
+      });
+    });
+
     it('should return 400 when download flag not true', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1000/scenarios/1000/results?download=false'
+        url: '/projects/1000/scenarios/1000/results?download=false&type=geojson'
       }).then(res => {
-        assert.equal(res.statusCode, 501, 'Status code is 404');
-        assert.equal(res.result.message, 'Query parameter "download" missing');
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "download" fails because ["download" must be one of [true]]');
+      });
+    });
+
+    it('should return 400 when type is incorrect', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/results?download=true&type=csvjson '
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "type" fails because ["type" must be one of [csv, geojson]]');
       });
     });
 
     it('should return 404 when a file is not found', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/8888/scenarios/8888/results?download=true'
+        url: '/projects/8888/scenarios/8888/results?download=true&type=csv'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'Results not found');
@@ -582,7 +670,7 @@ describe('Scenarios', function () {
     it('should return 404 when a file is not found on s3', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1000/scenarios/1000/results?download=true'
+        url: '/projects/1000/scenarios/1000/results?download=true&type=csv'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'File not found in storage bucket');
