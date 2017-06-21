@@ -18,6 +18,9 @@ const FILE_ORIGINS = path.join(__dirname, 'data-sergipe/villages.geojson');
 const FILE_ADMIN = path.join(__dirname, 'data-sergipe/admin-boundaries.geojson');
 const FILE_ROAD_NETWORK = path.join(__dirname, 'data-sergipe/road-network.osm');
 const FILE_POI = path.join(__dirname, 'data-sergipe/poi-townhalls.geojson');
+const FILE_RESULTS_CSV = path.join(__dirname, 'data-sergipe/results-p200001-s2000.csv');
+const FILE_RESULTS_JSON = path.join(__dirname, 'data-sergipe/results-p200001-s2000.json');
+const FILE_RESULTS_GEOJSON = path.join(__dirname, 'data-sergipe/results-p200001-s2000.geojson');
 
 const ADMIN_AREAS_BBOX = bbox(readJSONSync(FILE_ADMIN));
 
@@ -756,21 +759,21 @@ export function project2000 () {
   .then(() => scenarioResults(
     [
       {
-        'id': 1,
+        'id': 200001,
         'project_id': 2000,
         'scenario_id': 2000,
         'origin_id': 200001,
         'project_aa_id': 200001
       },
       {
-        'id': 2,
+        'id': 200002,
         'project_id': 2000,
         'scenario_id': 2000,
         'origin_id': 200002,
         'project_aa_id': 200001
       },
       {
-        'id': 3,
+        'id': 200003,
         'project_id': 2000,
         'scenario_id': 2000,
         'origin_id': 200003,
@@ -781,37 +784,40 @@ export function project2000 () {
   .then(() => scenarioResultsPOI(
     [
       {
-        id: 1,
-        result_id: 1,
+        id: 200001,
+        result_id: 200001,
         type: 'school',
         time: 5000
       },
       {
-        id: 2,
-        result_id: 2,
+        id: 200002,
+        result_id: 200002,
         type: 'school',
         time: 54700
       },
       {
-        id: 3,
-        result_id: 1,
+        id: 200003,
+        result_id: 200001,
         type: 'church',
         time: 3500
       },
       {
-        id: 4,
-        result_id: 3,
+        id: 200004,
+        result_id: 200003,
         type: 'school',
         time: 0
       },
       {
-        id: 5,
-        result_id: 3,
+        id: 200005,
+        result_id: 200003,
         type: 'church',
         time: 350000
       }
     ]
-  ));
+  ))
+  .then(() => putObjectFromFile(bucket, 'scenario-2000/results_200001-araua-csv_000000', FILE_RESULTS_CSV))
+  .then(() => putObjectFromFile(bucket, 'scenario-2000/results_all-json_000000', FILE_RESULTS_JSON))
+  .then(() => putObjectFromFile(bucket, 'scenario-2000/results_all-geojson_000000', FILE_RESULTS_GEOJSON));
 }
 
 //
