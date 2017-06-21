@@ -120,10 +120,13 @@ describe('Finish Project Setup', function () {
                 assert.lengthOf(logs, 4);
                 assert.equal(logs[0].code, 'start');
                 assert.equal(logs[0].data.message, 'Operation started');
-                assert.equal(logs[1].code, 'process:admin-bounds');
-                assert.equal(logs[1].data.message, 'Processing admin areas');
-                assert.equal(logs[2].code, 'process:origins');
-                assert.equal(logs[2].data.message, 'Processing origins');
+
+                // These actions run in parallel and can actually be switched.
+                assert.oneOf(logs[1].code, ['process:admin-bounds', 'process:origins']);
+                assert.oneOf(logs[1].data.message, ['Processing admin areas', 'Processing origins']);
+                assert.oneOf(logs[2].code, ['process:admin-bounds', 'process:origins']);
+                assert.oneOf(logs[2].data.message, ['Processing admin areas', 'Processing origins']);
+
                 // assert.equal(logs[2].code, 'process:road-network');
                 // assert.equal(logs[2].data.message, 'Road network processing started');
                 // assert.equal(logs[3].code, 'process:road-network');

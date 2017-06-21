@@ -5,6 +5,7 @@ import Promise from 'bluebird';
 
 import db from '../db/';
 import { ScenarioNotFoundError, ProjectNotFoundError } from '../utils/errors';
+import { getSourceData, getOperationData } from '../utils/utils';
 
 const routeSingleScenarioConfig = {
   validate: {
@@ -88,7 +89,7 @@ export function loadScenario (projId, scId) {
     })
     .then(scenario => attachAdminAreas(scenario))
     .then(scenario => attachScenarioSettings(scenario))
-    .then(scenario => attachScenarioFiles(scenario))
+    .then(scenario => attachScenarioSourceData(scenario))
     .then(scenario => attachOperation('generate-analysis', 'gen_analysis', scenario))
     .then(scenario => attachOperation('scenario-create', 'scen_create', scenario));
 }
@@ -117,12 +118,10 @@ function attachScenarioSettings (scenario) {
     });
 }
 
-function attachScenarioFiles (scenario) {
-  return db.select('id', 'name', 'type', 'subtype', 'path', 'created_at')
-    .from('scenarios_files')
-    .where('scenario_id', scenario.id)
-    .then(files => {
-      scenario.files = files || [];
+function attachScenarioSourceData (scenario) {
+  return getSourceData(db, 'scenario', scenario.id)
+    .then(sourceData => {
+      scenario.sourceData = sourceData;
       return scenario;
     });
 }
@@ -152,7 +151,7 @@ function attachAdminAreas (scenario) {
       aa = aa.map(o => {
         o.selected = selected.indexOf(o.id) !== -1;
         return o;
-      });
+      }).sort((a, b) => a.id - b.id);
       scenario.admin_areas = aa;
     }
 
@@ -161,42 +160,9 @@ function attachAdminAreas (scenario) {
 }
 
 function attachOperation (opName, prop, scenario) {
-  return db.select('*')
-    .from('operations')
-    .where('operations.scenario_id', scenario.id)
-    .where('operations.name', opName)
-    .orderBy('created_at', 'desc')
-    .limit(1)
-    .then(op => {
-      if (!op.length) {
-        scenario[prop] = null;
-        return scenario;
-      }
-      op = op[0];
-
-      return db.select('*')
-        .from('operations_logs')
-        .where('operation_id', op.id)
-        .orderBy('created_at')
-        .then(logs => {
-          let errored = false;
-          if (logs.length) {
-            errored = logs[logs.length - 1].code === 'error';
-          }
-          scenario[prop] = {
-            id: op.id,
-            status: op.status,
-            created_at: op.created_at,
-            updated_at: op.updated_at,
-            errored,
-            logs: logs.map(l => ({
-              id: l.id,
-              code: l.code,
-              data: l.data,
-              created_at: l.created_at
-            }))
-          };
-          return scenario;
-        });
+  return getOperationData(db, opName, prop, scenario.id)
+    .then(opData => {
+      scenario[prop] = opData;
+      return scenario;
     });
 }

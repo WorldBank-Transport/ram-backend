@@ -102,6 +102,84 @@ describe('Projects', function () {
       });
     });
 
+    it('should have the correct source data with no files', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        let project = res.result;
+        assert.deepEqual(project.sourceData, {
+          profile: {
+            type: null,
+            files: []
+          },
+          'admin-bounds': {
+            type: null,
+            files: []
+          },
+          origins: {
+            type: null,
+            files: []
+          }
+        });
+      });
+    });
+
+    it('should have the correct source data with all files', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/2000'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        let project = res.result;
+        assert.deepEqual(project.sourceData, {
+          profile: {
+            type: 'file',
+            files: [
+              {
+                'id': 2000,
+                'name': 'profile_000000',
+                'type': 'profile',
+                'path': 'project-2000/profile_000000',
+                'data': null,
+                'created_at': new Date('2017-02-01T12:00:06.000Z')
+              }
+            ]
+          },
+          'admin-bounds': {
+            type: 'file',
+            files: [
+              {
+                'id': 2002,
+                'name': 'admin-bounds_000000',
+                'type': 'admin-bounds',
+                'path': 'project-2000/admin-bounds_000000',
+                'data': null,
+                'created_at': new Date('2017-02-01T12:00:06.000Z')
+              }
+            ]
+          },
+          origins: {
+            type: 'file',
+            files: [
+              {
+                'id': 2001,
+                'name': 'origins_000000',
+                'type': 'origins',
+                'path': 'project-2000/origins_000000',
+                'data': {
+                  'availableInd': ['population'],
+                  'indicators': [ { 'key': 'population', 'label': 'Total population' } ]
+                },
+                'created_at': new Date('2017-02-01T12:00:06.000Z')
+              }
+            ]
+          }
+        });
+      });
+    });
+
     it('should include the scenario count for an individual project', function () {
       return instance.injectThen({
         method: 'GET',
