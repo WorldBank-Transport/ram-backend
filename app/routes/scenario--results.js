@@ -324,20 +324,20 @@ export default [
  */
 function mergeOriginETA (results) {
   let metaData = {
-    'poi_type': [],
-    'pop_type': [],
+    'poiType': [],
+    'popType': [],
     'maxPop': []
   };
 
   // build array of unique POI and population types in the results
   results.map(r => {
-    if (metaData.poi_type.indexOf(r.poi_type) === -1) metaData.poi_type.push(r.poi_type);
-    if (metaData.pop_type.indexOf(r.pop_key) === -1) metaData.pop_type.push(r.pop_key);
+    if (metaData.poiType.indexOf(r.poi_type) === -1) metaData.poiType.push(r.poi_type);
+    if (metaData.popType.indexOf(r.pop_key) === -1) metaData.popType.push(r.pop_key);
   });
 
   // return max population count for each population type
   // values are stored in the same order as the types in popTypes
-  metaData.maxPop = metaData.pop_type.map(p =>
+  metaData.maxPop = metaData.popType.map(p =>
     Math.max(...results.filter(r => r.pop_key === p)
       .map(r => {
         if (r.pop_key) return r.pop_value;
@@ -348,8 +348,8 @@ function mergeOriginETA (results) {
   let resultData = results.reduce((a, b) => {
     // Check if the accumulator already has an object for the origin
     let match = a.findIndex(o => o.i === b.origin_id);
-    let poiIndex = metaData.poi_type.indexOf(b.poi_type);
-    let popIndex = metaData.pop_type.indexOf(b.pop_key);
+    let poiIndex = metaData.poiType.indexOf(b.poi_type);
+    let popIndex = metaData.popType.indexOf(b.pop_key);
 
     if (match === -1) {
       // Create the feature
