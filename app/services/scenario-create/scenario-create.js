@@ -77,8 +77,21 @@ export function scenarioCreate (e) {
             .whereIn('type', ['poi', 'road-network'])
             .then(files => cloneScenarioFiles(trx, files, projId, scId))
           )
+          .then(() => trx('scenarios_source_data')
+            .select('project_id', 'name', 'type', 'data')
+            .where('scenario_id', sourceScenarioId)
+            .where('project_id', projId)
+            .then(sourceData => {
+              // Set new id.
+              sourceData.forEach(o => {
+                o.scenario_id = scId;
+              });
+              return sourceData;
+            })
+          )
+          .then(sourceData => trx.batchInsert('scenarios_source_data', sourceData));
           // Copy the osm-p2p-db.
-          .then(() => op.log('files', {message: 'Cloning road network database'}));
+          // .then(() => op.log('files', {message: 'Cloning road network database'}));
           // .then(() => cloneOsmP2Pdb(projId, sourceScenarioId, projId, scId));
       //
       } else if (source === 'new') {
@@ -158,6 +171,7 @@ function cloneScenarioFiles (trx, files, projId, scId) {
     return {
       name: fileName,
       type: file.type,
+      subtype: file.subtype,
       path: filePath,
       project_id: projId,
       scenario_id: scId,
