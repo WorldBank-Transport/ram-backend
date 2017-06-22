@@ -31,28 +31,38 @@ describe('Scenario results', function () {
     it('should return the correct results for a scenario', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/2000/scenarios/2000/results/geo'
+        url: '/projects/2000/scenarios/2000/results/geo?poiType=school&popInd=population'
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
-        assert.deepEqual(res.result.meta, {
-          'poiType': [ 'school', 'church' ],
-          'popType': [ 'population' ],
-          'maxPop': [ 48733 ]
-        });
-
-        let ft = res.result.results;
-        assert.equal(ft.length, 3);
-        assert.deepEqual(ft[0], {
+        let origins = res.result;
+        assert.equal(origins.length, 3);
+        assert.deepEqual(origins[0], {
           'n': 'Paripiranga',
           'i': 200001,
-          'e-0': 5000,
-          'e-1': 3500,
-          'p-0': 29459,
-          'pn-0': 0.6,
+          'e': 5000,
+          'p': 29459,
+          'pn': 0.6,
           'c': [-37.86215, -10.68289]
         });
-        assert.equal(ft[1]['e-0'], 54700);
-        assert.equal(ft[1]['e-1'], undefined);
+      });
+    });
+    it('should return the correct results for a scenario', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/2000/scenarios/2000/results/geo?poiType=church&popInd=population'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        let origins = res.result;
+        assert.equal(origins.length, 2);
+        assert.equal(origins[1].e, 350000);
+      });
+    });
+    it.skip('should return an error for unknown POI types', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/2000/scenarios/2000/results/geo?poiType=mockery&popInd=population'
+      }).then(res => {
+        assert.equal(res.statusCode, 500, 'Internal Server Error');
       });
     });
   });
