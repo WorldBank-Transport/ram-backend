@@ -18,9 +18,9 @@ const FILE_ORIGINS = path.join(__dirname, 'data-sergipe/villages.geojson');
 const FILE_ADMIN = path.join(__dirname, 'data-sergipe/admin-boundaries.geojson');
 const FILE_ROAD_NETWORK = path.join(__dirname, 'data-sergipe/road-network.osm');
 const FILE_POI = path.join(__dirname, 'data-sergipe/poi-townhalls.geojson');
-const FILE_RESULTS_CSV = path.join(__dirname, 'data-sergipe/results-p200001-s2000.csv');
-const FILE_RESULTS_JSON = path.join(__dirname, 'data-sergipe/results-p200001-s2000.json');
-const FILE_RESULTS_GEOJSON = path.join(__dirname, 'data-sergipe/results-p200001-s2000.geojson');
+const FILE_RESULTS_CSV = path.join(__dirname, 'data-sergipe/results-p2000-s2000.csv');
+const FILE_RESULTS_JSON = path.join(__dirname, 'data-sergipe/results-p2000-s2000.json');
+const FILE_RESULTS_GEOJSON = path.join(__dirname, 'data-sergipe/results-p2000-s2000.geojson');
 
 const ADMIN_AREAS_BBOX = bbox(readJSONSync(FILE_ADMIN));
 
