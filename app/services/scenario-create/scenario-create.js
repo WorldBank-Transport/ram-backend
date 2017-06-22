@@ -5,7 +5,7 @@ import Promise from 'bluebird';
 import config from '../../config';
 // import { cloneDatabase, importRoadNetwork } from '../rra-osm-p2p';
 import db from '../../db/';
-import { copyFile, getFileContents } from '../../s3/utils';
+import { copyFile } from '../../s3/utils';
 import Operation from '../../utils/operation';
 import AppLogger from '../../utils/app-logger';
 
@@ -77,8 +77,21 @@ export function scenarioCreate (e) {
             .whereIn('type', ['poi', 'road-network'])
             .then(files => cloneScenarioFiles(trx, files, projId, scId))
           )
+          .then(() => trx('scenarios_source_data')
+            .select('project_id', 'name', 'type', 'data')
+            .where('scenario_id', sourceScenarioId)
+            .where('project_id', projId)
+            .then(sourceData => {
+              // Set new id.
+              sourceData.forEach(o => {
+                o.scenario_id = scId;
+              });
+              return sourceData;
+            })
+          )
+          .then(sourceData => trx.batchInsert('scenarios_source_data', sourceData));
           // Copy the osm-p2p-db.
-          .then(() => op.log('files', {message: 'Cloning road network database'}));
+          // .then(() => op.log('files', {message: 'Cloning road network database'}));
           // .then(() => cloneOsmP2Pdb(projId, sourceScenarioId, projId, scId));
       //
       } else if (source === 'new') {
@@ -96,6 +109,22 @@ export function scenarioCreate (e) {
             .where('scenarios_files.type', 'poi')
             .then(files => cloneScenarioFiles(trx, files, projId, scId))
           )
+          // Insert source info.
+          // TODO: This needs to be updated once we have osm data.
+          .then(() => trx.batchInsert('scenarios_source_data', [
+            {
+              project_id: projId,
+              scenario_id: scId,
+              name: 'road-network',
+              type: 'file'
+            },
+            {
+              project_id: projId,
+              scenario_id: scId,
+              name: 'poi',
+              type: 'file'
+            }
+          ]))
           // Add entry for road network file.
           .then(() => {
             let now = new Date();
@@ -113,8 +142,8 @@ export function scenarioCreate (e) {
               .returning('*')
               .insert(data)
               .then(res => res[0]);
-          })
-          .then(file => getFileContents(file.path));
+          });
+          // .then(file => getFileContents(file.path))
           // Import to the osm-p2p-db.
           // .then(roadNetwork => {
           //   logger && logger.log('process road network');
@@ -158,6 +187,7 @@ function cloneScenarioFiles (trx, files, projId, scId) {
     return {
       name: fileName,
       type: file.type,
+      subtype: file.subtype,
       path: filePath,
       project_id: projId,
       scenario_id: scId,
