@@ -1,0 +1,40 @@
+[
+  {
+    "id": 200001,
+    "name": "Arauá",
+    "results": [
+      {
+        "id": 200001,
+        "name": "Paripiranga",
+        "population": 29459,
+        "lat": -10.6828923,
+        "lon": -37.8621523,
+        "poi": {
+          "school": 5000,
+          "church": 3500
+        }
+      },
+      {
+        "id": 200002,
+        "name": "Jandaíra",
+        "population": 10997,
+        "lat": -11.5628009,
+        "lon": -37.7820255,
+        "poi": {
+          "school": 54700
+        }
+      },
+      {
+        "id": 200003,
+        "name": "Tobias Barreto",
+        "population": 48733,
+        "lat": -11.188034,
+        "lon": -38.0034554,
+        "poi": {
+          "school": 0,
+          "church": 350000
+        }
+      }
+    ]
+  }
+]
