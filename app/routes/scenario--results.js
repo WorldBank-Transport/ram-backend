@@ -272,11 +272,16 @@ export default [
         params: {
           projId: Joi.number(),
           scId: Joi.number()
+        },
+        query: {
+          poiType: Joi.string().required(),
+          popInd: Joi.string().required()
         }
       }
     },
     handler: (request, reply) => {
       const { projId, scId } = request.params;
+      let { poiType, popInd } = request.query;
 
       let _results = db('results')
         .select(
@@ -292,9 +297,14 @@ export default [
         .innerJoin('projects_origins', 'projects_origins.id', 'results.origin_id')
         .innerJoin('projects_origins_indicators', 'projects_origins_indicators.origin_id', 'projects_origins.id')
         .where('results.project_id', projId)
-        .where('results.scenario_id', scId);
-      Promise.all(_results)
-        .then(res => mergeOriginETA(res))
+        .where('results.scenario_id', scId)
+        .where('projects_origins_indicators.key', popInd)
+        .where('results_poi.type', poiType);
+
+      checkPoi(projId, scId, poiType)
+        .then(() => checkPopInd(projId, popInd))
+        .then(() => Promise.all(_results))
+        .then(res => prepGeoResponse(res))
         .then(res => reply(res))
         .catch(err => {
           console.log('err', err);
@@ -331,67 +341,17 @@ function checkPopInd (projId, popInd) {
     });
 }
 
-/**
- * Merge result objects from same origin together. This is primarily to support
- * visualization of the results on the map. GeoJSON is built client-side, so
- * the response is kept to a minimum.
- * To support data driven styling with mapbox-gl, properties are stored as flat
- * k:v pairs, instead of nesting them in another object.
- */
-function mergeOriginETA (results) {
-  let metaData = {
-    'poiType': [],
-    'popType': [],
-    'maxPop': []
-  };
+function prepGeoResponse (results) {
+  let maxPop = Math.max(...results.map(o => o.pop_value));
 
-  // build array of unique POI and population types in the results
-  results.map(r => {
-    if (metaData.poiType.indexOf(r.poi_type) === -1) metaData.poiType.push(r.poi_type);
-    if (metaData.popType.indexOf(r.pop_key) === -1) metaData.popType.push(r.pop_key);
+  return results.map(o => {
+    return {
+      'i': o.origin_id,
+      'n': o.origin_name,
+      'e': o.time_to_poi,
+      'p': o.pop_value,
+      'pn': parseInt(o.pop_value / maxPop * 100) / 100,
+      'c': [parseInt(o.origin_coords[0] * 100000) / 100000, parseInt(o.origin_coords[1] * 100000) / 100000]
+    };
   });
-
-  // return max population count for each population type
-  // values are stored in the same order as the types in popTypes
-  metaData.maxPop = metaData.popType.map(p =>
-    Math.max(...results.filter(r => r.pop_key === p)
-      .map(r => {
-        if (r.pop_key) return r.pop_value;
-      })
-  ));
-
-  // Build a GeoJSON feature array, with each origin in its own feature
-  let resultData = results.reduce((a, b) => {
-    // Check if the accumulator already has an object for the origin
-    let match = a.findIndex(o => o.i === b.origin_id);
-    let poiIndex = metaData.poiType.indexOf(b.poi_type);
-    let popIndex = metaData.popType.indexOf(b.pop_key);
-
-    if (match === -1) {
-      // Create the feature
-      a.push({
-        'i': b.origin_id,
-        'n': b.origin_name,
-        [`e-${poiIndex}`]: b.time_to_poi,
-        [`p-${popIndex}`]: b.pop_value,
-        [`pn-${popIndex}`]: parseInt(b.pop_value / metaData.maxPop[popIndex] * 100) / 100,
-        'c': [parseInt(b.origin_coords[0] * 100000) / 100000, parseInt(b.origin_coords[1] * 100000) / 100000]
-      });
-    } else if (!a[match][`e-${poiIndex}`]) {
-      // Update an existing feature with an ETA for a different POI
-      a[match][`e-${poiIndex}`] = b.time_to_poi;
-    } else if (!a[match][`p-${popIndex}`]) {
-      // Update an existing feature with a population count for a different
-      // sub-set
-      a[match][`p-${popIndex}`] = b.pop_value;
-      a[match][`pn-${popIndex}`] = parseInt(b.pop_value / metaData.maxPop[popIndex] * 100) / 100;
-    }
-
-    return a;
-  }, []);
-
-  return {
-    'meta': metaData,
-    'results': resultData
-  };
 }
