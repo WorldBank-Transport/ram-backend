@@ -1,8 +1,20 @@
 {
-  "name": "Rural-Road-Accessibility",
-  "version": "0.2.0",
+  "name": "rural-road-accessibility--server",
+  "version": "0.3.0",
   "description": "World Bank project to assess rural road accessibility",
-  "repository": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility"
+  },
+  "author": {
+    "name": "Development Seed",
+    "url": "https://developmentseed.org"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility/issues"
+  },
+  "homepage": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility",
   "main": "index.js",
   "scripts": {
     "setup": "DEBUG=true node setup/",
@@ -15,9 +27,6 @@
   "engines": {
     "node": "6.7.x"
   },
-  "author": "Development Seed",
-  "license": "",
-  "homepage": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility",
   "dependencies": {
     "@turf/bbox": "^4.0.2",
     "@turf/center-of-mass": "^4.3.0",
