@@ -1,0 +1,61 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 200001,
+        "name": "Paripiranga",
+        "pop": 29459,
+        "eta": {
+          "school": 5000,
+          "church": 3500
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -10.6828923,
+          -37.8621523
+        ] 
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 200002,
+        "name": "Jandaíra",
+        "pop": 10997,
+        "eta": {
+          "school": 54700
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -11.5628009,
+          -37.7820255
+        ] 
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 200003,
+        "name": "Tobias Barreto",
+        "pop": 48733,
+        "eta": {
+          "school": 0,
+          "church": 350000
+        }
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -11.188034,
+          -38.0034554
+        ] 
+      }
+    }
+  ]
+}

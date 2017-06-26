@@ -38,7 +38,14 @@ describe('Scenarios', function () {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
         assert.equal(result.meta.found, 2);
-        assert.equal(result.results[0].name, 'Main scenario 1200');
+        let scenario = result.results[0];
+        assert.equal(scenario.name, 'Main scenario 1200');
+        assert.equal(scenario.description, 'Scenario 1200 created when the project 1200 was created');
+        assert.equal(scenario.status, 'active');
+        assert.equal(scenario.master, true);
+        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.equal(scenario.gen_analysis, null);
+        assert.equal(scenario.scen_create, null);
       });
     });
 
@@ -72,8 +79,124 @@ describe('Scenarios', function () {
         url: '/projects/1000/scenarios/1000'
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
-        assert.equal(res.result.id, 1000);
-        assert.equal(res.result.name, 'Main scenario');
+        let scenario = res.result;
+        assert.equal(scenario.id, 1000);
+        assert.equal(scenario.name, 'Main scenario');
+        assert.equal(scenario.description, 'Ghost scenario created when the project was created');
+        assert.equal(scenario.status, 'pending');
+        assert.equal(scenario.master, true);
+        assert.equal(scenario.admin_areas, null);
+        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.equal(scenario.gen_analysis, null);
+        assert.equal(scenario.scen_create, null);
+      });
+    });
+
+    it('should return the correct scenario - active', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/2000/scenarios/2000'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        let scenario = res.result;
+        assert.equal(scenario.id, 2000);
+        assert.equal(scenario.name, 'Main scenario for Sergipe');
+        assert.equal(scenario.description, '');
+        assert.equal(scenario.status, 'active');
+        assert.equal(scenario.master, true);
+        assert.deepEqual(scenario.admin_areas, [
+          { 'id': 200001, 'name': 'Arauá', 'type': 'boundary', 'selected': false },
+          { 'id': 200002, 'name': 'Boquim', 'type': 'boundary', 'selected': false },
+          { 'id': 200003, 'name': 'Campo do Brito', 'type': 'boundary', 'selected': false },
+          { 'id': 200004, 'name': 'Cristinápolis', 'type': 'boundary', 'selected': false },
+          { 'id': 200005, 'name': 'Distrito de Abadia', 'type': 'boundary', 'selected': false },
+          { 'id': 200006, 'name': 'Distrito de Buril', 'type': 'boundary', 'selected': false },
+          { 'id': 200007, 'name': 'Distrito de Conceição de Campinas', 'type': 'boundary', 'selected': false },
+          { 'id': 200008, 'name': 'Distrito de Itamira', 'type': 'boundary', 'selected': false },
+          { 'id': 200009, 'name': 'Distrito de Itanhi', 'type': 'boundary', 'selected': false },
+          { 'id': 2000010, 'name': 'Distrito de Sambaíba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000011, 'name': 'Estância', 'type': 'boundary', 'selected': false },
+          { 'id': 2000012, 'name': 'Indiaroba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000013, 'name': 'Itabaiana', 'type': 'boundary', 'selected': true },
+          { 'id': 2000014, 'name': 'Itabaianinha', 'type': 'boundary', 'selected': false },
+          { 'id': 2000015, 'name': 'Itaporanga d\'Ajuda', 'type': 'boundary', 'selected': false },
+          { 'id': 2000016, 'name': 'Lagarto', 'type': 'boundary', 'selected': true },
+          { 'id': 2000017, 'name': 'Macambira', 'type': 'boundary', 'selected': false },
+          { 'id': 2000018, 'name': 'Palmares', 'type': 'boundary', 'selected': false },
+          { 'id': 2000019, 'name': 'Pedra Mole', 'type': 'boundary', 'selected': false },
+          { 'id': 2000020, 'name': 'Pedrinhas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000021, 'name': 'Poço Verde', 'type': 'boundary', 'selected': true },
+          { 'id': 2000022, 'name': 'Riachão do Dantas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000023, 'name': 'Salgado', 'type': 'boundary', 'selected': true },
+          { 'id': 2000024, 'name': 'Samambaia', 'type': 'boundary', 'selected': false },
+          { 'id': 2000025, 'name': 'Santa Luzia do Itanhy', 'type': 'boundary', 'selected': false },
+          { 'id': 2000026, 'name': 'São Domingos', 'type': 'boundary', 'selected': false },
+          { 'id': 2000027, 'name': 'Simão Dias', 'type': 'boundary', 'selected': false },
+          { 'id': 2000028, 'name': 'Tobias Barreto', 'type': 'boundary', 'selected': false },
+          { 'id': 2000029, 'name': 'Tomar do Geru', 'type': 'boundary', 'selected': false },
+          { 'id': 2000030, 'name': 'Umbaúba', 'type': 'boundary', 'selected': false }
+        ]);
+        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.equal(scenario.gen_analysis, null);
+        assert.equal(scenario.scen_create, null);
+      });
+    });
+
+    it('should have the correct source data with no files', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        let scenario = res.result;
+        assert.deepEqual(scenario.sourceData, {
+          'road-network': {
+            type: null,
+            files: []
+          },
+          poi: {
+            type: null,
+            files: []
+          }
+        });
+      });
+    });
+
+    it('should have the correct source data with all files', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/2000/scenarios/2000'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        let scenario = res.result;
+        assert.deepEqual(scenario.sourceData, {
+          'road-network': {
+            type: 'file',
+            files: [
+              {
+                'id': 2000,
+                'name': 'road-network_000000',
+                'type': 'road-network',
+                'subtype': null,
+                'path': 'scenario-2000/road-network_000000',
+                'created_at': new Date('2017-02-01T12:00:06.000Z')
+              }
+            ]
+          },
+          poi: {
+            type: 'file',
+            files: [
+              {
+                'id': 2001,
+                'name': 'poi_000000',
+                'type': 'poi',
+                'subtype': 'pointOfInterest',
+                'path': 'scenario-2000/poi_000000',
+                'created_at': new Date('2017-02-01T12:00:06.000Z')
+              }
+            ]
+          }
+        });
       });
     });
   });
@@ -280,11 +403,17 @@ describe('Scenarios', function () {
         }
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
-        var result = res.result;
-        assert.equal(result.name, 'updated name');
-        assert.equal(result.description, 'updated description');
-        assert.equal((new Date(result.created_at)).toISOString(), '2017-02-01T12:00:01.000Z');
-        assert.notEqual(result.created_at, result.updated_at);
+        var scenario = res.result;
+        assert.equal(scenario.name, 'updated name');
+        assert.equal(scenario.description, 'updated description');
+        assert.equal(scenario.status, 'pending');
+        assert.equal(scenario.master, true);
+        assert.isTrue(typeof scenario.sourceData !== undefined);
+        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.equal(scenario.gen_analysis, null);
+        assert.equal(scenario.scen_create, null);
+        assert.equal((new Date(scenario.created_at)).toISOString(), '2017-02-01T12:00:01.000Z');
+        assert.notEqual(scenario.created_at, scenario.updated_at);
       });
     });
 
@@ -293,50 +422,48 @@ describe('Scenarios', function () {
         method: 'PATCH',
         url: '/projects/2000/scenarios/2000',
         payload: {
-          selectedAdminAreas: [
-            'Salgado', 'Itabaiana', 'Lagarto', 'Poço Verde'
-          ]
+          selectedAdminAreas: [200001, 200002, 200003, 200004]
         }
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
         let adminAreas = [
-          {'name': 'Distrito de Abadia', 'selected': false},
-          {'name': 'Distrito de Itanhi', 'selected': false},
-          {'name': 'Distrito de Conceição de Campinas', 'selected': false},
-          {'name': 'Distrito de Sambaíba', 'selected': false},
-          {'name': 'Distrito de Buril', 'selected': false},
-          {'name': 'Distrito de Itamira', 'selected': false},
-          {'name': 'Estância', 'selected': false},
-          {'name': 'Itaporanga d\'Ajuda', 'selected': false},
-          {'name': 'Salgado', 'selected': true},
-          {'name': 'Arauá', 'selected': false},
-          {'name': 'Boquim', 'selected': false},
-          {'name': 'Cristinápolis', 'selected': false},
-          {'name': 'Indiaroba', 'selected': false},
-          {'name': 'Itabaianinha', 'selected': false},
-          {'name': 'Pedrinhas', 'selected': false},
-          {'name': 'Santa Luzia do Itanhy', 'selected': false},
-          {'name': 'Tomar do Geru', 'selected': false},
-          {'name': 'Umbaúba', 'selected': false},
-          {'name': 'Pedra Mole', 'selected': false},
-          {'name': 'Campo do Brito', 'selected': false},
-          {'name': 'Itabaiana', 'selected': true},
-          {'name': 'Lagarto', 'selected': true},
-          {'name': 'Macambira', 'selected': false},
-          {'name': 'Poço Verde', 'selected': true},
-          {'name': 'Simão Dias', 'selected': false},
-          {'name': 'São Domingos', 'selected': false},
-          {'name': 'Palmares', 'selected': false},
-          {'name': 'Riachão do Dantas', 'selected': false},
-          {'name': 'Samambaia', 'selected': false},
-          {'name': 'Tobias Barreto', 'selected': false}
+          { 'id': 200001, 'name': 'Arauá', 'type': 'boundary', 'selected': true },
+          { 'id': 200002, 'name': 'Boquim', 'type': 'boundary', 'selected': true },
+          { 'id': 200003, 'name': 'Campo do Brito', 'type': 'boundary', 'selected': true },
+          { 'id': 200004, 'name': 'Cristinápolis', 'type': 'boundary', 'selected': true },
+          { 'id': 200005, 'name': 'Distrito de Abadia', 'type': 'boundary', 'selected': false },
+          { 'id': 200006, 'name': 'Distrito de Buril', 'type': 'boundary', 'selected': false },
+          { 'id': 200007, 'name': 'Distrito de Conceição de Campinas', 'type': 'boundary', 'selected': false },
+          { 'id': 200008, 'name': 'Distrito de Itamira', 'type': 'boundary', 'selected': false },
+          { 'id': 200009, 'name': 'Distrito de Itanhi', 'type': 'boundary', 'selected': false },
+          { 'id': 2000010, 'name': 'Distrito de Sambaíba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000011, 'name': 'Estância', 'type': 'boundary', 'selected': false },
+          { 'id': 2000012, 'name': 'Indiaroba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000013, 'name': 'Itabaiana', 'type': 'boundary', 'selected': false },
+          { 'id': 2000014, 'name': 'Itabaianinha', 'type': 'boundary', 'selected': false },
+          { 'id': 2000015, 'name': 'Itaporanga d\'Ajuda', 'type': 'boundary', 'selected': false },
+          { 'id': 2000016, 'name': 'Lagarto', 'type': 'boundary', 'selected': false },
+          { 'id': 2000017, 'name': 'Macambira', 'type': 'boundary', 'selected': false },
+          { 'id': 2000018, 'name': 'Palmares', 'type': 'boundary', 'selected': false },
+          { 'id': 2000019, 'name': 'Pedra Mole', 'type': 'boundary', 'selected': false },
+          { 'id': 2000020, 'name': 'Pedrinhas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000021, 'name': 'Poço Verde', 'type': 'boundary', 'selected': false },
+          { 'id': 2000022, 'name': 'Riachão do Dantas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000023, 'name': 'Salgado', 'type': 'boundary', 'selected': false },
+          { 'id': 2000024, 'name': 'Samambaia', 'type': 'boundary', 'selected': false },
+          { 'id': 2000025, 'name': 'Santa Luzia do Itanhy', 'type': 'boundary', 'selected': false },
+          { 'id': 2000026, 'name': 'São Domingos', 'type': 'boundary', 'selected': false },
+          { 'id': 2000027, 'name': 'Simão Dias', 'type': 'boundary', 'selected': false },
+          { 'id': 2000028, 'name': 'Tobias Barreto', 'type': 'boundary', 'selected': false },
+          { 'id': 2000029, 'name': 'Tomar do Geru', 'type': 'boundary', 'selected': false },
+          { 'id': 2000030, 'name': 'Umbaúba', 'type': 'boundary', 'selected': false }
         ];
         assert.deepEqual(result.admin_areas, adminAreas);
       });
     });
 
-    it('should update the deselect all admin areas', function () {
+    it('should deselect all admin areas', function () {
       return instance.injectThen({
         method: 'PATCH',
         url: '/projects/2000/scenarios/2000',
@@ -347,36 +474,36 @@ describe('Scenarios', function () {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
         let adminAreas = [
-          {'name': 'Distrito de Abadia', 'selected': false},
-          {'name': 'Distrito de Itanhi', 'selected': false},
-          {'name': 'Distrito de Conceição de Campinas', 'selected': false},
-          {'name': 'Distrito de Sambaíba', 'selected': false},
-          {'name': 'Distrito de Buril', 'selected': false},
-          {'name': 'Distrito de Itamira', 'selected': false},
-          {'name': 'Estância', 'selected': false},
-          {'name': 'Itaporanga d\'Ajuda', 'selected': false},
-          {'name': 'Salgado', 'selected': false},
-          {'name': 'Arauá', 'selected': false},
-          {'name': 'Boquim', 'selected': false},
-          {'name': 'Cristinápolis', 'selected': false},
-          {'name': 'Indiaroba', 'selected': false},
-          {'name': 'Itabaianinha', 'selected': false},
-          {'name': 'Pedrinhas', 'selected': false},
-          {'name': 'Santa Luzia do Itanhy', 'selected': false},
-          {'name': 'Tomar do Geru', 'selected': false},
-          {'name': 'Umbaúba', 'selected': false},
-          {'name': 'Pedra Mole', 'selected': false},
-          {'name': 'Campo do Brito', 'selected': false},
-          {'name': 'Itabaiana', 'selected': false},
-          {'name': 'Lagarto', 'selected': false},
-          {'name': 'Macambira', 'selected': false},
-          {'name': 'Poço Verde', 'selected': false},
-          {'name': 'Simão Dias', 'selected': false},
-          {'name': 'São Domingos', 'selected': false},
-          {'name': 'Palmares', 'selected': false},
-          {'name': 'Riachão do Dantas', 'selected': false},
-          {'name': 'Samambaia', 'selected': false},
-          {'name': 'Tobias Barreto', 'selected': false}
+          { 'id': 200001, 'name': 'Arauá', 'type': 'boundary', 'selected': false },
+          { 'id': 200002, 'name': 'Boquim', 'type': 'boundary', 'selected': false },
+          { 'id': 200003, 'name': 'Campo do Brito', 'type': 'boundary', 'selected': false },
+          { 'id': 200004, 'name': 'Cristinápolis', 'type': 'boundary', 'selected': false },
+          { 'id': 200005, 'name': 'Distrito de Abadia', 'type': 'boundary', 'selected': false },
+          { 'id': 200006, 'name': 'Distrito de Buril', 'type': 'boundary', 'selected': false },
+          { 'id': 200007, 'name': 'Distrito de Conceição de Campinas', 'type': 'boundary', 'selected': false },
+          { 'id': 200008, 'name': 'Distrito de Itamira', 'type': 'boundary', 'selected': false },
+          { 'id': 200009, 'name': 'Distrito de Itanhi', 'type': 'boundary', 'selected': false },
+          { 'id': 2000010, 'name': 'Distrito de Sambaíba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000011, 'name': 'Estância', 'type': 'boundary', 'selected': false },
+          { 'id': 2000012, 'name': 'Indiaroba', 'type': 'boundary', 'selected': false },
+          { 'id': 2000013, 'name': 'Itabaiana', 'type': 'boundary', 'selected': false },
+          { 'id': 2000014, 'name': 'Itabaianinha', 'type': 'boundary', 'selected': false },
+          { 'id': 2000015, 'name': 'Itaporanga d\'Ajuda', 'type': 'boundary', 'selected': false },
+          { 'id': 2000016, 'name': 'Lagarto', 'type': 'boundary', 'selected': false },
+          { 'id': 2000017, 'name': 'Macambira', 'type': 'boundary', 'selected': false },
+          { 'id': 2000018, 'name': 'Palmares', 'type': 'boundary', 'selected': false },
+          { 'id': 2000019, 'name': 'Pedra Mole', 'type': 'boundary', 'selected': false },
+          { 'id': 2000020, 'name': 'Pedrinhas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000021, 'name': 'Poço Verde', 'type': 'boundary', 'selected': false },
+          { 'id': 2000022, 'name': 'Riachão do Dantas', 'type': 'boundary', 'selected': false },
+          { 'id': 2000023, 'name': 'Salgado', 'type': 'boundary', 'selected': false },
+          { 'id': 2000024, 'name': 'Samambaia', 'type': 'boundary', 'selected': false },
+          { 'id': 2000025, 'name': 'Santa Luzia do Itanhy', 'type': 'boundary', 'selected': false },
+          { 'id': 2000026, 'name': 'São Domingos', 'type': 'boundary', 'selected': false },
+          { 'id': 2000027, 'name': 'Simão Dias', 'type': 'boundary', 'selected': false },
+          { 'id': 2000028, 'name': 'Tobias Barreto', 'type': 'boundary', 'selected': false },
+          { 'id': 2000029, 'name': 'Tomar do Geru', 'type': 'boundary', 'selected': false },
+          { 'id': 2000030, 'name': 'Umbaúba', 'type': 'boundary', 'selected': false }
         ];
         assert.deepEqual(result.admin_areas, adminAreas);
       });
@@ -473,7 +600,7 @@ describe('Scenarios', function () {
       db.insert({
         id: 10000001,
         name: 'results_000000',
-        type: 'results',
+        type: 'results-csv',
         path: 'scenario-1000/results_000000',
         project_id: 1000,
         scenario_id: 1000
@@ -490,20 +617,50 @@ describe('Scenarios', function () {
       .then(() => done());
     });
 
+    it('should return 400 when download is missing', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/results?type=csv'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "download" fails because ["download" is required]');
+      });
+    });
+
+    it('should return 400 when type is missing', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/results?download=true'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "type" fails because ["type" is required]');
+      });
+    });
+
     it('should return 400 when download flag not true', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1000/scenarios/1000/results?download=false'
+        url: '/projects/1000/scenarios/1000/results?download=false&type=geojson'
       }).then(res => {
-        assert.equal(res.statusCode, 501, 'Status code is 404');
-        assert.equal(res.result.message, 'Query parameter "download" missing');
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "download" fails because ["download" must be one of [true]]');
+      });
+    });
+
+    it('should return 400 when type is incorrect', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/scenarios/1000/results?download=true&type=csvjson '
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, 'child "type" fails because ["type" must be one of [csv, geojson]]');
       });
     });
 
     it('should return 404 when a file is not found', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/8888/scenarios/8888/results?download=true'
+        url: '/projects/8888/scenarios/8888/results?download=true&type=csv'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'Results not found');
@@ -513,7 +670,7 @@ describe('Scenarios', function () {
     it('should return 404 when a file is not found on s3', function () {
       return instance.injectThen({
         method: 'GET',
-        url: '/projects/1000/scenarios/1000/results?download=true'
+        url: '/projects/1000/scenarios/1000/results?download=true&type=csv'
       }).then(res => {
         assert.equal(res.statusCode, 404, 'Status code is 404');
         assert.equal(res.result.message, 'File not found in storage bucket');

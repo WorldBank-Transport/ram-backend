@@ -48,20 +48,10 @@ const rraOsmRoute = {
 
     if (path.match(/changeset\/[0-9]+\/upload/)) {
       // Update the database with the road generation time.
-      db.transaction(function (trx) {
-        return trx('scenarios')
-          .select('*')
-          .where('id', scId)
-          .first()
-          .then(scenario => {
-            let data = scenario.data;
-            data.rn_updated_at = (new Date());
-            return trx('scenarios')
-              .update({ data })
-              .where('id', scId);
-          })
-          .then(() => trx.commit());
-      })
+      db('scenarios_settings')
+        .update({value: (new Date())})
+        .where('scenario_id', scId)
+        .where('key', 'rn_updated_at')
       .then(() => handleIt());
     } else {
       handleIt();

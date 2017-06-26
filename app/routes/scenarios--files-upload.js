@@ -19,17 +19,22 @@ module.exports = [
         }
       },
       payload: {
-        maxBytes: 1 * Math.pow(1024, 3), // 1GB
+        // maxBytes: 1 * Math.pow(1024, 3), // 1GB
+        maxBytes: 1,
         output: 'stream',
         parse: false,
         allow: 'multipart/form-data'
       }
     },
     handler: (request, reply) => {
+      return reply(Boom.notImplemented('This method is deprecated'));
+
+      /* eslint-disable */
       const projId = parseInt(request.params.projId);
       const scId = parseInt(request.params.scId);
       let file;
       let type;
+      let subtype;
       let fileName;
       let filePath;
 
@@ -50,6 +55,9 @@ module.exports = [
             throw new DataValidationError('"file" is required');
           }
 
+          // TODO: Get subtype from request.
+          subtype = type === 'poi' ? 'pointOfInterest' : '';
+
           file = result.files.file[0];
           fileName = `${type}_${Date.now()}`;
           filePath = `scenario-${scId}/${fileName}`;
@@ -69,7 +77,8 @@ module.exports = [
           })
           .leftJoin('scenarios_files', function () {
             this.on('scenarios.id', '=', 'scenarios_files.scenario_id')
-              .andOn(db.raw('scenarios_files.type = :type', {type}));
+              .andOn(db.raw('scenarios_files.type = :type', {type}))
+              .andOn(db.raw('scenarios_files.subtype = :subtype', {subtype}));
           })
           .where('projects.id', projId)
           .then(res => {
@@ -95,6 +104,11 @@ module.exports = [
             created_at: (new Date()),
             updated_at: (new Date())
           };
+
+          // TODO: Get subtype from request.
+          if (type === 'poi') {
+            data.subtype = subtype;
+          }
 
           return db('scenarios_files')
             .returning('*')

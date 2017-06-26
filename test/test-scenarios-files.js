@@ -103,7 +103,7 @@ describe('Scenario files', function () {
     });
   });
 
-  describe('POST /projects/{projId}/scenarios/{scId}/files', function () {
+  describe.skip('POST /projects/{projId}/scenarios/{scId}/files', function () {
     it('should error when data format is not multipart/form-data', function () {
       return instance.injectThen({
         method: 'POST',
