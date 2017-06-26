@@ -93,6 +93,37 @@ export default [
               .then(files => {
                 if (files.length) { throw new FileExistsError(); }
               })
+              // Validations.
+              .then(() => {
+                if (sourceName === 'admin-bounds') {
+                  return getLocalJSONFileContents(file.path)
+                    .catch(err => {
+                      if (err instanceof SyntaxError) throw new DataValidationError('Invalid GeoJSON file');
+                      throw err;
+                    })
+                    .then(contents => {
+                      if (contents.type !== 'FeatureCollection') {
+                        throw new DataValidationError('GeoJSON file must be a feature collection');
+                      }
+
+                      if (!contents.features || !contents.features.length) {
+                        throw new DataValidationError('No valid admin areas found in file');
+                      }
+
+                      // Features without name.
+                      let noName = contents.features.filter(o => !o.properties.name);
+                      if (noName.length) {
+                        throw new DataValidationError(`All features must have a "name". Found ${noName.length} features without a "name" property`);
+                      }
+
+                      // Point features.
+                      let noPoly = contents.features.filter(o => o.geometry.type !== 'Polygon' && o.geometry.type !== 'MultiPolygon');
+                      if (noPoly.length) {
+                        throw new DataValidationError(`All features must be a "Polygon" or a "MultiPolygon". Found ${noPoly.length} invalid features`);
+                      }
+                    });
+                }
+              })
               // Upload to S3.
               .then(() => putFileToS3(filePath, file.path))
               // Insert into database.
@@ -243,6 +274,10 @@ function handleOrigins (result, projId) {
             if (files.length) { throw new FileExistsError(); }
           })
           .then(() => getLocalJSONFileContents(file.path))
+          .catch(err => {
+            if (err instanceof SyntaxError) throw new DataValidationError('Invalid GeoJSON file');
+            throw err;
+          })
           .then(contents => {
             // Every feature must have a name attribute.
             let hasName = contents.features.every(f => !!f.properties.name);

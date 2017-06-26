@@ -5,7 +5,7 @@ import Promise from 'bluebird';
 import Zip from 'node-zip';
 
 import db from '../db/';
-import { putFile as putFileToS3, removeLocalFile, getFileContents } from '../s3/utils';
+import { putFile as putFileToS3, removeLocalFile, getLocalJSONFileContents, getFileContents } from '../s3/utils';
 import {
   ProjectNotFoundError,
   ScenarioNotFoundError,
@@ -129,6 +129,25 @@ export default [
                 })
                 .then(files => {
                   if (files.length) { throw new FileExistsError(); }
+                })
+                // Validations.
+                .then(() => {
+                  if (sourceName === 'poi') {
+                    return getLocalJSONFileContents(file.path)
+                      .catch(err => {
+                        if (err instanceof SyntaxError) throw new DataValidationError(`Invalid GeoJSON file`);
+                        throw err;
+                      })
+                      .then(contents => {
+                        if (contents.type !== 'FeatureCollection') {
+                          throw new DataValidationError('GeoJSON file must be a feature collection');
+                        }
+
+                        if (!contents.features || !contents.features.length) {
+                          throw new DataValidationError('No valid poi found in file');
+                        }
+                      });
+                  }
                 })
                 // Upload to S3.
                 .then(() => putFileToS3(filePath, file.path))
