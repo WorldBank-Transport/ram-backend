@@ -5,7 +5,13 @@ import Promise from 'bluebird';
 import Zip from 'node-zip';
 
 import db from '../db/';
-import { putFile as putFileToS3, removeLocalFile, getLocalJSONFileContents, getFileContents } from '../s3/utils';
+import {
+  putFile as putFileToS3,
+  removeLocalFile,
+  removeFile,
+  getLocalJSONFileContents,
+  getFileContents
+} from '../s3/utils';
 import {
   ProjectNotFoundError,
   ScenarioNotFoundError,
@@ -94,26 +100,7 @@ export default [
               let filePath = `scenario-${scId}/${fileName}`;
 
               // Upsert source.
-              return db('scenarios_source_data')
-                .select('id')
-                .where('scenario_id', scId)
-                .where('name', sourceName)
-                .first()
-                .then(source => {
-                  if (source) {
-                    return db('scenarios_source_data')
-                      .update({type: 'file'})
-                      .where('id', source.id);
-                  } else {
-                    return db('scenarios_source_data')
-                      .insert({
-                        project_id: projId,
-                        scenario_id: scId,
-                        name: sourceName,
-                        type: 'file'
-                      });
-                  }
-                })
+              return upsertScenarioSource(projId, scId, sourceName, 'file')
                 // Check if the file exists.
                 .then(() => {
                   let query = db('scenarios_files')
@@ -186,8 +173,35 @@ export default [
                   throw err;
                 });
             case 'osm':
-              throw new DataValidationError(`"osm" type not implemented`);
-              // break;
+              if (sourceName === 'poi') throw new Error('Osm source for poi not implemented'); // temp
+              // Upsert source.
+              return upsertScenarioSource(projId, scId, sourceName, 'osm')
+                // Delete file if it exists.
+                .then(() => db('scenarios_files')
+                  .where('project_id', projId)
+                  .where('scenario_id', scId)
+                  .where('type', sourceName)
+                  .then(files => {
+                    if (files.length) {
+                      // Remove files from DB.
+                      return db('scenarios_files')
+                        .whereIn('id', files.map(o => o.id))
+                        .del()
+                        // Remove files from storage.
+                        .then(() => Promise.map(files, file => removeFile(file.path)));
+                    }
+                  })
+                )
+                .then(() => db('scenarios_files')
+                  .where('project_id', projId)
+                  .where('scenario_id', scId)
+                  .where('type', sourceName)
+                  .del()
+                )
+                .then(() => reply({
+                  sourceType,
+                  sourceName
+                }));
             default:
               throw new DataValidationError(`"source-type" must be one of [osm, file]`);
           }
@@ -264,3 +278,26 @@ export default [
     }
   }
 ];
+
+function upsertScenarioSource (projId, scId, sourceName, sourceType) {
+  return db('scenarios_source_data')
+    .select('id')
+    .where('scenario_id', scId)
+    .where('name', sourceName)
+    .first()
+    .then(source => {
+      if (source) {
+        return db('scenarios_source_data')
+          .update({type: sourceType})
+          .where('id', source.id);
+      } else {
+        return db('scenarios_source_data')
+          .insert({
+            project_id: projId,
+            scenario_id: scId,
+            name: sourceName,
+            type: sourceType
+          });
+      }
+    });
+}
