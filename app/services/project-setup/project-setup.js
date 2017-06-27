@@ -7,10 +7,11 @@ import _ from 'lodash';
 import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
-import { getJSONFileContents } from '../../s3/utils';
+import { getJSONFileContents, putFileStream } from '../../s3/utils';
 // import { getFileContents, getJSONFileContents } from '../../s3/utils';
 // import { importRoadNetwork } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
+import * as overpass from '../../utils/overpass';
 
 const DEBUG = config.debug;
 let appLogger = AppLogger({ output: DEBUG });
@@ -195,6 +196,12 @@ export function concludeProjectSetup (e) {
   let op = new Operation(db);
   op.loadById(opId)
   .then(() => Promise.all([
+    // Get source for Road Network.
+    db('scenarios_source_data')
+      .select('*')
+      .where('scenario_id', scId)
+      .where('name', 'road-network')
+      .first(),
     // db('scenarios_files')
     //   .select('*')
     //   .where('project_id', projId)
@@ -217,7 +224,42 @@ export function concludeProjectSetup (e) {
   ]))
   .then(filesContent => {
     // let [roadNetwork, [adminBoundsFc, originsData]] = filesContent;
-    let [[adminBoundsFc, originsData]] = filesContent;
+    let [rnSource, [adminBoundsFc, originsData]] = filesContent;
+
+    let rnProcessPromise;
+    switch (rnSource.type) {
+      case 'file':
+        rnProcessPromise = Promise.resolve();
+        break;
+      case 'osm':
+        let adminAreasBbox = overpass.fcBbox(adminBoundsFc);
+        let query = `(
+          way["highway"~"motorway|primary|secondary|tertiary|service|residential"](${adminAreasBbox});
+          >;
+        );
+        out body;`;
+        rnProcessPromise = op.log('process:road-network', {message: 'Importing road network from OSM'})
+          .then(() => overpass.query(query))
+          .then(osmData => {
+            let fileName = `road-network_${Date.now()}`;
+            let filePath = `scenario-${scId}/${fileName}`;
+            let data = {
+              name: fileName,
+              type: 'road-network',
+              path: filePath,
+              project_id: projId,
+              scenario_id: scId,
+              created_at: (new Date()),
+              updated_at: (new Date())
+            };
+
+            return putFileStream(filePath, osmData)
+              .then(() => db('scenarios_files').insert(data));
+          });
+        break;
+      default:
+        throw new Error(`Invalid source type for road-network`);
+    }
 
     // Run the tasks in series rather than in parallel.
     // This is better for error handling. If they run in parallel and
@@ -226,10 +268,11 @@ export function concludeProjectSetup (e) {
     // the error is captured by the promise.
     // Since processing the admin areas is a pretty fast operation, the
     // performance is not really affected.
-    return Promise.all([
-      processAdminAreas(adminBoundsFc),
-      processOrigins(originsData)
-    ]);
+    return rnProcessPromise
+      .then(() => Promise.all([
+        processAdminAreas(adminBoundsFc),
+        processOrigins(originsData)
+      ]));
       // .then(() => {
       //   logger && logger.log('process road network');
       //   return importRoadNetwork(projId, scId, op, roadNetwork);

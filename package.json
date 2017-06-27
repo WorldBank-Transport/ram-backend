@@ -52,7 +52,10 @@
     "osm-p2p": "^1.4.0",
     "osm-p2p-server": "^2.1.2",
     "osm2json": "^2.1.0",
-    "pg": "^6.1.2"
+    "pg": "^6.1.2",
+    "promise-retry": "^1.1.1",
+    "request": "^2.79.0",
+    "request-promise": "^4.2.1"
   },
   "devDependencies": {
     "chai": "^3.5.0",
@@ -65,7 +68,6 @@
     "mocha": "^3.2.0",
     "mockdate": "^2.0.1",
     "nodemon": "^1.11.0",
-    "request": "^2.79.0",
     "stream-to-promise": "^2.2.0"
   }
 }
