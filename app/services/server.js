@@ -24,7 +24,7 @@ module.exports = function (options, callback) {
   server.hapi.register(require('hapi-auth-jwt2'), err => {
     if (err) callback(err);
 
-    if (config.auth.strategy === 'jwt') {
+    if (config.auth && config.auth.strategy === 'jwt') {
       server.hapi.auth.strategy('jwt', 'jwt', true, {
         complete: true,
         key: jwksRsa.hapiJwt2Key({

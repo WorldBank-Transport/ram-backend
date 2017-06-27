@@ -75,6 +75,10 @@ The following options must be set:
 
   - `connection.host` - The host. (mostly cosmetic. Default to 0.0.0.0). [PORT]
   - `connection.port` - The port where the app runs. (Default 4000). [HOST]
+  - `auth` - Authentication strategy object
+  - `auth.strategy` - `jwt` or `none`
+  - `auth.audience` - JWT resource server namespace in case of `jwt`
+  - `auth.issuer` - JWT issuer URL in case of `jwt`
   - `db` - The database connection string. [DB_CONNECTION]
   - `osmP2PDir` - The folder to store the osm-p2p dbs. [OSM_P2P_DIR]
   - `storage` - Object with storage related settings. Has to be s3 compatible.
@@ -101,6 +105,9 @@ module.exports = {
     host: '0.0.0.0',
     port: 4000
   },
+  auth: {
+    strategy: none
+  },
   db: 'postgresql://rra:rra@localhost:5432/rra',
   osmP2PDir: `${__dirname}/../../osm-p2p-dbs`,
   storage: {
@@ -122,6 +129,15 @@ module.exports = {
     storagePort: 9000
   }
 };
+```
+
+Example of auth key with JWT:
+```
+auth: {
+  strategy: 'jwt',
+  audience: 'http://api',
+  issuer: 'https://example.auth0.com/' #URL should have an endslash
+}
 ```
 
 ### Setup
