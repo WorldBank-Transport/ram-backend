@@ -43,8 +43,8 @@ process.on('message', function (e) {
  *         e.opId           Operation Id. It has to be already started.
  *         e.projId         Project Id.
  *         e.scId           Scenario Id.
- *         e.source         Source for the road network (clone | new)
- *         e.sourceScenarioId  Id of the source scenario. Relevant if source
+ *         e.rnSource         Source for the road network (clone | new)
+ *         e.rnSourceScenarioId  Id of the source scenario. Relevant if source
  *                             is `clone`.
  *         e.roadNetworkFile   Name of the road network file on s3. Relevant if
  *                             source is `new`.
@@ -55,8 +55,8 @@ export function scenarioCreate (e) {
     projId,
     scId,
     opId,
-    source,
-    sourceScenarioId,
+    rnSource,
+    rnSourceScenarioId,
     roadNetworkFile,
     callback
   } = e;
@@ -67,20 +67,20 @@ export function scenarioCreate (e) {
     .then(() => db.transaction(function (trx) {
       let executor = Promise.resolve();
 
-      if (source === 'clone') {
+      if (rnSource === 'clone') {
         executor = executor
           // Copy the scenario files.
           .then(() => op.log('files', {message: 'Cloning files'}))
           .then(() => trx('scenarios_files')
             .select('*')
-            .where('scenario_id', sourceScenarioId)
+            .where('scenario_id', rnSourceScenarioId)
             .where('project_id', projId)
             .whereIn('type', ['poi', 'road-network'])
             .then(files => cloneScenarioFiles(trx, files, projId, scId))
           )
           .then(() => trx('scenarios_source_data')
             .select('project_id', 'name', 'type', 'data')
-            .where('scenario_id', sourceScenarioId)
+            .where('scenario_id', rnSourceScenarioId)
             .where('project_id', projId)
             .then(sourceData => {
               // Set new id.
@@ -93,9 +93,9 @@ export function scenarioCreate (e) {
           .then(sourceData => trx.batchInsert('scenarios_source_data', sourceData));
           // Copy the osm-p2p-db.
           // .then(() => op.log('files', {message: 'Cloning road network database'}));
-          // .then(() => cloneOsmP2Pdb(projId, sourceScenarioId, projId, scId));
+          // .then(() => cloneOsmP2Pdb(projId, rnSourceScenarioId, projId, scId));
       //
-      } else if (source === 'new') {
+      } else if (rnSource === 'new') {
         executor = executor
           // Copy the scenario files.
           .then(() => op.log('files', {message: 'Cloning files'}))
@@ -150,7 +150,7 @@ export function scenarioCreate (e) {
           //   logger && logger.log('process road network');
           //   return importRoadNetwork(projId, scId, op, roadNetwork);
           // });
-      } else if (source === 'osm') {
+      } else if (rnSource === 'osm') {
         executor = executor
           .then(() => op.log('files', {message: 'Importing road network'}))
           .then(() => trx.batchInsert('scenarios_source_data', [
