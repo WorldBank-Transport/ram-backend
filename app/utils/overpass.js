@@ -44,3 +44,12 @@ export function convertBbox (bbox) {
 export function fcBbox (fc) {
   return convertBbox(bbox(fc));
 }
+
+export function importRoadNetwork (bbox) {
+  let ql = `(
+    way["highway"~"motorway|primary|secondary|tertiary|service|residential"](${bbox});
+    >;
+  ); out body;`;
+
+  return query(ql);
+}

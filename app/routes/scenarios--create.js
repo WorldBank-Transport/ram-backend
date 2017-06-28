@@ -106,6 +106,9 @@ function handler (params, payload, reply) {
       } else if (source === 'new') {
         return handleRoadNetworkUpload(scenario, op.getId(), source, roadNetworkFile)
           .then(() => scenario);
+      } else if (source === 'osm') {
+        return createScenario(params.projId, scenario.id, op.getId(), source)
+          .then(() => scenario);
       }
     })
     .then(scenario => reply(scenario))
@@ -166,7 +169,7 @@ export default [
           let validation = Joi.validate(payload, Joi.object().keys({
             name: Joi.string().required(),
             description: Joi.string(),
-            roadNetworkSource: Joi.string().valid('clone', 'new').required(),
+            roadNetworkSource: Joi.string().valid('clone', 'new', 'osm').required(),
             roadNetworkSourceScenario: Joi.number().when('roadNetworkSource', {is: 'clone', then: Joi.required()}),
             roadNetworkFile: Joi.object().when('roadNetworkSource', {is: 'new', then: Joi.required()})
           }));
@@ -264,7 +267,7 @@ function startOperation (projId, scId) {
     });
 }
 
-function createScenario (projId, scId, opId, source, data) {
+function createScenario (projId, scId, opId, source, data = {}) {
   let action = Promise.resolve();
   // In test mode we don't want to start the generation.
   // It will be tested in the appropriate place.

@@ -193,6 +193,28 @@ export function concludeProjectSetup (e) {
       .then(() => originsTask());
   }
 
+  function importRoadNetwork (bbox) {
+    return op.log('process:road-network', {message: 'Importing road network from OSM'})
+      .then(() => overpass.importRoadNetwork(bbox))
+      .then(osmData => {
+        // Insert file into DB.
+        let fileName = `road-network_${Date.now()}`;
+        let filePath = `scenario-${scId}/${fileName}`;
+        let data = {
+          name: fileName,
+          type: 'road-network',
+          path: filePath,
+          project_id: projId,
+          scenario_id: scId,
+          created_at: (new Date()),
+          updated_at: (new Date())
+        };
+
+        return putFileStream(filePath, osmData)
+          .then(() => db('scenarios_files').insert(data));
+      });
+  }
+
   let op = new Operation(db);
   op.loadById(opId)
   .then(() => Promise.all([
@@ -229,33 +251,12 @@ export function concludeProjectSetup (e) {
     let rnProcessPromise;
     switch (rnSource.type) {
       case 'file':
+        // We'll need to get the files contents to import to
+        // the osm-p2p-db. Eventually...
         rnProcessPromise = Promise.resolve();
         break;
       case 'osm':
-        let adminAreasBbox = overpass.fcBbox(adminBoundsFc);
-        let query = `(
-          way["highway"~"motorway|primary|secondary|tertiary|service|residential"](${adminAreasBbox});
-          >;
-        );
-        out body;`;
-        rnProcessPromise = op.log('process:road-network', {message: 'Importing road network from OSM'})
-          .then(() => overpass.query(query))
-          .then(osmData => {
-            let fileName = `road-network_${Date.now()}`;
-            let filePath = `scenario-${scId}/${fileName}`;
-            let data = {
-              name: fileName,
-              type: 'road-network',
-              path: filePath,
-              project_id: projId,
-              scenario_id: scId,
-              created_at: (new Date()),
-              updated_at: (new Date())
-            };
-
-            return putFileStream(filePath, osmData)
-              .then(() => db('scenarios_files').insert(data));
-          });
+        rnProcessPromise = importRoadNetwork(overpass.fcBbox(adminBoundsFc));
         break;
       default:
         throw new Error(`Invalid source type for road-network`);
