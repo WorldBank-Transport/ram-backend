@@ -71,13 +71,13 @@ export function getSourceData (db, contentType, id) {
       structure = {
         'road-network': {
           type: null,
-          files: []
-          // osmOptions
+          files: [],
+          osmOptions: {}
         },
         poi: {
           type: null,
-          files: []
-          // osmOptions
+          files: [],
+          osmOptions: {}
         }
       };
       break;

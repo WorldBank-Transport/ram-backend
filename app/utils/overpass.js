@@ -53,3 +53,20 @@ export function importRoadNetwork (bbox) {
 
   return query(ql);
 }
+
+export function importPOI (bbox, groups) {
+  console.log('groups', groups);
+  throw new Error('Development triggered error');
+}
+
+export const osmPOIGroups = [
+  {
+    key: 'health'
+  },
+  {
+    key: 'education'
+  },
+  {
+    key: 'money'
+  }
+];

@@ -21,6 +21,7 @@ import {
   FileNotFoundError
 } from '../utils/errors';
 import { parseFormData } from '../utils/utils';
+import { osmPOIGroups } from '../utils/overpass';
 
 export default [
   {
@@ -173,10 +174,26 @@ export default [
                   throw err;
                 });
             case 'osm':
-              if (sourceName === 'poi') throw new Error('Osm source for poi not implemented'); // temp
+              // With poi source the osmPoiTypes are required.
+              let osmPoiTypes = result.fields['osmPoiTypes'] || [];
+              if (sourceName === 'poi') {
+                // Validate POI.
+                if (!osmPoiTypes.length) {
+                  throw new DataValidationError('"osmPoiTypes" is required for source "poi"');
+                }
+
+                let validPOI = osmPOIGroups.map(o => o.key);
+                let invalid = osmPoiTypes.filter(o => validPOI.indexOf(o) === -1);
+                if (invalid.length) {
+                  throw new DataValidationError(`POI type [${invalid.join(', ')}] not allowed. "osmPoiTypes" values must be any of [${validPOI.join(', ')}]`);
+                }
+              }
+
+              let sourceData = osmPoiTypes ? { osmPoiTypes } : null;
+
               // Upsert source.
-              return upsertScenarioSource(projId, scId, sourceName, 'osm')
-                // Delete file if it exists.
+              return upsertScenarioSource(projId, scId, sourceName, 'osm', sourceData)
+                // Delete files if exist.
                 .then(() => db('scenarios_files')
                   .where('project_id', projId)
                   .where('scenario_id', scId)
@@ -279,7 +296,7 @@ export default [
   }
 ];
 
-function upsertScenarioSource (projId, scId, sourceName, sourceType) {
+function upsertScenarioSource (projId, scId, sourceName, sourceType, sourceData) {
   return db('scenarios_source_data')
     .select('id')
     .where('scenario_id', scId)
@@ -288,7 +305,7 @@ function upsertScenarioSource (projId, scId, sourceName, sourceType) {
     .then(source => {
       if (source) {
         return db('scenarios_source_data')
-          .update({type: sourceType})
+          .update({type: sourceType, data: sourceData ? JSON.stringify(sourceData) : null})
           .where('id', source.id);
       } else {
         return db('scenarios_source_data')
@@ -296,7 +313,8 @@ function upsertScenarioSource (projId, scId, sourceName, sourceType) {
             project_id: projId,
             scenario_id: scId,
             name: sourceName,
-            type: sourceType
+            type: sourceType,
+            data: sourceData ? JSON.stringify(sourceData) : null
           });
       }
     });
