@@ -215,6 +215,14 @@ export function concludeProjectSetup (e) {
       });
   }
 
+  function importPOIs (bbox) {
+    return op.log('process:poi', {message: 'Importing poi from OSM'})
+      .then(() => overpass.importPOI(bbox))
+      .then(osmData => {
+        console.log('osmData', osmData);
+      });
+  }
+
   let op = new Operation(db);
   op.loadById(opId)
   .then(() => Promise.all([
@@ -222,8 +230,8 @@ export function concludeProjectSetup (e) {
     db('scenarios_source_data')
       .select('*')
       .where('scenario_id', scId)
-      .where('name', 'road-network')
-      .first(),
+      .whereIn('name', ['poi', 'road-network'])
+      .orderBy('name'),
     // db('scenarios_files')
     //   .select('*')
     //   .where('project_id', projId)
@@ -246,21 +254,17 @@ export function concludeProjectSetup (e) {
   ]))
   .then(filesContent => {
     // let [roadNetwork, [adminBoundsFc, originsData]] = filesContent;
-    let [rnSource, [adminBoundsFc, originsData]] = filesContent;
+    let [[poiSource, rnSource], [adminBoundsFc, originsData]] = filesContent;
 
-    let rnProcessPromise;
-    switch (rnSource.type) {
-      case 'file':
-        // We'll need to get the files contents to import to
-        // the osm-p2p-db. Eventually...
-        rnProcessPromise = Promise.resolve();
-        break;
-      case 'osm':
-        rnProcessPromise = importRoadNetwork(overpass.fcBbox(adminBoundsFc));
-        break;
-      default:
-        throw new Error(`Invalid source type for road-network`);
-    }
+    let rnProcessPromise = rnSource.type === 'osm'
+      ? () => importRoadNetwork(overpass.fcBbox(adminBoundsFc))
+      // We'll need to get the files contents to import to
+      // the osm-p2p-db. Eventually...
+      : () => Promise.resolve();
+
+    let poiProcessPromise = poiSource.type === 'osm'
+      ? () => importPOIs(overpass.fcBbox(adminBoundsFc), poiSource.data.osmPoiTypes)
+      : () => Promise.resolve();
 
     // Run the tasks in series rather than in parallel.
     // This is better for error handling. If they run in parallel and
@@ -269,7 +273,8 @@ export function concludeProjectSetup (e) {
     // the error is captured by the promise.
     // Since processing the admin areas is a pretty fast operation, the
     // performance is not really affected.
-    return rnProcessPromise
+    return rnProcessPromise()
+      .then(() => poiProcessPromise())
       .then(() => Promise.all([
         processAdminAreas(adminBoundsFc),
         processOrigins(originsData)
