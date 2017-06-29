@@ -193,10 +193,12 @@ export function concludeProjectSetup (e) {
       .then(() => originsTask());
   }
 
-  function importRoadNetwork (bbox) {
+  function importOSMRoadNetwork (bbox) {
+    logger && logger.log('Importing road network from overpass for bbox (S,W,N,E):', bbox);
     return op.log('process:road-network', {message: 'Importing road network from OSM'})
       .then(() => overpass.importRoadNetwork(bbox))
       .then(osmData => {
+        logger && logger.log('Got road network. Saving to S3 and db');
         // Insert file into DB.
         let fileName = `road-network_${Date.now()}`;
         let filePath = `scenario-${scId}/${fileName}`;
@@ -215,11 +217,53 @@ export function concludeProjectSetup (e) {
       });
   }
 
-  function importPOIs (bbox) {
+  function importOSMPOIs (bbox, poiTypes) {
+    logger && logger.log('Importing pois from overpass for bbox (S,W,N,E):', bbox);
+    logger && logger.log('POI types:', poiTypes);
     return op.log('process:poi', {message: 'Importing poi from OSM'})
-      .then(() => overpass.importPOI(bbox))
-      .then(osmData => {
-        console.log('osmData', osmData);
+      .then(() => overpass.importPOI(bbox, poiTypes))
+      .then(osmGeoJSON => {
+        logger && logger.log('Got POIS. Saving to S3 and db');
+        let types = Object.keys(osmGeoJSON);
+
+        let dbInsertions = [];
+        let fileUploadPromises = [];
+        let emptyPOI = [];
+
+        types.forEach(poiType => {
+          // Filter out pois without anything
+          if (osmGeoJSON[poiType].features.length) {
+            let fileName = `poi_${poiType}_${Date.now()}`;
+            let filePath = `scenario-${scId}/${fileName}`;
+
+            // Prepare for db insertion.
+            dbInsertions.push({
+              name: fileName,
+              type: 'poi',
+              subtype: poiType,
+              path: filePath,
+              project_id: projId,
+              scenario_id: scId,
+              created_at: (new Date()),
+              updated_at: (new Date())
+            });
+
+            // Save each poi type to S3.
+            fileUploadPromises.push(putFileStream(filePath, JSON.stringify(osmGeoJSON[poiType])));
+          } else {
+            emptyPOI.push(poiType);
+          }
+        });
+
+        if (emptyPOI.length) {
+          logger && logger.log(`No POI were returned for [${emptyPOI.join(', ')}]`);
+          throw new Error(`No POI were returned for [${emptyPOI.join(', ')}]`);
+        }
+
+        // Save to database.
+        let promises = fileUploadPromises.concat(db.batchInsert('scenarios_files', dbInsertions));
+
+        return Promise.all(promises);
       });
   }
 
@@ -257,13 +301,13 @@ export function concludeProjectSetup (e) {
     let [[poiSource, rnSource], [adminBoundsFc, originsData]] = filesContent;
 
     let rnProcessPromise = rnSource.type === 'osm'
-      ? () => importRoadNetwork(overpass.fcBbox(adminBoundsFc))
+      ? () => importOSMRoadNetwork(overpass.fcBbox(adminBoundsFc))
       // We'll need to get the files contents to import to
       // the osm-p2p-db. Eventually...
       : () => Promise.resolve();
 
     let poiProcessPromise = poiSource.type === 'osm'
-      ? () => importPOIs(overpass.fcBbox(adminBoundsFc), poiSource.data.osmPoiTypes)
+      ? () => importOSMPOIs(overpass.fcBbox(adminBoundsFc), poiSource.data.osmPoiTypes)
       : () => Promise.resolve();
 
     // Run the tasks in series rather than in parallel.

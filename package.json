@@ -52,6 +52,7 @@
     "osm-p2p": "^1.4.0",
     "osm-p2p-server": "^2.1.2",
     "osm2json": "^2.1.0",
+    "osmtogeojson": "^3.0.0-beta.2",
     "pg": "^6.1.2",
     "promise-retry": "^1.1.1",
     "request": "^2.79.0",
