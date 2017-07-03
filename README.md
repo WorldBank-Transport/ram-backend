@@ -106,7 +106,7 @@ module.exports = {
     port: 4000
   },
   auth: {
-    strategy: none
+    strategy: 'none'
   },
   db: 'postgresql://rra:rra@localhost:5432/rra',
   osmP2PDir: `${__dirname}/../../osm-p2p-dbs`,
