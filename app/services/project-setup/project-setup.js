@@ -197,6 +197,11 @@ export function concludeProjectSetup (e) {
     logger && logger.log('Importing road network from overpass for bbox (S,W,N,E):', bbox);
     return op.log('process:road-network', {message: 'Importing road network from OSM'})
       .then(() => overpass.importRoadNetwork(bbox))
+      .catch(err => {
+        // Just to log error
+        logger && logger.log('Error importing from overpass', err.message);
+        throw err;
+      })
       .then(osmData => {
         logger && logger.log('Got road network. Saving to S3 and db');
         // Insert file into DB.
@@ -222,6 +227,11 @@ export function concludeProjectSetup (e) {
     logger && logger.log('POI types:', poiTypes);
     return op.log('process:poi', {message: 'Importing poi from OSM'})
       .then(() => overpass.importPOI(bbox, poiTypes))
+      .catch(err => {
+        // Just to log error
+        logger && logger.log('Error importing from overpass', err.message);
+        throw err;
+      })
       .then(osmGeoJSON => {
         logger && logger.log('Got POIS. Saving to S3 and db');
         let types = Object.keys(osmGeoJSON);

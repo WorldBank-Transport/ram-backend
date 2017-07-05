@@ -46,13 +46,30 @@ export function fcBbox (fc) {
   return convertBbox(bbox(fc));
 }
 
+function handleOverpassSilentError (osmData) {
+  let remarkTest = osmData.match('<remark>(.*)</remark>');
+
+  if (remarkTest) {
+    let [, remark] = remarkTest;
+
+    if (remark.match('Query run out of memory')) {
+      throw new Error('Area is too complex to import from OSM');
+    }
+
+    throw new Error(remark);
+  }
+
+  return osmData;
+}
+
 export function importRoadNetwork (bbox) {
   let ql = `(
-    way["highway"~"motorway|primary|secondary|tertiary|service|residential"](${bbox});
+    way["highway"]["highway"!~"^footway$|^path$|^bridleway$|^steps$|^pedestrian$"](${bbox});
     >;
   ); out body;`;
 
-  return query('xml', ql);
+  return query('xml', ql)
+    .then(handleOverpassSilentError);
 }
 
 export function importPOI (bbox, poiTypes) {
@@ -84,6 +101,7 @@ export function importPOI (bbox, poiTypes) {
   // ); out body;
 
   return query('json', ql)
+    .then(handleOverpassSilentError)
     .then(osmData => osmtogeojson(JSON.parse(osmData), { flatProperties: true }))
     .then(osmGeo => {
       // Prepare the response object with a feature collection per POI type.

@@ -186,6 +186,11 @@ export function scenarioCreate (e) {
             .then(res => res.bbox)
           )
           .then(bbox => overpass.importRoadNetwork(overpass.convertBbox(bbox)))
+          .catch(err => {
+            // Just to log error
+            logger && logger.log('Error importing from overpass', err.message);
+            throw err;
+          })
           .then(osmData => {
             // Insert file into DB.
             let fileName = `road-network_${Date.now()}`;
