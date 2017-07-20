@@ -56,7 +56,7 @@ export default [
         })
         .then(() => db('scenarios')
           .select('id')
-          .where('id', projId)
+          .where('id', scId)
           .first()
           .then(scenario => { if (!scenario) throw new ScenarioNotFoundError(); })
         )
@@ -226,6 +226,7 @@ export default [
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(FileExistsError, e => reply(Boom.conflict(e.message)))
+        .catch(ProjectStatusError, e => reply(Boom.badRequest(e.message)))
         .catch(DataValidationError, e => reply(Boom.badRequest(e.message)))
         .catch(err => {
           console.log('err', err);
