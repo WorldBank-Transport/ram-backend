@@ -47,12 +47,25 @@ export function fcBbox (fc) {
 }
 
 function handleOverpassSilentError (osmData) {
-  let remarkTest = osmData.match('<remark>(.*)</remark>');
+  let remark = null;
 
-  if (remarkTest) {
-    let [, remark] = remarkTest;
+  // Handle response in xml format.
+  if (typeof osmData === 'string') {
+    let remarkTest = osmData.match('<remark>(.*)</remark>');
 
-    if (remark.match('Query run out of memory')) {
+    if (remarkTest) {
+      remark = remarkTest[1];
+    }
+
+  // Handle response in json format.
+  } else {
+    if (osmData.remark) {
+      remark = osmData.remark;
+    }
+  }
+
+  if (remark) {
+    if (remark.match('Query run out of memory') || remark.match('Query timed out in')) {
       throw new Error('Area is too complex to import from OSM');
     }
 
@@ -101,8 +114,9 @@ export function importPOI (bbox, poiTypes) {
   // ); out body;
 
   return query('json', ql)
+    .then(osmData => JSON.parse(osmData))
     .then(handleOverpassSilentError)
-    .then(osmData => osmtogeojson(JSON.parse(osmData), { flatProperties: true }))
+    .then(osmJSON => osmtogeojson(osmJSON, { flatProperties: true }))
     .then(osmGeo => {
       // Prepare the response object with a feature collection per POI type.
       let poiFCs = {};
