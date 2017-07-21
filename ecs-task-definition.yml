@@ -11,7 +11,7 @@ rra-postgis:
 rra-api:
   image: wbtransport/rra-api
   ports:
-    - 4000:4000
+    - 4000:80
   command: node index.js
   links:
     - rra-postgis
