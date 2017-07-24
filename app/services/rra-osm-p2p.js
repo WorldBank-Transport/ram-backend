@@ -1,14 +1,17 @@
 'use strict';
 import fs from 'fs-extra';
+import Promise from 'bluebird';
 import os from 'os';
 import cp from 'child_process';
 import path from 'path';
 import osmdb from 'osm-p2p';
 import osmrouter from 'osm-p2p-server';
-import osm2json from 'osm2json';
-import putChanges from 'osm-p2p-server/api/put_changes';
+// import osm2json from 'osm2json';
+// import putChanges from 'osm-p2p-server/api/put_changes';
 import createChangeset from 'osm-p2p-server/api/create_changeset';
-import osmP2PErrors from 'osm-p2p-server/errors';
+// import osmP2PErrors from 'osm-p2p-server/errors';
+import importer from 'osm-p2p-db-importer';
+// import { Readable } from 'stream';
 
 import config from '../config';
 
@@ -146,6 +149,82 @@ export function importRoadNetwork (projId, scId, op, roadNetwork) {
     });
   };
 
+  let baseDir = getDatabaseBaseDir();
+  let dbName = getDatabaseName(projId, scId);
+
+  let importPromise = Promise.promisify(importer);
+
+  return op.log('process:road-network', {message: 'Road network processing started'})
+    .then(() => generateChangeset())
+    .then(id => createOSMChange(id))
+    .then(() => {
+      let xml = fs.createReadStream(`${basePath}.osmc`);
+      return importPromise(`${baseDir}/${dbName}`, xml);
+    })
+    .then(() => { console.timeEnd('processRoadNetwork'); })
+    // Note: There's no need to close the osm-p2p-db because when the process
+    // terminates the connection is automatically closed.
+    .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
+}
+
+/*
+export function importRoadNetwork (projId, scId, op, roadNetwork) {
+  console.time('processRoadNetwork');
+  const db = getDatabase(projId, scId);
+  const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
+
+  // Create a new changeset through the API.
+  const generateChangeset = () => {
+    return new Promise((resolve, reject) => {
+      let changeset = {
+        type: 'changeset',
+        tags: {
+          comment: `Finish project setup. Project ${projId}, Scenario ${scId}`,
+          created_by: 'RRA'
+        }
+      };
+      createChangeset(db)(changeset, (err, id, node) => {
+        if (err) return reject(err);
+        return resolve(id);
+      });
+    });
+  };
+
+  // Create an OSM Change file and store it in system /tmp folder.
+  const createOSMChange = (id) => {
+    return new Promise((resolve, reject) => {
+      // OGR reads from a file
+      fs.writeFileSync(`${basePath}.osm`, roadNetwork);
+
+      // Use ogr2osm with:
+      // -t - a custom translation file. Default only removes empty values
+      // -o - to specify output file
+      // -f - to force overwrite
+      let cmd = path.resolve(__dirname, '../lib/ogr2osm/ogr2osm.py');
+      let args = [
+        cmd,
+        `${basePath}.osm`,
+        '-t', './app/lib/ogr2osm/default_translation.py',
+        '--changeset-id', id,
+        '-o', `${basePath}.osmc`,
+        '-f'
+      ];
+
+      let conversionProcess = cp.spawn('python', args);
+      let processError = '';
+      conversionProcess.stderr.on('data', err => {
+        processError += err.toString();
+      });
+      conversionProcess.on('close', code => {
+        if (code !== 0) {
+          let err = processError || `Unknown error. Code ${code}`;
+          return reject(new Error(err));
+        }
+        return resolve(id);
+      });
+    });
+  };
+
   // Add data from the OSM Change file to the created changeset.
   const putChangeset = (id) => {
     return new Promise((resolve, reject) => {
@@ -168,3 +247,4 @@ export function importRoadNetwork (projId, scId, op, roadNetwork) {
     // terminates the connection is automatically closed.
     .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
 }
+*/
