@@ -148,7 +148,7 @@ describe('Finish Project Setup', function () {
           scId: 3000,
           callback: (err) => {
             if (err) {
-              done(new Error('The script ended in error' + err));
+              done(new Error('The script ended in error ' + err));
             } else {
               validate();
             }

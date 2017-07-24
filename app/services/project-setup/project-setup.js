@@ -335,7 +335,7 @@ export function concludeProjectSetup (e) {
 
     let rnProcessPromise = rnSource.type === 'osm'
       ? () => importOSMRoadNetwork(overpass.fcBbox(adminBoundsFc))
-      : Promise.resolve();
+      : () => Promise.resolve();
       // We'll need to get the RN contents to import to the osm-p2p-db.
       // : () => db('scenarios_files')
       //   .select('*')
