@@ -8,7 +8,7 @@ import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
 import { getJSONFileContents, putFileStream } from '../../s3/utils';
-// import { getFileContents, getJSONFileContents } from '../../s3/utils';
+// import { getFileContents } from '../../s3/utils';
 // import { importRoadNetwork } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
@@ -195,8 +195,8 @@ export function concludeProjectSetup (e) {
 
   function importOSMRoadNetwork (bbox) {
     logger && logger.log('Importing road network from overpass for bbox (S,W,N,E):', bbox);
-    return op.log('process:road-network', {message: 'Importing road network from OSM'})
-      .then(() => overpass.importRoadNetwork(bbox))
+
+    let importOSMRoadNetworkTask = () => overpass.importRoadNetwork(bbox)
       .catch(err => {
         // Just to log error
         logger && logger.log('Error importing from overpass', err.message);
@@ -218,15 +218,30 @@ export function concludeProjectSetup (e) {
         };
 
         return putFileStream(filePath, osmData)
-          .then(() => db('scenarios_files').insert(data));
+          .then(() => db('scenarios_files').insert(data))
+          .then(() => osmData);
       });
+
+    // Clean the tables so any remnants of previous attempts are removed.
+    // This avoids primary keys collisions and duplication.
+    let cleanTable = () => {
+      return db('scenarios_files')
+        .where('project_id', projId)
+        .where('scenario_id', scId)
+        .where('type', 'road-network')
+        .del();
+    };
+
+    return op.log('process:road-network', {message: 'Importing road network from OSM'})
+      .then(() => cleanTable())
+      .then(() => importOSMRoadNetworkTask());
   }
 
   function importOSMPOIs (bbox, poiTypes) {
     logger && logger.log('Importing pois from overpass for bbox (S,W,N,E):', bbox);
     logger && logger.log('POI types:', poiTypes);
-    return op.log('process:poi', {message: 'Importing poi from OSM'})
-      .then(() => overpass.importPOI(bbox, poiTypes))
+
+    let importOSMPOIsTask = () => overpass.importPOI(bbox, poiTypes)
       .catch(err => {
         // Just to log error
         logger && logger.log('Error importing from overpass', err.message);
@@ -275,6 +290,20 @@ export function concludeProjectSetup (e) {
 
         return Promise.all(promises);
       });
+
+    // Clean the tables so any remnants of previous attempts are removed.
+    // This avoids primary keys collisions and duplication.
+    let cleanTable = () => {
+      return db('scenarios_files')
+        .where('project_id', projId)
+        .where('scenario_id', scId)
+        .where('type', 'poi')
+        .del();
+    };
+
+    return op.log('process:poi', {message: 'Importing poi from OSM'})
+      .then(() => cleanTable())
+      .then(() => importOSMPOIsTask());
   }
 
   let op = new Operation(db);
@@ -286,12 +315,6 @@ export function concludeProjectSetup (e) {
       .where('scenario_id', scId)
       .whereIn('name', ['poi', 'road-network'])
       .orderBy('name'),
-    // db('scenarios_files')
-    //   .select('*')
-    //   .where('project_id', projId)
-    //   .where('type', 'road-network')
-    //   .first()
-    //   .then(file => getFileContents(file.path)),
     db('projects_files')
       .select('*')
       .where('project_id', projId)
@@ -312,9 +335,14 @@ export function concludeProjectSetup (e) {
 
     let rnProcessPromise = rnSource.type === 'osm'
       ? () => importOSMRoadNetwork(overpass.fcBbox(adminBoundsFc))
-      // We'll need to get the files contents to import to
-      // the osm-p2p-db. Eventually...
-      : () => Promise.resolve();
+      : Promise.resolve();
+      // We'll need to get the RN contents to import to the osm-p2p-db.
+      // : () => db('scenarios_files')
+      //   .select('*')
+      //   .where('project_id', projId)
+      //   .where('type', 'road-network')
+      //   .first()
+      //   .then(file => getFileContents(file.path));
 
     let poiProcessPromise = poiSource.type === 'osm'
       ? () => importOSMPOIs(overpass.fcBbox(adminBoundsFc), poiSource.data.osmPoiTypes)
@@ -327,16 +355,17 @@ export function concludeProjectSetup (e) {
     // the error is captured by the promise.
     // Since processing the admin areas is a pretty fast operation, the
     // performance is not really affected.
-    return rnProcessPromise()
-      .then(() => poiProcessPromise())
-      .then(() => Promise.all([
-        processAdminAreas(adminBoundsFc),
-        processOrigins(originsData)
-      ]));
-      // .then(() => {
+    return Promise.all([
+      processAdminAreas(adminBoundsFc),
+      processOrigins(originsData)
+    ])
+    .then(() => poiProcessPromise())
+    .then(() => rnProcessPromise()
+      // .then(roadNetwork => {
       //   logger && logger.log('process road network');
       //   return importRoadNetwork(projId, scId, op, roadNetwork);
-      // });
+      // })
+    );
   })
   .then(() => {
     return db.transaction(function (trx) {
