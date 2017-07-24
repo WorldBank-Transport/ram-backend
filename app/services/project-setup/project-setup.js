@@ -7,9 +7,9 @@ import _ from 'lodash';
 import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
-import { getJSONFileContents, putFileStream } from '../../s3/utils';
-// import { getFileContents } from '../../s3/utils';
-// import { importRoadNetwork } from '../rra-osm-p2p';
+import { setScenarioSetting } from '../../utils/utils';
+import { getFileContents, getJSONFileContents, putFileStream } from '../../s3/utils';
+import { importRoadNetwork as importRoadNetworkOSMP2P, closeDatabase } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
 
@@ -335,14 +335,13 @@ export function concludeProjectSetup (e) {
 
     let rnProcessPromise = rnSource.type === 'osm'
       ? () => importOSMRoadNetwork(overpass.fcBbox(adminBoundsFc))
-      : () => Promise.resolve();
       // We'll need to get the RN contents to import to the osm-p2p-db.
-      // : () => db('scenarios_files')
-      //   .select('*')
-      //   .where('project_id', projId)
-      //   .where('type', 'road-network')
-      //   .first()
-      //   .then(file => getFileContents(file.path));
+      : () => db('scenarios_files')
+        .select('*')
+        .where('project_id', projId)
+        .where('type', 'road-network')
+        .first()
+        .then(file => getFileContents(file.path));
 
     let poiProcessPromise = poiSource.type === 'osm'
       ? () => importOSMPOIs(overpass.fcBbox(adminBoundsFc), poiSource.data.osmPoiTypes)
@@ -361,10 +360,15 @@ export function concludeProjectSetup (e) {
     ])
     .then(() => poiProcessPromise())
     .then(() => rnProcessPromise()
-      // .then(roadNetwork => {
-      //   logger && logger.log('process road network');
-      //   return importRoadNetwork(projId, scId, op, roadNetwork);
-      // })
+      .then(roadNetwork => {
+        logger && logger.log('process road network');
+
+        // Disable road network editing if size over threshold.
+        let rnEditThreshold = 100 * Math.pow(1024, 2); // 100MB
+        return setScenarioSetting(db, scId, 'rn_active_editing', roadNetwork.length < rnEditThreshold)
+          .then(() => closeDatabase(projId, scId))
+          .then(() => importRoadNetworkOSMP2P(projId, scId, op, roadNetwork));
+      })
     );
   })
   .then(() => {

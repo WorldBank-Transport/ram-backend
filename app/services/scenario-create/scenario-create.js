@@ -3,9 +3,10 @@ import path from 'path';
 import Promise from 'bluebird';
 
 import config from '../../config';
-// import { cloneDatabase, importRoadNetwork } from '../rra-osm-p2p';
+import { cloneDatabase, closeDatabase, importRoadNetwork } from '../rra-osm-p2p';
 import db from '../../db/';
-import { copyFile, putFileStream } from '../../s3/utils';
+import { setScenarioSetting } from '../../utils/utils';
+import { copyFile, putFileStream, getFileContents } from '../../s3/utils';
 import Operation from '../../utils/operation';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
@@ -90,10 +91,11 @@ export function scenarioCreate (e) {
               return sourceData;
             })
           )
-          .then(sourceData => trx.batchInsert('scenarios_source_data', sourceData));
+          .then(sourceData => trx.batchInsert('scenarios_source_data', sourceData))
           // Copy the osm-p2p-db.
-          // .then(() => op.log('files', {message: 'Cloning road network database'}));
-          // .then(() => cloneOsmP2Pdb(projId, rnSourceScenarioId, projId, scId));
+          .then(() => op.log('files', {message: 'Cloning road network database'}))
+          .then(() => closeDatabase(projId, scId))
+          .then(() => cloneOsmP2Pdb(projId, rnSourceScenarioId, projId, scId));
       //
       } else if (rnSource === 'new') {
         executor = executor
@@ -143,13 +145,13 @@ export function scenarioCreate (e) {
               .returning('*')
               .insert(data)
               .then(res => res[0]);
-          });
-          // .then(file => getFileContents(file.path))
+          })
+          .then(file => getFileContents(file.path))
           // Import to the osm-p2p-db.
-          // .then(roadNetwork => {
-          //   logger && logger.log('process road network');
-          //   return importRoadNetwork(projId, scId, op, roadNetwork);
-          // });
+          .then(roadNetwork => {
+            logger && logger.log('process road network');
+            return importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork);
+          });
       } else if (rnSource === 'osm') {
         executor = executor
           .then(() => op.log('files', {message: 'Importing road network'}))
@@ -206,7 +208,11 @@ export function scenarioCreate (e) {
             };
 
             return putFileStream(filePath, osmData)
-              .then(() => db('scenarios_files').insert(data));
+              .then(() => db('scenarios_files').insert(data))
+              .then(() => {
+                logger && logger.log('process road network');
+                return importRoadNetworkOsmP2Pdb(projId, scId, op, osmData);
+              });
           });
       }
 
@@ -269,10 +275,20 @@ function cloneScenarioFiles (trx, files, projId, scId) {
 }
 
 // Clone the osm-p2p-db.
-// function cloneOsmP2Pdb (srcProjId, srcScId, destProjId, destScId) {
-//   logger && logger.log('cloning osm-p2p-db');
-//   return cloneDatabase(srcProjId, srcScId, destProjId, destScId);
-// }
+function cloneOsmP2Pdb (srcProjId, srcScId, destProjId, destScId) {
+  logger && logger.log('cloning osm-p2p-db');
+  return cloneDatabase(srcProjId, srcScId, destProjId, destScId);
+}
+
+function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
+  logger && logger.log('process road network');
+
+  // Disable road network editing if size over threshold.
+  let rnEditThreshold = 100 * Math.pow(1024, 2); // 100MB
+  return closeDatabase(projId, scId)
+    .then(() => setScenarioSetting(db, scId, 'rn_active_editing', roadNetwork.length < rnEditThreshold))
+    .then(() => importRoadNetwork(projId, scId, op, roadNetwork));
+}
 
 // TODO: Although some cleanup is good, if we delete the scenario altogether
 // we won't have messages to show the user indicating that it failed.
