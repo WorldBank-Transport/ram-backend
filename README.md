@@ -148,6 +148,8 @@ auth: {
 1. Create a new auth0 account, the `issuer` parameter in the configuration will be `https://<account_name>.auth0.com/`
 2. In the APIs section, create a new API and provide a name and an identifier. The "identifier" will be used as the `audience` parameter in the configuration
 
+**Disable auth**
+For development purposes it might be easier to disable authentication altogether. To do this simply set `auth.strategy` to `none` using the config or the env variable `AUTH_STRATEGY`. Note that auth must be disabled on the client as well.
 
 ### Setup
 Both the database and the local storage need some setup.
