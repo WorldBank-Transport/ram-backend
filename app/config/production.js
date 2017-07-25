@@ -25,5 +25,6 @@ module.exports = {
     db: null,
     storageHost: null,
     storagePort: 9000
-  }
+  },
+  roadNetEditThreshold: 100 * Math.pow(1024, 2) // 100MB
 };

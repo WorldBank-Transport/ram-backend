@@ -5,6 +5,7 @@ import path from 'path';
 import bbox from '@turf/bbox';
 import fs from 'fs';
 
+import config from '../../app/config';
 import db from '../../app/db';
 import { bucket } from '../../app/s3/';
 import { putObjectFromFile } from '../../app/s3/structure';
@@ -23,6 +24,8 @@ const FILE_RESULTS_JSON = path.join(__dirname, 'data-sergipe/results-p2000-s2000
 const FILE_RESULTS_GEOJSON = path.join(__dirname, 'data-sergipe/results-p2000-s2000.geojson');
 
 const ADMIN_AREAS_BBOX = bbox(readJSONSync(FILE_ADMIN));
+
+const FILE_ROAD_NETWORK_SIZE = fs.statSync(FILE_ROAD_NETWORK).size;
 
 // Parse admin areas.
 let adminAreas = readJSONSync(FILE_ADMIN);
@@ -554,6 +557,13 @@ export function project1100 () {
       'value': JSON.stringify(getSelectedAdminAreas(1100)),
       'created_at': '2017-02-01T12:00:01.000Z',
       'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1100,
+      'key': 'rn_active_editing',
+      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditThreshold,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
     }
   ]))
   .then(() => scenarioFile([
@@ -715,6 +725,13 @@ export function project1200 () {
       'updated_at': '2017-02-01T12:00:01.000Z'
     },
     {
+      'scenario_id': 1200,
+      'key': 'rn_active_editing',
+      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditThreshold,
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
       'scenario_id': 1201,
       'key': 'res_gen_at',
       'value': 0,
@@ -732,6 +749,13 @@ export function project1200 () {
       'scenario_id': 1201,
       'key': 'admin_areas',
       'value': JSON.stringify(getSelectedAdminAreas(1200)),
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 1201,
+      'key': 'rn_active_editing',
+      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditThreshold,
       'created_at': '2017-02-01T12:00:01.000Z',
       'updated_at': '2017-02-01T12:00:01.000Z'
     }
@@ -919,6 +943,13 @@ export function project2000 () {
       'scenario_id': 2000,
       'key': 'admin_areas',
       'value': JSON.stringify(getSelectedAdminAreas(2000)),
+      'created_at': '2017-02-01T12:00:01.000Z',
+      'updated_at': '2017-02-01T12:00:01.000Z'
+    },
+    {
+      'scenario_id': 2000,
+      'key': 'rn_active_editing',
+      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditThreshold,
       'created_at': '2017-02-01T12:00:01.000Z',
       'updated_at': '2017-02-01T12:00:01.000Z'
     }
