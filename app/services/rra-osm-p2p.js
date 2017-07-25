@@ -103,7 +103,7 @@ export function importRoadNetwork (projId, scId, op, roadNetwork) {
       let changeset = {
         type: 'changeset',
         tags: {
-          comment: `Finish project setup. Project ${projId}, Scenario ${scId}`,
+          comment: `New scenario. Project ${projId}, Scenario ${scId}`,
           created_by: 'RRA'
         }
       };

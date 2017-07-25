@@ -1,7 +1,9 @@
 'use strict';
 import { assert } from 'chai';
 import path from 'path';
+import fs from 'fs-extra';
 
+import config from '../app/config';
 import db from '../app/db';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
 import { bucket } from '../app/s3/';
@@ -34,7 +36,7 @@ describe('Finish Project Setup', function () {
   });
 
   it('should process the project files to finish the setup', function (done) {
-    this.slow(250);
+    this.slow(1500);
     // There needs to be an ongoing operation to start the script.
     // Operation is fully tested on another file so it's safe to use.
     let op = new Operation(db);
@@ -116,8 +118,7 @@ describe('Finish Project Setup', function () {
             db('operations_logs')
               .where('operation_id', op.getId())
               .then(logs => {
-                // assert.lengthOf(logs, 5);
-                assert.lengthOf(logs, 4);
+                assert.lengthOf(logs, 6);
                 assert.equal(logs[0].code, 'start');
                 assert.equal(logs[0].data.message, 'Operation started');
 
@@ -127,16 +128,16 @@ describe('Finish Project Setup', function () {
                 assert.oneOf(logs[2].code, ['process:admin-bounds', 'process:origins']);
                 assert.oneOf(logs[2].data.message, ['Processing admin areas', 'Processing origins']);
 
-                // assert.equal(logs[2].code, 'process:road-network');
-                // assert.equal(logs[2].data.message, 'Road network processing started');
-                // assert.equal(logs[3].code, 'process:road-network');
-                // assert.equal(logs[3].data.message, 'Road network processing finished');
-                // assert.equal(logs[4].code, 'success');
-                // assert.equal(logs[4].data.message, 'Operation complete');
-                assert.equal(logs[3].code, 'success');
-                assert.equal(logs[3].data.message, 'Operation complete');
+                assert.equal(logs[3].code, 'process:road-network');
+                assert.equal(logs[3].data.message, 'Road network processing started');
+                assert.equal(logs[4].code, 'process:road-network');
+                assert.equal(logs[4].data.message, 'Road network processing finished');
+                assert.equal(logs[5].code, 'success');
+                assert.equal(logs[5].data.message, 'Operation complete');
               })
           ])
+          // Delete osm p2p folder.
+          .then(() => fs.remove(config.osmP2PDir))
           .then(() => done())
           .catch(err => done(err));
         };
