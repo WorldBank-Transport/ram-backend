@@ -4,7 +4,7 @@ import fs from 'fs';
 import FormData from 'form-data';
 import streamToPromise from 'stream-to-promise';
 
-import Server from '../app/services/server';
+import initServer from '../app/services/server';
 import db from '../app/db';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
@@ -16,10 +16,13 @@ var options = {
 
 var instance;
 before(function (done) {
-  instance = Server(options).hapi;
-  instance.register(require('inject-then'), function (err) {
-    if (err) throw err;
-    done();
+  initServer(options, function (_, server) {
+    instance = server.hapi;
+    instance.register(require('inject-then'), function (err) {
+      if (err) throw err;
+
+      done();
+    });
   });
 });
 

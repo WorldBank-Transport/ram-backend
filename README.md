@@ -75,6 +75,10 @@ The following options must be set:
 
   - `connection.host` - The host. (mostly cosmetic. Default to 0.0.0.0). [PORT]
   - `connection.port` - The port where the app runs. (Default 4000). [HOST]
+  - `auth` - Authentication strategy object
+  - `auth.strategy` - `jwt` or `none` (see "Auth0" section for more details)
+  - `auth.audience` - JWT resource server namespace in case of `jwt`
+  - `auth.issuer` - JWT issuer URL in case of `jwt`
   - `db` - The database connection string. [DB_CONNECTION]
   - `osmP2PDir` - The folder to store the osm-p2p dbs. [OSM_P2P_DIR]
   - `storage` - Object with storage related settings. Has to be s3 compatible.
@@ -101,6 +105,9 @@ module.exports = {
     host: '0.0.0.0',
     port: 4000
   },
+  auth: {
+    strategy: 'none'
+  },
   db: 'postgresql://rra:rra@localhost:5432/rra',
   osmP2PDir: `${__dirname}/../../osm-p2p-dbs`,
   storage: {
@@ -123,6 +130,24 @@ module.exports = {
   }
 };
 ```
+
+#### Auth0 configuration
+
+In the case of `jwt` auth, requests include signed access tokens that are issued by an OAuth provider. [More information](https://auth0.com/docs/jwks)
+
+Example of auth key with JWT (in this case Auth0 is the issuer):
+
+```
+auth: {
+  strategy: 'jwt',
+  audience: 'http://api',
+  issuer: 'https://example.auth0.com/' #URL should have an endslash
+}
+```
+
+1. Create a new auth0 account, the `issuer` parameter in the configuration will be `https://<account_name>.auth0.com/`
+2. In the APIs section, create a new API and provide a name and an identifier. The "identifier" will be used as the `audience` parameter in the configuration
+
 
 ### Setup
 Both the database and the local storage need some setup.
@@ -187,16 +212,16 @@ Travis is set up to deploy the backend to an AWS ECS Cluster whenever a PR is me
 ### Setting up deployment
 Follow these steps to set up a deployment to an ECS Cluster:
 
-1. [Create an ECS Cluster](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/create_cluster.html) on AWS  
+1. [Create an ECS Cluster](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/create_cluster.html) on AWS
   - the current setup requires one EC2 instance and has been tested on a `t2.medium`
   - associate a Key Pair to the instance
   - expose the port for the API (default is `4000`). If you're using Minio as the storage engine, also open that port (eg. `9000`).
-2. Modify the Travis config with your AWS credentials  
+2. Modify the Travis config with your AWS credentials
   - `AWS_ECS_CLUSTER` = the cluster you created in step 1
   - `AWS_REGION`
   - `AWS_ACCESS_KEY_ID`
   - `AWS_SECRET_ACCESS_KEY` - use `travis encrypt AWS_SECRET_ACCESS_KEY=[secretKey]` to [generate an encrypted key](https://docs.travis-ci.com/user/encryption-keys/)
-3. SSH into the machine with your Key Pair to set up the basic database structure  
+3. SSH into the machine with your Key Pair to set up the basic database structure
   - run `docker ps` and to find the Container ID of `rra-api`
   - run `docker exec [container_id] npm run setup -- --db --bucket`
 4. [to come] deployment of the Analysis process

@@ -2,14 +2,16 @@
 require('dotenv').config();
 
 import config from './config';
-import Server from './services/server';
+import initServer from './services/server';
 
 var options = {
   connection: config.connection
 };
 
 // Start API server
-var server = new Server(options);
-server.start(() => {
-  // Started.
+initServer(options, (err, server) => {
+  if (err) throw err;
+  server.start(() => {
+    // Started.
+  });
 });
