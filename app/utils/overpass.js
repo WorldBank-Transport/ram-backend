@@ -12,7 +12,7 @@ import osmtogeojson from 'osmtogeojson';
 export function query (format, query) {
   return promiseRetry((retry, number) => {
     console.log('Fetching data from Overpass... Attempt number:', number);
-    return rp(`http://overpass-api.de/api/interpreter?data=[out:${format}];${query}`)
+    return rp(`http://overpass-api.de/api/interpreter?data=[out:${format}][timeout:900][maxsize:2000000000];${query}`)
       .catch(err => {
         // API calls to Overpass are rate limited. Retry if statusCode is 429
         if (err.statusCode === 429) {
