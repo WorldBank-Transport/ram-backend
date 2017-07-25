@@ -152,11 +152,13 @@ describe('Scenarios', function () {
         assert.deepEqual(scenario.sourceData, {
           'road-network': {
             type: null,
-            files: []
+            files: [],
+            osmOptions: {}
           },
           poi: {
             type: null,
-            files: []
+            files: [],
+            osmOptions: {}
           }
         });
       });
@@ -181,7 +183,8 @@ describe('Scenarios', function () {
                 'path': 'scenario-2000/road-network_000000',
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
-            ]
+            ],
+            osmOptions: {}
           },
           poi: {
             type: 'file',
@@ -194,7 +197,8 @@ describe('Scenarios', function () {
                 'path': 'scenario-2000/poi_000000',
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
-            ]
+            ],
+            osmOptions: {}
           }
         });
       });

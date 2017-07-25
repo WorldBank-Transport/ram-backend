@@ -5,9 +5,10 @@ import Promise from 'bluebird';
 import config from '../../config';
 // import { cloneDatabase, importRoadNetwork } from '../rra-osm-p2p';
 import db from '../../db/';
-import { copyFile } from '../../s3/utils';
+import { copyFile, putFileStream } from '../../s3/utils';
 import Operation from '../../utils/operation';
 import AppLogger from '../../utils/app-logger';
+import * as overpass from '../../utils/overpass';
 
 const DEBUG = config.debug;
 let appLogger = AppLogger({ output: DEBUG });
@@ -42,8 +43,8 @@ process.on('message', function (e) {
  *         e.opId           Operation Id. It has to be already started.
  *         e.projId         Project Id.
  *         e.scId           Scenario Id.
- *         e.source         Source for the road network (clone | new)
- *         e.sourceScenarioId  Id of the source scenario. Relevant if source
+ *         e.rnSource         Source for the road network (clone | new)
+ *         e.rnSourceScenarioId  Id of the source scenario. Relevant if source
  *                             is `clone`.
  *         e.roadNetworkFile   Name of the road network file on s3. Relevant if
  *                             source is `new`.
@@ -54,8 +55,8 @@ export function scenarioCreate (e) {
     projId,
     scId,
     opId,
-    source,
-    sourceScenarioId,
+    rnSource,
+    rnSourceScenarioId,
     roadNetworkFile,
     callback
   } = e;
@@ -66,20 +67,20 @@ export function scenarioCreate (e) {
     .then(() => db.transaction(function (trx) {
       let executor = Promise.resolve();
 
-      if (source === 'clone') {
+      if (rnSource === 'clone') {
         executor = executor
           // Copy the scenario files.
           .then(() => op.log('files', {message: 'Cloning files'}))
           .then(() => trx('scenarios_files')
             .select('*')
-            .where('scenario_id', sourceScenarioId)
+            .where('scenario_id', rnSourceScenarioId)
             .where('project_id', projId)
             .whereIn('type', ['poi', 'road-network'])
             .then(files => cloneScenarioFiles(trx, files, projId, scId))
           )
           .then(() => trx('scenarios_source_data')
             .select('project_id', 'name', 'type', 'data')
-            .where('scenario_id', sourceScenarioId)
+            .where('scenario_id', rnSourceScenarioId)
             .where('project_id', projId)
             .then(sourceData => {
               // Set new id.
@@ -92,9 +93,9 @@ export function scenarioCreate (e) {
           .then(sourceData => trx.batchInsert('scenarios_source_data', sourceData));
           // Copy the osm-p2p-db.
           // .then(() => op.log('files', {message: 'Cloning road network database'}));
-          // .then(() => cloneOsmP2Pdb(projId, sourceScenarioId, projId, scId));
+          // .then(() => cloneOsmP2Pdb(projId, rnSourceScenarioId, projId, scId));
       //
-      } else if (source === 'new') {
+      } else if (rnSource === 'new') {
         executor = executor
           // Copy the scenario files.
           .then(() => op.log('files', {message: 'Cloning files'}))
@@ -149,6 +150,64 @@ export function scenarioCreate (e) {
           //   logger && logger.log('process road network');
           //   return importRoadNetwork(projId, scId, op, roadNetwork);
           // });
+      } else if (rnSource === 'osm') {
+        executor = executor
+          .then(() => op.log('files', {message: 'Importing road network'}))
+          .then(() => trx.batchInsert('scenarios_source_data', [
+            {
+              project_id: projId,
+              scenario_id: scId,
+              name: 'road-network',
+              type: 'osm'
+            },
+            {
+              project_id: projId,
+              scenario_id: scId,
+              name: 'poi',
+              type: 'file'
+            }
+          ]))
+          // When uploading a new file we do so only for the
+          // road-network. Since the poi file is identical for all
+          // scenarios of the project just clone it from the master.
+          .then(() => trx('scenarios_files')
+            .select('scenarios_files.*')
+            .innerJoin('scenarios', 'scenarios.id', 'scenarios_files.scenario_id')
+            .where('scenarios.master', true)
+            .where('scenarios.project_id', projId)
+            .where('scenarios_files.type', 'poi')
+            .then(files => cloneScenarioFiles(trx, files, projId, scId))
+          )
+          // Get the bbox for the overpass import.
+          .then(() => db('projects')
+            .select('bbox')
+            .where('id', projId)
+            .first()
+            .then(res => res.bbox)
+          )
+          .then(bbox => overpass.importRoadNetwork(overpass.convertBbox(bbox)))
+          .catch(err => {
+            // Just to log error
+            logger && logger.log('Error importing from overpass', err.message);
+            throw err;
+          })
+          .then(osmData => {
+            // Insert file into DB.
+            let fileName = `road-network_${Date.now()}`;
+            let filePath = `scenario-${scId}/${fileName}`;
+            let data = {
+              name: fileName,
+              type: 'road-network',
+              path: filePath,
+              project_id: projId,
+              scenario_id: scId,
+              created_at: (new Date()),
+              updated_at: (new Date())
+            };
+
+            return putFileStream(filePath, osmData)
+              .then(() => db('scenarios_files').insert(data));
+          });
       }
 
       return executor
