@@ -1,16 +1,16 @@
-<h1 align="center">Rural Road Accessibility Server</h1>
+<h1 align="center">RAM Backend</h1>
 
-The Rural Roads Accessibility tool allows you to assess the accessibility of rural populations in relation to critical services. Using the [Open Source Routing Machine](http://project-osrm.org), RRA calculates travel times from population centers to the nearest POI.
-RRA Server is the main backend of the project and contains the API, database and file storage.
+The Rural Accessibility Map allows you to assess the accessibility of rural populations in relation to critical services. Using the [Open Source Routing Machine](http://project-osrm.org), calculates travel times from population centers to the nearest POI.
+This repository contains the main backend of the project with the API, database and file storage.
 
-Apart from the RRA Server, the tool relies on the following projects:
+Apart from the RAM Backend, the tool relies on the following projects:
 
-1. [rra-frontend](https://github.com/WorldBank-Transport/rra-frontend) with the code for the user interface
-2. [rra-datapipeline](https://github.com/WorldBank-Transport/rra-datapipeline) that handles some of the more intensive data processing
-3. [rra-iD](https://github.com/WorldBank-Transport/rra-iD), a customized version of iD - the popular OSM editor - to allow editing of the road network
+1. [ram-frontend](https://github.com/WorldBank-Transport/ram-frontend) with the code for the user interface
+2. [ram-datapipeline](https://github.com/WorldBank-Transport/ram-datapipeline) that handles some of the more intensive data processing
+3. [ram-iD](https://github.com/WorldBank-Transport/ram-iD), a customized version of iD - the popular OSM editor - to allow editing of the road network
 
 ## Offline usage
-To run RRA analysis locally, follow these steps. On first time setup:
+To run RAM analysis locally, follow these steps. On first time setup:
 
 1. clone this repository
 2. install the project dependencies: node 6, Docker, Docker Compose - [more on project dependencies](#install-project-dependencies)
@@ -19,7 +19,7 @@ To run RRA analysis locally, follow these steps. On first time setup:
 5. `docker-compose up -d` to start the full eco-system in the background
 6. `docker exec rra-api yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `docker exec rra-api yarn run setup -- --data` instead - [more on setup](#setup)
 
-Once this is done, you can access RRA in your browser on: http://localhost:8080
+Once this is done, you can access RAM in your browser on: http://localhost:8080
 
 After the first time setup, use `docker-compose down` and `docker-compose up -d` to bring the containers down and back up again.
 
