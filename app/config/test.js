@@ -5,7 +5,7 @@ module.exports = {
     port: 4000
   },
   db: 'postgresql://rratest:rratest@localhost:5432/rratest',
-  osmP2PDir: `${__dirname}/../../osm-p2p-dbs`,
+  osmP2PDir: `${__dirname}/../../osm-p2p-dbs-test`,
   storage: {
     host: '0.0.0.0',
     port: 9000,
@@ -24,5 +24,6 @@ module.exports = {
     db: null,
     storageHost: null,
     storagePort: null
-  }
+  },
+  roadNetEditThreshold: 100 * Math.pow(1024, 2) // 100MB
 };

@@ -284,10 +284,15 @@ function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
   logger && logger.log('process road network');
 
   // Disable road network editing if size over threshold.
-  let rnEditThreshold = 100 * Math.pow(1024, 2); // 100MB
-  return closeDatabase(projId, scId)
-    .then(() => setScenarioSetting(db, scId, 'rn_active_editing', roadNetwork.length < rnEditThreshold))
-    .then(() => importRoadNetwork(projId, scId, op, roadNetwork));
+  let allowImport = roadNetwork.length < config.roadNetEditThreshold;
+
+  return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
+    .then(() => {
+      if (allowImport) {
+        return closeDatabase(projId, scId)
+          .then(() => importRoadNetwork(projId, scId, op, roadNetwork));
+      }
+    });
 }
 
 // TODO: Although some cleanup is good, if we delete the scenario altogether

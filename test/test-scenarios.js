@@ -43,7 +43,7 @@ describe('Scenarios', function () {
         assert.equal(scenario.description, 'Scenario 1200 created when the project 1200 was created');
         assert.equal(scenario.status, 'active');
         assert.equal(scenario.master, true);
-        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.deepEqual(scenario.data, { res_gen_at: 0, rn_updated_at: 0, rn_active_editing: true });
         assert.equal(scenario.gen_analysis, null);
         assert.equal(scenario.scen_create, null);
       });
@@ -86,7 +86,7 @@ describe('Scenarios', function () {
         assert.equal(scenario.status, 'pending');
         assert.equal(scenario.master, true);
         assert.equal(scenario.admin_areas, null);
-        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.deepEqual(scenario.data, { res_gen_at: 0, rn_updated_at: 0 });
         assert.equal(scenario.gen_analysis, null);
         assert.equal(scenario.scen_create, null);
       });
@@ -136,7 +136,7 @@ describe('Scenarios', function () {
           { 'id': 2000029, 'name': 'Tomar do Geru', 'type': 'boundary', 'selected': false },
           { 'id': 2000030, 'name': 'Umbaúba', 'type': 'boundary', 'selected': false }
         ]);
-        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.deepEqual(scenario.data, { res_gen_at: 0, rn_updated_at: 0, rn_active_editing: true });
         assert.equal(scenario.gen_analysis, null);
         assert.equal(scenario.scen_create, null);
       });
@@ -413,7 +413,7 @@ describe('Scenarios', function () {
         assert.equal(scenario.status, 'pending');
         assert.equal(scenario.master, true);
         assert.isTrue(typeof scenario.sourceData !== undefined);
-        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.deepEqual(scenario.data, { res_gen_at: 0, rn_updated_at: 0 });
         assert.equal(scenario.gen_analysis, null);
         assert.equal(scenario.scen_create, null);
         assert.equal((new Date(scenario.created_at)).toISOString(), '2017-02-01T12:00:01.000Z');

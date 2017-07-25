@@ -22,5 +22,6 @@ module.exports = {
     db: 'postgresql://rra:rra@172.99.99.10:5432/rra',
     storageHost: '172.99.99.15',
     storagePort: 9000
-  }
+  },
+  roadNetEditThreshold: 100 * Math.pow(1024, 2) // 100MB
 };
