@@ -1,7 +1,7 @@
 'use strict';
 import { assert } from 'chai';
 
-import Server from '../app/services/server';
+import initServer from '../app/services/server';
 
 var options = {
   connection: {port: 2000, host: '0.0.0.0'}
@@ -9,10 +9,13 @@ var options = {
 
 var instance;
 before(function (done) {
-  instance = Server(options).hapi;
-  instance.register(require('inject-then'), function (err) {
-    if (err) throw err;
-    done();
+  initServer(options, function (_, server) {
+    instance = server.hapi;
+    instance.register(require('inject-then'), function (err) {
+      if (err) throw err;
+
+      done();
+    });
   });
 });
 
