@@ -9,7 +9,7 @@ import db from '../../db/';
 import Operation from '../../utils/operation';
 import { setScenarioSetting } from '../../utils/utils';
 import { getFileContents, getJSONFileContents, putFileStream } from '../../s3/utils';
-import { importRoadNetwork, closeDatabase } from '../rra-osm-p2p';
+import { importRoadNetwork } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
 
@@ -391,7 +391,8 @@ export function concludeProjectSetup (e) {
 }
 
 function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
-  logger && logger.log('process road network');
+  let rnLogger = appLogger.group(`p${projId} s${scId} rn import`);
+  rnLogger && rnLogger.log('process road network');
 
   // Disable road network editing if size over threshold.
   let allowImport = roadNetwork.length < config.roadNetEditThreshold;
@@ -399,8 +400,7 @@ function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
   return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
     .then(() => {
       if (allowImport) {
-        return closeDatabase(projId, scId)
-          .then(() => importRoadNetwork(projId, scId, op, roadNetwork));
+        return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
       }
     });
 }

@@ -281,7 +281,8 @@ function cloneOsmP2Pdb (srcProjId, srcScId, destProjId, destScId) {
 }
 
 function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
-  logger && logger.log('process road network');
+  let rnLogger = appLogger.group(`p${projId} s${scId} rn import`);
+  rnLogger && rnLogger.log('process road network');
 
   // Disable road network editing if size over threshold.
   let allowImport = roadNetwork.length < config.roadNetEditThreshold;
@@ -289,8 +290,7 @@ function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
   return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
     .then(() => {
       if (allowImport) {
-        return closeDatabase(projId, scId)
-          .then(() => importRoadNetwork(projId, scId, op, roadNetwork));
+        return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
       }
     });
 }
