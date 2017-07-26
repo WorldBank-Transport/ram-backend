@@ -87,28 +87,32 @@ export function removeDatabase (projId, scId) {
 
     fs.remove(`${baseDir}/${dbName}`, err => {
       if (err) return reject(err);
+
+      delete dbConnections[dbName];
       return resolve();
     });
   });
 }
 
-export function importRoadNetwork (projId, scId, op, roadNetwork) {
-  console.time('processRoadNetwork');
-  const db = getDatabase(projId, scId);
+export function importRoadNetwork (projId, scId, op, roadNetwork, logger) {
   const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
 
   // Create a new changeset through the API.
   const generateChangeset = () => {
+    const db = getDatabase(projId, scId);
     return new Promise((resolve, reject) => {
+      logger && logger.log('Creating changeset in database...');
+
       let changeset = {
         type: 'changeset',
         tags: {
-          comment: `New scenario. Project ${projId}, Scenario ${scId}`,
+          comment: `Project ${projId}, Scenario ${scId}`,
           created_by: 'RRA'
         }
       };
       createChangeset(db)(changeset, (err, id, node) => {
         if (err) return reject(err);
+        logger && logger.log('Creating changeset in database... done');
         return resolve(id);
       });
     });
@@ -117,6 +121,7 @@ export function importRoadNetwork (projId, scId, op, roadNetwork) {
   // Create an OSM Change file and store it in system /tmp folder.
   const createOSMChange = (id) => {
     return new Promise((resolve, reject) => {
+      logger && logger.log('Creating changeset file...');
       // OGR reads from a file
       fs.writeFileSync(`${basePath}.osm`, roadNetwork);
 
@@ -144,6 +149,7 @@ export function importRoadNetwork (projId, scId, op, roadNetwork) {
           let err = processError || `Unknown error. Code ${code}`;
           return reject(new Error(err));
         }
+        logger && logger.log('Creating changeset file... done');
         return resolve(id);
       });
     });
@@ -155,13 +161,17 @@ export function importRoadNetwork (projId, scId, op, roadNetwork) {
   let importPromise = Promise.promisify(importer);
 
   return op.log('process:road-network', {message: 'Road network processing started'})
+    // Remove anything that might be there. We're importing fresh data after
+    .then(() => removeDatabase(projId, scId))
     .then(() => generateChangeset())
     .then(id => createOSMChange(id))
+    .then(() => closeDatabase(projId, scId))
+    .then(() => logger && logger.log('Importing changeset into osm-p2p...'))
     .then(() => {
       let xml = fs.createReadStream(`${basePath}.osmc`);
       return importPromise(`${baseDir}/${dbName}`, xml);
     })
-    .then(() => { console.timeEnd('processRoadNetwork'); })
+    .then(() => logger && logger.log('Importing changeset into osm-p2p... done'))
     // Note: There's no need to close the osm-p2p-db because when the process
     // terminates the connection is automatically closed.
     .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
