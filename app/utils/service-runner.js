@@ -12,6 +12,8 @@ export default class ServiceRunner extends EventEmitter {
   start () {
     // Set an unused port number.
     // process.execArgv.push('--debug=' + (12345));
+    // Ensure the process can allocate the needed ram.
+    process.execArgv.push('--max_old_space_size=4096');
     let servicePath = path.resolve(__dirname, `../services/${this.name}/index.js`);
     let p = fork(servicePath);
     let processError = null;
@@ -28,6 +30,10 @@ export default class ServiceRunner extends EventEmitter {
     p.on('exit', (code) => {
       if (code !== 0) {
         processError = processError || `Unknown error. Code ${code}`;
+        if (code === null) {
+          // Very likely to be out of memory error.
+          processError = 'Process terminated by system';
+        }
         this.emit('complete', new Error(processError));
       } else {
         this.emit('complete');
