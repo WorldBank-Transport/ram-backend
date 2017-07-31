@@ -13,6 +13,9 @@ import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
 import { closeDatabase } from '../services/rra-osm-p2p';
 
+// Stores running processes to be able to kill them.
+let runningProcesses = {};
+
 module.exports = [
   {
     path: '/projects/{projId}/scenarios/{scId}/generate',
@@ -181,14 +184,19 @@ function generateResults (projId, scId, opId) {
 
 function updateRN (projId, scId, opId, cb) {
   return new Promise((resolve, reject) => {
-    console.log(`p${projId} s${scId}`, 'updateRN');
+    let identifier = `p${projId} s${scId}`;
+    console.log(identifier, 'updateRN');
     let service = new ServiceRunner('export-road-network', {projId, scId, opId});
 
+    if (!runningProcesses[identifier]) runningProcesses[identifier] = {};
+    runningProcesses[identifier].updateRN = service;
+
     service.on('complete', err => {
-      console.log(`p${projId} s${scId}`, 'updateRN complete');
+      runningProcesses[identifier].updateRN = null;
+      console.log(identifier, 'updateRN complete');
 
       if (err) {
-        console.log(`p${projId} s${scId}`, 'updateRN ended in error and was captured');
+        console.log(identifier, 'updateRN ended in error and was captured');
         // The operation may not have finished if the error took place outside
         // the promise, or if the error was due to a wrong db connection.
         let op = new Operation(db);
@@ -300,6 +308,14 @@ function killAnalysisProcess (projId, scId) {
   if (process.env.DS_ENV === 'test') { return Promise.resolve(); }
 
   return new Promise(resolve => {
+    let identifier = `p${projId} s${scId}`;
+    // If there's a process running means that the export isn't finished.
+    // Kill it.
+    if (runningProcesses[identifier].updateRN) {
+      runningProcesses[identifier].updateRN.kill();
+      return resolve();
+    }
+
     let containerName = `analysisp${projId}s${scId}`;
     let args = [];
 
