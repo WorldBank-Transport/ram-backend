@@ -28,5 +28,5 @@ module.exports = {
     storageHost: null,
     storagePort: null
   },
-  roadNetEditThreshold: 150 * Math.pow(1024, 2) // 150MB
+  roadNetEditThreshold: 20 * Math.pow(1024, 2) // 20MB
 };
