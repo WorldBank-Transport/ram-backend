@@ -8,7 +8,7 @@
   dependencies:
     "@turf/meta" "^4.5.2"
 
-"@turf/center-of-mass@^4.3.0":
+"@turf/center-of-mass@^4.5.2":
   version "4.5.2"
   resolved "https://registry.yarnpkg.com/@turf/center-of-mass/-/center-of-mass-4.5.2.tgz#eaad96a73739ea9b329bd0d4275e945ac1c31ba8"
   dependencies:
