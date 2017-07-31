@@ -12,6 +12,7 @@ export default class ServiceRunner extends EventEmitter {
   start () {
     // Set an unused port number.
     // process.execArgv.push('--debug=' + (12345));
+    // process.execArgv.push('--inspect');
     // Ensure the process can allocate the needed ram.
     process.execArgv.push('--max_old_space_size=4096');
     let servicePath = path.resolve(__dirname, `../services/${this.name}/index.js`);
