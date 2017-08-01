@@ -23,7 +23,7 @@ module.exports = {
     hyperSize: null,
     container: 'wbtransport/rra-analysis:latest-dev',
     db: null,
-    storageHost: 'http://api.ram.tf',
+    storageHost: 'http://api.ruralaccess.info',
     storagePort: 9000
   }
 };
