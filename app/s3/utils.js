@@ -105,7 +105,16 @@ export function removeLocalFile (path, quiet = false) {
 }
 
 export function getLocalFileContents (path) {
-  return readFile(path, 'utf8');
+  return readFile(path, 'utf8')
+    .then(data => {
+      // https://github.com/sindresorhus/strip-bom
+      // Catches EFBBBF (UTF-8 BOM) because the buffer-to-string
+      // conversion translates it to FEFF (UTF-16 BOM)
+      if (data.charCodeAt(0) === 0xFEFF) {
+        return data.slice(1);
+      }
+      return data;
+    });
 }
 
 export function getLocalJSONFileContents (path) {
