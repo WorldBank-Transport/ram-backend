@@ -2,6 +2,7 @@
 import path from 'path';
 import obj2osm from 'obj2osm';
 import getMap from 'osm-p2p-server/api/get_map';
+import through2 from 'through2';
 
 import config from '../../config';
 import { getDatabase } from '../rra-osm-p2p';
@@ -66,12 +67,15 @@ export function exportRoadNetwork (e) {
         throw err;
       });
 
-      logger && logger.log('starting data stream');
+      logger && logger.log('Exporting data from osm-p2p');
+
       let stream = getMap(osmDb)(bbox, {order: 'type'})
+        .pipe(processOSMP2PExport())
         .pipe(formatTransform);
 
       return putFileStream(filePath, stream)
-          // Get previous file
+        .then(() => logger && logger.log('Exporting data from osm-p2p... done'))
+        // Get previous file.
         .then(() => db('scenarios_files')
           .select('path')
           .where('type', 'road-network')
@@ -107,4 +111,32 @@ export function exportRoadNetwork (e) {
         .then(op => op.finish())
         .then(() => callback(err.message), () => callback(err.message));
     });
+}
+
+/**
+ * Clean data exported from  osm-p2p-db so it can be used by osrm.
+ * Deletes attributes: version, timestamp, changeset.
+ * Assigns new ids to nodes and ways.
+ * Requires that nodes appear before ways.
+ *
+ * @return Stream transform function
+ */
+function processOSMP2PExport () {
+  let c = 0;
+  const newId = () => ++c;
+  let ids = {};
+
+  return through2.obj((data, enc, cb) => {
+    delete data.version;
+    delete data.timestamp;
+    delete data.changeset;
+
+    if (!ids[data.id]) ids[data.id] = newId();
+
+    data.id = ids[data.id];
+
+    if (data.nodes) data.nodes = data.nodes.map(n => ids[n]);
+
+    cb(null, data);
+  });
 }

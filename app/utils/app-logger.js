@@ -11,6 +11,19 @@ export default function AppLogger (options) {
     main: []
   };
 
+  let lastTime = null;
+
+  const getTimeDiff = () => {
+    let prev = lastTime;
+    lastTime = Date.now();
+    if (!prev) {
+      return '--';
+    } else {
+      let diff = (lastTime - prev) / 1000;
+      return `+${diff}`;
+    }
+  };
+
   const getLogTime = () => {
     let d = new Date();
     let h = d.getHours();
@@ -27,9 +40,10 @@ export default function AppLogger (options) {
   const _log = (group, ...args) => {
     if (!history[group]) history[group] = [];
     let t = getLogTime();
-    history[group].push([`[${t}]`, ...args]);
-    chrono.push([`[${t}]`, `[${group}]`, ...args]);
-    options.output && console.log(`[${t}]`, `[${group}]`, ...args);
+    let d = getTimeDiff();
+    history[group].push([`[${t} ${d}]`, ...args]);
+    chrono.push([`[${t} ${d}]`, `[${group}]`, ...args]);
+    options.output && console.log(`[${t} ${d}]`, `[${group}]`, ...args);
   };
 
   const _dump = (group) => {
