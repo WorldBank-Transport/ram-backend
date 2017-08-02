@@ -126,7 +126,6 @@ export function concludeProjectSetup (e) {
     let originsTask = () => {
       let indicators = originsData.data.indicators;
       let neededProps = indicators.map(o => o.key);
-      neededProps.push('name');
 
       return getJSONFileContents(originsData.path)
         .then(originsFC => {
@@ -156,7 +155,7 @@ export function concludeProjectSetup (e) {
 
             return {
               project_id: projId,
-              name: feat.properties.name,
+              name: feat.properties.name || 'N/A',
               coordinates: JSON.stringify(coordinates)
             };
           });
