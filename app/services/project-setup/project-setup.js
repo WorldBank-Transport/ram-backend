@@ -156,7 +156,7 @@ export function concludeProjectSetup (e) {
 
             return {
               project_id: projId,
-              name: feat.properties.name,
+              name: feat.properties.name || 'N/A',
               coordinates: JSON.stringify(coordinates)
             };
           });
