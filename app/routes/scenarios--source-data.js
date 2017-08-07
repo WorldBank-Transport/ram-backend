@@ -5,7 +5,13 @@ import Promise from 'bluebird';
 import Zip from 'node-zip';
 
 import db from '../db/';
-import { putFile as putFileToS3, removeLocalFile, getFileContents } from '../s3/utils';
+import {
+  putFile as putFileToS3,
+  removeLocalFile,
+  removeFile,
+  getLocalJSONFileContents,
+  getFileContents
+} from '../s3/utils';
 import {
   ProjectNotFoundError,
   ScenarioNotFoundError,
@@ -15,6 +21,7 @@ import {
   FileNotFoundError
 } from '../utils/errors';
 import { parseFormData } from '../utils/utils';
+import { osmPOIGroups } from '../utils/overpass';
 
 export default [
   {
@@ -49,7 +56,7 @@ export default [
         })
         .then(() => db('scenarios')
           .select('id')
-          .where('id', projId)
+          .where('id', scId)
           .first()
           .then(scenario => { if (!scenario) throw new ScenarioNotFoundError(); })
         )
@@ -94,26 +101,7 @@ export default [
               let filePath = `scenario-${scId}/${fileName}`;
 
               // Upsert source.
-              return db('scenarios_source_data')
-                .select('id')
-                .where('scenario_id', scId)
-                .where('name', sourceName)
-                .first()
-                .then(source => {
-                  if (source) {
-                    return db('scenarios_source_data')
-                      .update({type: 'file'})
-                      .where('id', source.id);
-                  } else {
-                    return db('scenarios_source_data')
-                      .insert({
-                        project_id: projId,
-                        scenario_id: scId,
-                        name: sourceName,
-                        type: 'file'
-                      });
-                  }
-                })
+              return upsertScenarioSource(projId, scId, sourceName, 'file')
                 // Check if the file exists.
                 .then(() => {
                   let query = db('scenarios_files')
@@ -129,6 +117,25 @@ export default [
                 })
                 .then(files => {
                   if (files.length) { throw new FileExistsError(); }
+                })
+                // Validations.
+                .then(() => {
+                  if (sourceName === 'poi') {
+                    return getLocalJSONFileContents(file.path)
+                      .catch(err => {
+                        if (err instanceof SyntaxError) throw new DataValidationError(`Invalid GeoJSON file`);
+                        throw err;
+                      })
+                      .then(contents => {
+                        if (contents.type !== 'FeatureCollection') {
+                          throw new DataValidationError('GeoJSON file must be a feature collection');
+                        }
+
+                        if (!contents.features || !contents.features.length) {
+                          throw new DataValidationError('No valid poi found in file');
+                        }
+                      });
+                  }
                 })
                 // Upload to S3.
                 .then(() => putFileToS3(filePath, file.path))
@@ -167,8 +174,51 @@ export default [
                   throw err;
                 });
             case 'osm':
-              throw new DataValidationError(`"osm" type not implemented`);
-              // break;
+              // With poi source the osmPoiTypes are required.
+              let osmPoiTypes = result.fields['osmPoiTypes'] || [];
+              if (sourceName === 'poi') {
+                // Validate POI.
+                if (!osmPoiTypes.length) {
+                  throw new DataValidationError('"osmPoiTypes" is required for source "poi"');
+                }
+
+                let validPOI = osmPOIGroups.map(o => o.key);
+                let invalid = osmPoiTypes.filter(o => validPOI.indexOf(o) === -1);
+                if (invalid.length) {
+                  throw new DataValidationError(`POI type [${invalid.join(', ')}] not allowed. "osmPoiTypes" values must be any of [${validPOI.join(', ')}]`);
+                }
+              }
+
+              let sourceData = osmPoiTypes ? { osmPoiTypes } : null;
+
+              // Upsert source.
+              return upsertScenarioSource(projId, scId, sourceName, 'osm', sourceData)
+                // Delete files if exist.
+                .then(() => db('scenarios_files')
+                  .where('project_id', projId)
+                  .where('scenario_id', scId)
+                  .where('type', sourceName)
+                  .then(files => {
+                    if (files.length) {
+                      // Remove files from DB.
+                      return db('scenarios_files')
+                        .whereIn('id', files.map(o => o.id))
+                        .del()
+                        // Remove files from storage.
+                        .then(() => Promise.map(files, file => removeFile(file.path)));
+                    }
+                  })
+                )
+                .then(() => db('scenarios_files')
+                  .where('project_id', projId)
+                  .where('scenario_id', scId)
+                  .where('type', sourceName)
+                  .del()
+                )
+                .then(() => reply({
+                  sourceType,
+                  sourceName
+                }));
             default:
               throw new DataValidationError(`"source-type" must be one of [osm, file]`);
           }
@@ -176,6 +226,7 @@ export default [
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(FileExistsError, e => reply(Boom.conflict(e.message)))
+        .catch(ProjectStatusError, e => reply(Boom.badRequest(e.message)))
         .catch(DataValidationError, e => reply(Boom.badRequest(e.message)))
         .catch(err => {
           console.log('err', err);
@@ -245,3 +296,27 @@ export default [
     }
   }
 ];
+
+function upsertScenarioSource (projId, scId, sourceName, sourceType, sourceData) {
+  return db('scenarios_source_data')
+    .select('id')
+    .where('scenario_id', scId)
+    .where('name', sourceName)
+    .first()
+    .then(source => {
+      if (source) {
+        return db('scenarios_source_data')
+          .update({type: sourceType, data: sourceData ? JSON.stringify(sourceData) : null})
+          .where('id', source.id);
+      } else {
+        return db('scenarios_source_data')
+          .insert({
+            project_id: projId,
+            scenario_id: scId,
+            name: sourceName,
+            type: sourceType,
+            data: sourceData ? JSON.stringify(sourceData) : null
+          });
+      }
+    });
+}

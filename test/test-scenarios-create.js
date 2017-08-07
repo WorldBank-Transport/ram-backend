@@ -4,7 +4,7 @@ import fs from 'fs';
 import FormData from 'form-data';
 import streamToPromise from 'stream-to-promise';
 
-import Server from '../app/services/server';
+import initServer from '../app/services/server';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
 import db from '../app/db';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
@@ -17,10 +17,13 @@ var options = {
 
 var instance;
 before(function (done) {
-  instance = Server(options).hapi;
-  instance.register(require('inject-then'), function (err) {
-    if (err) throw err;
-    done();
+  initServer(options, function (_, server) {
+    instance = server.hapi;
+    instance.register(require('inject-then'), function (err) {
+      if (err) throw err;
+
+      done();
+    });
   });
 });
 
@@ -121,7 +124,7 @@ describe('Scenarios', function () {
         .then(res => {
           assert.equal(res.statusCode, 400, 'Status code is 400');
           var result = res.result;
-          assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" must be one of \[clone, new\]\]/);
+          assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" must be one of \[clone, new, osm\]\]/);
         });
     });
 

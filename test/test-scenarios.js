@@ -2,7 +2,7 @@
 import { assert } from 'chai';
 import mockdate from 'mockdate';
 
-import Server from '../app/services/server';
+import initServer from '../app/services/server';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp, projectPendingWithFiles } from './utils/data';
@@ -14,10 +14,13 @@ var options = {
 
 var instance;
 before(function (done) {
-  instance = Server(options).hapi;
-  instance.register(require('inject-then'), function (err) {
-    if (err) throw err;
-    done();
+  initServer(options, function (_, server) {
+    instance = server.hapi;
+    instance.register(require('inject-then'), function (err) {
+      if (err) throw err;
+
+      done();
+    });
   });
 });
 
@@ -43,7 +46,7 @@ describe('Scenarios', function () {
         assert.equal(scenario.description, 'Scenario 1200 created when the project 1200 was created');
         assert.equal(scenario.status, 'active');
         assert.equal(scenario.master, true);
-        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.deepEqual(scenario.data, { res_gen_at: 0, rn_updated_at: 0, rn_active_editing: true });
         assert.equal(scenario.gen_analysis, null);
         assert.equal(scenario.scen_create, null);
       });
@@ -86,7 +89,7 @@ describe('Scenarios', function () {
         assert.equal(scenario.status, 'pending');
         assert.equal(scenario.master, true);
         assert.equal(scenario.admin_areas, null);
-        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.deepEqual(scenario.data, { res_gen_at: 0, rn_updated_at: 0 });
         assert.equal(scenario.gen_analysis, null);
         assert.equal(scenario.scen_create, null);
       });
@@ -136,7 +139,7 @@ describe('Scenarios', function () {
           { 'id': 2000029, 'name': 'Tomar do Geru', 'type': 'boundary', 'selected': false },
           { 'id': 2000030, 'name': 'Umbaúba', 'type': 'boundary', 'selected': false }
         ]);
-        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.deepEqual(scenario.data, { res_gen_at: 0, rn_updated_at: 0, rn_active_editing: true });
         assert.equal(scenario.gen_analysis, null);
         assert.equal(scenario.scen_create, null);
       });
@@ -152,11 +155,13 @@ describe('Scenarios', function () {
         assert.deepEqual(scenario.sourceData, {
           'road-network': {
             type: null,
-            files: []
+            files: [],
+            osmOptions: {}
           },
           poi: {
             type: null,
-            files: []
+            files: [],
+            osmOptions: {}
           }
         });
       });
@@ -181,7 +186,8 @@ describe('Scenarios', function () {
                 'path': 'scenario-2000/road-network_000000',
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
-            ]
+            ],
+            osmOptions: {}
           },
           poi: {
             type: 'file',
@@ -194,7 +200,8 @@ describe('Scenarios', function () {
                 'path': 'scenario-2000/poi_000000',
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
-            ]
+            ],
+            osmOptions: {}
           }
         });
       });
@@ -409,7 +416,7 @@ describe('Scenarios', function () {
         assert.equal(scenario.status, 'pending');
         assert.equal(scenario.master, true);
         assert.isTrue(typeof scenario.sourceData !== undefined);
-        assert.deepEqual(scenario.data, { res_gen_at: '0', rn_updated_at: '0' });
+        assert.deepEqual(scenario.data, { res_gen_at: 0, rn_updated_at: 0 });
         assert.equal(scenario.gen_analysis, null);
         assert.equal(scenario.scen_create, null);
         assert.equal((new Date(scenario.created_at)).toISOString(), '2017-02-01T12:00:01.000Z');

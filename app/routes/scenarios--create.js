@@ -15,8 +15,8 @@ function handler (params, payload, reply) {
   const now = new Date();
   const name = payload.name;
   const description = payload.description;
-  const source = payload.roadNetworkSource;
-  const sourceScenarioId = payload.roadNetworkSourceScenario;
+  const rnSource = payload.roadNetworkSource;
+  const rnSourceScenarioId = payload.roadNetworkSourceScenario;
   const roadNetworkFile = payload.roadNetworkFile;
 
   return db('projects')
@@ -29,10 +29,10 @@ function handler (params, payload, reply) {
     })
     .then(() => {
       // If we're cloning from a different scenario, make sure it exists.
-      if (source === 'clone') {
+      if (rnSource === 'clone') {
         return db('scenarios')
           .select('id')
-          .where('id', sourceScenarioId)
+          .where('id', rnSourceScenarioId)
           .where('project_id', params.projId)
           .then((scenarios) => {
             if (!scenarios.length) throw new ScenarioNotFoundError();
@@ -100,11 +100,14 @@ function handler (params, payload, reply) {
     .then(scenario => startOperation(params.projId, scenario.id).then(op => [op, scenario]))
     .then(data => {
       let [op, scenario] = data;
-      if (source === 'clone') {
-        return createScenario(params.projId, scenario.id, op.getId(), source, {sourceScenarioId})
+      if (rnSource === 'clone') {
+        return createScenario(params.projId, scenario.id, op.getId(), rnSource, {rnSourceScenarioId})
           .then(() => scenario);
-      } else if (source === 'new') {
-        return handleRoadNetworkUpload(scenario, op.getId(), source, roadNetworkFile)
+      } else if (rnSource === 'new') {
+        return handleRoadNetworkUpload(scenario, op.getId(), rnSource, roadNetworkFile)
+          .then(() => scenario);
+      } else if (rnSource === 'osm') {
+        return createScenario(params.projId, scenario.id, op.getId(), rnSource)
           .then(() => scenario);
       }
     })
@@ -166,7 +169,7 @@ export default [
           let validation = Joi.validate(payload, Joi.object().keys({
             name: Joi.string().required(),
             description: Joi.string(),
-            roadNetworkSource: Joi.string().valid('clone', 'new').required(),
+            roadNetworkSource: Joi.string().valid('clone', 'new', 'osm').required(),
             roadNetworkSourceScenario: Joi.number().when('roadNetworkSource', {is: 'clone', then: Joi.required()}),
             roadNetworkFile: Joi.object().when('roadNetworkSource', {is: 'new', then: Joi.required()})
           }));
@@ -264,20 +267,20 @@ function startOperation (projId, scId) {
     });
 }
 
-function createScenario (projId, scId, opId, source, data) {
+function createScenario (projId, scId, opId, rnSource, data = {}) {
   let action = Promise.resolve();
   // In test mode we don't want to start the generation.
   // It will be tested in the appropriate place.
   if (process.env.DS_ENV === 'test') { return action; }
 
-  if (source === 'clone') {
+  if (rnSource === 'clone') {
     // We need to close the connection to the source scenario before cloning
     // the database. This needs to be done in this process. The process ran by
     // the service runner won't have access to it.
-    // action = closeDatabase(projId, data.sourceScenarioId);
+    // action = closeDatabase(projId, data.rnSourceScenarioId);
   }
 
-  let serviceData = Object.assign({}, {projId, scId, opId, source}, data);
+  let serviceData = Object.assign({}, {projId, scId, opId, rnSource}, data);
 
   action.then(() => {
     console.log(`p${projId} s${scId}`, 'createScenario');

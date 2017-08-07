@@ -10,8 +10,11 @@ import { removeFile } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
 import { getProject } from './projects--get';
 import Operation from '../utils/operation';
-// import ServiceRunner from '../utils/service-runner';
-// import { closeDatabase } from '../services/rra-osm-p2p';
+import ServiceRunner from '../utils/service-runner';
+import { closeDatabase } from '../services/rra-osm-p2p';
+
+// Stores running processes to be able to kill them.
+let runningProcesses = {};
 
 module.exports = [
   {
@@ -155,46 +158,63 @@ function generateResults (projId, scId, opId) {
   // It will be tested in the appropriate place.
   if (process.env.DS_ENV === 'test') { return; }
 
-  spawnAnalysisProcess(projId, scId, opId);
+  // Check if we need to export the road network.
+  db('scenarios_settings')
+    .select('value')
+    .where('scenario_id', scId)
+    .where('key', 'rn_active_editing')
+    .first()
+    .then(scSettings => {
+      let needExport = scSettings && scSettings.value === 'true';
 
-  // process.nextTick(() => {
-  //   // Close the database on this process before exporting the road network.
-  //   closeDatabase(projId, scId).then(() => {
-  //     updateRN(projId, scId, opId, (err) => {
-  //       // The error is logged to the db inside `updateRN`.
-  //       // There's nothing else to do.
-  //       if (!err) {
-  //         spawnAnalysisProcess(projId, scId, opId);
-  //       }
-  //     });
-  //   });
-  // });
+      setImmediate(() => {
+        let executor = Promise.resolve();
+
+        if (needExport) {
+          executor = executor
+            // Close the database on this process before exporting the road network.
+            .then(() => closeDatabase(projId, scId))
+            .then(() => updateRN(projId, scId, opId));
+        }
+
+        executor.then(() => spawnAnalysisProcess(projId, scId, opId));
+      });
+    });
 }
 
-// function updateRN (projId, scId, opId, cb) {
-//   console.log(`p${projId} s${scId}`, 'updateRN');
-//   let service = new ServiceRunner('export-road-network', {projId, scId, opId});
+function updateRN (projId, scId, opId, cb) {
+  return new Promise((resolve, reject) => {
+    let identifier = `p${projId} s${scId}`;
+    console.log(identifier, 'updateRN');
+    let service = new ServiceRunner('export-road-network', {projId, scId, opId});
 
-//   service.on('complete', err => {
-//     console.log(`p${projId} s${scId}`, 'updateRN complete');
-//     if (err) {
-//       // The operation may not have finished if the error took place outside
-//       // the promise, or if the error was due to a wrong db connection.
-//       let op = new Operation(db);
-//       op.loadById(opId)
-//         .then(op => {
-//           if (!op.isCompleted()) {
-//             return op.log('error', {error: err.message})
-//               .then(op => op.finish());
-//           }
-//         })
-//         .then(() => cb(err), () => cb(err));
-//     } else {
-//       cb();
-//     }
-//   })
-//   .start();
-// }
+    if (!runningProcesses[identifier]) runningProcesses[identifier] = {};
+    runningProcesses[identifier].updateRN = service;
+
+    service.on('complete', err => {
+      runningProcesses[identifier].updateRN = null;
+      console.log(identifier, 'updateRN complete');
+
+      if (err) {
+        console.log(identifier, 'updateRN ended in error and was captured');
+        // The operation may not have finished if the error took place outside
+        // the promise, or if the error was due to a wrong db connection.
+        let op = new Operation(db);
+        op.loadById(opId)
+          .then(op => {
+            if (!op.isCompleted()) {
+              return op.log('error', {error: err.message})
+                .then(op => op.finish());
+            }
+          })
+          .then(() => reject(err), () => reject(err));
+      } else {
+        resolve();
+      }
+    })
+    .start();
+  });
+}
 
 function spawnAnalysisProcess (projId, scId, opId) {
   console.log(`p${projId} s${scId}`, 'spawnAnalysisProcess');
@@ -288,6 +308,14 @@ function killAnalysisProcess (projId, scId) {
   if (process.env.DS_ENV === 'test') { return Promise.resolve(); }
 
   return new Promise(resolve => {
+    let identifier = `p${projId} s${scId}`;
+    // If there's a process running means that the export isn't finished.
+    // Kill it.
+    if (runningProcesses[identifier].updateRN) {
+      runningProcesses[identifier].updateRN.kill();
+      return resolve();
+    }
+
     let containerName = `analysisp${projId}s${scId}`;
     let args = [];
 

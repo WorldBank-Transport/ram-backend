@@ -71,13 +71,13 @@ export function getSourceData (db, contentType, id) {
       structure = {
         'road-network': {
           type: null,
-          files: []
-          // osmOptions
+          files: [],
+          osmOptions: {}
         },
         poi: {
           type: null,
-          files: []
-          // osmOptions
+          files: [],
+          osmOptions: {}
         }
       };
       break;
@@ -150,5 +150,37 @@ export function getOperationData (db, opName, prop, id) {
             }))
           };
         });
+    });
+}
+
+export function setScenarioSetting (db, scId, key, value) {
+  // Check if setting exists.
+  return db('scenarios_settings')
+    .select('key')
+    .where('scenario_id', scId)
+    .where('key', key)
+    .first()
+    .then(setting => {
+      // Update.
+      if (setting) {
+        return db('scenarios_settings')
+          .update({
+            value,
+            updated_at: (new Date())
+          })
+          .where('scenario_id', scId)
+          .where('key', key);
+
+      // Insert new.
+      } else {
+        return db('scenarios_settings')
+          .insert({
+            scenario_id: scId,
+            key,
+            value,
+            created_at: (new Date()),
+            updated_at: (new Date())
+          });
+      }
     });
 }

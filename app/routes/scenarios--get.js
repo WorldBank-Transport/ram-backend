@@ -107,15 +107,28 @@ function singleScenarioHandler (request, reply) {
 function attachScenarioSettings (scenario) {
   return db.select('key', 'value')
     .from('scenarios_settings')
-    .whereIn('key', ['res_gen_at', 'rn_updated_at'])
+    // Admin areas are handled differently because the name has to be
+    // fetched as well.
+    .whereNotIn('key', ['admin_areas'])
     .where('scenario_id', scenario.id)
     .then(data => {
       scenario.data = {};
       data.forEach(o => {
-        scenario.data[o.key] = o.value;
+        scenario.data[o.key] = parseType(o.value);
       });
       return scenario;
     });
+}
+
+function parseType (val) {
+  // Quick and dirty way to parse type.
+  // Using JSON.parse will parse every value except strings. So if the parsing
+  // fails assume it's a string and carry on.
+  try {
+    return JSON.parse(val);
+  } catch (e) {
+    return val;
+  }
 }
 
 function attachScenarioSourceData (scenario) {
