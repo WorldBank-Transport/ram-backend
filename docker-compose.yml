@@ -54,3 +54,11 @@ services:
       - 8080:80
     networks:
       - rra
+
+  rra-id:
+    image: wbtransport/ram-id:latest-stable
+    container_name: ram-id
+    ports:
+      - 8000:80
+    networks:
+      - rra
