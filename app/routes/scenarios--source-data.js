@@ -209,12 +209,6 @@ export default [
                     }
                   })
                 )
-                .then(() => db('scenarios_files')
-                  .where('project_id', projId)
-                  .where('scenario_id', scId)
-                  .where('type', sourceName)
-                  .del()
-                )
                 .then(() => reply({
                   sourceType,
                   sourceName
