@@ -1,5 +1,6 @@
 'use strict';
 import path from 'path';
+import fs from 'fs-extra';
 import bbox from '@turf/bbox';
 import centerOfMass from '@turf/center-of-mass';
 import _ from 'lodash';
@@ -305,14 +306,37 @@ export function concludeProjectSetup (e) {
       .then(() => importOSMPOIsTask());
   }
 
+  function copyDefaultProfile (projId) {
+    let fileName = `profile_${Date.now()}`;
+    let filePath = `project-${projId}/${fileName}`;
+
+    return putFileStream(filePath, fs.createReadStream(path.resolve(__dirname, '../../utils/default.profile.lua')))
+      .then(() => db('projects_files')
+        .insert({
+          name: fileName,
+          type: 'profile',
+          path: filePath,
+          project_id: projId,
+          created_at: (new Date()),
+          updated_at: (new Date())
+        })
+      );
+  }
+
   let op = new Operation(db);
   op.loadById(opId)
   .then(() => Promise.all([
-    // Get source for Road Network.
+    // Get source for Road Network and Poi.
     db('scenarios_source_data')
       .select('*')
       .where('scenario_id', scId)
       .whereIn('name', ['poi', 'road-network'])
+      .orderBy('name'),
+    // Get source for Profile.
+    db('projects_source_data')
+      .select('*')
+      .where('project_id', projId)
+      .whereIn('name', ['profile'])
       .orderBy('name'),
     db('projects_files')
       .select('*')
@@ -330,7 +354,7 @@ export function concludeProjectSetup (e) {
   ]))
   .then(filesContent => {
     // let [roadNetwork, [adminBoundsFc, originsData]] = filesContent;
-    let [[poiSource, rnSource], [adminBoundsFc, originsData]] = filesContent;
+    let [[poiSource, rnSource], [profileSource], [adminBoundsFc, originsData]] = filesContent;
 
     let rnProcessPromise = rnSource.type === 'osm'
       ? () => importOSMRoadNetwork(overpass.fcBbox(adminBoundsFc))
@@ -346,6 +370,10 @@ export function concludeProjectSetup (e) {
       ? () => importOSMPOIs(overpass.fcBbox(adminBoundsFc), poiSource.data.osmPoiTypes)
       : () => Promise.resolve();
 
+    let profileProcessPromise = profileSource.type === 'default'
+      ? () => copyDefaultProfile(projId)
+      : () => Promise.resolve();
+
     // Run the tasks in series rather than in parallel.
     // This is better for error handling. If they run in parallel and
     // `processAdminAreas` errors, the script hangs a bit while
@@ -357,6 +385,7 @@ export function concludeProjectSetup (e) {
       processAdminAreas(adminBoundsFc),
       processOrigins(originsData)
     ])
+    .then(() => profileProcessPromise())
     .then(() => poiProcessPromise())
     .then(() => rnProcessPromise()
       .then(roadNetwork => importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork))
