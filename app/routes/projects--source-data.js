@@ -1,4 +1,6 @@
 'use strict';
+import fs from 'fs-extra';
+import path from 'path';
 import Joi from 'joi';
 import Boom from 'boom';
 import _ from 'lodash';
@@ -6,7 +8,7 @@ import Promise from 'bluebird';
 import Zip from 'node-zip';
 
 import db from '../db/';
-import { putFile as putFileToS3, removeLocalFile, getLocalJSONFileContents, getFileContents } from '../s3/utils';
+import { putFile as putFileToS3, removeFile, removeLocalFile, getLocalJSONFileContents, getFileContents } from '../s3/utils';
 import {
   ProjectNotFoundError,
   FileExistsError,
@@ -17,6 +19,13 @@ import {
 import { parseFormData } from '../utils/utils';
 
 export default [
+  {
+    path: '/files/source-data/default.profile.lua',
+    method: 'GET',
+    handler: (request, reply) => {
+      reply(fs.createReadStream(path.resolve(__dirname, '../utils/default.profile.lua')));
+    }
+  },
   {
     path: '/projects/{projId}/source-data',
     method: 'POST',
@@ -58,7 +67,9 @@ export default [
           let sourceType = result.fields['source-type'][0];
           let sourceName = result.fields['source-name'][0];
 
-          if (sourceType !== 'file') {
+          if (sourceName === 'profile' && ['file', 'default'].indexOf(sourceType) === -1) {
+            throw new DataValidationError(`"source-type" for "profile" must be one of [file, default]`);
+          } else if (sourceName !== 'profile' && sourceType !== 'file') {
             throw new DataValidationError(`"source-type" must be one of [file]`);
           }
 
@@ -69,81 +80,43 @@ export default [
           // Store the file if there is one.
           // File must exist when the source is not origins, but that's
           // checked afterwards.
-          let file = result.files.file ? result.files.file[0] : null;
+          let uploadedFilePath = result.files.file ? result.files.file[0].path : null;
           let resolver;
           // Origins need to be handled differently.
           if (sourceName === 'origins') {
             resolver = handleOrigins(result, projId);
           } else {
-            if (!result.files.file) {
-              throw new DataValidationError('"file" is required');
-            }
-
-            let fileName = `${sourceName}_${Date.now()}`;
-            let filePath = `profile-${projId}/${fileName}`;
-
-            // Upsert source.
-            resolver = upsertSource(sourceName, 'file', projId)
-              // Check if the file exists.
-              .then(() => db('projects_files')
-                .select('id')
-                .where('project_id', projId)
-                .where('type', sourceName)
-              )
-              .then(files => {
-                if (files.length) { throw new FileExistsError(); }
-              })
-              // Validations.
-              .then(() => {
-                if (sourceName === 'admin-bounds') {
-                  return getLocalJSONFileContents(file.path)
-                    .catch(err => {
-                      if (err instanceof SyntaxError) throw new DataValidationError('Invalid GeoJSON file');
-                      throw err;
-                    })
-                    .then(contents => {
-                      if (contents.type !== 'FeatureCollection') {
-                        throw new DataValidationError('GeoJSON file must be a feature collection');
-                      }
-
-                      if (!contents.features || !contents.features.length) {
-                        throw new DataValidationError('No valid admin areas found in file');
-                      }
-
-                      // Features without name.
-                      let noName = contents.features.filter(o => !o.properties.name);
-                      if (noName.length) {
-                        throw new DataValidationError(`All features must have a "name". Found ${noName.length} features without a "name" property`);
-                      }
-
-                      // Point features.
-                      let noPoly = contents.features.filter(o => o.geometry.type !== 'Polygon' && o.geometry.type !== 'MultiPolygon');
-                      if (noPoly.length) {
-                        throw new DataValidationError(`All features must be a "Polygon" or a "MultiPolygon". Found ${noPoly.length} invalid features`);
-                      }
-                    });
+            switch (sourceType) {
+              case 'file':
+                if (!uploadedFilePath) {
+                  throw new DataValidationError('"file" is required');
                 }
-              })
-              // Upload to S3.
-              .then(() => putFileToS3(filePath, file.path))
-              // Insert into database.
-              .then(() => {
-                let data = {
-                  name: fileName,
-                  type: sourceName,
-                  path: filePath,
-                  project_id: projId,
-                  created_at: (new Date()),
-                  updated_at: (new Date())
-                };
+                resolver = handleProfileAndAdmin(sourceName, uploadedFilePath, projId);
+                break;
+              case 'default':
+                if (sourceName !== 'profile') {
+                  throw new DataValidationError(`"source-type" default only supported for [profile]`);
+                }
 
-                return db('projects_files')
-                  .returning(['id', 'name', 'type', 'path', 'created_at'])
-                  .insert(data)
-                  .then(insertResponse => insertResponse[0]);
-              })
-              // Delete temp file.
-              .then(insertResponse => removeLocalFile(file.path, true).then(() => insertResponse));
+                resolver = upsertSource(sourceName, 'default', projId)
+                  // Check if the file exists.
+                  .then(() => db('projects_files')
+                    .select('id', 'path')
+                    .where('project_id', projId)
+                    .where('type', sourceName)
+                  )
+                  .then(files => {
+                    if (files.length) {
+                      // Remove files from DB.
+                      return db('projects_files')
+                        .whereIn('id', files.map(o => o.id))
+                        .del()
+                        // Remove files from storage.
+                        .then(() => Promise.map(files, file => removeFile(file.path)));
+                    }
+                  });
+                break;
+            }
           }
 
           return resolver
@@ -154,7 +127,7 @@ export default [
             })))
             .catch(err => {
               // Delete temp file in case of error. Re-throw error to continue.
-              file && removeLocalFile(file.path, true);
+              uploadedFilePath && removeLocalFile(uploadedFilePath, true);
               throw err;
             });
         })
@@ -228,6 +201,74 @@ export default [
     }
   }
 ];
+
+function handleProfileAndAdmin (sourceName, uploadedFilePath, projId) {
+  let fileName = `${sourceName}_${Date.now()}`;
+  let filePath = `project-${projId}/${fileName}`;
+
+  // Upsert source.
+  return upsertSource(sourceName, 'file', projId)
+    // Check if the file exists.
+    .then(() => db('projects_files')
+      .select('id')
+      .where('project_id', projId)
+      .where('type', sourceName)
+    )
+    .then(files => {
+      if (files.length) { throw new FileExistsError(); }
+    })
+    // Validations.
+    .then(() => {
+      if (sourceName === 'admin-bounds') {
+        return getLocalJSONFileContents(uploadedFilePath)
+          .catch(err => {
+            if (err instanceof SyntaxError) throw new DataValidationError('Invalid GeoJSON file');
+            throw err;
+          })
+          .then(contents => {
+            if (contents.type !== 'FeatureCollection') {
+              throw new DataValidationError('GeoJSON file must be a feature collection');
+            }
+
+            if (!contents.features || !contents.features.length) {
+              throw new DataValidationError('No valid admin areas found in file');
+            }
+
+            // Features without name.
+            let noName = contents.features.filter(o => !o.properties.name);
+            if (noName.length) {
+              throw new DataValidationError(`All features must have a "name". Found ${noName.length} features without a "name" property`);
+            }
+
+            // Point features.
+            let noPoly = contents.features.filter(o => o.geometry.type !== 'Polygon' && o.geometry.type !== 'MultiPolygon');
+            if (noPoly.length) {
+              throw new DataValidationError(`All features must be a "Polygon" or a "MultiPolygon". Found ${noPoly.length} invalid features`);
+            }
+          });
+      }
+    })
+    // Upload to S3.
+    .then(() => putFileToS3(filePath, uploadedFilePath))
+    // Insert into database.
+    .then(() => {
+      let data = {
+        name: fileName,
+        type: sourceName,
+        path: filePath,
+        project_id: projId,
+        created_at: (new Date()),
+        updated_at: (new Date())
+      };
+
+      return db('projects_files')
+        .returning(['id', 'name', 'type', 'path', 'created_at'])
+        .insert(data)
+        .then(insertResponse => insertResponse[0]);
+    })
+    // Delete temp file.
+    .then(insertResponse => removeLocalFile(uploadedFilePath, true).then(() => insertResponse));
+}
 
 function handleOrigins (result, projId) {
   let sourceName = result.fields['source-name'][0];
@@ -367,10 +408,9 @@ function upsertSource (sourceName, type, projId) {
     .first()
     .then(source => {
       if (source) {
-        // No need.
-        // return db('projects_source_data')
-        //   .update({type: type})
-        //   .where('id', source.id);
+        return db('projects_source_data')
+          .update({type: type})
+          .where('id', source.id);
       } else {
         return db('projects_source_data')
           .insert({
