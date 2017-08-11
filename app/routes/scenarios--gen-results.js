@@ -158,6 +158,9 @@ function generateResults (projId, scId, opId) {
   // It will be tested in the appropriate place.
   if (process.env.DS_ENV === 'test') { return; }
 
+  let identifier = `p${projId} s${scId}`;
+  if (!runningProcesses[identifier]) runningProcesses[identifier] = {};
+
   // Check if we need to export the road network.
   db('scenarios_settings')
     .select('value')
@@ -188,7 +191,6 @@ function updateRN (projId, scId, opId, cb) {
     console.log(identifier, 'updateRN');
     let service = new ServiceRunner('export-road-network', {projId, scId, opId});
 
-    if (!runningProcesses[identifier]) runningProcesses[identifier] = {};
     runningProcesses[identifier].updateRN = service;
 
     service.on('complete', err => {
@@ -284,6 +286,9 @@ function spawnAnalysisProcess (projId, scId, opId) {
     });
 
     analysisProc.on('close', (code) => {
+      let identifier = `p${projId} s${scId}`;
+      delete runningProcesses[identifier];
+
       if (code !== 0) {
         // The operation may not have finished if the error took place outside
         // the promise, or if the error was due to a wrong db connection.
@@ -313,6 +318,7 @@ function killAnalysisProcess (projId, scId) {
     // Kill it.
     if (runningProcesses[identifier].updateRN) {
       runningProcesses[identifier].updateRN.kill();
+      runningProcesses[identifier].updateRN = null;
       return resolve();
     }
 
