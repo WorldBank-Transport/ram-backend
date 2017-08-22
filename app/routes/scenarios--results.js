@@ -200,6 +200,7 @@ export default [
           scId: Joi.number()
         },
         query: {
+          name: Joi.string(),
           poiType: Joi.string().required(),
           popInd: Joi.string().required(),
           sortBy: Joi.string(),
@@ -213,7 +214,7 @@ export default [
       const { projId, scId } = request.params;
       const { page, limit } = request;
       const offset = (page - 1) * limit;
-      let { sortBy, sortDir, poiType, popInd } = request.query;
+      let { sortBy, sortDir, poiType, popInd, name } = request.query;
 
       sortBy = sortBy || 'origin_name';
       sortDir = sortDir || 'asc';
@@ -228,6 +229,11 @@ export default [
         .where('results.scenario_id', scId)
         .where('projects_origins_indicators.key', popInd)
         .where('results_poi.type', poiType)
+        .modify(function (queryBuilder) {
+          if (name) {
+            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${name}%'))`);
+          }
+        })
         .first();
 
       let _results = db('results')
@@ -249,6 +255,11 @@ export default [
         .where('results.scenario_id', scId)
         .where('projects_origins_indicators.key', popInd)
         .where('results_poi.type', poiType)
+        .modify(function (queryBuilder) {
+          if (name) {
+            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${name}%'))`);
+          }
+        })
         .orderBy(sortBy, sortDir)
         .offset(offset).limit(limit);
 
