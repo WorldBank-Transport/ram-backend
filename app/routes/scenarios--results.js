@@ -214,7 +214,7 @@ export default [
       const { projId, scId } = request.params;
       const { page, limit } = request;
       const offset = (page - 1) * limit;
-      let { sortBy, sortDir, poiType, popInd, origin_name } = request.query;
+      let { sortBy, sortDir, poiType, popInd, origin_name: originName } = request.query;
 
       sortBy = sortBy || 'origin_name';
       sortDir = sortDir || 'asc';
@@ -230,8 +230,8 @@ export default [
         .where('projects_origins_indicators.key', popInd)
         .where('results_poi.type', poiType)
         .modify(function (queryBuilder) {
-          if (origin_name) {
-            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${origin_name}%'))`);
+          if (originName) {
+            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${originName}%'))`);
           }
         })
         .first();
@@ -256,8 +256,8 @@ export default [
         .where('projects_origins_indicators.key', popInd)
         .where('results_poi.type', poiType)
         .modify(function (queryBuilder) {
-          if (origin_name) {
-            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${origin_name}%'))`);
+          if (originName) {
+            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${originName}%'))`);
           }
         })
         .orderBy(sortBy, sortDir)
