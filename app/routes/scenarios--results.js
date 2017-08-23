@@ -200,7 +200,7 @@ export default [
           scId: Joi.number()
         },
         query: {
-          name: Joi.string(),
+          origin_name: Joi.string(),
           poiType: Joi.string().required(),
           popInd: Joi.string().required(),
           sortBy: Joi.string(),
@@ -214,7 +214,7 @@ export default [
       const { projId, scId } = request.params;
       const { page, limit } = request;
       const offset = (page - 1) * limit;
-      let { sortBy, sortDir, poiType, popInd, name } = request.query;
+      let { sortBy, sortDir, poiType, popInd, origin_name } = request.query;
 
       sortBy = sortBy || 'origin_name';
       sortDir = sortDir || 'asc';
@@ -230,8 +230,8 @@ export default [
         .where('projects_origins_indicators.key', popInd)
         .where('results_poi.type', poiType)
         .modify(function (queryBuilder) {
-          if (name) {
-            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${name}%'))`);
+          if (origin_name) {
+            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${origin_name}%'))`);
           }
         })
         .first();
@@ -256,8 +256,8 @@ export default [
         .where('projects_origins_indicators.key', popInd)
         .where('results_poi.type', poiType)
         .modify(function (queryBuilder) {
-          if (name) {
-            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${name}%'))`);
+          if (origin_name) {
+            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${origin_name}%'))`);
           }
         })
         .orderBy(sortBy, sortDir)
