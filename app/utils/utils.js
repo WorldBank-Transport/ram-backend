@@ -90,9 +90,9 @@ export function getSourceData (db, contentType, id) {
       let filesFetchTypes = [];
 
       sources.forEach(s => {
-        if (s.type === 'osm') {
+        if (s.type === 'osm' || s.type === 'default') {
           // Never going to happen for projects, just scenarios.
-          structure[s.name].type = 'osm';
+          structure[s.name].type = s.type;
           structure[s.name].osmOptions = s.data;
         } else if (s.type === 'file') {
           structure[s.name].type = 'file';
