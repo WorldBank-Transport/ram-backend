@@ -15,6 +15,8 @@ services:
       POSTGRES_PASSWORD: rra
       POSTGRES_USER: rra
       POSTGRES_DB: rra
+    volumes:
+      - ./setup/setup-extensions.sh:/docker-entrypoint-initdb.d/setup-extensions.sh
     ports:
       - 5432:5432
     networks:
