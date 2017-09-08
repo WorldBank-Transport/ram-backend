@@ -1,15 +1,25 @@
 'use strict';
 import path from 'path';
 import fs from 'fs-extra';
+import { exec } from 'child_process';
+import os from 'os';
 import bbox from '@turf/bbox';
 import centerOfMass from '@turf/center-of-mass';
 import _ from 'lodash';
+import Promise from 'bluebird';
 
 import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
 import { setScenarioSetting } from '../../utils/utils';
-import { getFileContents, getJSONFileContents, putFileStream } from '../../s3/utils';
+import {
+  getFileContents,
+  getJSONFileContents,
+  putFileStream,
+  putFile,
+  removeDir as removeS3Dir,
+  getLocalFilesInDir
+} from '../../s3/utils';
 import { importRoadNetwork } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
@@ -58,13 +68,19 @@ export function concludeProjectSetup (e) {
   function processAdminAreas (adminBoundsFc) {
     logger && logger.log('process admin areas');
 
+    if (!adminBoundsFc.features) {
+      throw new Error('Invalid administrative boundaries file');
+    }
+
+    let filteredAA = {
+      'type': 'FeatureCollection',
+      'features': adminBoundsFc.features
+        .filter(o => !!o.properties.name && o.geometry.type !== 'Point')
+    };
+
     let adminAreaTask = () => {
       return db.transaction(function (trx) {
-        if (!adminBoundsFc.features) {
-          throw new Error('Invalid administrative boundaries file');
-        }
-        let adminAreas = _(adminBoundsFc.features)
-          .filter(o => !!o.properties.name && o.geometry.type !== 'Point')
+        let adminAreas = _(filteredAA.features)
           .sortBy(o => _.kebabCase(o.properties.name))
           .map(o => {
             return {
@@ -76,7 +92,7 @@ export function concludeProjectSetup (e) {
           })
           .value();
 
-        let adminAreasBbox = bbox(adminBoundsFc);
+        let adminAreasBbox = bbox(filteredAA);
 
         return Promise.all([
           trx('projects')
@@ -116,9 +132,34 @@ export function concludeProjectSetup (e) {
       ]);
     };
 
+    // Prepare the features for the vector tiles.
+    let processForTiles = () => {
+      // Skip on tests.
+      if (process.env.DS_ENV === 'test') { return; }
+
+      let fc = {
+        'type': 'FeatureCollection',
+        'features': filteredAA.features.map(o => ({
+          type: 'Feature',
+          properties: {
+            name: o.properties.name,
+            type: o.properties.type || 'admin-area',
+            project_id: projId
+          },
+          geometry: o.geometry
+        }))
+      };
+
+      return createVectorTiles(projId, scId, fc);
+    };
+
     return op.log('process:admin-bounds', {message: 'Processing admin areas'})
       .then(() => cleanAATable())
-      .then(() => adminAreaTask());
+      .then(() => adminAreaTask())
+      .then(() => processForTiles())
+      .then(() => {
+        // throw new Error('staph');
+      });
   }
 
   function processOrigins (originsData) {
@@ -431,4 +472,45 @@ function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
         return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
       }
     });
+}
+
+function createVectorTiles (projId, scId, fc) {
+  // Promisify functions.
+  let removeP = Promise.promisify(fs.remove);
+  let writeJsonP = Promise.promisify(fs.writeJson);
+
+  let geojsonFile = path.resolve(os.tmpdir(), `p${projId}s${scId}-fc.geojson`);
+  let tilesFolder = path.resolve(os.tmpdir(), `p${projId}s${scId}-tiles`);
+
+  // Clean any existing files, locally and from S3.
+  return Promise.all([
+    removeP(geojsonFile),
+    removeP(tilesFolder),
+    // Admin bounds tiles are calculated during project setup, meaning that
+    // there won't be anything on S3. This is just in case the process fails
+    // down the road and we've to repeat.
+    removeS3Dir(`project-${projId}/tiles/admin-bounds`)
+  ])
+  .then(() => writeJsonP(geojsonFile, fc))
+  .then(() => {
+    return new Promise((resolve, reject) => {
+      exec(`tippecanoe -l bounds -e ${tilesFolder} ${geojsonFile}`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          reject(error);
+          return;
+        }
+        console.log(`stdout: ${stdout}`);
+        console.log(`stderr: ${stderr}`);
+        resolve();
+      });
+    });
+  })
+  .then(() => {
+    let files = getLocalFilesInDir(tilesFolder);
+    return Promise.map(files, file => {
+      let newName = file.replace(tilesFolder, `project-${projId}/tiles/admin-bounds`);
+      return putFile(newName, file);
+    }, { concurrency: 10 });
+  });
 }
