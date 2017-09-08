@@ -156,10 +156,7 @@ export function concludeProjectSetup (e) {
     return op.log('process:admin-bounds', {message: 'Processing admin areas'})
       .then(() => cleanAATable())
       .then(() => adminAreaTask())
-      .then(() => processForTiles())
-      .then(() => {
-        // throw new Error('staph');
-      });
+      .then(() => processForTiles());
   }
 
   function processOrigins (originsData) {
@@ -476,25 +473,29 @@ function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
 
 function createVectorTiles (projId, scId, fc) {
   // Promisify functions.
-  let removeP = Promise.promisify(fs.remove);
-  let writeJsonP = Promise.promisify(fs.writeJson);
+  const removeP = Promise.promisify(fs.remove);
+  const writeJsonP = Promise.promisify(fs.writeJson);
 
-  let geojsonFile = path.resolve(os.tmpdir(), `p${projId}s${scId}-fc.geojson`);
-  let tilesFolder = path.resolve(os.tmpdir(), `p${projId}s${scId}-tiles`);
+  const geojsonName = `p${projId}s${scId}-fc.geojson`;
+  const tilesFolderName = `p${projId}s${scId}-tiles`;
+  const geojsonFilePath = path.resolve(os.tmpdir(), geojsonName);
+  const tilesFolderPath = path.resolve(os.tmpdir(), tilesFolderName);
 
   // Clean any existing files, locally and from S3.
   return Promise.all([
-    removeP(geojsonFile),
-    removeP(tilesFolder),
+    removeP(geojsonFilePath),
+    removeP(tilesFolderPath),
     // Admin bounds tiles are calculated during project setup, meaning that
     // there won't be anything on S3. This is just in case the process fails
     // down the road and we've to repeat.
     removeS3Dir(`project-${projId}/tiles/admin-bounds`)
   ])
-  .then(() => writeJsonP(geojsonFile, fc))
+  .then(() => writeJsonP(geojsonFilePath, fc))
   .then(() => {
     return new Promise((resolve, reject) => {
-      exec(`tippecanoe -l bounds -e ${tilesFolder} ${geojsonFile}`, (error, stdout, stderr) => {
+      // -u $(id -u) is used to ensure that the volumes are created with the
+      // correct user so they can be removed. Otherwise they'd belong to root.
+      exec(`docker run -u $(id -u) --rm -v ${os.tmpdir()}:/data wbtransport/tippecanoe tippecanoe -e /data/${tilesFolderName} /data/${geojsonName}`, (error, stdout, stderr) => {
         if (error) {
           console.error(`exec error: ${error}`);
           reject(error);
@@ -507,9 +508,9 @@ function createVectorTiles (projId, scId, fc) {
     });
   })
   .then(() => {
-    let files = getLocalFilesInDir(tilesFolder);
+    let files = getLocalFilesInDir(tilesFolderPath);
     return Promise.map(files, file => {
-      let newName = file.replace(tilesFolder, `project-${projId}/tiles/admin-bounds`);
+      let newName = file.replace(tilesFolderPath, `project-${projId}/tiles/admin-bounds`);
       return putFile(newName, file);
     }, { concurrency: 10 });
   });
