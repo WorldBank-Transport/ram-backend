@@ -3,7 +3,7 @@ import fs from 'fs';
 import Promise from 'bluebird';
 
 import s3, { bucket } from './';
-import { removeObject, putObjectFromFile, listObjects } from './structure';
+import { removeObject, putObjectFromFile, listObjects, emptyBucket } from './structure';
 
 const readFile = Promise.promisify(fs.readFile);
 
@@ -31,6 +31,11 @@ export function listenForFile (file) {
 // Proxy of removeObject function, assuming the bucket.
 export function removeFile (file) {
   return removeObject(bucket, file);
+}
+
+// Proxy of emptyBucket function, assuming the bucket.
+export function removeDir (dir) {
+  return emptyBucket(bucket, dir);
 }
 
 // Get file.
@@ -93,6 +98,14 @@ export function putFile (name, filepath) {
   return putObjectFromFile(bucket, name, filepath);
 }
 
+// List files
+// Proxy of listObjects function, assuming the bucket.
+export function listFiles (namePrefix) {
+  return listObjects(bucket, namePrefix);
+}
+
+// Local file operation.
+
 export function removeLocalFile (path, quiet = false) {
   return new Promise((resolve, reject) => {
     fs.unlink(path, err => {
@@ -122,8 +135,17 @@ export function getLocalJSONFileContents (path) {
     .then(result => JSON.parse(result));
 }
 
-// List files
-// Proxy of listObjects function, assuming the bucket.
-export function listFiles (namePrefix) {
-  return listObjects(bucket, namePrefix);
+export function getLocalFilesInDir (dir) {
+  const files = fs.readdirSync(dir);
+
+  return files.reduce((acc, file) => {
+    let name = dir + '/' + file;
+    if (fs.statSync(name).isDirectory()) {
+      acc = acc.concat(getLocalFilesInDir(name));
+    } else {
+      acc.push(name);
+    }
+
+    return acc;
+  }, []);
 }
