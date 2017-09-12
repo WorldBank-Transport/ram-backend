@@ -277,7 +277,15 @@ function cloneScenarioFiles (trx, files, projId, scId) {
 // Clone the osm-p2p-db.
 function cloneOsmP2Pdb (srcProjId, srcScId, destProjId, destScId) {
   logger && logger.log('cloning osm-p2p-db');
-  return cloneDatabase(srcProjId, srcScId, destProjId, destScId);
+  return cloneDatabase(srcProjId, srcScId, destProjId, destScId)
+    .catch(err => {
+      // If the road network is too big, the db is not created.
+      // Account for this and avoid errors.
+      // TODO: Check if the DB is supposed to not exist.
+      if (err.code !== 'ENOENT') {
+        throw err;
+      }
+    });
 }
 
 function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
