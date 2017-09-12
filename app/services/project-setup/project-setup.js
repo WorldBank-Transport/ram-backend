@@ -495,7 +495,7 @@ function createVectorTiles (projId, scId, fc) {
     return new Promise((resolve, reject) => {
       // -u $(id -u) is used to ensure that the volumes are created with the
       // correct user so they can be removed. Otherwise they'd belong to root.
-      exec(`docker run -u $(id -u) --rm -v ${os.tmpdir()}:/data wbtransport/tippecanoe tippecanoe -e /data/${tilesFolderName} /data/${geojsonName}`, (error, stdout, stderr) => {
+      exec(`docker run -u $(id -u) --rm -v ${os.tmpdir()}:/data wbtransport/tippecanoe tippecanoe -l bounds -e /data/${tilesFolderName} /data/${geojsonName}`, (error, stdout, stderr) => {
         if (error) {
           console.error(`exec error: ${error}`);
           reject(error);
