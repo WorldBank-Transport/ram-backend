@@ -11,7 +11,7 @@ import Promise from 'bluebird';
 import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
-import { setScenarioSetting } from '../../utils/utils';
+import { setScenarioSetting, getPropInsensitive } from '../../utils/utils';
 import {
   getFileContents,
   getJSONFileContents,
@@ -75,7 +75,12 @@ export function concludeProjectSetup (e) {
     let filteredAA = {
       'type': 'FeatureCollection',
       'features': adminBoundsFc.features
-        .filter(o => !!o.properties.name && o.geometry.type !== 'Point')
+        .filter(o => !!o.properties[getPropInsensitive(o.properties, 'name')] && o.geometry.type !== 'Point')
+        .map(o => {
+          // Normalize name prop.
+          o.properties.name = o.properties[getPropInsensitive(o.properties, 'name')];
+          return o;
+        })
     };
 
     let adminAreaTask = () => {
