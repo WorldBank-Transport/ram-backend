@@ -304,7 +304,7 @@ function handleOrigins (result, projId) {
       // If there is, validate indicators against it.
       if (file) {
         let fileName = `${sourceName}_${Date.now()}`;
-        let filePath = `profile-${projId}/${fileName}`;
+        let filePath = `project-${projId}/${fileName}`;
 
         // File was submitted. There can't be one in the database.
         return db('projects_files')

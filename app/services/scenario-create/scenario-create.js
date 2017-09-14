@@ -246,7 +246,10 @@ export function scenarioCreate (e) {
 function cloneScenarioFiles (trx, files, projId, scId) {
   logger && logger.log('cloning files');
   let newFiles = files.map(file => {
-    const fileName = `${file.type}_${Date.now()}`;
+    const fileName = file.type === 'poi'
+      ? `${file.type}_${file.subtype}_${Date.now()}`
+      : `${file.type}_${Date.now()}`;
+
     const filePath = `scenario-${scId}/${fileName}`;
 
     return {
