@@ -267,11 +267,7 @@ describe('Scenarios', function () {
           assert.equal(typeof result.roadNetworkUpload, 'undefined');
           assert.equal(result.data.res_gen_at, 0);
           assert.equal(result.data.rn_updated_at, 0);
-<<<<<<< b4ef9f5f00b60fa57b5fbece0bb5811ba3e59d31
           assert.isArray(result.admin_areas, []);
-=======
-          assert.equal(result.admin_areas, []);
->>>>>>> Fix tests
 
           return result;
         });
