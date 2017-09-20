@@ -80,7 +80,7 @@ export function exportRoadNetwork (e) {
           .select('path')
           .where('type', 'road-network')
           .where('project_id', projId)
-          .where('scenario_id', projId)
+          .where('scenario_id', scId)
           .first()
         )
         // Delete from storage.
@@ -94,7 +94,7 @@ export function exportRoadNetwork (e) {
           })
           .where('type', 'road-network')
           .where('project_id', projId)
-          .where('scenario_id', projId)
+          .where('scenario_id', scId)
         );
     })
     // Note: There's no need to close the osm-p2p-db because when the process
