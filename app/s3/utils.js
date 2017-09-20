@@ -62,6 +62,15 @@ export function copyFile (oldFile, newFile) {
   });
 }
 
+// Copy directory.
+export function copyDirectory (sourceDir, destDir) {
+  return listFiles(sourceDir)
+    .then(files => Promise.map(files, file => {
+      let newName = file.name.replace(sourceDir, destDir);
+      return copyFile(file.name, newName);
+    }, { concurrency: 10 }));
+}
+
 // Get file content.
 export function getFileContents (file) {
   return new Promise((resolve, reject) => {
@@ -102,6 +111,15 @@ export function putFile (name, filepath) {
 // Proxy of listObjects function, assuming the bucket.
 export function listFiles (namePrefix) {
   return listObjects(bucket, namePrefix);
+}
+
+// Put directory
+export function putDirectory (sourceDir, destDir) {
+  let files = getLocalFilesInDir(sourceDir);
+  return Promise.map(files, file => {
+    let newName = file.replace(sourceDir, destDir);
+    return putFile(newName, file);
+  }, { concurrency: 10 });
 }
 
 // Local file operation.
