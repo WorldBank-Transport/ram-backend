@@ -153,7 +153,7 @@ export function scenarioCreate (e) {
           .then(roadNetwork => {
             logger && logger.log('process road network');
             return importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork)
-              .then(roadNetwork => createRoadNetworkVT(projId, scId, op, roadNetwork));
+              .then(roadNetwork => createRoadNetworkVT(projId, scId, op, roadNetwork).promise);
           });
       } else if (rnSource === 'osm') {
         executor = executor
@@ -215,7 +215,7 @@ export function scenarioCreate (e) {
               .then(() => {
                 logger && logger.log('process road network');
                 return importRoadNetworkOsmP2Pdb(projId, scId, op, osmData)
-                  .then(roadNetwork => createRoadNetworkVT(projId, scId, op, roadNetwork));
+                  .then(roadNetwork => createRoadNetworkVT(projId, scId, op, roadNetwork).promise);
               });
           });
       }

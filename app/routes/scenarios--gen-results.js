@@ -204,16 +204,6 @@ function generateResults (projId, scId, op) {
     });
 }
 
-function generateTiles (projId, scId, op) {
-  return db('scenarios_files')
-    .select('*')
-    .where('scenario_id', scId)
-    .where('type', 'road-network')
-    .first()
-    .then(file => getFileContents(file.path))
-    .then(roadNetwork => createRoadNetworkVT(projId, scId, op, roadNetwork));
-}
-
 function updateRN (projId, scId, opId, cb) {
   return new Promise((resolve, reject) => {
     let identifier = `p${projId} s${scId}`;
@@ -245,6 +235,30 @@ function updateRN (projId, scId, opId, cb) {
     })
     .start();
   });
+}
+
+function generateTiles (projId, scId, op) {
+  let identifier = `p${projId} s${scId}`;
+  console.log(identifier, 'generating vector tiles');
+
+  let executor = db('scenarios_files')
+    .select('*')
+    .where('scenario_id', scId)
+    .where('type', 'road-network')
+    .first()
+    .then(file => getFileContents(file.path))
+    .then(roadNetwork => {
+      // createRoadNetworkVT returns an objects with a promise and a kill switch
+      let service = createRoadNetworkVT(projId, scId, op, roadNetwork);
+      runningProcesses[identifier].genVT = service;
+
+      return service.promise;
+    })
+    .then(() => {
+      runningProcesses[identifier].genVT = null;
+    });
+
+  return executor;
 }
 
 function spawnAnalysisProcess (projId, scId, opId) {
@@ -343,11 +357,16 @@ function killAnalysisProcess (projId, scId) {
 
   return new Promise(resolve => {
     let identifier = `p${projId} s${scId}`;
-    // If there's a process running means that the export isn't finished.
-    // Kill it.
+    // Since the processes run sequentially check by order which we need
+    // to kill.
     if (runningProcesses[identifier].updateRN) {
       runningProcesses[identifier].updateRN.kill();
       runningProcesses[identifier].updateRN = null;
+      return resolve();
+    }
+    if (runningProcesses[identifier].genVT) {
+      runningProcesses[identifier].genVT.kill();
+      runningProcesses[identifier].genVT = null;
       return resolve();
     }
 

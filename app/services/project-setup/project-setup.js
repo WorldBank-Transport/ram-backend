@@ -151,7 +151,7 @@ export function concludeProjectSetup (e) {
         }))
       };
 
-      return createAdminBoundsVT(projId, scId, op, fc);
+      return createAdminBoundsVT(projId, scId, op, fc).promise;
     };
 
     return op.log('process:admin-bounds', {message: 'Processing admin areas'})
@@ -428,7 +428,7 @@ export function concludeProjectSetup (e) {
     .then(() => poiProcessPromise())
     .then(() => rnProcessPromise()
       .then(roadNetwork => importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork))
-      .then(roadNetwork => process.env.DS_ENV === 'test' ? null : createRoadNetworkVT(projId, scId, op, roadNetwork))
+      .then(roadNetwork => process.env.DS_ENV === 'test' ? null : createRoadNetworkVT(projId, scId, op, roadNetwork).promise)
     );
   })
   .then(() => {
