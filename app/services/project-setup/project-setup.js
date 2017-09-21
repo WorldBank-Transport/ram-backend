@@ -195,7 +195,7 @@ export function concludeProjectSetup (e) {
 
             return {
               project_id: projId,
-              name: feat.properties.name || 'N/A',
+              name: feat.properties[getPropInsensitive(feat.properties, 'name')] || 'N/A',
               coordinates: JSON.stringify(coordinates)
             };
           });
