@@ -413,23 +413,14 @@ export function concludeProjectSetup (e) {
       ? () => copyDefaultProfile(projId)
       : () => Promise.resolve();
 
-    // Run the tasks in series rather than in parallel.
-    // This is better for error handling. If they run in parallel and
-    // `processAdminAreas` errors, the script hangs a bit while
-    // `processRoadNetwork` (which is resource intensive) finished and only then
-    // the error is captured by the promise.
-    // Since processing the admin areas is a pretty fast operation, the
-    // performance is not really affected.
-    return Promise.all([
-      processAdminAreas(adminBoundsFc),
-      processOrigins(originsData)
-    ])
-    .then(() => profileProcessPromise())
-    .then(() => poiProcessPromise())
-    .then(() => rnProcessPromise()
-      .then(roadNetwork => importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork))
-      .then(roadNetwork => process.env.DS_ENV === 'test' ? null : createRoadNetworkVT(projId, scId, op, roadNetwork).promise)
-    );
+    return processOrigins(originsData)
+      .then(() => processAdminAreas(adminBoundsFc))
+      .then(() => profileProcessPromise())
+      .then(() => poiProcessPromise())
+      .then(() => rnProcessPromise()
+        .then(roadNetwork => importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork))
+        .then(roadNetwork => process.env.DS_ENV === 'test' ? null : createRoadNetworkVT(projId, scId, op, roadNetwork).promise)
+      );
   })
   .then(() => {
     return db.transaction(function (trx) {
