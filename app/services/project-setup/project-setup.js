@@ -1,15 +1,25 @@
 'use strict';
 import path from 'path';
 import fs from 'fs-extra';
+import { exec } from 'child_process';
+import os from 'os';
 import bbox from '@turf/bbox';
 import centerOfMass from '@turf/center-of-mass';
 import _ from 'lodash';
+import Promise from 'bluebird';
 
 import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
-import { setScenarioSetting } from '../../utils/utils';
-import { getFileContents, getJSONFileContents, putFileStream } from '../../s3/utils';
+import { setScenarioSetting, getPropInsensitive } from '../../utils/utils';
+import {
+  getFileContents,
+  getJSONFileContents,
+  putFileStream,
+  putFile,
+  removeDir as removeS3Dir,
+  getLocalFilesInDir
+} from '../../s3/utils';
 import { importRoadNetwork } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
@@ -58,13 +68,24 @@ export function concludeProjectSetup (e) {
   function processAdminAreas (adminBoundsFc) {
     logger && logger.log('process admin areas');
 
+    if (!adminBoundsFc.features) {
+      throw new Error('Invalid administrative boundaries file');
+    }
+
+    let filteredAA = {
+      'type': 'FeatureCollection',
+      'features': adminBoundsFc.features
+        .filter(o => !!o.properties[getPropInsensitive(o.properties, 'name')] && o.geometry.type !== 'Point')
+        .map(o => {
+          // Normalize name prop.
+          o.properties.name = o.properties[getPropInsensitive(o.properties, 'name')];
+          return o;
+        })
+    };
+
     let adminAreaTask = () => {
       return db.transaction(function (trx) {
-        if (!adminBoundsFc.features) {
-          throw new Error('Invalid administrative boundaries file');
-        }
-        let adminAreas = _(adminBoundsFc.features)
-          .filter(o => !!o.properties.name && o.geometry.type !== 'Point')
+        let adminAreas = _(filteredAA.features)
           .sortBy(o => _.kebabCase(o.properties.name))
           .map(o => {
             return {
@@ -76,7 +97,7 @@ export function concludeProjectSetup (e) {
           })
           .value();
 
-        let adminAreasBbox = bbox(adminBoundsFc);
+        let adminAreasBbox = bbox(filteredAA);
 
         return Promise.all([
           trx('projects')
@@ -116,9 +137,31 @@ export function concludeProjectSetup (e) {
       ]);
     };
 
+    // Prepare the features for the vector tiles.
+    let processForTiles = () => {
+      // Skip on tests.
+      if (process.env.DS_ENV === 'test') { return; }
+
+      let fc = {
+        'type': 'FeatureCollection',
+        'features': filteredAA.features.map(o => ({
+          type: 'Feature',
+          properties: {
+            name: o.properties.name,
+            type: o.properties.type || 'admin-area',
+            project_id: projId
+          },
+          geometry: o.geometry
+        }))
+      };
+
+      return createVectorTiles(projId, scId, fc);
+    };
+
     return op.log('process:admin-bounds', {message: 'Processing admin areas'})
       .then(() => cleanAATable())
-      .then(() => adminAreaTask());
+      .then(() => adminAreaTask())
+      .then(() => processForTiles());
   }
 
   function processOrigins (originsData) {
@@ -431,4 +474,49 @@ function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
         return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
       }
     });
+}
+
+function createVectorTiles (projId, scId, fc) {
+  // Promisify functions.
+  const removeP = Promise.promisify(fs.remove);
+  const writeJsonP = Promise.promisify(fs.writeJson);
+
+  const geojsonName = `p${projId}s${scId}-fc.geojson`;
+  const tilesFolderName = `p${projId}s${scId}-tiles`;
+  const geojsonFilePath = path.resolve(os.tmpdir(), geojsonName);
+  const tilesFolderPath = path.resolve(os.tmpdir(), tilesFolderName);
+
+  // Clean any existing files, locally and from S3.
+  return Promise.all([
+    removeP(geojsonFilePath),
+    removeP(tilesFolderPath),
+    // Admin bounds tiles are calculated during project setup, meaning that
+    // there won't be anything on S3. This is just in case the process fails
+    // down the road and we've to repeat.
+    removeS3Dir(`project-${projId}/tiles/admin-bounds`)
+  ])
+  .then(() => writeJsonP(geojsonFilePath, fc))
+  .then(() => {
+    return new Promise((resolve, reject) => {
+      // -u $(id -u) is used to ensure that the volumes are created with the
+      // correct user so they can be removed. Otherwise they'd belong to root.
+      exec(`docker run -u $(id -u) --rm -v ${os.tmpdir()}:/data wbtransport/tippecanoe tippecanoe -l bounds -e /data/${tilesFolderName} /data/${geojsonName}`, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`exec error: ${error}`);
+          reject(error);
+          return;
+        }
+        console.log(`stdout: ${stdout}`);
+        console.log(`stderr: ${stderr}`);
+        resolve();
+      });
+    });
+  })
+  .then(() => {
+    let files = getLocalFilesInDir(tilesFolderPath);
+    return Promise.map(files, file => {
+      let newName = file.replace(tilesFolderPath, `project-${projId}/tiles/admin-bounds`);
+      return putFile(newName, file);
+    }, { concurrency: 10 });
+  });
 }

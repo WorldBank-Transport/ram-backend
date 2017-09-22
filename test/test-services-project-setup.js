@@ -179,7 +179,7 @@ describe('Finish Project Setup', function () {
                 .orderBy('id', 'desc')
                 .then(logs => {
                   assert.equal(err, 'Invalid administrative boundaries file');
-                  assert.lengthOf(logs, 4);
+                  assert.lengthOf(logs, 2);
                   assert.equal(logs[0].code, 'error');
                   assert.equal(logs[0].data.error, 'Invalid administrative boundaries file');
                 })

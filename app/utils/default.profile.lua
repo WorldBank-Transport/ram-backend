@@ -379,9 +379,9 @@ function way_function (way, result)
   end
 
   -- Set access restriction flag if access is allowed under certain restrictions only
-  if access ~= "" and access_tag_restricted[access] then
-    result.is_access_restricted = true
-  end
+  -- if access ~= "" and access_tag_restricted[access] then
+  --   result.is_access_restricted = true
+  -- end
 
   -- Set access restriction flag if service is allowed under certain restrictions only
   -- if service and service ~= "" and service_tag_restricted[service] then

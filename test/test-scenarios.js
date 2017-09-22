@@ -1,6 +1,5 @@
 'use strict';
 import { assert } from 'chai';
-import mockdate from 'mockdate';
 
 import initServer from '../app/services/server';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
@@ -539,45 +538,51 @@ describe('Scenarios', function () {
     });
 
     it('should update when updating a scenario', function () {
-      mockdate.set(1000000000000);
-      return instance.injectThen({
-        method: 'PATCH',
-        url: '/projects/8888/scenarios/8888',
-        payload: {
-          name: 'New name'
-        }
-      }).then(res => {
-        assert.equal(res.statusCode, 200, 'Status code is 200');
-        assert.equal(res.result.name, 'New name');
+      // Change the date to see if it get updated.
+      return db('projects')
+        .update({'updated_at': (new Date(0))})
+        .where('id', 8888)
+        .then(() => instance.injectThen({
+          method: 'PATCH',
+          url: '/projects/8888/scenarios/8888',
+          payload: {
+            name: 'New name'
+          }
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
+          assert.equal(res.result.name, 'New name');
 
-        return db.select('updated_at')
-          .from('projects')
-          .where('id', 8888)
-          .then(projects => {
-            let timestamp = (new Date(projects[0].updated_at)).getTime();
-            assert.equal(timestamp, 1000000000000);
-            mockdate.reset();
-          });
-      });
+          return db.select('updated_at')
+            .from('projects')
+            .where('id', 8888)
+            .first()
+            .then(project => {
+              assert.notEqual(project.updated_at, '1970-01-01T00:00:00.000Z');
+            });
+        });
     });
 
     it('should update when deleting a scenario', function () {
-      mockdate.set(1222000000000);
-      return instance.injectThen({
-        method: 'DELETE',
-        url: '/projects/8888/scenarios/8889'
-      }).then(res => {
-        assert.equal(res.statusCode, 200, 'Status code is 200');
+      // Change the date to see if it get updated.
+      return db('projects')
+        .update({'updated_at': (new Date(0))})
+        .where('id', 8888)
+        .then(() => instance.injectThen({
+          method: 'DELETE',
+          url: '/projects/8888/scenarios/8889'
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
 
-        return db.select('updated_at')
-          .from('projects')
-          .where('id', 8888)
-          .then(projects => {
-            let timestamp = (new Date(projects[0].updated_at)).getTime();
-            assert.equal(timestamp, 1222000000000);
-            mockdate.reset();
-          });
-      });
+          return db.select('updated_at')
+            .from('projects')
+            .where('id', 8888)
+            .first()
+            .then(project => {
+              assert.notEqual(project.updated_at, '1970-01-01T00:00:00.000Z');
+            });
+        });
     });
 
     it('should update when deleting a scenario file', function () {

@@ -1,10 +1,9 @@
 'use strict';
 import Joi from 'joi';
 import Boom from 'boom';
-import Promise from 'bluebird';
 
 import db from '../db/';
-import { removeFile } from '../s3/utils';
+import { removeDir as removeS3Dir } from '../s3/utils';
 import { MasterScenarioError, ScenarioNotFoundError } from '../utils/errors';
 
 module.exports = [
@@ -36,16 +35,11 @@ module.exports = [
           }
         })
         .then(() => db.transaction(trx => {
-          // Store the files to delete later. Not super clean but better than
-          // just passing the files down all the promises.
-          let allFiles;
-
           return trx
             .select('*')
             .from('scenarios_files')
             .where('scenario_id', scId)
             .where('project_id', projId)
-            .then(files => { allFiles = files; })
             // Delete the scenario. Everything else will follow due to
             // cascade delete.
             // - scenario files
@@ -58,9 +52,7 @@ module.exports = [
               }
             })
             .then(() => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId))
-            .then(() => {
-              return Promise.map(allFiles, f => removeFile(f.path));
-            });
+            .then(() => removeS3Dir(`scenario-${scId}/`));
         }))
       .then(() => reply({statusCode: 200, message: 'Scenario deleted'}))
       .catch(MasterScenarioError, e => reply(Boom.conflict(e.message)))

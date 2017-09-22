@@ -4,7 +4,7 @@ import Boom from 'boom';
 import Promise from 'bluebird';
 
 import db from '../db/';
-import { removeFile } from '../s3/utils';
+import { removeDir as removeS3Dir } from '../s3/utils';
 import { ProjectNotFoundError } from '../utils/errors';
 
 module.exports = [
@@ -21,14 +21,10 @@ module.exports = [
     handler: (request, reply) => {
       const id = request.params.projId;
       db.transaction(trx => {
-        // Store the files to delete later. Not super clean but better than
-        // just passing the files down all the promises.
-        let allFiles;
         return Promise.all([
           trx.select('*').from('projects_files').where('project_id', id),
           trx.select('*').from('scenarios_files').where('project_id', id)
         ])
-        .then(files => { allFiles = files; })
         // Delete the project. Everything else will follow due to
         // cascade delete.
         // - project files
@@ -46,10 +42,7 @@ module.exports = [
             }
           })
         )
-        .then(() => {
-          let flat = allFiles.reduce((files, acc) => acc.concat(files), []);
-          return Promise.map(flat, f => removeFile(f.path));
-        });
+        .then(() => removeS3Dir(`project-${id}/`));
       })
       .then(() => reply({statusCode: 200, message: 'Project deleted'}))
       .catch(ProjectNotFoundError, () => reply(Boom.notFound('Project not found')))

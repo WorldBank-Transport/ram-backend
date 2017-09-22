@@ -16,7 +16,7 @@ import {
   DataValidationError,
   ProjectStatusError
 } from '../utils/errors';
-import { parseFormData } from '../utils/utils';
+import { parseFormData, getPropInsensitive } from '../utils/utils';
 
 export default [
   {
@@ -235,7 +235,7 @@ function handleProfileAndAdmin (sourceName, uploadedFilePath, projId) {
             }
 
             // Features without name.
-            let noName = contents.features.filter(o => !o.properties.name);
+            let noName = contents.features.filter(o => !o.properties[getPropInsensitive(o.properties, 'name')]);
             if (noName.length) {
               throw new DataValidationError(`All features must have a "name". Found ${noName.length} features without a "name" property`);
             }
@@ -304,7 +304,7 @@ function handleOrigins (result, projId) {
       // If there is, validate indicators against it.
       if (file) {
         let fileName = `${sourceName}_${Date.now()}`;
-        let filePath = `profile-${projId}/${fileName}`;
+        let filePath = `project-${projId}/${fileName}`;
 
         // File was submitted. There can't be one in the database.
         return db('projects_files')
