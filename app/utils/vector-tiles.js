@@ -144,7 +144,7 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
       return dockerRun([
         `-v ${os.tmpdir()}:/data`,
         `--name ${currentRunning}`,
-        'vt',
+        'wbtransport/rra-vt',
         'node --max_old_space_size=8192 /usr/local/bin/osmtogeojson',
         `/data/${osmName} > ${geojsonFilePath}`
       ]);
@@ -158,7 +158,7 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
       return dockerRun([
         `-v ${os.tmpdir()}:/data`,
         `--name ${currentRunning}`,
-        'vt',
+        'wbtransport/rra-vt',
         'tippecanoe',
         '-l road-network',
         `-e /data/${tilesFolderName}`,
