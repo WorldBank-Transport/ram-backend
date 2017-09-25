@@ -6,12 +6,13 @@ import cp from 'child_process';
 
 import config from '../config';
 import db from '../db/';
-import { removeFile } from '../s3/utils';
+import { removeFile, getFileContents } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
 import { getProject } from './projects--get';
 import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
 import { closeDatabase } from '../services/rra-osm-p2p';
+import { createRoadNetworkVT } from '../utils/vector-tiles';
 
 // Stores running processes to be able to kill them.
 let runningProcesses = {};
@@ -101,7 +102,7 @@ module.exports = [
         })
         .then(op => op.log('start', {message: 'Analysis generation started'}))
         // Start generation.
-        .then(op => generateResults(projId, scId, op.getId()))
+        .then(op => generateResults(projId, scId, op))
         .then(() => reply({statusCode: 200, message: 'Result generation started'}))
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
@@ -153,10 +154,12 @@ module.exports = [
   }
 ];
 
-function generateResults (projId, scId, opId) {
+function generateResults (projId, scId, op) {
   // In test mode we don't want to start the generation.
   // It will be tested in the appropriate place.
   if (process.env.DS_ENV === 'test') { return; }
+
+  let opId = op.getId();
 
   let identifier = `p${projId} s${scId}`;
   if (!runningProcesses[identifier]) runningProcesses[identifier] = {};
@@ -165,10 +168,25 @@ function generateResults (projId, scId, opId) {
   db('scenarios_settings')
     .select('value')
     .where('scenario_id', scId)
-    .where('key', 'rn_active_editing')
-    .first()
+    .whereIn('key', ['res_gen_at', 'rn_active_editing', 'rn_updated_at'])
+    .orderBy('key')
     .then(scSettings => {
-      let needExport = scSettings && scSettings.value === 'true';
+      const activeEditing = scSettings[1].value;
+      let genAt = scSettings[0].value;
+      let rnUpdatedAt = scSettings[2].value;
+
+      let needExport = false;
+      if (activeEditing === 'true') {
+        genAt = genAt === 0 ? genAt : (new Date(genAt)).getTime();
+        rnUpdatedAt = rnUpdatedAt === 0 ? rnUpdatedAt : (new Date(rnUpdatedAt)).getTime();
+
+        needExport = rnUpdatedAt > genAt;
+        if (!needExport) {
+          console.log(identifier, 'Road network was not modified');
+        }
+      } else {
+        console.log(identifier, 'Road network editing not enabled');
+      }
 
       setImmediate(() => {
         let executor = Promise.resolve();
@@ -177,7 +195,8 @@ function generateResults (projId, scId, opId) {
           executor = executor
             // Close the database on this process before exporting the road network.
             .then(() => closeDatabase(projId, scId))
-            .then(() => updateRN(projId, scId, opId));
+            .then(() => updateRN(projId, scId, opId))
+            .then(() => generateTiles(projId, scId, op));
         }
 
         executor.then(() => spawnAnalysisProcess(projId, scId, opId));
@@ -216,6 +235,30 @@ function updateRN (projId, scId, opId, cb) {
     })
     .start();
   });
+}
+
+function generateTiles (projId, scId, op) {
+  let identifier = `p${projId} s${scId}`;
+  console.log(identifier, 'generating vector tiles');
+
+  let executor = db('scenarios_files')
+    .select('*')
+    .where('scenario_id', scId)
+    .where('type', 'road-network')
+    .first()
+    .then(file => getFileContents(file.path))
+    .then(roadNetwork => {
+      // createRoadNetworkVT returns an objects with a promise and a kill switch
+      let service = createRoadNetworkVT(projId, scId, op, roadNetwork);
+      runningProcesses[identifier].genVT = service;
+
+      return service.promise;
+    })
+    .then(() => {
+      runningProcesses[identifier].genVT = null;
+    });
+
+  return executor;
 }
 
 function spawnAnalysisProcess (projId, scId, opId) {
@@ -314,11 +357,16 @@ function killAnalysisProcess (projId, scId) {
 
   return new Promise(resolve => {
     let identifier = `p${projId} s${scId}`;
-    // If there's a process running means that the export isn't finished.
-    // Kill it.
+    // Since the processes run sequentially check by order which we need
+    // to kill.
     if (runningProcesses[identifier].updateRN) {
       runningProcesses[identifier].updateRN.kill();
       runningProcesses[identifier].updateRN = null;
+      return resolve();
+    }
+    if (runningProcesses[identifier].genVT) {
+      runningProcesses[identifier].genVT.kill();
+      runningProcesses[identifier].genVT = null;
       return resolve();
     }
 
