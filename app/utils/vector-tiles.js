@@ -107,12 +107,6 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
  * @return Object with a `promise` and a `kill` switch.
  */
 export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
-  return {
-    promise: Promise.resolve(),
-    kill: () => Promise.resolve()
-  };
-  /* eslint-disable */
-
   // Promisify functions.
   const removeP = Promise.promisify(fs.remove);
   const writeFile = Promise.promisify(fs.writeFile);
@@ -186,7 +180,6 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
         : Promise.resolve();
     }
   };
-  /* eslint-enable */
 }
 
 function dockerRun (args) {
