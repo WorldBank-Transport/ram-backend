@@ -23,6 +23,8 @@ module.exports = [
       }
     },
     handler: (request, reply) => {
+      return reply(Boom.notImplemented('This method is not implemented'));
+      /* eslint-disable */
       const { scId, type, z, x, y } = request.params;
 
       return db.select('*')
