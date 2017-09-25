@@ -2,7 +2,7 @@
 import path from 'path';
 import fs from 'fs-extra';
 import { exec } from 'child_process';
-import os from 'os';
+import tmpDir from 'temp-dir';
 import Promise from 'bluebird';
 
 import {
@@ -33,8 +33,8 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
 
   const geojsonName = `p${projId}s${scId}-fc.geojson`;
   const tilesFolderName = `p${projId}s${scId}-tiles`;
-  const geojsonFilePath = path.resolve(os.tmpdir(), geojsonName);
-  const tilesFolderPath = path.resolve(os.tmpdir(), tilesFolderName);
+  const geojsonFilePath = path.resolve(tmpDir, geojsonName);
+  const tilesFolderPath = path.resolve(tmpDir, tilesFolderName);
 
   let currentRunning = null;
   let killed = false;
@@ -60,9 +60,9 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
     .then(() => {
       currentRunning = `p${projId}s${scId}-bounds`;
       return dockerRun([
-        `-v ${os.tmpdir()}:/data`,
+        `-v ${tmpDir}:/data`,
         `--name ${currentRunning}`,
-        'vt',
+        'wbtransport/rra-vt',
         'tippecanoe',
         '-l bounds',
         `-e /data/${tilesFolderName}`,
@@ -114,9 +114,9 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
   const osmName = `p${projId}s${scId}-rn.osm`;
   const geojsonName = `p${projId}s${scId}-rn.geojson`;
   const tilesFolderName = `p${projId}s${scId}-rn-tiles`;
-  const osmFilePath = path.resolve(os.tmpdir(), osmName);
-  const geojsonFilePath = path.resolve(os.tmpdir(), geojsonName);
-  const tilesFolderPath = path.resolve(os.tmpdir(), tilesFolderName);
+  const osmFilePath = path.resolve(tmpDir, osmName);
+  const geojsonFilePath = path.resolve(tmpDir, geojsonName);
+  const tilesFolderPath = path.resolve(tmpDir, tilesFolderName);
 
   let currentRunning = null;
   let killed = false;
@@ -142,7 +142,7 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
       currentRunning = `p${projId}s${scId}-rn`;
 
       return dockerRun([
-        `-v ${os.tmpdir()}:/data`,
+        `-v ${tmpDir}:/data`,
         `--name ${currentRunning}`,
         'wbtransport/rra-vt',
         'node --max_old_space_size=8192 /usr/local/bin/osmtogeojson',
@@ -156,7 +156,7 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
     .then(() => {
       currentRunning = `p${projId}s${scId}-tiles`;
       return dockerRun([
-        `-v ${os.tmpdir()}:/data`,
+        `-v ${tmpDir}:/data`,
         `--name ${currentRunning}`,
         'wbtransport/rra-vt',
         'tippecanoe',
