@@ -1,8 +1,6 @@
 'use strict';
 import path from 'path';
 import fs from 'fs-extra';
-import { exec } from 'child_process';
-import os from 'os';
 import bbox from '@turf/bbox';
 import centerOfMass from '@turf/center-of-mass';
 import _ from 'lodash';
@@ -12,13 +10,11 @@ import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
 import { setScenarioSetting, getPropInsensitive } from '../../utils/utils';
+import { createAdminBoundsVT, createRoadNetworkVT } from '../../utils/vector-tiles';
 import {
   getFileContents,
   getJSONFileContents,
-  putFileStream,
-  putFile,
-  removeDir as removeS3Dir,
-  getLocalFilesInDir
+  putFileStream
 } from '../../s3/utils';
 import { importRoadNetwork } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
@@ -155,7 +151,7 @@ export function concludeProjectSetup (e) {
         }))
       };
 
-      return createVectorTiles(projId, scId, fc);
+      return createAdminBoundsVT(projId, scId, op, fc).promise;
     };
 
     return op.log('process:admin-bounds', {message: 'Processing admin areas'})
@@ -199,7 +195,7 @@ export function concludeProjectSetup (e) {
 
             return {
               project_id: projId,
-              name: feat.properties.name || 'N/A',
+              name: feat.properties[getPropInsensitive(feat.properties, 'name')] || 'N/A',
               coordinates: JSON.stringify(coordinates)
             };
           });
@@ -417,22 +413,14 @@ export function concludeProjectSetup (e) {
       ? () => copyDefaultProfile(projId)
       : () => Promise.resolve();
 
-    // Run the tasks in series rather than in parallel.
-    // This is better for error handling. If they run in parallel and
-    // `processAdminAreas` errors, the script hangs a bit while
-    // `processRoadNetwork` (which is resource intensive) finished and only then
-    // the error is captured by the promise.
-    // Since processing the admin areas is a pretty fast operation, the
-    // performance is not really affected.
-    return Promise.all([
-      processAdminAreas(adminBoundsFc),
-      processOrigins(originsData)
-    ])
-    .then(() => profileProcessPromise())
-    .then(() => poiProcessPromise())
-    .then(() => rnProcessPromise()
-      .then(roadNetwork => importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork))
-    );
+    return processOrigins(originsData)
+      .then(() => processAdminAreas(adminBoundsFc))
+      .then(() => profileProcessPromise())
+      .then(() => poiProcessPromise())
+      .then(() => rnProcessPromise()
+        .then(roadNetwork => importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork))
+        .then(roadNetwork => process.env.DS_ENV === 'test' ? null : createRoadNetworkVT(projId, scId, op, roadNetwork).promise)
+      );
   })
   .then(() => {
     return db.transaction(function (trx) {
@@ -473,50 +461,6 @@ function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
       if (allowImport) {
         return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
       }
-    });
-}
-
-function createVectorTiles (projId, scId, fc) {
-  // Promisify functions.
-  const removeP = Promise.promisify(fs.remove);
-  const writeJsonP = Promise.promisify(fs.writeJson);
-
-  const geojsonName = `p${projId}s${scId}-fc.geojson`;
-  const tilesFolderName = `p${projId}s${scId}-tiles`;
-  const geojsonFilePath = path.resolve(os.tmpdir(), geojsonName);
-  const tilesFolderPath = path.resolve(os.tmpdir(), tilesFolderName);
-
-  // Clean any existing files, locally and from S3.
-  return Promise.all([
-    removeP(geojsonFilePath),
-    removeP(tilesFolderPath),
-    // Admin bounds tiles are calculated during project setup, meaning that
-    // there won't be anything on S3. This is just in case the process fails
-    // down the road and we've to repeat.
-    removeS3Dir(`project-${projId}/tiles/admin-bounds`)
-  ])
-  .then(() => writeJsonP(geojsonFilePath, fc))
-  .then(() => {
-    return new Promise((resolve, reject) => {
-      // -u $(id -u) is used to ensure that the volumes are created with the
-      // correct user so they can be removed. Otherwise they'd belong to root.
-      exec(`docker run -u $(id -u) --rm -v ${os.tmpdir()}:/data wbtransport/tippecanoe tippecanoe -l bounds -e /data/${tilesFolderName} /data/${geojsonName}`, (error, stdout, stderr) => {
-        if (error) {
-          console.error(`exec error: ${error}`);
-          reject(error);
-          return;
-        }
-        console.log(`stdout: ${stdout}`);
-        console.log(`stderr: ${stderr}`);
-        resolve();
-      });
-    });
-  })
-  .then(() => {
-    let files = getLocalFilesInDir(tilesFolderPath);
-    return Promise.map(files, file => {
-      let newName = file.replace(tilesFolderPath, `project-${projId}/tiles/admin-bounds`);
-      return putFile(newName, file);
-    }, { concurrency: 10 });
-  });
+    })
+    .then(() => roadNetwork);
 }
