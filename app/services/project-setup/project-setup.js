@@ -16,7 +16,7 @@ import {
   getJSONFileContents,
   putFileStream
 } from '../../s3/utils';
-import { importRoadNetwork } from '../rra-osm-p2p';
+import { importRoadNetwork, removeDatabase } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
 
@@ -327,7 +327,8 @@ export function concludeProjectSetup (e) {
         // Save to database.
         let promises = fileUploadPromises.concat(db.batchInsert('scenarios_files', dbInsertions));
 
-        return Promise.all(promises);
+        return Promise.all(promises)
+          .then(() => osmGeoJSON);
       });
 
     // Clean the tables so any remnants of previous attempts are removed.
@@ -392,9 +393,10 @@ export function concludeProjectSetup (e) {
       })
   ]))
   .then(filesContent => {
-    // let [roadNetwork, [adminBoundsFc, originsData]] = filesContent;
     let [[poiSource, rnSource], [profileSource], [adminBoundsFc, originsData]] = filesContent;
 
+    //
+    // Handle Road Network.
     let rnProcessPromise = rnSource.type === 'osm'
       ? () => importOSMRoadNetwork(overpass.fcBbox(adminBoundsFc))
       // We'll need to get the RN contents to import to the osm-p2p-db.
@@ -405,10 +407,14 @@ export function concludeProjectSetup (e) {
         .first()
         .then(file => getFileContents(file.path));
 
+    //
+    // Handle POI.
     let poiProcessPromise = poiSource.type === 'osm'
       ? () => importOSMPOIs(overpass.fcBbox(adminBoundsFc), poiSource.data.osmPoiTypes)
       : () => Promise.resolve();
 
+    //
+    // Handle Profile.
     let profileProcessPromise = profileSource.type === 'default'
       ? () => copyDefaultProfile(projId)
       : () => Promise.resolve();
@@ -416,6 +422,8 @@ export function concludeProjectSetup (e) {
     return processOrigins(originsData)
       .then(() => processAdminAreas(adminBoundsFc))
       .then(() => profileProcessPromise())
+      // Remove anything that might be there. We're importing fresh data.
+      .then(() => removeDatabase(projId, scId))
       .then(() => poiProcessPromise())
       .then(() => rnProcessPromise()
         .then(roadNetwork => importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork))
