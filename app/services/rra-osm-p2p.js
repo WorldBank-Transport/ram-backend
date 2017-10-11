@@ -6,9 +6,7 @@ import cp from 'child_process';
 import path from 'path';
 import osmdb from 'osm-p2p';
 import osmrouter from 'osm-p2p-server';
-import osmP2PCreateChangeset from 'osm-p2p-server/api/create_changeset';
-import osmP2PCloseChangeset from 'osm-p2p-server/api/close_changeset';
-import importer from 'osm-p2p-db-importer';
+import importer from 'osm-p2p-import';
 
 import config from '../config';
 
@@ -94,63 +92,24 @@ export function removeDatabase (projId, scId) {
 export function importRoadNetwork (projId, scId, op, roadNetwork, logger) {
   const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
 
-  let baseDir = getDatabaseBaseDir();
-  let dbName = getDatabaseName(projId, scId);
-  let changesetId;
+  let osmDb = getDatabase(projId, scId);
 
   let importPromise = Promise.promisify(importer);
 
   return op.log('process:road-network', {message: 'Road network processing started'})
-    .then(() => openChangeset(projId, scId, logger))
-    .then(id => { changesetId = id; })
-    .then(() => createOSMChangeset(changesetId, roadNetwork, 'osm', basePath, logger))
-    .then(() => closeDatabase(projId, scId))
+    .then(() => convertToOSMXml(roadNetwork, 'osm', basePath, logger))
     .then(() => logger && logger.log('Importing changeset into osm-p2p...'))
     .then(() => {
-      let xml = fs.createReadStream(`${basePath}.osmc`);
-      return importPromise(`${baseDir}/${dbName}`, xml);
+      let xml = fs.createReadStream(`${basePath}.osm`);
+      return importPromise(osmDb, xml);
     })
     .then(() => logger && logger.log('Importing changeset into osm-p2p... done'))
-    .then(() => closeChangeset(projId, scId, changesetId, logger))
     // Note: There's no need to close the osm-p2p-db because when the process
     // terminates the connection is automatically closed.
     .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
 }
 
-function openChangeset (projId, scId, logger) {
-  const db = getDatabase(projId, scId);
-  return new Promise((resolve, reject) => {
-    logger && logger.log('Creating changeset in database...');
-
-    let changeset = {
-      type: 'changeset',
-      tags: {
-        comment: `Project ${projId}, Scenario ${scId}`,
-        created_by: 'RRA'
-      }
-    };
-    osmP2PCreateChangeset(db)(changeset, (err, id, node) => {
-      if (err) return reject(err);
-      logger && logger.log('Creating changeset in database... done');
-      return resolve(id);
-    });
-  });
-}
-
-function closeChangeset (projId, scId, changesetId, logger) {
-  const db = getDatabase(projId, scId);
-  return new Promise((resolve, reject) => {
-    logger && logger.log('Closing changeset in database...');
-
-    osmP2PCloseChangeset(db)(changesetId, (err) => {
-      if (err) return reject(err);
-      logger && logger.log('Closing changeset in database... done');
-      return resolve();
-    });
-  });
-}
-
-function createOSMChangeset (changesetId, data, dataType, basePath, logger) {
+function convertToOSMXml (data, dataType, basePath, logger) {
   // Create an OSM Change file and store it in system /tmp folder.
   return new Promise((resolve, reject) => {
     logger && logger.log('Creating changeset file...');
@@ -166,8 +125,7 @@ function createOSMChangeset (changesetId, data, dataType, basePath, logger) {
       cmd,
       `${basePath}.${dataType}`,
       '-t', './app/lib/ogr2osm/default_translation.py',
-      '--changeset-id', changesetId,
-      '-o', `${basePath}.osmc`,
+      '-o', `${basePath}.osm`,
       '-f'
     ];
 
@@ -182,7 +140,7 @@ function createOSMChangeset (changesetId, data, dataType, basePath, logger) {
         return reject(new Error(err));
       }
       logger && logger.log('Creating changeset file... done');
-      return resolve(changesetId);
+      return resolve();
     });
   });
 }
