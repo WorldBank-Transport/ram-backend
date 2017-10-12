@@ -77,142 +77,146 @@ export default [
             throw new DataValidationError(`"source-name" must be one of [poi, road-network]`);
           }
 
+          const handleFileSource = () => {
+            if (!result.files.file) {
+              throw new DataValidationError('"file" is required');
+            }
+
+            // With poi source the subtype is required.
+            let subtype = result.fields['subtype'] ? result.fields['subtype'][0] : null;
+            if (sourceName === 'poi' && !subtype) {
+              throw new DataValidationError('"subtype" is required for source "poi"');
+            }
+
+            let file = result.files.file[0];
+            let fileName;
+
+            if (subtype) {
+              fileName = `${sourceName}_${subtype}_${Date.now()}`;
+            } else {
+              fileName = `${sourceName}_${Date.now()}`;
+            }
+
+            let filePath = `scenario-${scId}/${fileName}`;
+
+            // When switching from an OSM source to File, check if there are any
+            // files in the db and remove them. This can happen if files were
+            // imported from OSM but the process failed.
+            return getScenarioSource(scId, sourceName)
+              .then(source => {
+                // Delete files.
+                return source && source.type === 'osm'
+                  ? deleteScenarioFiles(projId, scId, sourceName)
+                  : null;
+              })
+              // Upsert source.
+              .then(() => upsertScenarioSource(projId, scId, sourceName, 'file'))
+              // Check if the file exists.
+              .then(() => {
+                let query = db('scenarios_files')
+                  .select('id')
+                  .where('scenario_id', scId)
+                  .where('type', sourceName);
+
+                if (subtype) {
+                  query = query.where('subtype', subtype);
+                }
+
+                return query;
+              })
+              .then(files => {
+                if (files.length) { throw new FileExistsError(); }
+              })
+              // Validations.
+              .then(() => {
+                if (sourceName === 'poi') {
+                  return getLocalJSONFileContents(file.path)
+                    .catch(err => {
+                      if (err instanceof SyntaxError) throw new DataValidationError(`Invalid GeoJSON file`);
+                      throw err;
+                    })
+                    .then(contents => {
+                      if (contents.type !== 'FeatureCollection') {
+                        throw new DataValidationError('GeoJSON file must be a feature collection');
+                      }
+
+                      if (!contents.features || !contents.features.length) {
+                        throw new DataValidationError('No valid poi found in file');
+                      }
+                    });
+                }
+              })
+              // Upload to S3.
+              .then(() => putFileToS3(filePath, file.path))
+              // Insert into database.
+              .then(() => {
+                let data = {
+                  name: fileName,
+                  type: sourceName,
+                  path: filePath,
+                  project_id: projId,
+                  scenario_id: scId,
+                  created_at: (new Date()),
+                  updated_at: (new Date())
+                };
+
+                if (subtype) {
+                  data.subtype = subtype;
+                }
+
+                return db('scenarios_files')
+                  .returning(['id', 'name', 'type', 'subtype', 'path', 'created_at'])
+                  .insert(data)
+                  .then(insertResponse => insertResponse[0])
+                  .then(insertResponse => db('scenarios').update({updated_at: (new Date())}).where('id', scId).then(() => insertResponse))
+                  .then(insertResponse => db('projects').update({updated_at: (new Date())}).where('id', projId).then(() => insertResponse));
+              })
+              // Delete temp file.
+              .then(insertResponse => removeLocalFile(file.path, true).then(() => insertResponse))
+              .then(insertResponse => reply(Object.assign({}, insertResponse, {
+                sourceType,
+                sourceName
+              })))
+              .catch(err => {
+                // Delete temp file in case of error. Re-throw error to continue.
+                file && removeLocalFile(file.path, true);
+                throw err;
+              });
+          };
+
+          const handleOSMSource = () => {
+            // With poi source the osmPoiTypes are required.
+            let osmPoiTypes = result.fields['osmPoiTypes'] || [];
+            if (sourceName === 'poi') {
+              // Validate POI.
+              if (!osmPoiTypes.length) {
+                throw new DataValidationError('"osmPoiTypes" is required for source "poi"');
+              }
+
+              let validPOI = osmPOIGroups.map(o => o.key);
+              let invalid = osmPoiTypes.filter(o => validPOI.indexOf(o) === -1);
+              if (invalid.length) {
+                throw new DataValidationError(`POI type [${invalid.join(', ')}] not allowed. "osmPoiTypes" values must be any of [${validPOI.join(', ')}]`);
+              }
+            }
+
+            let sourceData = osmPoiTypes ? { osmPoiTypes } : null;
+
+            // Upsert source.
+            return upsertScenarioSource(projId, scId, sourceName, 'osm', sourceData)
+              // Delete files if exist.
+              .then(() => deleteScenarioFiles(projId, scId, sourceName))
+              .then(() => reply({
+                sourceType,
+                sourceName
+              }));
+          };
+
           switch (sourceType) {
             case 'file':
-              if (!result.files.file) {
-                throw new DataValidationError('"file" is required');
-              }
-
-              // With poi source the subtype is required.
-              let subtype = result.fields['subtype'] ? result.fields['subtype'][0] : null;
-              if (sourceName === 'poi' && !subtype) {
-                throw new DataValidationError('"subtype" is required for source "poi"');
-              }
-
-              let file = result.files.file[0];
-              let fileName;
-
-              if (subtype) {
-                fileName = `${sourceName}_${subtype}_${Date.now()}`;
-              } else {
-                fileName = `${sourceName}_${Date.now()}`;
-              }
-
-              let filePath = `scenario-${scId}/${fileName}`;
-
-              // Upsert source.
-              return upsertScenarioSource(projId, scId, sourceName, 'file')
-                // Check if the file exists.
-                .then(() => {
-                  let query = db('scenarios_files')
-                    .select('id')
-                    .where('scenario_id', scId)
-                    .where('type', sourceName);
-
-                  if (subtype) {
-                    query = query.where('subtype', subtype);
-                  }
-
-                  return query;
-                })
-                .then(files => {
-                  if (files.length) { throw new FileExistsError(); }
-                })
-                // Validations.
-                .then(() => {
-                  if (sourceName === 'poi') {
-                    return getLocalJSONFileContents(file.path)
-                      .catch(err => {
-                        if (err instanceof SyntaxError) throw new DataValidationError(`Invalid GeoJSON file`);
-                        throw err;
-                      })
-                      .then(contents => {
-                        if (contents.type !== 'FeatureCollection') {
-                          throw new DataValidationError('GeoJSON file must be a feature collection');
-                        }
-
-                        if (!contents.features || !contents.features.length) {
-                          throw new DataValidationError('No valid poi found in file');
-                        }
-                      });
-                  }
-                })
-                // Upload to S3.
-                .then(() => putFileToS3(filePath, file.path))
-                // Insert into database.
-                .then(() => {
-                  let data = {
-                    name: fileName,
-                    type: sourceName,
-                    path: filePath,
-                    project_id: projId,
-                    scenario_id: scId,
-                    created_at: (new Date()),
-                    updated_at: (new Date())
-                  };
-
-                  if (subtype) {
-                    data.subtype = subtype;
-                  }
-
-                  return db('scenarios_files')
-                    .returning(['id', 'name', 'type', 'subtype', 'path', 'created_at'])
-                    .insert(data)
-                    .then(insertResponse => insertResponse[0])
-                    .then(insertResponse => db('scenarios').update({updated_at: (new Date())}).where('id', scId).then(() => insertResponse))
-                    .then(insertResponse => db('projects').update({updated_at: (new Date())}).where('id', projId).then(() => insertResponse));
-                })
-                // Delete temp file.
-                .then(insertResponse => removeLocalFile(file.path, true).then(() => insertResponse))
-                .then(insertResponse => reply(Object.assign({}, insertResponse, {
-                  sourceType,
-                  sourceName
-                })))
-                .catch(err => {
-                  // Delete temp file in case of error. Re-throw error to continue.
-                  file && removeLocalFile(file.path, true);
-                  throw err;
-                });
+              return handleFileSource();
             case 'osm':
-              // With poi source the osmPoiTypes are required.
-              let osmPoiTypes = result.fields['osmPoiTypes'] || [];
-              if (sourceName === 'poi') {
-                // Validate POI.
-                if (!osmPoiTypes.length) {
-                  throw new DataValidationError('"osmPoiTypes" is required for source "poi"');
-                }
-
-                let validPOI = osmPOIGroups.map(o => o.key);
-                let invalid = osmPoiTypes.filter(o => validPOI.indexOf(o) === -1);
-                if (invalid.length) {
-                  throw new DataValidationError(`POI type [${invalid.join(', ')}] not allowed. "osmPoiTypes" values must be any of [${validPOI.join(', ')}]`);
-                }
-              }
-
-              let sourceData = osmPoiTypes ? { osmPoiTypes } : null;
-
-              // Upsert source.
-              return upsertScenarioSource(projId, scId, sourceName, 'osm', sourceData)
-                // Delete files if exist.
-                .then(() => db('scenarios_files')
-                  .where('project_id', projId)
-                  .where('scenario_id', scId)
-                  .where('type', sourceName)
-                  .then(files => {
-                    if (files.length) {
-                      // Remove files from DB.
-                      return db('scenarios_files')
-                        .whereIn('id', files.map(o => o.id))
-                        .del()
-                        // Remove files from storage.
-                        .then(() => Promise.map(files, file => removeFile(file.path)));
-                    }
-                  })
-                )
-                .then(() => reply({
-                  sourceType,
-                  sourceName
-                }));
+              return handleOSMSource();
             default:
               throw new DataValidationError(`"source-type" must be one of [osm, file]`);
           }
@@ -291,12 +295,33 @@ export default [
   }
 ];
 
-function upsertScenarioSource (projId, scId, sourceName, sourceType, sourceData) {
+function deleteScenarioFiles (projId, scId, sourceName) {
+  return db('scenarios_files')
+    .where('project_id', projId)
+    .where('scenario_id', scId)
+    .where('type', sourceName)
+    .then(files => {
+      if (files.length) {
+        // Remove files from DB.
+        return db('scenarios_files')
+          .whereIn('id', files.map(o => o.id))
+          .del()
+          // Remove files from storage.
+          .then(() => Promise.map(files, file => removeFile(file.path)));
+      }
+    });
+}
+
+function getScenarioSource (scId, sourceName) {
   return db('scenarios_source_data')
-    .select('id')
+    .select('id', 'type')
     .where('scenario_id', scId)
     .where('name', sourceName)
-    .first()
+    .first();
+}
+
+function upsertScenarioSource (projId, scId, sourceName, sourceType, sourceData) {
+  return getScenarioSource(scId, sourceName)
     .then(source => {
       if (source) {
         return db('scenarios_source_data')

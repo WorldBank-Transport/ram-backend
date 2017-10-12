@@ -17,6 +17,8 @@ export function query (format, query) {
         // API calls to Overpass are rate limited. Retry if statusCode is 429
         if (err.statusCode === 429) {
           retry(err);
+        } else if (err.statusCode === 504) {
+          throw new Error('Overpass server is busy. Try again later.');
         }
         throw err;
       });
