@@ -15,5 +15,6 @@ rra-api:
   command: node index.js
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock
+    - /tmp:/tmp
   links:
     - rra-postgis
