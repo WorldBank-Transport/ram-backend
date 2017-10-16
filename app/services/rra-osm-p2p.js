@@ -6,8 +6,7 @@ import cp from 'child_process';
 import path from 'path';
 import osmdb from 'osm-p2p';
 import osmrouter from 'osm-p2p-server';
-import createChangeset from 'osm-p2p-server/api/create_changeset';
-import importer from 'osm-p2p-db-importer';
+import importer from 'osm-p2p-import';
 
 import config from '../config';
 
@@ -93,82 +92,55 @@ export function removeDatabase (projId, scId) {
 export function importRoadNetwork (projId, scId, op, roadNetwork, logger) {
   const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
 
-  // Create a new changeset through the API.
-  const generateChangeset = () => {
-    const db = getDatabase(projId, scId);
-    return new Promise((resolve, reject) => {
-      logger && logger.log('Creating changeset in database...');
-
-      let changeset = {
-        type: 'changeset',
-        tags: {
-          comment: `Project ${projId}, Scenario ${scId}`,
-          created_by: 'RRA'
-        }
-      };
-      createChangeset(db)(changeset, (err, id, node) => {
-        if (err) return reject(err);
-        logger && logger.log('Creating changeset in database... done');
-        return resolve(id);
-      });
-    });
-  };
-
-  // Create an OSM Change file and store it in system /tmp folder.
-  const createOSMChange = (id) => {
-    return new Promise((resolve, reject) => {
-      logger && logger.log('Creating changeset file...');
-      // OGR reads from a file
-      fs.writeFileSync(`${basePath}.osm`, roadNetwork);
-
-      // Use ogr2osm with:
-      // -t - a custom translation file. Default only removes empty values
-      // -o - to specify output file
-      // -f - to force overwrite
-      let cmd = path.resolve(__dirname, '../lib/ogr2osm/ogr2osm.py');
-      let args = [
-        cmd,
-        `${basePath}.osm`,
-        '-t', './app/lib/ogr2osm/default_translation.py',
-        '--changeset-id', id,
-        '-o', `${basePath}.osmc`,
-        '-f'
-      ];
-
-      let conversionProcess = cp.spawn('python', args);
-      let processError = '';
-      conversionProcess.stderr.on('data', err => {
-        processError += err.toString();
-      });
-      conversionProcess.on('close', code => {
-        if (code !== 0) {
-          let err = processError || `Unknown error. Code ${code}`;
-          return reject(new Error(err));
-        }
-        logger && logger.log('Creating changeset file... done');
-        return resolve(id);
-      });
-    });
-  };
-
-  let baseDir = getDatabaseBaseDir();
-  let dbName = getDatabaseName(projId, scId);
+  let osmDb = getDatabase(projId, scId);
 
   let importPromise = Promise.promisify(importer);
 
   return op.log('process:road-network', {message: 'Road network processing started'})
-    // Remove anything that might be there. We're importing fresh data after
-    .then(() => removeDatabase(projId, scId))
-    .then(() => generateChangeset())
-    .then(id => createOSMChange(id))
-    .then(() => closeDatabase(projId, scId))
+    .then(() => convertToOSMXml(roadNetwork, 'osm', basePath, logger))
     .then(() => logger && logger.log('Importing changeset into osm-p2p...'))
     .then(() => {
-      let xml = fs.createReadStream(`${basePath}.osmc`);
-      return importPromise(`${baseDir}/${dbName}`, xml);
+      let xml = fs.createReadStream(`${basePath}.osm`);
+      return importPromise(osmDb, xml);
     })
     .then(() => logger && logger.log('Importing changeset into osm-p2p... done'))
     // Note: There's no need to close the osm-p2p-db because when the process
     // terminates the connection is automatically closed.
     .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
+}
+
+function convertToOSMXml (data, dataType, basePath, logger) {
+  // Create an OSM Change file and store it in system /tmp folder.
+  return new Promise((resolve, reject) => {
+    logger && logger.log('Creating changeset file...');
+    // OGR reads from a file
+    fs.writeFileSync(`${basePath}.${dataType}`, data);
+
+    // Use ogr2osm with:
+    // -t - a custom translation file. Default only removes empty values
+    // -o - to specify output file
+    // -f - to force overwrite
+    let cmd = path.resolve(__dirname, '../lib/ogr2osm/ogr2osm.py');
+    let args = [
+      cmd,
+      `${basePath}.${dataType}`,
+      '-t', './app/lib/ogr2osm/default_translation.py',
+      '-o', `${basePath}.osm`,
+      '-f'
+    ];
+
+    let conversionProcess = cp.spawn('python', args);
+    let processError = '';
+    conversionProcess.stderr.on('data', err => {
+      processError += err.toString();
+    });
+    conversionProcess.on('close', code => {
+      if (code !== 0) {
+        let err = processError || `Unknown error. Code ${code}`;
+        return reject(new Error(err));
+      }
+      logger && logger.log('Creating changeset file... done');
+      return resolve();
+    });
+  });
 }

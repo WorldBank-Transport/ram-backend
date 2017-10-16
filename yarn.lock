@@ -1103,7 +1103,7 @@ cryptiles@3.x.x:
   dependencies:
     boom "5.x.x"
 
-cuid@^1.2.5, cuid@^1.3.8:
+cuid@^1.2.5:
   version "1.3.8"
   resolved "https://registry.yarnpkg.com/cuid/-/cuid-1.3.8.tgz#4b875e0969bad764f7ec0706cf44f5fb0831f6b7"
   dependencies:
@@ -1276,7 +1276,7 @@ end-of-stream@1.0.0:
   dependencies:
     once "~1.3.0"
 
-end-of-stream@^1.0.0, end-of-stream@^1.1.0, end-of-stream@^1.4.0:
+end-of-stream@^1.0.0, end-of-stream@^1.1.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/end-of-stream/-/end-of-stream-1.4.0.tgz#7a90d833efda6cfa6eac0f4949dbb0fad3a63206"
   dependencies:
@@ -2117,7 +2117,7 @@ hyperlog-kdb-index@^4.0.0:
     subleveldown "^2.1.0"
     through2 "^2.0.0"
 
-hyperlog@^4.10.0, hyperlog@^4.12.1:
+hyperlog@^4.10.0:
   version "4.12.1"
   resolved "https://registry.yarnpkg.com/hyperlog/-/hyperlog-4.12.1.tgz#6c7cdc2626f73441f2d93b9d6f45838fd17d9b5d"
   dependencies:
@@ -2707,7 +2707,7 @@ level-sublevel@^6.6.1:
     typewiselite "~1.0.0"
     xtend "~4.0.0"
 
-level@^1.4.0, level@^1.6.0:
+level@^1.4.0:
   version "1.7.0"
   resolved "https://registry.yarnpkg.com/level/-/level-1.7.0.tgz#43464a3a8ba73b2f3de56a24292805146da213a1"
   dependencies:
@@ -3254,21 +3254,16 @@ osenv@^0.1.0, osenv@^0.1.4:
     os-homedir "^1.0.0"
     os-tmpdir "^1.0.0"
 
-osm-p2p-db-importer@^1.1.2:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/osm-p2p-db-importer/-/osm-p2p-db-importer-1.1.2.tgz#4485b062ba682f5c380b6ea881601315d6cba509"
+osm-p2p-api@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/osm-p2p-api/-/osm-p2p-api-1.0.1.tgz#e499e00178141c8f13550575b1892a9c5da4fe45"
   dependencies:
-    base-convertor "^1.1.0"
     collect-stream "^1.2.1"
-    cuid "^1.3.8"
-    end-of-stream "^1.4.0"
-    hyperlog "^4.12.1"
-    level "^1.6.0"
-    lexicographic-integer "^1.1.0"
-    mkdirp "^0.5.1"
-    osm2json "^2.1.0"
-    randombytes "^2.0.3"
+    collect-transform-stream "0.0.2"
+    osm-p2p-defork "^1.0.0"
+    pumpify "^1.3.5"
     through2 "^2.0.3"
+    through2-map "^3.0.0"
 
 osm-p2p-db@^4.0.0:
   version "4.2.4"
@@ -3296,9 +3291,19 @@ osm-p2p-defork@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/osm-p2p-defork/-/osm-p2p-defork-1.0.0.tgz#b9bf9a43418d0338c9ef509465a1a27bb67a1355"
 
-osm-p2p-server@^2.1.6:
-  version "2.1.6"
-  resolved "https://registry.yarnpkg.com/osm-p2p-server/-/osm-p2p-server-2.1.6.tgz#ab8def605f135bc1be117287aaac8121e3aaf379"
+osm-p2p-import@^3.0.3:
+  version "3.0.3"
+  resolved "https://registry.yarnpkg.com/osm-p2p-import/-/osm-p2p-import-3.0.3.tgz#70d6daed2ba1c3f4b769b648c3f55a3858f0b7e0"
+  dependencies:
+    minimist "^1.2.0"
+    mkdirp "^0.5.1"
+    osm-p2p "^2.0.0"
+    osm2json "^2.1.0"
+    through2 "^2.0.3"
+
+osm-p2p-server@^2.3.2:
+  version "2.3.2"
+  resolved "https://registry.yarnpkg.com/osm-p2p-server/-/osm-p2p-server-2.3.2.tgz#2e4bb8d2902becae5cc0f8969275714b1edd3668"
   dependencies:
     JSONStream "^1.1.4"
     accepts "^1.3.3"
@@ -3312,6 +3317,7 @@ osm-p2p-server@^2.1.6:
     minimist "^1.2.0"
     obj2osm "^2.0.0"
     once "^1.3.3"
+    osm-p2p-api "^1.0.1"
     osm-p2p-defork "^1.0.0"
     osm2json "^2.1.0"
     pumpify "^1.3.5"
@@ -3710,7 +3716,7 @@ randombytes@2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/randombytes/-/randombytes-2.0.1.tgz#18f4a9ba0dd07bdb1580bc9156091fcf90eabc6f"
 
-randombytes@^2.0.2, randombytes@^2.0.3:
+randombytes@^2.0.2:
   version "2.0.5"
   resolved "https://registry.yarnpkg.com/randombytes/-/randombytes-2.0.5.tgz#dc009a246b8d09a177b4b7a0ae77bc570f4b1b79"
   dependencies:
