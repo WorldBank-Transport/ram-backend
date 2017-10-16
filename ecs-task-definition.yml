@@ -13,5 +13,7 @@ rra-api:
   ports:
     - 80:4000
   command: node index.js
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
   links:
     - rra-postgis
