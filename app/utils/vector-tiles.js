@@ -27,6 +27,12 @@ import {
  * @return Object with a `promise` and a `kill` switch.
  */
 export function createAdminBoundsVT (projId, scId, op, fc) {
+  // Temporary disable vector tiles.
+  return {
+    promise: Promise.resolve(),
+    kill: () => Promise.resolve()
+  };
+
   // Promisify functions.
   const removeP = Promise.promisify(fs.remove);
   const writeJsonP = Promise.promisify(fs.writeJson);
@@ -107,6 +113,12 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
  * @return Object with a `promise` and a `kill` switch.
  */
 export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
+  // Temporary disable vector tiles.
+  return {
+    promise: Promise.resolve(),
+    kill: () => Promise.resolve()
+  };
+
   // Promisify functions.
   const removeP = Promise.promisify(fs.remove);
   const writeFile = Promise.promisify(fs.writeFile);
