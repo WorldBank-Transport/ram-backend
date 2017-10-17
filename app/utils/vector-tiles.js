@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use strict';
 import path from 'path';
 import fs from 'fs-extra';
