@@ -1,6 +1,8 @@
 import EventEmitter from 'events';
 import { fork } from 'child_process';
 import path from 'path';
+import config from '../config';
+const DEBUG = config.debug;
 
 export default class ServiceRunner extends EventEmitter {
   constructor (name, data) {
@@ -23,6 +25,7 @@ export default class ServiceRunner extends EventEmitter {
     let processError = null;
 
     this.theProcess.on('message', function (msg) {
+      DEBUG && console.log(`ServiceRunner [${this.name}] [message]`, 'msg', msg);
       switch (msg.type) {
         case 'error':
           processError = msg;
@@ -31,7 +34,16 @@ export default class ServiceRunner extends EventEmitter {
       this.emit('message', msg);
     });
 
-    this.theProcess.on('exit', (code) => {
+    this.theProcess.on('close', (code, signal) => {
+      DEBUG && console.log(`ServiceRunner [${this.name}] [close]`, 'code, signal', code, signal);
+    });
+
+    this.theProcess.on('error', (err) => {
+      DEBUG && console.log(`ServiceRunner [${this.name}] [error]`, 'err', err);
+    });
+
+    this.theProcess.on('exit', (code, signal) => {
+      DEBUG && console.log(`ServiceRunner [${this.name}] [exit]`, 'code, signal', code, signal);
       this.running = false;
       if (code !== 0) {
         processError = processError || `Unknown error. Code ${code}`;
