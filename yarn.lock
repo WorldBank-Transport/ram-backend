@@ -3291,9 +3291,9 @@ osm-p2p-defork@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/osm-p2p-defork/-/osm-p2p-defork-1.0.0.tgz#b9bf9a43418d0338c9ef509465a1a27bb67a1355"
 
-osm-p2p-import@^3.0.3:
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/osm-p2p-import/-/osm-p2p-import-3.0.3.tgz#70d6daed2ba1c3f4b769b648c3f55a3858f0b7e0"
+osm-p2p-import@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/osm-p2p-import/-/osm-p2p-import-3.0.4.tgz#ce288c03a0067b6feb7878730187cf7142292800"
   dependencies:
     minimist "^1.2.0"
     mkdirp "^0.5.1"

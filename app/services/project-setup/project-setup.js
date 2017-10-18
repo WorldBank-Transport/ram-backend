@@ -438,19 +438,38 @@ export function concludeProjectSetup (e) {
       .then(() => profileProcessPromise())
       // Remove anything that might be there. We're importing fresh data.
       .then(() => removeDatabase(projId, scId))
-      .then(() => poiProcessPromise()
-        .then(poisFC => {
-          // Merge all feature collection together.
-          let fc = {
-            type: 'FeatureCollection',
-            features: Object.keys(poisFC).reduce((acc, key) => acc.concat(poisFC[key].features), [])
-          };
-          return importPoiOsmP2Pdb(projId, scId, op, fc);
-        })
-      )
       .then(() => rnProcessPromise()
         .then(roadNetwork => importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork))
         .then(roadNetwork => process.env.DS_ENV === 'test' ? null : createRoadNetworkVT(projId, scId, op, roadNetwork).promise)
+      )
+      .then(() => poiProcessPromise()
+        .then(poisFC => {
+          // Check rn_active_editing setting to see if we need to import.
+          return db('scenarios_settings')
+            .select('value')
+            .where('key', 'rn_active_editing')
+            .where('scenario_id', scId)
+            .first()
+            .then((editing) => {
+              if (editing.value !== 'true') {
+                return;
+              }
+              // Merge all feature collection together.
+              // Add a property to keep track of the poi type.
+              let fc = {
+                type: 'FeatureCollection',
+                features: Object.keys(poisFC).reduce((acc, key) => {
+                  let feats = poisFC[key].features;
+                  feats.forEach(f => { f.properties.ram_poi_type = key; });
+                  return acc.concat(feats);
+                }, [])
+              };
+
+              let poiLogger = appLogger.group(`p${projId} s${scId} poi import`);
+              poiLogger && poiLogger.log('process poi');
+              return importPOI(projId, scId, op, fc, poiLogger);
+            });
+        })
       );
   })
   .then(() => {
@@ -494,23 +513,4 @@ function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
       }
     })
     .then(() => roadNetwork);
-}
-
-function importPoiOsmP2Pdb (projId, scId, op, poiFC) {
-  let poiLogger = appLogger.group(`p${projId} s${scId} poi import`);
-  poiLogger && poiLogger.log('process poi');
-
-  // TODO: Should the POI be editable if the road network is not?
-
-  // let allowImport = roadNetwork.length < config.roadNetEditThreshold;
-
-  return importPOI(projId, scId, op, poiFC, poiLogger);
-
-  // return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
-  //   .then(() => {
-  //     if (allowImport) {
-  //       return importRoadNetwork(projId, scId, op, roadNetwork, poiLogger);
-  //     }
-  //   })
-  //   .then(() => roadNetwork);
 }
