@@ -1,7 +1,6 @@
 'use strict';
 import Joi from 'joi';
 import Boom from 'boom';
-import Promise from 'bluebird';
 
 import db from '../db/';
 import { removeDir as removeS3Dir } from '../s3/utils';
