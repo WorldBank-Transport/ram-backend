@@ -52,7 +52,10 @@ module.exports = [
               }
             })
             .then(() => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId))
-            .then(() => removeS3Dir(`scenario-${scId}/`));
+            .then(() => {
+              // Let the dir be removed in the background.
+              removeS3Dir(`scenario-${scId}/`);
+            });
         }))
       .then(() => reply({statusCode: 200, message: 'Scenario deleted'}))
       .catch(MasterScenarioError, e => reply(Boom.conflict(e.message)))
