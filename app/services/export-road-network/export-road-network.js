@@ -166,10 +166,8 @@ export function exportRoadNetwork (e) {
           })));
       }
 
-      return Promise.all([
-        processRN(),
-        processPOI()
-      ])
+      return processRN()
+        .then(() => processPOI())
         .then(() => logger && logger.log('Exporting data from osm-p2p... done'));
     })
     // Note: There's no need to close the osm-p2p-db because when the process
