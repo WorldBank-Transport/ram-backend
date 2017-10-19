@@ -18,6 +18,8 @@ function handler (params, payload, reply) {
   const rnSource = payload.roadNetworkSource;
   const rnSourceScenarioId = payload.roadNetworkSourceScenario;
   const roadNetworkFile = payload.roadNetworkFile;
+  const poiSource = payload.poiSource;
+  const poiSourceScenarioId = payload.poiSourceScenario;
 
   return db('projects')
     .select('status')
@@ -97,19 +99,31 @@ function handler (params, payload, reply) {
         });
     })
     // Start operation and return data to continue.
-    .then(scenario => startOperation(params.projId, scenario.id).then(op => [op, scenario]))
-    .then(data => {
-      let [op, scenario] = data;
-      if (rnSource === 'clone') {
-        return createScenario(params.projId, scenario.id, op.getId(), rnSource, {rnSourceScenarioId})
-          .then(() => scenario);
-      } else if (rnSource === 'new') {
-        return handleRoadNetworkUpload(scenario, op.getId(), rnSource, roadNetworkFile)
-          .then(() => scenario);
-      } else if (rnSource === 'osm') {
-        return createScenario(params.projId, scenario.id, op.getId(), rnSource)
-          .then(() => scenario);
+    .then(scenario => Promise.all([
+      startOperation(params.projId, scenario.id),
+      scenario
+    ]))
+    .then(([op, scenario]) => {
+      let action = Promise.resolve({ rnSource, poiSource });
+
+      // Upload and process file. Add the filename to the data object.
+      if (rnSource === 'new') {
+        action = action.then(data => handleRoadNetworkUpload(scenario, op.getId(), rnSource, roadNetworkFile)
+          .then(res => Object.assign({}, data, res))
+        );
+      // Add the rn source id to the data object.
+      } else if (rnSource === 'clone') {
+        action = action.then(data => Object.assign({}, data, {rnSourceScenarioId}));
       }
+
+      // Add the poi source id to the data object.
+      if (poiSource === 'clone') {
+        action = action.then(data => Object.assign({}, data, {poiSourceScenarioId}));
+      }
+
+      return action
+        .then(data => createScenario(params.projId, scenario.id, op.getId(), data))
+        .then(() => scenario);
     })
     .then(scenario => reply(scenario))
     .catch(err => {
@@ -165,13 +179,21 @@ export default [
           if (result.files.roadNetworkFile) {
             payload.roadNetworkFile = result.files.roadNetworkFile[0];
           }
+          if (result.fields.poiSource) {
+            payload.poiSource = result.fields.poiSource[0];
+          }
+          if (result.fields.poiSourceScenario) {
+            payload.poiSourceScenario = result.fields.poiSourceScenario[0];
+          }
 
           let validation = Joi.validate(payload, Joi.object().keys({
             name: Joi.string().required(),
             description: Joi.string(),
             roadNetworkSource: Joi.string().valid('clone', 'new', 'osm').required(),
             roadNetworkSourceScenario: Joi.number().when('roadNetworkSource', {is: 'clone', then: Joi.required()}),
-            roadNetworkFile: Joi.object().when('roadNetworkSource', {is: 'new', then: Joi.required()})
+            roadNetworkFile: Joi.object().when('roadNetworkSource', {is: 'new', then: Joi.required()}),
+            poiSource: Joi.string().valid('clone').required(),
+            poiSourceScenario: Joi.number().when('poiSource', {is: 'clone', then: Joi.required()})
           }));
 
           if (validation.error) {
@@ -267,20 +289,13 @@ function startOperation (projId, scId) {
     });
 }
 
-function createScenario (projId, scId, opId, rnSource, data = {}) {
+function createScenario (projId, scId, opId, data = {}) {
   let action = Promise.resolve();
   // In test mode we don't want to start the generation.
   // It will be tested in the appropriate place.
   if (process.env.DS_ENV === 'test') { return action; }
 
-  if (rnSource === 'clone') {
-    // We need to close the connection to the source scenario before cloning
-    // the database. This needs to be done in this process. The process ran by
-    // the service runner won't have access to it.
-    // action = closeDatabase(projId, data.rnSourceScenarioId);
-  }
-
-  let serviceData = Object.assign({}, {projId, scId, opId, rnSource}, data);
+  let serviceData = Object.assign({}, {projId, scId, opId}, data);
 
   action.then(() => {
     console.log(`p${projId} s${scId}`, 'createScenario');
@@ -321,5 +336,5 @@ function handleRoadNetworkUpload (scenario, opId, source, roadNetworkFile) {
     .then(() => putFileToS3(filePath, roadNetworkFile.path))
     // Delete temp file.
     .then(() => removeLocalFile(roadNetworkFile.path, true))
-    .then(() => createScenario(scenario.project_id, scenario.id, opId, source, {roadNetworkFile: fileName}));
+    .then(() => ({roadNetworkFile: fileName}));
 }
