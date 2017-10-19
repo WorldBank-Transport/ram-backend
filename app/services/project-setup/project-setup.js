@@ -9,7 +9,7 @@ import Promise from 'bluebird';
 import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
-import { setScenarioSetting, getPropInsensitive } from '../../utils/utils';
+import { setScenarioSetting, getScenarioSetting, getPropInsensitive } from '../../utils/utils';
 import { createAdminBoundsVT, createRoadNetworkVT } from '../../utils/vector-tiles';
 import {
   getFileContents,
@@ -403,6 +403,7 @@ export function concludeProjectSetup (e) {
       : () => db('scenarios_files')
         .select('*')
         .where('project_id', projId)
+        .where('scenario_id', scId)
         .where('type', 'road-network')
         .first()
         .then(file => getFileContents(file.path));
@@ -415,6 +416,7 @@ export function concludeProjectSetup (e) {
       : () => db('scenarios_files')
         .select('*')
         .where('project_id', projId)
+        .where('scenario_id', scId)
         .where('type', 'poi')
         .then(files => Promise.all([
           files,
@@ -445,13 +447,9 @@ export function concludeProjectSetup (e) {
       .then(() => poiProcessPromise()
         .then(poisFC => {
           // Check rn_active_editing setting to see if we need to import.
-          return db('scenarios_settings')
-            .select('value')
-            .where('key', 'rn_active_editing')
-            .where('scenario_id', scId)
-            .first()
-            .then((editing) => {
-              if (editing.value !== 'true') {
+          return getScenarioSetting(db, scId, 'rn_active_editing')
+            .then(editing => {
+              if (!editing) {
                 return;
               }
               // Merge all feature collection together.
