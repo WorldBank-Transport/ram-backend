@@ -479,9 +479,9 @@ export function concludeProjectSetup (e) {
         trx('scenarios')
           .update({updated_at: (new Date()), status: 'active'})
           .where('id', scId)
-      ])
-      .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
-    });
+      ]);
+    })
+    .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
   })
   .then(() => {
     logger && logger.log('process complete');

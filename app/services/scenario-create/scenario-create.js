@@ -68,7 +68,7 @@ export function scenarioCreate (e) {
   let op = new Operation(db);
   op.loadById(opId)
     .then(op => op.log('admin-areas', {message: 'Cloning admin areas'}))
-    .then(() => db.transaction(function (trx) {
+    .then(() => {
       let executor = Promise.resolve();
 
       // Cache the road network content to use later.
@@ -82,15 +82,15 @@ export function scenarioCreate (e) {
         executor = executor
           // Copy the scenario files.
           .then(() => op.log('files', {message: 'Cloning points of interest'}))
-          .then(() => trx('scenarios_files')
+          .then(() => db('scenarios_files')
             .select('*')
             .where('scenario_id', poiSourceScenarioId)
             .where('project_id', projId)
             .where('type', 'poi')
-            .then(files => cloneScenarioFiles(trx, files, projId, scId))
+            .then(files => cloneScenarioFiles(db, files, projId, scId))
           )
           // Set poi source to file.
-          .then(() => trx('scenarios_source_data')
+          .then(() => db('scenarios_source_data')
             .insert({
               project_id: projId,
               scenario_id: scId,
@@ -107,15 +107,15 @@ export function scenarioCreate (e) {
         executor = executor
           // Copy the scenario files.
           .then(() => op.log('files', {message: 'Cloning road network'}))
-          .then(() => trx('scenarios_files')
+          .then(() => db('scenarios_files')
             .select('*')
             .where('scenario_id', rnSourceScenarioId)
             .where('project_id', projId)
             .where('type', 'road-network')
-            .then(files => cloneScenarioFiles(trx, files, projId, scId))
+            .then(files => cloneScenarioFiles(db, files, projId, scId))
           )
           // Set road network source to file.
-          .then(() => trx('scenarios_source_data')
+          .then(() => db('scenarios_source_data')
             .insert({
               project_id: projId,
               scenario_id: scId,
@@ -124,12 +124,12 @@ export function scenarioCreate (e) {
             })
           )
           // Copy the setting for road network edition.
-          .then(() => trx('scenarios_settings')
+          .then(() => db('scenarios_settings')
             .select('value')
             .where('scenario_id', rnSourceScenarioId)
             .where('key', 'rn_active_editing')
             .first()
-            .then(res => setScenarioSetting(trx, scId, 'rn_active_editing', res ? res.value : false))
+            .then(res => setScenarioSetting(db, scId, 'rn_active_editing', res ? res.value : false))
           )
           // Copy vector tiles.
           .then(() => copyDirectory(`scenario-${rnSourceScenarioId}/tiles/road-network`, `scenario-${scId}/tiles/road-network`));
@@ -139,7 +139,7 @@ export function scenarioCreate (e) {
         executor = executor
           .then(() => op.log('files', {message: 'Uploading new road network'}))
           // Set road network source to file.
-          .then(() => trx('scenarios_source_data')
+          .then(() => db('scenarios_source_data')
             .insert({
               project_id: projId,
               scenario_id: scId,
@@ -160,7 +160,7 @@ export function scenarioCreate (e) {
               updated_at: now
             };
 
-            return trx('scenarios_files')
+            return db('scenarios_files')
               .returning('*')
               .insert(data)
               .then(res => res[0]);
@@ -183,7 +183,7 @@ export function scenarioCreate (e) {
         executor = executor
           .then(() => op.log('files', {message: 'Importing road network'}))
           // Set road network source to osm.
-          .then(() => trx('scenarios_source_data')
+          .then(() => db('scenarios_source_data')
             .insert({
               project_id: projId,
               scenario_id: scId,
@@ -192,7 +192,7 @@ export function scenarioCreate (e) {
             })
           )
           // Get the bbox for the overpass import.
-          .then(() => trx('projects')
+          .then(() => db('projects')
             .select('bbox')
             .where('id', projId)
             .first()
@@ -219,7 +219,7 @@ export function scenarioCreate (e) {
             };
 
             return putFileStream(filePath, osmData)
-              .then(() => trx('scenarios_files').insert(data))
+              .then(() => db('scenarios_files').insert(data))
               .then(() => osmData);
           })
           .then(roadNetwork => {
@@ -249,7 +249,7 @@ export function scenarioCreate (e) {
       } else {
         // Is there any importing to do?
         executor = executor
-          .then(() => getScenarioSetting(trx, scId, 'rn_active_editing'))
+          .then(() => getScenarioSetting(db, scId, 'rn_active_editing'))
           // No import. Stop the chain with an error.
           .then(editing => {
             if (!editing) {
@@ -258,7 +258,7 @@ export function scenarioCreate (e) {
             }
           })
           // Get the road network from cache or form the db.
-          .then(() => rnCache || trx('scenarios_files')
+          .then(() => rnCache || db('scenarios_files')
             .select('*')
             .where('project_id', projId)
             .where('scenario_id', scId)
@@ -273,7 +273,7 @@ export function scenarioCreate (e) {
             return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
           })
           // Get all the pois and create a feature collection.
-          .then(() => trx('scenarios_files')
+          .then(() => db('scenarios_files')
             .select('*')
             .where('project_id', projId)
             .where('scenario_id', scId)
@@ -308,10 +308,10 @@ export function scenarioCreate (e) {
       }
 
       return executor
-        .then(() => trx('scenarios').update({status: 'active', updated_at: (new Date())}).where('id', scId))
-        .then(() => trx('projects').update({updated_at: (new Date())}).where('id', projId))
+        .then(() => db('scenarios').update({status: 'active', updated_at: (new Date())}).where('id', scId))
+        .then(() => db('projects').update({updated_at: (new Date())}).where('id', projId))
         .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
-    }))
+    })
     // Note: There's no need to close the osm-p2p-db because when the process
     // terminates the connection is automatically closed.
     .then(() => {
@@ -334,7 +334,7 @@ export function scenarioCreate (e) {
 
 // Copies the given files from a to the new scenario, both the database entries
 // and the physical file.
-function cloneScenarioFiles (trx, files, projId, scId) {
+function cloneScenarioFiles (db, files, projId, scId) {
   logger && logger.log('cloning files');
   let newFiles = files.map(file => {
     const fileName = file.type === 'poi'
@@ -359,7 +359,7 @@ function cloneScenarioFiles (trx, files, projId, scId) {
     // Insert new files in the db.
     .then(allFiles => {
       let [oldFiles, newFiles] = allFiles;
-      return trx.batchInsert('scenarios_files', newFiles).then(() => [oldFiles, newFiles]);
+      return db.batchInsert('scenarios_files', newFiles).then(() => [oldFiles, newFiles]);
     })
     // Copy files on s3.
     .then(allFiles => {

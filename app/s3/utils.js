@@ -1,5 +1,5 @@
 'use strict';
-import fs from 'fs';
+import fs from 'fs-extra';
 import Promise from 'bluebird';
 
 import s3, { bucket } from './';
