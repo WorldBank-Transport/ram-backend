@@ -381,19 +381,3 @@ function cloneOsmP2Pdb (srcProjId, srcScId, destProjId, destScId) {
       }
     });
 }
-
-function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
-  let rnLogger = appLogger.group(`p${projId} s${scId} rn import`);
-  rnLogger && rnLogger.log('process road network');
-
-  // Disable road network editing if size over threshold.
-  let allowImport = roadNetwork.length < config.roadNetEditThreshold;
-
-  return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
-    .then(() => {
-      if (allowImport) {
-        return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
-      }
-    })
-    .then(() => roadNetwork);
-}
