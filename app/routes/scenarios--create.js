@@ -257,7 +257,9 @@ export default [
             name: data.name,
             description: data.description,
             roadNetworkSource: 'clone',
-            roadNetworkSourceScenario: request.params.scId
+            roadNetworkSourceScenario: request.params.scId,
+            poiSource: 'clone',
+            poiSourceScenario: request.params.scId
           };
           return handler(request.params, payload, reply);
         })
