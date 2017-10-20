@@ -46,7 +46,7 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
   let killed = false;
   let checkKilled = () => { if (killed) throw new Error('Process manually terminated'); };
 
-  DEBUG && console.log(identifier, 'Clean files...')
+  DEBUG && console.log(identifier, 'Clean files...');
 
   // Clean any existing files, locally and from S3.
   let executor = op.log('process:admin-bounds', {message: 'Creating admin bounds vector tiles'})
@@ -67,7 +67,7 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
     .then(() => checkKilled())
     // Create tiles.
     .then(() => {
-      DEBUG && console.log(identifier, 'Running tippecanoe...')
+      DEBUG && console.log(identifier, 'Running tippecanoe...');
       currentRunning = `p${projId}s${scId}-bounds`;
       return dockerRun([
         `-v ${tmpDir}:/data`,
@@ -137,7 +137,7 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
   let killed = false;
   let checkKilled = () => { if (killed) throw new Error('Process manually terminated'); };
 
-  DEBUG && console.log(identifier, 'Clean files...')
+  DEBUG && console.log(identifier, 'Clean files...');
 
   // Clean any existing files, locally and from S3.
   let executor = op.log('road-network', {message: 'Creating road-network vector tiles'})
@@ -157,7 +157,7 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
     .then(() => checkKilled())
     // Convert to geojson.
     .then(() => {
-      DEBUG && console.log(identifier, 'Running osmtogeojson...')
+      DEBUG && console.log(identifier, 'Running osmtogeojson...');
       currentRunning = `p${projId}s${scId}-rn`;
       return dockerRun([
         `-v ${tmpDir}:/data`,
@@ -173,7 +173,7 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
     .then(() => checkKilled())
     // Create tiles.
     .then(() => {
-      DEBUG && console.log(identifier, 'Running tippecanoe...')
+      DEBUG && console.log(identifier, 'Running tippecanoe...');
       currentRunning = `p${projId}s${scId}-tiles`;
       return dockerRun([
         `-v ${tmpDir}:/data`,
