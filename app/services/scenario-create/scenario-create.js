@@ -93,6 +93,14 @@ export function scenarioCreate (e) {
             })
           )
           .then(sourceData => trx.batchInsert('scenarios_source_data', sourceData))
+          // Copy the setting for road network edition.
+          .then(() => trx('scenarios_settings')
+            .select('value')
+            .where('scenario_id', rnSourceScenarioId)
+            .where('key', 'rn_active_editing')
+            .first()
+            .then(res => setScenarioSetting(db, scId, 'rn_active_editing', res ? res.value : false))
+          )
           // Copy the osm-p2p-db.
           .then(() => op.log('files', {message: 'Cloning road network database'}))
           .then(() => closeDatabase(projId, scId))

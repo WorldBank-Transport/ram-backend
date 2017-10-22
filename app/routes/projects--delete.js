@@ -1,7 +1,6 @@
 'use strict';
 import Joi from 'joi';
 import Boom from 'boom';
-import Promise from 'bluebird';
 
 import db from '../db/';
 import { removeDir as removeS3Dir } from '../s3/utils';
@@ -21,10 +20,11 @@ module.exports = [
     handler: (request, reply) => {
       const id = request.params.projId;
       db.transaction(trx => {
-        return Promise.all([
-          trx.select('*').from('projects_files').where('project_id', id),
-          trx.select('*').from('scenarios_files').where('project_id', id)
-        ])
+        return trx.select('id').from('scenarios').where('project_id', id)
+        .then(scenarios => {
+          // Let the dir be removed in the background.
+          scenarios.forEach(s => removeS3Dir(`scenario-${s.id}/`));
+        })
         // Delete the project. Everything else will follow due to
         // cascade delete.
         // - project files
@@ -42,7 +42,10 @@ module.exports = [
             }
           })
         )
-        .then(() => removeS3Dir(`project-${id}/`));
+        .then(() => {
+          // Let the dir be removed in the background.
+          removeS3Dir(`project-${id}/`);
+        });
       })
       .then(() => reply({statusCode: 200, message: 'Project deleted'}))
       .catch(ProjectNotFoundError, () => reply(Boom.notFound('Project not found')))
