@@ -92,7 +92,7 @@ function handler (params, payload, reply) {
             res_gen_at: 0,
             rn_updated_at: 0
           };
-          scenario.admin_areas = '[]';
+          scenario.admin_areas = [];
           return scenario;
         });
     })

@@ -32,7 +32,7 @@ export function emptyBucket (bucket, objPrefix = '') {
       }
       throw err;
     })
-    .then(objects => Promise.map(objects, o => removeObject(bucket, o.name)));
+    .then(objects => Promise.map(objects, o => removeObject(bucket, o.name), { concurrency: 10 }));
 }
 
 export function destroyBucket (bucket) {

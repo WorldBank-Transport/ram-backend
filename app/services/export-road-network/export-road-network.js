@@ -1,7 +1,7 @@
 'use strict';
 import path from 'path';
 import obj2osm from 'obj2osm';
-import getMap from 'osm-p2p-server/api/get_map';
+import osmP2PApi from 'osm-p2p-server/api/index';
 import through2 from 'through2';
 
 import config from '../../config';
@@ -69,7 +69,7 @@ export function exportRoadNetwork (e) {
 
       logger && logger.log('Exporting data from osm-p2p');
 
-      let stream = getMap(osmDb)(bbox, {order: 'type'})
+      let stream = osmP2PApi(osmDb).getMap(bbox, {order: 'type'})
         .pipe(processOSMP2PExport())
         .pipe(formatTransform);
 
@@ -80,7 +80,7 @@ export function exportRoadNetwork (e) {
           .select('path')
           .where('type', 'road-network')
           .where('project_id', projId)
-          .where('scenario_id', projId)
+          .where('scenario_id', scId)
           .first()
         )
         // Delete from storage.
@@ -94,7 +94,7 @@ export function exportRoadNetwork (e) {
           })
           .where('type', 'road-network')
           .where('project_id', projId)
-          .where('scenario_id', projId)
+          .where('scenario_id', scId)
         );
     })
     // Note: There's no need to close the osm-p2p-db because when the process

@@ -3,7 +3,7 @@ import fs from 'fs';
 import Promise from 'bluebird';
 
 import s3, { bucket } from './';
-import { removeObject, putObjectFromFile, listObjects } from './structure';
+import { removeObject, putObjectFromFile, listObjects, emptyBucket } from './structure';
 
 const readFile = Promise.promisify(fs.readFile);
 
@@ -33,6 +33,11 @@ export function removeFile (file) {
   return removeObject(bucket, file);
 }
 
+// Proxy of emptyBucket function, assuming the bucket.
+export function removeDir (dir) {
+  return emptyBucket(bucket, dir);
+}
+
 // Get file.
 export function getFile (file) {
   return new Promise((resolve, reject) => {
@@ -55,6 +60,15 @@ export function copyFile (oldFile, newFile) {
       return resolve();
     });
   });
+}
+
+// Copy directory.
+export function copyDirectory (sourceDir, destDir) {
+  return listFiles(sourceDir)
+    .then(files => Promise.map(files, file => {
+      let newName = file.name.replace(sourceDir, destDir);
+      return copyFile(file.name, newName);
+    }, { concurrency: 10 }));
 }
 
 // Get file content.
@@ -93,6 +107,23 @@ export function putFile (name, filepath) {
   return putObjectFromFile(bucket, name, filepath);
 }
 
+// List files
+// Proxy of listObjects function, assuming the bucket.
+export function listFiles (namePrefix) {
+  return listObjects(bucket, namePrefix);
+}
+
+// Put directory
+export function putDirectory (sourceDir, destDir) {
+  let files = getLocalFilesInDir(sourceDir);
+  return Promise.map(files, file => {
+    let newName = file.replace(sourceDir, destDir);
+    return putFile(newName, file);
+  }, { concurrency: 10 });
+}
+
+// Local file operation.
+
 export function removeLocalFile (path, quiet = false) {
   return new Promise((resolve, reject) => {
     fs.unlink(path, err => {
@@ -122,8 +153,17 @@ export function getLocalJSONFileContents (path) {
     .then(result => JSON.parse(result));
 }
 
-// List files
-// Proxy of listObjects function, assuming the bucket.
-export function listFiles (namePrefix) {
-  return listObjects(bucket, namePrefix);
+export function getLocalFilesInDir (dir) {
+  const files = fs.readdirSync(dir);
+
+  return files.reduce((acc, file) => {
+    let name = dir + '/' + file;
+    if (fs.statSync(name).isDirectory()) {
+      acc = acc.concat(getLocalFilesInDir(name));
+    } else {
+      acc.push(name);
+    }
+
+    return acc;
+  }, []);
 }

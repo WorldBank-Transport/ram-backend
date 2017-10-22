@@ -249,6 +249,7 @@ export function createProjectsOriginsTable () {
       .onDelete('CASCADE');
     table.string('name');
     table.json('coordinates');
+    table.index('project_id');
   });
 }
 
@@ -263,6 +264,7 @@ export function createProjectsOriginsIndicatorsTable () {
     table.string('key');
     table.string('label');
     table.integer('value');
+    table.index('origin_id');
   });
 }
 

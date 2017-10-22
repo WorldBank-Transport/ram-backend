@@ -6,10 +6,11 @@ import config from '../../config';
 import { cloneDatabase, closeDatabase, importRoadNetwork } from '../rra-osm-p2p';
 import db from '../../db/';
 import { setScenarioSetting } from '../../utils/utils';
-import { copyFile, putFileStream, getFileContents } from '../../s3/utils';
+import { copyFile, copyDirectory, putFileStream, getFileContents } from '../../s3/utils';
 import Operation from '../../utils/operation';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
+import { createRoadNetworkVT } from '../../utils/vector-tiles';
 
 const DEBUG = config.debug;
 let appLogger = AppLogger({ output: DEBUG });
@@ -92,10 +93,19 @@ export function scenarioCreate (e) {
             })
           )
           .then(sourceData => trx.batchInsert('scenarios_source_data', sourceData))
+          // Copy the setting for road network edition.
+          .then(() => trx('scenarios_settings')
+            .select('value')
+            .where('scenario_id', rnSourceScenarioId)
+            .where('key', 'rn_active_editing')
+            .first()
+            .then(res => setScenarioSetting(db, scId, 'rn_active_editing', res ? res.value : false))
+          )
           // Copy the osm-p2p-db.
           .then(() => op.log('files', {message: 'Cloning road network database'}))
           .then(() => closeDatabase(projId, scId))
-          .then(() => cloneOsmP2Pdb(projId, rnSourceScenarioId, projId, scId));
+          .then(() => cloneOsmP2Pdb(projId, rnSourceScenarioId, projId, scId))
+          .then(() => copyDirectory(`scenario-${rnSourceScenarioId}/tiles/road-network`, `scenario-${scId}/tiles/road-network`));
       //
       } else if (rnSource === 'new') {
         executor = executor
@@ -150,7 +160,8 @@ export function scenarioCreate (e) {
           // Import to the osm-p2p-db.
           .then(roadNetwork => {
             logger && logger.log('process road network');
-            return importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork);
+            return importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork)
+              .then(roadNetwork => createRoadNetworkVT(projId, scId, op, roadNetwork).promise);
           });
       } else if (rnSource === 'osm') {
         executor = executor
@@ -211,7 +222,8 @@ export function scenarioCreate (e) {
               .then(() => db('scenarios_files').insert(data))
               .then(() => {
                 logger && logger.log('process road network');
-                return importRoadNetworkOsmP2Pdb(projId, scId, op, osmData);
+                return importRoadNetworkOsmP2Pdb(projId, scId, op, osmData)
+                  .then(roadNetwork => createRoadNetworkVT(projId, scId, op, roadNetwork).promise);
               });
           });
       }
@@ -246,7 +258,10 @@ export function scenarioCreate (e) {
 function cloneScenarioFiles (trx, files, projId, scId) {
   logger && logger.log('cloning files');
   let newFiles = files.map(file => {
-    const fileName = `${file.type}_${Date.now()}`;
+    const fileName = file.type === 'poi'
+      ? `${file.type}_${file.subtype}_${Date.now()}`
+      : `${file.type}_${Date.now()}`;
+
     const filePath = `scenario-${scId}/${fileName}`;
 
     return {
@@ -277,7 +292,15 @@ function cloneScenarioFiles (trx, files, projId, scId) {
 // Clone the osm-p2p-db.
 function cloneOsmP2Pdb (srcProjId, srcScId, destProjId, destScId) {
   logger && logger.log('cloning osm-p2p-db');
-  return cloneDatabase(srcProjId, srcScId, destProjId, destScId);
+  return cloneDatabase(srcProjId, srcScId, destProjId, destScId)
+    .catch(err => {
+      // If the road network is too big, the db is not created.
+      // Account for this and avoid errors.
+      // TODO: Check if the DB is supposed to not exist.
+      if (err.code !== 'ENOENT') {
+        throw err;
+      }
+    });
 }
 
 function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
@@ -292,24 +315,6 @@ function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
       if (allowImport) {
         return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
       }
-    });
+    })
+    .then(() => roadNetwork);
 }
-
-// TODO: Although some cleanup is good, if we delete the scenario altogether
-// we won't have messages to show the user indicating that it failed.
-// Figure out what's the best way to handle it.
-//
-// function onFailCleanup (projId, scId) {
-//   return db
-//     .delete()
-//     .from('scenarios')
-//     .where('id', scId)
-//     .where('project_id', projId)
-//     // Remove osm-p2p-db.
-//     .then(() => removeDatabase(projId, scId))
-//     // Remove files uploaded to s3.
-//     .then(() => emptyBucket(bucket, `scenario-${scId}/`))
-//     .catch(err => {
-//       console.log('onFailCleanup error', err);
-//     });
-// }

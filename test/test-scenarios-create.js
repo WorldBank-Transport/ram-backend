@@ -267,7 +267,7 @@ describe('Scenarios', function () {
           assert.equal(typeof result.roadNetworkUpload, 'undefined');
           assert.equal(result.data.res_gen_at, 0);
           assert.equal(result.data.rn_updated_at, 0);
-          assert.equal(result.admin_areas, '[]');
+          assert.isArray(result.admin_areas, []);
 
           return result;
         });
@@ -354,7 +354,7 @@ describe('Scenarios', function () {
         assert.equal(typeof result.roadNetworkUpload, 'undefined');
         assert.equal(result.data.res_gen_at, 0);
         assert.equal(result.data.rn_updated_at, 0);
-        assert.equal(result.admin_areas, '[]');
+        assert.isArray(result.admin_areas, []);
 
         return result;
       });

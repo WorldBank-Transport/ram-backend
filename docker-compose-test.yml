@@ -10,6 +10,7 @@ services:
       POSTGRES_DB: rra
     volumes:
       - ./setup/create-test-db.sh:/docker-entrypoint-initdb.d/create-test-db.sh
+      - ./setup/setup-extensions.sh:/docker-entrypoint-initdb.d/setup-extensions.sh
   rra-minio:
     image: minio/minio
     ports:

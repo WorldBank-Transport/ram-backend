@@ -10,8 +10,13 @@ rra-postgis:
     - /var/lib/postgresql/data:/var/lib/postgresql/data
 rra-api:
   image: wbtransport/rra-api
+  environment:
+    DEBUG: true
   ports:
     - 80:4000
   command: node index.js
+  volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /tmp:/tmp
   links:
     - rra-postgis
