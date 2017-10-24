@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use strict';
 import path from 'path';
 import fs from 'fs-extra';
@@ -32,6 +33,12 @@ const DEBUG = config.debug;
  */
 export function createAdminBoundsVT (projId, scId, op, fc) {
   const identifier = `p${projId} s${scId} AB VT`;
+
+  // Temporary disable vector tiles.
+  return {
+    promise: Promise.resolve(),
+    kill: () => Promise.resolve()
+  };
 
   // Promisify functions.
   const removeP = Promise.promisify(fs.remove);
@@ -121,6 +128,12 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
  */
 export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
   const identifier = `p${projId} s${scId} RN VT`;
+
+  // Temporary disable vector tiles.
+  return {
+    promise: Promise.resolve(),
+    kill: () => Promise.resolve()
+  };
 
   // Promisify functions.
   const removeP = Promise.promisify(fs.remove);
