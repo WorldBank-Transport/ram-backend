@@ -6,7 +6,7 @@ import config from '../../config';
 import { cloneDatabase, closeDatabase, importRoadNetwork, importPOI } from '../rra-osm-p2p';
 import db from '../../db/';
 import { setScenarioSetting, getScenarioSetting } from '../../utils/utils';
-import { copyFile, copyDirectory, putFileStream, getFileContents, getJSONFileContents } from '../../s3/utils';
+import { copyFile, copyDirectory, putFileStream, getFileContents, getJSONFileContents, getFileInfo } from '../../s3/utils';
 import Operation from '../../utils/operation';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
@@ -70,10 +70,6 @@ export function scenarioCreate (e) {
     .then(op => op.log('admin-areas', {message: 'Cloning admin areas'}))
     .then(() => {
       let executor = Promise.resolve();
-
-      // Cache the road network content to use later.
-      // This is to avoid multiple downloads from s3.
-      let rnCache = null;
 
       logger && logger.log('poiSource', poiSource);
       logger && logger.log('rnSource', rnSource);
@@ -163,19 +159,19 @@ export function scenarioCreate (e) {
             return db('scenarios_files')
               .returning('*')
               .insert(data)
-              .then(res => res[0]);
+              .then(() => data);
           })
-          .then(file => getFileContents(file.path))
-          .then(roadNetwork => {
-             // Disable road network editing if size over threshold.
-            return setScenarioSetting(db, scId, 'rn_active_editing', roadNetwork.length < config.roadNetEditThreshold)
-              .then(() => roadNetwork);
-          })
-          // Create vector tiles.
-          .then(roadNetwork => {
-            rnCache = roadNetwork;
-            logger && logger.log('process road network');
-            return createRoadNetworkVT(projId, scId, op, roadNetwork).promise;
+          .then(file => Promise.all([file.path, getFileInfo(file.path)]))
+          .then(([filePath, fileInfo]) => {
+            // Disable road network editing if size over threshold.
+            let allowImport = fileInfo.size < config.roadNetEditThreshold;
+            return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
+              .then(() => {
+                if (process.env.DS_ENV !== 'test') {
+                  logger && logger.log('process road network');
+                  return createRoadNetworkVT(projId, scId, op, filePath).promise;
+                }
+              });
           });
 
       // Road Network: Osm
@@ -220,18 +216,19 @@ export function scenarioCreate (e) {
 
             return putFileStream(filePath, osmData)
               .then(() => db('scenarios_files').insert(data))
-              .then(() => osmData);
+              .then(() => data);
           })
-          .then(roadNetwork => {
-             // Disable road network editing if size over threshold.
-            return setScenarioSetting(db, scId, 'rn_active_editing', roadNetwork.length < config.roadNetEditThreshold)
-              .then(() => roadNetwork);
-          })
-          // Create vector tiles.
-          .then(roadNetwork => {
-            rnCache = roadNetwork;
-            logger && logger.log('process road network');
-            return createRoadNetworkVT(projId, scId, op, roadNetwork).promise;
+          .then(file => Promise.all([file.path, getFileInfo(file.path)]))
+          .then(([filePath, fileInfo]) => {
+            // Disable road network editing if size over threshold.
+            let allowImport = fileInfo.size < config.roadNetEditThreshold;
+            return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
+              .then(() => {
+                if (process.env.DS_ENV !== 'test') {
+                  logger && logger.log('process road network');
+                  return createRoadNetworkVT(projId, scId, op, filePath).promise;
+                }
+              });
           });
       } else {
         throw new Error(`Road network source is invalid: ${rnSource}`);
@@ -258,7 +255,7 @@ export function scenarioCreate (e) {
             }
           })
           // Get the road network from cache or form the db.
-          .then(() => rnCache || db('scenarios_files')
+          .then(() => db('scenarios_files')
             .select('*')
             .where('project_id', projId)
             .where('scenario_id', scId)

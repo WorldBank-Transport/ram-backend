@@ -50,6 +50,18 @@ export function getFile (file) {
   });
 }
 
+// Get s3 file to file.
+export function fGetFile (file, dest) {
+  return new Promise((resolve, reject) => {
+    s3.fGetObject(bucket, file, dest, (err) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(dest);
+    });
+  });
+}
+
 // Copy file.
 export function copyFile (oldFile, newFile) {
   return new Promise((resolve, reject) => {
@@ -58,6 +70,18 @@ export function copyFile (oldFile, newFile) {
         return reject(err);
       }
       return resolve();
+    });
+  });
+}
+
+// File stats.
+export function getFileInfo (file) {
+  return new Promise((resolve, reject) => {
+    s3.statObject(bucket, file, (err, stat) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve(stat);
     });
   });
 }

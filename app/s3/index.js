@@ -1,8 +1,12 @@
 'use strict';
 import * as Minio from 'minio';
+import Http from 'http';
+import Https from 'https';
+
 import config from '../config';
 
 var minioClient;
+var agent;
 const { host, port, engine, accessKey, secretKey } = config.storage;
 
 switch (engine) {
@@ -14,6 +18,7 @@ switch (engine) {
       accessKey: accessKey,
       secretKey: secretKey
     });
+    agent = Http.globalAgent;
     break;
   case 's3':
     minioClient = new Minio.Client({
@@ -21,10 +26,14 @@ switch (engine) {
       accessKey: config.storage.accessKey,
       secretKey: config.storage.secretKey
     });
+    agent = Https.globalAgent;
     break;
   default:
     throw new Error('Invalid storage engine. Use s3 or minio');
 }
+
+// Temp fix for https://github.com/minio/minio-js/issues/641
+minioClient.agent = agent;
 
 export default minioClient;
 
