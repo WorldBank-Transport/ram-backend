@@ -2,17 +2,11 @@
 const _ = require('lodash');
 
 // Prod settings act as base.
-var config = require('./config/production');
-
-// Staging overrides
-if (process.env.DS_ENV === 'staging') {
-  _.merge(config, require('./config/staging'));
-}
+var config = {};
 
 // local config overrides everything when present.
 try {
-  var localConfig = require('./config/local');
-  _.merge(config, localConfig);
+  config = require('./config/local');
 } catch (e) {
   // Local file is not mandatory.
 }
