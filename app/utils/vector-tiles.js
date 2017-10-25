@@ -6,10 +6,15 @@ import { exec } from 'child_process';
 import tmpDir from 'temp-dir';
 import Promise from 'bluebird';
 
+import config from '../config';
+
 import {
   removeDir as removeS3Dir,
-  putDirectory
+  putDirectory,
+  fGetFile
 } from '../s3/utils';
+
+const DEBUG = config.debug;
 
 /**
  * Create the vector tiles for the admin bounds.
@@ -34,6 +39,8 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
     kill: () => Promise.resolve()
   };
 
+  const identifier = `p${projId} s${scId} AB VT`;
+
   // Promisify functions.
   const removeP = Promise.promisify(fs.remove);
   const writeJsonP = Promise.promisify(fs.writeJson);
@@ -47,6 +54,8 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
   let killed = false;
   let checkKilled = () => { if (killed) throw new Error('Process manually terminated'); };
 
+  DEBUG && console.log(identifier, 'Clean files...');
+
   // Clean any existing files, locally and from S3.
   let executor = op.log('process:admin-bounds', {message: 'Creating admin bounds vector tiles'})
     // Clean up phase.
@@ -58,6 +67,7 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
       // down the road and we've to repeat.
       removeS3Dir(`project-${projId}/tiles/admin-bounds`)
     ]))
+    .then(() => { DEBUG && console.log(identifier, 'Clean files... done'); })
     .then(() => writeJsonP(geojsonFilePath, fc))
     // Check if it was killed. The docker run will throw errors but the other
     // processes won't. Stop the chain if it was aborted before reaching
@@ -65,6 +75,7 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
     .then(() => checkKilled())
     // Create tiles.
     .then(() => {
+      DEBUG && console.log(identifier, 'Running tippecanoe...');
       currentRunning = `p${projId}s${scId}-bounds`;
       return dockerRun([
         `-v ${tmpDir}:/data`,
@@ -76,10 +87,13 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
         `/data/${geojsonName}`
       ]);
     })
+    .then(() => { DEBUG && console.log(identifier, 'Running tippecanoe... done'); })
     // Check if it was killed. Additional check in case docker delayed in
     // throwing the error.
     .then(() => checkKilled())
+    .then(() => { DEBUG && console.log(identifier, 'Uploading to storage...'); })
     .then(() => putDirectory(tilesFolderPath, `project-${projId}/tiles/admin-bounds`))
+    .then(() => { DEBUG && console.log(identifier, 'Uploading to storage... done'); })
     // Check if it was killed. putDirectory will not throw an error so stop the
     // run if the analysis was killed while putDirectory was running.
     .then(() => checkKilled());
@@ -109,20 +123,21 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
  * @param  {int} projId
  * @param  {int} scId
  * @param  {Operation} op
- * @param  {String} roadNetwork
+ * @param  {String} roadNetworkPath
  *
  * @return Object with a `promise` and a `kill` switch.
  */
-export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
+export function createRoadNetworkVT (projId, scId, op, roadNetworkPath) {
   // Temporary disable vector tiles.
   return {
     promise: Promise.resolve(),
     kill: () => Promise.resolve()
   };
 
+  const identifier = `p${projId} s${scId} RN VT`;
+
   // Promisify functions.
   const removeP = Promise.promisify(fs.remove);
-  const writeFile = Promise.promisify(fs.writeFile);
 
   const osmName = `p${projId}s${scId}-rn.osm`;
   const geojsonName = `p${projId}s${scId}-rn.geojson`;
@@ -135,6 +150,8 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
   let killed = false;
   let checkKilled = () => { if (killed) throw new Error('Process manually terminated'); };
 
+  DEBUG && console.log(identifier, 'Clean files...');
+
   // Clean any existing files, locally and from S3.
   let executor = op.log('road-network', {message: 'Creating road-network vector tiles'})
     // Clean up phase.
@@ -145,15 +162,16 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
       // Clean S3 directory
       removeS3Dir(`scenario-${scId}/tiles/road-network`)
     ]))
-    .then(() => writeFile(osmFilePath, roadNetwork))
+    .then(() => { DEBUG && console.log(identifier, 'Clean files... done'); })
+    .then(() => fGetFile(roadNetworkPath, osmFilePath))
     // Check if it was killed. The docker run will throw errors but the other
     // processes won't. Stop the chain if it was aborted before reaching
     // docker run
     .then(() => checkKilled())
     // Convert to geojson.
     .then(() => {
+      DEBUG && console.log(identifier, 'Running osmtogeojson...');
       currentRunning = `p${projId}s${scId}-rn`;
-
       return dockerRun([
         `-v ${tmpDir}:/data`,
         `--name ${currentRunning}`,
@@ -162,11 +180,13 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
         `/data/${osmName} > ${geojsonFilePath}`
       ]);
     })
-    // Check if it was killed. Additional check in case docker delayed in
+    .then(() => { DEBUG && console.log(identifier, 'Running osmtogeojson... done'); })
+    // Check if it was killed. Additional check in case docker delayed int
     // throwing the error.
     .then(() => checkKilled())
     // Create tiles.
     .then(() => {
+      DEBUG && console.log(identifier, 'Running tippecanoe...');
       currentRunning = `p${projId}s${scId}-tiles`;
       return dockerRun([
         `-v ${tmpDir}:/data`,
@@ -178,7 +198,13 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
         `/data/${geojsonName}`
       ]);
     })
+    .then(() => { DEBUG && console.log(identifier, 'Running tippecanoe... done'); })
+    // Check if it was killed. Additional check in case docker delayed in
+    // throwing the error.
+    .then(() => checkKilled())
+    .then(() => { DEBUG && console.log(identifier, 'Uploading to storage...'); })
     .then(() => putDirectory(tilesFolderPath, `scenario-${scId}/tiles/road-network`))
+    .then(() => { DEBUG && console.log(identifier, 'Uploading to storage... done'); })
     // Check if it was killed. putDirectory will not throw an error so stop the
     // run if the analysis was killed while putDirectory was running.
     .then(() => checkKilled());

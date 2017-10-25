@@ -171,6 +171,8 @@ describe('Scenarios', function () {
       form.append('name', 'Scenario name');
       form.append('roadNetworkSource', 'clone');
       form.append('roadNetworkSourceScenario', 1);
+      form.append('poiSource', 'clone');
+      form.append('poiSourceScenario', 1);
 
       return streamToPromise(form)
         .then(payload => instance.injectThen({
@@ -190,6 +192,8 @@ describe('Scenarios', function () {
       form.append('name', 'Scenario name');
       form.append('roadNetworkSource', 'clone');
       form.append('roadNetworkSourceScenario', 1);
+      form.append('poiSource', 'clone');
+      form.append('poiSourceScenario', 1);
 
       return streamToPromise(form)
         .then(payload => instance.injectThen({
@@ -209,6 +213,8 @@ describe('Scenarios', function () {
       form.append('name', 'Scenario name');
       form.append('roadNetworkSource', 'clone');
       form.append('roadNetworkSourceScenario', 1);
+      form.append('poiSource', 'clone');
+      form.append('poiSourceScenario', 1);
 
       return streamToPromise(form)
         .then(payload => instance.injectThen({
@@ -229,6 +235,8 @@ describe('Scenarios', function () {
       form.append('name', 'Main scenario 1200');
       form.append('roadNetworkSource', 'clone');
       form.append('roadNetworkSourceScenario', 1200);
+      form.append('poiSource', 'clone');
+      form.append('poiSourceScenario', 1200);
 
       return streamToPromise(form)
         .then(payload => instance.injectThen({
@@ -249,6 +257,8 @@ describe('Scenarios', function () {
       form.append('name', 'New scenario project 1200');
       form.append('roadNetworkSource', 'clone');
       form.append('roadNetworkSourceScenario', 1200);
+      form.append('poiSource', 'clone');
+      form.append('poiSourceScenario', 1200);
 
       return streamToPromise(form)
         .then(payload => instance.injectThen({
@@ -278,6 +288,8 @@ describe('Scenarios', function () {
       form.append('name', 'New scenario with file project 1200');
       form.append('roadNetworkSource', 'new');
       form.append('roadNetworkFile', fs.createReadStream('./test/utils/data-sergipe/road-network.osm'));
+      form.append('poiSource', 'clone');
+      form.append('poiSourceScenario', 1);
 
       return streamToPromise(form).then(payload => {
         return instance.injectThen({
