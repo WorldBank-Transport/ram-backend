@@ -90,14 +90,30 @@ export function removeDatabase (projId, scId) {
 }
 
 export function importRoadNetwork (projId, scId, op, roadNetwork, logger) {
+  const importPromise = Promise.promisify(importer);
   const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
-
-  let osmDb = getDatabase(projId, scId);
-
-  let importPromise = Promise.promisify(importer);
+  const osmDb = getDatabase(projId, scId);
 
   return op.log('process:road-network', {message: 'Road network processing started'})
     .then(() => convertToOSMXml(roadNetwork, 'osm', basePath, logger))
+    .then(() => logger && logger.log('Importing changeset into osm-p2p...'))
+    .then(() => {
+      const xml = fs.createReadStream(`${basePath}.osm`);
+      return importPromise(osmDb, xml);
+    })
+    .then(() => logger && logger.log('Importing changeset into osm-p2p... done'))
+    // Note: There's no need to close the osm-p2p-db because when the process
+    // terminates the connection is automatically closed.
+    .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
+}
+
+export function importPOI (projId, scId, op, poiFc, logger) {
+  const importPromise = Promise.promisify(importer);
+  const basePath = path.resolve(os.tmpdir(), `poiP${projId}S${scId}`);
+  const osmDb = getDatabase(projId, scId);
+
+  return op.log('process:poi', {message: 'Poi processing started'})
+    .then(() => convertToOSMXml(JSON.stringify(poiFc), 'geojson', basePath, logger))
     .then(() => logger && logger.log('Importing changeset into osm-p2p...'))
     .then(() => {
       let xml = fs.createReadStream(`${basePath}.osm`);
@@ -106,7 +122,7 @@ export function importRoadNetwork (projId, scId, op, roadNetwork, logger) {
     .then(() => logger && logger.log('Importing changeset into osm-p2p... done'))
     // Note: There's no need to close the osm-p2p-db because when the process
     // terminates the connection is automatically closed.
-    .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
+    .then(() => op.log('process:poi', {message: 'Poi processing finished'}));
 }
 
 function convertToOSMXml (data, dataType, basePath, logger) {

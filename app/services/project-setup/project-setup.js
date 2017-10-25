@@ -9,14 +9,14 @@ import Promise from 'bluebird';
 import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
-import { setScenarioSetting, getPropInsensitive } from '../../utils/utils';
+import { setScenarioSetting, getScenarioSetting, getPropInsensitive } from '../../utils/utils';
 import { createAdminBoundsVT, createRoadNetworkVT } from '../../utils/vector-tiles';
 import {
   getFileContents,
   getJSONFileContents,
   putFileStream
 } from '../../s3/utils';
-import { importRoadNetwork, removeDatabase } from '../rra-osm-p2p';
+import { importRoadNetwork, importPOI, removeDatabase } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
 
@@ -403,6 +403,7 @@ export function concludeProjectSetup (e) {
       : () => db('scenarios_files')
         .select('*')
         .where('project_id', projId)
+        .where('scenario_id', scId)
         .where('type', 'road-network')
         .first()
         .then(file => getFileContents(file.path));
@@ -411,7 +412,22 @@ export function concludeProjectSetup (e) {
     // Handle POI.
     let poiProcessPromise = poiSource.type === 'osm'
       ? () => importOSMPOIs(overpass.fcBbox(adminBoundsFc), poiSource.data.osmPoiTypes)
-      : () => Promise.resolve();
+      // We'll need to get the POI contents to import to the osm-p2p-db.
+      : () => db('scenarios_files')
+        .select('*')
+        .where('project_id', projId)
+        .where('scenario_id', scId)
+        .where('type', 'poi')
+        .then(files => Promise.all([
+          files,
+          Promise.map(files, file => getJSONFileContents(file.path))
+        ])
+        .then(([files, filesContent]) => {
+          // Create an object indexed by poi type.
+          let pois = {};
+          files.forEach((f, idx) => { pois[f.subtype] = filesContent[idx]; });
+          return pois;
+        }));
 
     //
     // Handle Profile.
@@ -424,10 +440,34 @@ export function concludeProjectSetup (e) {
       .then(() => profileProcessPromise())
       // Remove anything that might be there. We're importing fresh data.
       .then(() => removeDatabase(projId, scId))
-      .then(() => poiProcessPromise())
       .then(() => rnProcessPromise()
         .then(roadNetwork => importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork))
         .then(roadNetwork => process.env.DS_ENV === 'test' ? null : createRoadNetworkVT(projId, scId, op, roadNetwork).promise)
+      )
+      .then(() => poiProcessPromise()
+        .then(poisFC => {
+          // Check rn_active_editing setting to see if we need to import.
+          return getScenarioSetting(db, scId, 'rn_active_editing')
+            .then(editing => {
+              if (!editing) {
+                return;
+              }
+              // Merge all feature collection together.
+              // Add a property to keep track of the poi type.
+              let fc = {
+                type: 'FeatureCollection',
+                features: Object.keys(poisFC).reduce((acc, key) => {
+                  let feats = poisFC[key].features;
+                  feats.forEach(f => { f.properties.ram_poi_type = key; });
+                  return acc.concat(feats);
+                }, [])
+              };
+
+              let poiLogger = appLogger.group(`p${projId} s${scId} poi import`);
+              poiLogger && poiLogger.log('process poi');
+              return importPOI(projId, scId, op, fc, poiLogger);
+            });
+        })
       );
   })
   .then(() => {
@@ -439,9 +479,9 @@ export function concludeProjectSetup (e) {
         trx('scenarios')
           .update({updated_at: (new Date()), status: 'active'})
           .where('id', scId)
-      ])
-      .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
-    });
+      ]);
+    })
+    .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
   })
   .then(() => {
     logger && logger.log('process complete');
