@@ -97,6 +97,7 @@ The following options must be set:
   - `analysisProcess.db` - The database connection string. When using Docker for the analysis process, the host will be the name of the database container (`rra-postgis`). When using Hyper, this will be the IP of your hosted database [ANL_DB]
   - `analysisProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`rra-minio`). When using Hyper, this will be the IP of the storage host. [ANL_STORAGE_HOST]
   - `analysisProcess.storagePort` - The port to use. [ANL_STORAGE_PORT]
+  - `roadNetEditMax` - The size in bytes until which the road network can be be edited in browser. When the road network exceeds the size, network editing is disabled. [ROAD_NET_EDIT_MAX]
 
 #### Config Example
 ```
@@ -127,7 +128,8 @@ module.exports = {
     db: 'postgresql://rra:rra@rra-postgis:5432/rra',
     storageHost: 'rra-minio',
     storagePort: 9000
-  }
+  },
+  roadNetEditMax: 20 * Math.pow(1024, 2) // 20MB
 };
 ```
 

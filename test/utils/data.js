@@ -561,7 +561,7 @@ export function project1100 () {
     {
       'scenario_id': 1100,
       'key': 'rn_active_editing',
-      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditThreshold,
+      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditMax,
       'created_at': '2017-02-01T12:00:01.000Z',
       'updated_at': '2017-02-01T12:00:01.000Z'
     }
@@ -727,7 +727,7 @@ export function project1200 () {
     {
       'scenario_id': 1200,
       'key': 'rn_active_editing',
-      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditThreshold,
+      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditMax,
       'created_at': '2017-02-01T12:00:01.000Z',
       'updated_at': '2017-02-01T12:00:01.000Z'
     },
@@ -755,7 +755,7 @@ export function project1200 () {
     {
       'scenario_id': 1201,
       'key': 'rn_active_editing',
-      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditThreshold,
+      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditMax,
       'created_at': '2017-02-01T12:00:01.000Z',
       'updated_at': '2017-02-01T12:00:01.000Z'
     }
@@ -949,7 +949,7 @@ export function project2000 () {
     {
       'scenario_id': 2000,
       'key': 'rn_active_editing',
-      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditThreshold,
+      'value': FILE_ROAD_NETWORK_SIZE < config.roadNetEditMax,
       'created_at': '2017-02-01T12:00:01.000Z',
       'updated_at': '2017-02-01T12:00:01.000Z'
     }

@@ -48,6 +48,8 @@ if (!(process.env.DS_ENV === 'test' && process.env.TRAVIS)) {
   config.analysisProcess.hyperAccess = process.env.HYPER_ACCESS || config.analysisProcess.hyperAccess;
   config.analysisProcess.hyperSecret = process.env.HYPER_SECRET || config.analysisProcess.hyperSecret;
   config.analysisProcess.hyperSize = process.env.HYPER_SIZE || config.analysisProcess.hyperSize;
+
+  config.roadNetEditMax = process.env.ROAD_NET_EDIT_MAX || config.roadNetEditMax;
 }
 
 config.baseDir = __dirname;

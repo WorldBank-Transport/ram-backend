@@ -36,7 +36,8 @@ var splitEnvs = [
   'ANL_CONTAINER',
   'ANL_DB',
   'ANL_STORAGE_HOST',
-  'ANL_STORAGE_PORT'
+  'ANL_STORAGE_PORT',
+  'ROAD_NET_EDIT_MAX'
 ];
 
 var envs = splitEnvs

@@ -308,7 +308,7 @@ function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
   rnLogger && rnLogger.log('process road network');
 
   // Disable road network editing if size over threshold.
-  let allowImport = roadNetwork.length < config.roadNetEditThreshold;
+  let allowImport = roadNetwork.length < config.roadNetEditMax;
 
   return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
     .then(() => {

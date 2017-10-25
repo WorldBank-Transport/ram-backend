@@ -26,5 +26,5 @@ module.exports = {
     storageHost: '172.99.99.15',
     storagePort: 9000
   },
-  roadNetEditThreshold: 20 * Math.pow(1024, 2) // 20MB
+  roadNetEditMax: 20 * Math.pow(1024, 2) // 20MB
 };
