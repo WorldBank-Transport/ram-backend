@@ -1,5 +1,4 @@
 'use strict';
-const _ = require('lodash');
 
 // Prod settings act as base.
 var config = {};
