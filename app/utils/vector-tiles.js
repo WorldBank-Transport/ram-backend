@@ -10,7 +10,8 @@ import config from '../config';
 
 import {
   removeDir as removeS3Dir,
-  putDirectory
+  putDirectory,
+  fGetFile
 } from '../s3/utils';
 
 const DEBUG = config.debug;
@@ -32,13 +33,13 @@ const DEBUG = config.debug;
  * @return Object with a `promise` and a `kill` switch.
  */
 export function createAdminBoundsVT (projId, scId, op, fc) {
-  const identifier = `p${projId} s${scId} AB VT`;
-
   // Temporary disable vector tiles.
   return {
     promise: Promise.resolve(),
     kill: () => Promise.resolve()
   };
+
+  const identifier = `p${projId} s${scId} AB VT`;
 
   // Promisify functions.
   const removeP = Promise.promisify(fs.remove);
@@ -122,22 +123,21 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
  * @param  {int} projId
  * @param  {int} scId
  * @param  {Operation} op
- * @param  {String} roadNetwork
+ * @param  {String} roadNetworkPath
  *
  * @return Object with a `promise` and a `kill` switch.
  */
-export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
-  const identifier = `p${projId} s${scId} RN VT`;
-
+export function createRoadNetworkVT (projId, scId, op, roadNetworkPath) {
   // Temporary disable vector tiles.
   return {
     promise: Promise.resolve(),
     kill: () => Promise.resolve()
   };
 
+  const identifier = `p${projId} s${scId} RN VT`;
+
   // Promisify functions.
   const removeP = Promise.promisify(fs.remove);
-  const writeFile = Promise.promisify(fs.writeFile);
 
   const osmName = `p${projId}s${scId}-rn.osm`;
   const geojsonName = `p${projId}s${scId}-rn.geojson`;
@@ -163,7 +163,7 @@ export function createRoadNetworkVT (projId, scId, op, roadNetwork) {
       removeS3Dir(`scenario-${scId}/tiles/road-network`)
     ]))
     .then(() => { DEBUG && console.log(identifier, 'Clean files... done'); })
-    .then(() => writeFile(osmFilePath, roadNetwork))
+    .then(() => fGetFile(roadNetworkPath, osmFilePath))
     // Check if it was killed. The docker run will throw errors but the other
     // processes won't. Stop the chain if it was aborted before reaching
     // docker run
