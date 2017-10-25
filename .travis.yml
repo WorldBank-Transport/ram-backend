@@ -15,7 +15,7 @@ env:
   - AWS_REGION=us-east-1
   - AWS_ACCESS_KEY_ID=AKIAILREAKXPJOWAXTBQ
   - DB_CONNECTION=postgresql://rra:rra@rra-postgis:5432/rra
-  - OSM_P2P_DIR=
+  - OSM_P2P_DIR=/data/osm-p2p-dbs
   - STORAGE_ENGINE=s3
   - STORAGE_ACCESS_KEY=AKIAIPEH472XR6VB5U3A
   - STORAGE_BUCKET=rra-staging-storage
