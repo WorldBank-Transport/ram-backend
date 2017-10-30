@@ -353,7 +353,7 @@ function checkPopInd (projId, popInd) {
 }
 
 function prepGeoResponse (results) {
-  let maxPop = Math.max.apply(results.map(o => o.pop_value));
+  let maxPop = Math.max.apply(Math, results.map(o => o.pop_value));
 
   return results.map(o => {
     return {
