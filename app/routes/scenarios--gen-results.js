@@ -199,7 +199,10 @@ function generateResults (projId, scId, op) {
             .then(() => generateTiles(projId, scId, op));
         }
 
-        executor.then(() => spawnAnalysisProcess(projId, scId, opId));
+        executor.then(() => spawnAnalysisProcess(projId, scId, opId))
+          .catch(err => {
+            console.log(identifier, 'generateResults error was handled:', err);
+          });
       });
     });
 }
@@ -246,16 +249,26 @@ function generateTiles (projId, scId, op) {
     .where('scenario_id', scId)
     .where('type', 'road-network')
     .first()
-    .then(file => getFileContents(file.path))
-    .then(roadNetwork => {
+    .then(file => {
       // createRoadNetworkVT returns an objects with a promise and a kill switch
-      let service = createRoadNetworkVT(projId, scId, op, roadNetwork);
+      let service = createRoadNetworkVT(projId, scId, op, file.path);
       runningProcesses[identifier].genVT = service;
 
       return service.promise;
     })
     .then(() => {
       runningProcesses[identifier].genVT = null;
+    })
+    .catch(err => {
+      let executor = Promise.resolve();
+      if (!op.isCompleted()) {
+        executor = executor
+          .then(() => op.log('error', {error: err.message}))
+          .then(op => op.finish());
+      }
+
+      // Rethrow to stop;
+      return executor.then(() => { throw err; });
     });
 
   return executor;

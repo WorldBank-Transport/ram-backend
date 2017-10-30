@@ -1,20 +1,139 @@
-/* eslint-disable */
 'use strict';
-import path from 'path';
-import fs from 'fs-extra';
-import { exec } from 'child_process';
-import tmpDir from 'temp-dir';
+import { spawn, exec } from 'child_process';
 import Promise from 'bluebird';
 
 import config from '../config';
 
-import {
-  removeDir as removeS3Dir,
-  putDirectory,
-  fGetFile
-} from '../s3/utils';
+function pullImage (projId, scId) {
+  return new Promise((resolve, reject) => {
+    let error;
+    // Make sure the latest image (dev / stable) is used.
+    let pullImage = spawn(config.vtProcess.service, [
+      'pull', config.vtProcess.container,
+      '-e', `HYPER_ACCESS=${config.vtProcess.hyperAccess}`,
+      '-e', `HYPER_SECRET=${config.vtProcess.hyperSecret}`
+    ]);
 
-const DEBUG = config.debug;
+    pullImage.stderr.on('data', (data) => {
+      error = data.toString();
+      console.log(`[VT P${projId} S${scId}][ERROR]`, error);
+    });
+
+    pullImage.on('close', code => {
+      if (code !== 0) {
+        console.log(`[VT P${projId} S${scId}][ERROR]`, 'Pull image error', error);
+        console.log(`[VT P${projId} S${scId}][ERROR]`, 'Continuing...');
+      }
+      return resolve();
+      // return code === 0 ? resolve() : reject(new Error('Pull image failed'));
+    });
+  });
+}
+
+function killSwitch (projId, scId) {
+  return new Promise((resolve, reject) => {
+    const service = config.vtProcess.service;
+    const containerName = `vtp${projId}s${scId}`;
+    let args = [];
+
+    switch (service) {
+      case 'hyper':
+        args.push(
+          '-e', `HYPER_ACCESS=${config.vtProcess.hyperAccess}`,
+          '-e', `HYPER_SECRET=${config.vtProcess.hyperSecret}`
+        );
+        break;
+      case 'docker':
+        break;
+      default:
+        return reject(new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`));
+    }
+
+    exec(`${service} rm -f ${args.join(' ')} ${containerName}`, (errStop) => {
+      if (errStop) {
+        console.log(`[VT P${projId} S${scId}][ABORT] stop`, errStop);
+        return reject(errStop);
+      }
+      resolve();
+    });
+  });
+}
+
+function runProcess (projId, scId, sourceFile, vtType) {
+  return new Promise((resolve, reject) => {
+    console.log(`[VT P${projId} S${scId}]`, 'spawnVectorTilesProcess', vtType);
+    const containerName = `vtp${projId}s${scId}`;
+    const service = config.vtProcess.service;
+
+    // Each Project/Scenario combination can only have one vt process running.
+    let args = [
+      'run',
+      '--name', containerName,
+      '--rm',
+      '-e', `PROJECT_ID=${projId}`,
+      '-e', `SCENARIO_ID=${scId}`,
+      '-e', `SOURCE_FILE=${sourceFile}`,
+      '-e', `VT_TYPE=${vtType}`,
+      '-e', `STORAGE_HOST=${config.vtProcess.storageHost}`,
+      '-e', `STORAGE_PORT=${config.vtProcess.storagePort}`,
+      '-e', `STORAGE_ENGINE=${config.storage.engine}`,
+      '-e', `STORAGE_ACCESS_KEY=${config.storage.accessKey}`,
+      '-e', `STORAGE_SECRET_KEY=${config.storage.secretKey}`,
+      '-e', `STORAGE_BUCKET=${config.storage.bucket}`,
+      '-e', `STORAGE_REGION=${config.storage.region}`,
+      '-e', 'CONVERSION_DIR=/conversion'
+    ];
+
+    switch (service) {
+      case 'docker':
+        args.push(
+          '--network', 'rra'
+        );
+        break;
+      case 'hyper':
+        args.push(
+          '-e', `HYPER_ACCESS=${config.vtProcess.hyperAccess}`,
+          '-e', `HYPER_SECRET=${config.vtProcess.hyperSecret}`
+        );
+        if (config.vtProcess.hyperSize) {
+          args.push(
+            `--size=${config.vtProcess.hyperSize}`
+          );
+        }
+        break;
+      default:
+        return Promise.reject(new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`));
+    }
+
+    // Append the name of the image last
+    args.push(config.vtProcess.container);
+    // Add the command to run.
+    // The `rra-vt` command is the one responsible to generate the vector tiles.
+    // This container has other commands available like
+    // osmtogeojson and tippecanoe
+    args.push('rra-vt');
+
+    let proc = spawn(service, args);
+    let error;
+
+    proc.stdout.on('data', (data) => {
+      console.log(`[VT P${projId} S${scId}]`, data.toString());
+    });
+
+    proc.stderr.on('data', (data) => {
+      error = data.toString();
+      console.log(`[VT P${projId} S${scId}][ERROR]`, error);
+    });
+
+    proc.on('close', (code) => {
+      if (code === 0) {
+        return resolve();
+      } else {
+        return reject(new Error(error || 'Unknown error. Code: ' + code));
+      }
+    });
+  });
+}
 
 /**
  * Create the vector tiles for the admin bounds.
@@ -25,88 +144,23 @@ const DEBUG = config.debug;
  * - Convert geojson to vector tiles
  * - Upload vector-tiles to remote storage
  *
+ * Note: All is done inside a Docker container
+ *
  * @param  {int} projId
  * @param  {int} scId
  * @param  {Operation} op
- * @param  {String} roadNetwork
+ * @param  {String} adminBoundsPath
  *
  * @return Object with a `promise` and a `kill` switch.
  */
-export function createAdminBoundsVT (projId, scId, op, fc) {
-  // Temporary disable vector tiles.
-  return {
-    promise: Promise.resolve(),
-    kill: () => Promise.resolve()
-  };
-
-  const identifier = `p${projId} s${scId} AB VT`;
-
-  // Promisify functions.
-  const removeP = Promise.promisify(fs.remove);
-  const writeJsonP = Promise.promisify(fs.writeJson);
-
-  const geojsonName = `p${projId}s${scId}-fc.geojson`;
-  const tilesFolderName = `p${projId}s${scId}-tiles`;
-  const geojsonFilePath = path.resolve(tmpDir, geojsonName);
-  const tilesFolderPath = path.resolve(tmpDir, tilesFolderName);
-
-  let currentRunning = null;
-  let killed = false;
-  let checkKilled = () => { if (killed) throw new Error('Process manually terminated'); };
-
-  DEBUG && console.log(identifier, 'Clean files...');
-
-  // Clean any existing files, locally and from S3.
-  let executor = op.log('process:admin-bounds', {message: 'Creating admin bounds vector tiles'})
-    // Clean up phase.
-    .then(() => Promise.all([
-      removeP(geojsonFilePath),
-      removeP(tilesFolderPath),
-      // Admin bounds tiles are calculated during project setup, meaning that
-      // there won't be anything on S3. This is just in case the process fails
-      // down the road and we've to repeat.
-      removeS3Dir(`project-${projId}/tiles/admin-bounds`)
-    ]))
-    .then(() => { DEBUG && console.log(identifier, 'Clean files... done'); })
-    .then(() => writeJsonP(geojsonFilePath, fc))
-    // Check if it was killed. The docker run will throw errors but the other
-    // processes won't. Stop the chain if it was aborted before reaching
-    // docker run
-    .then(() => checkKilled())
-    // Create tiles.
-    .then(() => {
-      DEBUG && console.log(identifier, 'Running tippecanoe...');
-      currentRunning = `p${projId}s${scId}-bounds`;
-      return dockerRun([
-        `-v ${tmpDir}:/data`,
-        `--name ${currentRunning}`,
-        'wbtransport/rra-vt',
-        'tippecanoe',
-        '-l bounds',
-        `-e /data/${tilesFolderName}`,
-        `/data/${geojsonName}`
-      ]);
-    })
-    .then(() => { DEBUG && console.log(identifier, 'Running tippecanoe... done'); })
-    // Check if it was killed. Additional check in case docker delayed in
-    // throwing the error.
-    .then(() => checkKilled())
-    .then(() => { DEBUG && console.log(identifier, 'Uploading to storage...'); })
-    .then(() => putDirectory(tilesFolderPath, `project-${projId}/tiles/admin-bounds`))
-    .then(() => { DEBUG && console.log(identifier, 'Uploading to storage... done'); })
-    // Check if it was killed. putDirectory will not throw an error so stop the
-    // run if the analysis was killed while putDirectory was running.
-    .then(() => checkKilled());
+export function createAdminBoundsVT (projId, scId, op, adminBoundsPath) {
+  let executor = op.log('admin-bounds', {message: 'Creating admin-bounds vector tiles'})
+    .then(() => pullImage(projId, scId))
+    .then(() => runProcess(projId, scId, adminBoundsPath, 'admin-bounds'));
 
   return {
     promise: executor,
-    kill: () => {
-      killed = true;
-      return currentRunning
-        ? dockerKill(currentRunning)
-          .then(() => { currentRunning = null; })
-        : Promise.resolve();
-    }
+    kill: () => killSwitch(projId, scId)
   };
 }
 
@@ -120,6 +174,8 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
  * - Convert geojson to vector tiles
  * - Upload vector-tiles to remote storage
  *
+ * Note: All is done inside a Docker container
+ *
  * @param  {int} projId
  * @param  {int} scId
  * @param  {Operation} op
@@ -128,138 +184,12 @@ export function createAdminBoundsVT (projId, scId, op, fc) {
  * @return Object with a `promise` and a `kill` switch.
  */
 export function createRoadNetworkVT (projId, scId, op, roadNetworkPath) {
-  // Temporary disable vector tiles.
-  return {
-    promise: Promise.resolve(),
-    kill: () => Promise.resolve()
-  };
-
-  const identifier = `p${projId} s${scId} RN VT`;
-
-  // Promisify functions.
-  const removeP = Promise.promisify(fs.remove);
-
-  const osmName = `p${projId}s${scId}-rn.osm`;
-  const geojsonName = `p${projId}s${scId}-rn.geojson`;
-  const tilesFolderName = `p${projId}s${scId}-rn-tiles`;
-  const osmFilePath = path.resolve(tmpDir, osmName);
-  const geojsonFilePath = path.resolve(tmpDir, geojsonName);
-  const tilesFolderPath = path.resolve(tmpDir, tilesFolderName);
-
-  let currentRunning = null;
-  let killed = false;
-  let checkKilled = () => { if (killed) throw new Error('Process manually terminated'); };
-
-  DEBUG && console.log(identifier, 'Clean files...');
-
-  // Clean any existing files, locally and from S3.
   let executor = op.log('road-network', {message: 'Creating road-network vector tiles'})
-    // Clean up phase.
-    .then(() => Promise.all([
-      removeP(osmFilePath),
-      removeP(geojsonFilePath),
-      removeP(tilesFolderPath),
-      // Clean S3 directory
-      removeS3Dir(`scenario-${scId}/tiles/road-network`)
-    ]))
-    .then(() => { DEBUG && console.log(identifier, 'Clean files... done'); })
-    .then(() => fGetFile(roadNetworkPath, osmFilePath))
-    // Check if it was killed. The docker run will throw errors but the other
-    // processes won't. Stop the chain if it was aborted before reaching
-    // docker run
-    .then(() => checkKilled())
-    // Convert to geojson.
-    .then(() => {
-      DEBUG && console.log(identifier, 'Running osmtogeojson...');
-      currentRunning = `p${projId}s${scId}-rn`;
-      return dockerRun([
-        `-v ${tmpDir}:/data`,
-        `--name ${currentRunning}`,
-        'wbtransport/rra-vt',
-        'node --max_old_space_size=8192 /usr/local/bin/osmtogeojson',
-        `/data/${osmName} > ${geojsonFilePath}`
-      ]);
-    })
-    .then(() => { DEBUG && console.log(identifier, 'Running osmtogeojson... done'); })
-    // Check if it was killed. Additional check in case docker delayed int
-    // throwing the error.
-    .then(() => checkKilled())
-    // Create tiles.
-    .then(() => {
-      DEBUG && console.log(identifier, 'Running tippecanoe...');
-      currentRunning = `p${projId}s${scId}-tiles`;
-      return dockerRun([
-        `-v ${tmpDir}:/data`,
-        `--name ${currentRunning}`,
-        'wbtransport/rra-vt',
-        'tippecanoe',
-        '-l road-network',
-        `-e /data/${tilesFolderName}`,
-        `/data/${geojsonName}`
-      ]);
-    })
-    .then(() => { DEBUG && console.log(identifier, 'Running tippecanoe... done'); })
-    // Check if it was killed. Additional check in case docker delayed in
-    // throwing the error.
-    .then(() => checkKilled())
-    .then(() => { DEBUG && console.log(identifier, 'Uploading to storage...'); })
-    .then(() => putDirectory(tilesFolderPath, `scenario-${scId}/tiles/road-network`))
-    .then(() => { DEBUG && console.log(identifier, 'Uploading to storage... done'); })
-    // Check if it was killed. putDirectory will not throw an error so stop the
-    // run if the analysis was killed while putDirectory was running.
-    .then(() => checkKilled());
+    .then(() => pullImage(projId, scId))
+    .then(() => runProcess(projId, scId, roadNetworkPath, 'road-network'));
 
   return {
     promise: executor,
-    kill: () => {
-      killed = true;
-      return currentRunning
-        ? dockerKill(currentRunning)
-          .then(() => { currentRunning = null; })
-        : Promise.resolve();
-    }
+    kill: () => killSwitch(projId, scId)
   };
-}
-
-function dockerRun (args) {
-  return new Promise((resolve, reject) => {
-    // -u $(id -u) is used to ensure that the volumes are created with the
-    // correct user so they can be removed. Otherwise they'd belong to root.
-    let base = [
-      'docker run',
-      '-u $(id -u)',
-      '--rm'
-    ].concat(args);
-
-    exec(base.join(' '), (error, stdout, stderr) => {
-      if (error) {
-        console.error('dockerRun error', error);
-        reject(error);
-        return;
-      }
-      console.log('dockerRun stdout', stdout);
-      console.log('dockerRun stderr', stderr);
-      resolve();
-    });
-  });
-}
-
-function dockerKill (container) {
-  return new Promise((resolve, reject) => {
-    let args = [
-      'docker rm -f',
-      container
-    ];
-
-    exec(args.join(' '), (error, stdout, stderr) => {
-      if (error) {
-        console.error('dockerKill error', error);
-        reject(error);
-        return;
-      }
-      console.log('dockerKill stdout', stdout);
-      console.log('dockerKill stderr', stderr);
-      resolve();
-    });
-  });
 }
