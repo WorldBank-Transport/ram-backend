@@ -181,7 +181,7 @@ export function concludeProjectSetup (e) {
       .then(() => cleanAATable())
       .then(() => adminAreaTask())
       .then(() => updateFile())
-      .then(filePath => createAdminBoundsVT(projId, scId, op, filePath).promise);
+      .then(filePath => process.env.DS_ENV === 'test' ? null : createAdminBoundsVT(projId, scId, op, filePath).promise);
   }
 
   function processOrigins (originsData) {
