@@ -295,7 +295,6 @@ export function scenarioCreate (e) {
           )
           // Import into osm db.
           .then(poiFc => {
-            console.log('poiFc', poiFc);
             let poiLogger = appLogger.group(`p${projId} s${scId} poi import`);
             poiLogger && poiLogger.log('process poi');
             return importPOI(projId, scId, op, poiFc, poiLogger);
