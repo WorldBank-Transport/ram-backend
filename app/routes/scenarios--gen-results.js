@@ -6,7 +6,7 @@ import cp from 'child_process';
 
 import config from '../config';
 import db from '../db/';
-import { removeFile, getFileContents } from '../s3/utils';
+import { removeFile } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
 import { getProject } from './projects--get';
 import Operation from '../utils/operation';
