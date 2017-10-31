@@ -25,5 +25,14 @@ module.exports = {
     db: null,
     storageHost: 'http://api.ruralaccess.info',
     storagePort: 9000
+  },
+  vtProcess: {
+    service: 'hyper',
+    hyperAccess: null,
+    hyperSecret: null,
+    hyperSize: null,
+    container: 'wbtransport/rra-vt:latest-stable',
+    storageHost: 'http://api.ruralaccess.info',
+    storagePort: 9000
   }
 };
