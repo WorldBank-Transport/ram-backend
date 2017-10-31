@@ -6,14 +6,17 @@ import config from '../config';
 
 function pullImage (projId, scId) {
   return new Promise((resolve, reject) => {
-    let error;
-    // Make sure the latest image (dev / stable) is used.
-    let pullImage = spawn(config.vtProcess.service, [
-      'pull', config.vtProcess.container,
-      '-e', `HYPER_ACCESS=${config.vtProcess.hyperAccess}`,
-      '-e', `HYPER_SECRET=${config.vtProcess.hyperSecret}`
-    ]);
+    const cmd = config.vtProcess.service;
+    const args = [ 'pull', config.vtProcess.container ];
+    const env = {
+      HYPER_ACCESS: config.vtProcess.hyperAccess,
+      HYPER_SECRET: config.vtProcess.hyperSecret
+    };
 
+    // Make sure the latest image (dev / stable) is used.
+    let pullImage = spawn(cmd, args, { env: Object.assign({}, process.env, env) });
+
+    let error;
     pullImage.stderr.on('data', (data) => {
       error = data.toString();
       console.log(`[VT P${projId} S${scId}][ERROR]`, error);
@@ -25,7 +28,6 @@ function pullImage (projId, scId) {
         console.log(`[VT P${projId} S${scId}][ERROR]`, 'Continuing...');
       }
       return resolve();
-      // return code === 0 ? resolve() : reject(new Error('Pull image failed'));
     });
   });
 }
@@ -34,14 +36,14 @@ function killSwitch (projId, scId) {
   return new Promise((resolve, reject) => {
     const service = config.vtProcess.service;
     const containerName = `vtp${projId}s${scId}`;
-    let args = [];
+    let env = {};
 
     switch (service) {
       case 'hyper':
-        args.push(
-          '-e', `HYPER_ACCESS=${config.vtProcess.hyperAccess}`,
-          '-e', `HYPER_SECRET=${config.vtProcess.hyperSecret}`
-        );
+        env = {
+          HYPER_ACCESS: config.vtProcess.hyperAccess,
+          HYPER_SECRET: config.vtProcess.hyperSecret
+        };
         break;
       case 'docker':
         break;
@@ -49,7 +51,7 @@ function killSwitch (projId, scId) {
         return reject(new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`));
     }
 
-    exec(`${service} rm -f ${args.join(' ')} ${containerName}`, (errStop) => {
+    exec(`${service} rm -f ${containerName}`, { env: Object.assign({}, process.env, env) }, (errStop) => {
       if (errStop) {
         console.log(`[VT P${projId} S${scId}][ABORT] stop`, errStop);
         return reject(errStop);
@@ -64,6 +66,7 @@ function runProcess (projId, scId, sourceFile, vtType) {
     console.log(`[VT P${projId} S${scId}]`, 'spawnVectorTilesProcess', vtType);
     const containerName = `vtp${projId}s${scId}`;
     const service = config.vtProcess.service;
+    let env = {};
 
     // Each Project/Scenario combination can only have one vt process running.
     let args = [
@@ -91,10 +94,10 @@ function runProcess (projId, scId, sourceFile, vtType) {
         );
         break;
       case 'hyper':
-        args.push(
-          '-e', `HYPER_ACCESS=${config.vtProcess.hyperAccess}`,
-          '-e', `HYPER_SECRET=${config.vtProcess.hyperSecret}`
-        );
+        env = {
+          HYPER_ACCESS: config.vtProcess.hyperAccess,
+          HYPER_SECRET: config.vtProcess.hyperSecret
+        };
         if (config.vtProcess.hyperSize) {
           args.push(
             `--size=${config.vtProcess.hyperSize}`
@@ -113,7 +116,7 @@ function runProcess (projId, scId, sourceFile, vtType) {
     // osmtogeojson and tippecanoe
     args.push('rra-vt');
 
-    let proc = spawn(service, args);
+    let proc = spawn(service, args, { env: Object.assign({}, process.env, env) });
     let error;
 
     proc.stdout.on('data', (data) => {

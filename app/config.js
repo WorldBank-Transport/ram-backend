@@ -57,7 +57,6 @@ if (!(process.env.DS_ENV === 'test' && process.env.TRAVIS)) {
 
   config.vtProcess.service = process.env.VT_SERVICE || config.vtProcess.service;
   config.vtProcess.container = process.env.VT_CONTAINER || config.vtProcess.container;
-  config.vtProcess.db = process.env.VT_DB || config.vtProcess.db;
   config.vtProcess.storageHost = process.env.VT_STORAGE_HOST || config.vtProcess.storageHost;
   config.vtProcess.storagePort = process.env.VT_STORAGE_PORT || config.vtProcess.storagePort;
   config.vtProcess.hyperAccess = process.env.HYPER_ACCESS || config.vtProcess.hyperAccess;

@@ -101,6 +101,9 @@ The following options must be set:
   - `vtProcess.container` - The name of the rra-vt container (Default wbtransport/rra-vt:latest-stable) [VT_CONTAINER]
   - `vtProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`rra-minio`). When using Hyper, this will be the IP of the storage host. [VT_STORAGE_HOST]
   - `vtProcess.storagePort` - The port to use. [VT_STORAGE_PORT]
+  - `vtProcess.hyperAccess` - Access key for Hyper. [HYPER_ACCESS]
+  - `vtProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
+  - `vtProcess.hyperSize` - The size of the Hyper container. If not specified, it will use [Hyper's](https://hyper.sh) default container. [HYPER_SIZE]
 
 #### Config Example
 ```
@@ -129,6 +132,14 @@ module.exports = {
     hyperSecret: null,
     container: 'wbtransport/rra-analysis:latest-stable',
     db: 'postgresql://rra:rra@rra-postgis:5432/rra',
+    storageHost: 'rra-minio',
+    storagePort: 9000
+  },
+  vtProcess: {
+    service: 'docker',
+    hyperAccess: null,
+    hyperSecret: null,
+    container: 'wbtransport/rra-vt:latest-stable',
     storageHost: 'rra-minio',
     storagePort: 9000
   }
