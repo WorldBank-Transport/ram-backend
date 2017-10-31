@@ -6,7 +6,7 @@ import cp from 'child_process';
 
 import config from '../config';
 import db from '../db/';
-import { removeFile, getFileContents } from '../s3/utils';
+import { removeFile } from '../s3/utils';
 import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
 import { getProject } from './projects--get';
 import Operation from '../utils/operation';
@@ -199,7 +199,10 @@ function generateResults (projId, scId, op) {
             .then(() => generateTiles(projId, scId, op));
         }
 
-        executor.then(() => spawnAnalysisProcess(projId, scId, opId));
+        executor.then(() => spawnAnalysisProcess(projId, scId, opId))
+          .catch(err => {
+            console.log(identifier, 'generateResults error was handled:', err);
+          });
       });
     });
 }
@@ -246,116 +249,157 @@ function generateTiles (projId, scId, op) {
     .where('scenario_id', scId)
     .where('type', 'road-network')
     .first()
-    .then(file => getFileContents(file.path))
-    .then(roadNetwork => {
+    .then(file => {
       // createRoadNetworkVT returns an objects with a promise and a kill switch
-      let service = createRoadNetworkVT(projId, scId, op, roadNetwork);
+      let service = createRoadNetworkVT(projId, scId, op, file.path);
       runningProcesses[identifier].genVT = service;
 
       return service.promise;
     })
     .then(() => {
       runningProcesses[identifier].genVT = null;
+    })
+    .catch(err => {
+      let executor = Promise.resolve();
+      if (!op.isCompleted()) {
+        executor = executor
+          .then(() => op.log('error', {error: err.message}))
+          .then(op => op.finish());
+      }
+
+      // Rethrow to stop;
+      return executor.then(() => { throw err; });
     });
 
   return executor;
 }
 
 function spawnAnalysisProcess (projId, scId, opId) {
-  console.log(`p${projId} s${scId}`, 'spawnAnalysisProcess');
-  // Each Project/Scenario combination can only have one analysis process
-  // running.
-  let containerName = `analysisp${projId}s${scId}`;
-  let args = [
-    'run',
-    '--name', containerName,
-    '-e', `DB_URI=${config.analysisProcess.db}`,
-    '-e', `PROJECT_ID=${projId}`,
-    '-e', `SCENARIO_ID=${scId}`,
-    '-e', `OPERATION_ID=${opId}`,
-    '-e', `STORAGE_HOST=${config.analysisProcess.storageHost}`,
-    '-e', `STORAGE_PORT=${config.analysisProcess.storagePort}`,
-    '-e', `STORAGE_ENGINE=${config.storage.engine}`,
-    '-e', `STORAGE_ACCESS_KEY=${config.storage.accessKey}`,
-    '-e', `STORAGE_SECRET_KEY=${config.storage.secretKey}`,
-    '-e', `STORAGE_BUCKET=${config.storage.bucket}`,
-    '-e', `STORAGE_REGION=${config.storage.region}`,
-    '-e', 'CONVERSION_DIR=/conversion'
-  ];
+  // Update image before starting.
+  function pullImage () {
+    return new Promise((resolve, reject) => {
+      const cmd = config.analysisProcess.service;
+      const args = [ 'pull', config.analysisProcess.container ];
+      const env = {
+        HYPER_ACCESS: config.analysisProcess.hyperAccess,
+        HYPER_SECRET: config.analysisProcess.hyperSecret
+      };
 
-  let service = config.analysisProcess.service;
-  switch (service) {
-    case 'docker':
-      args.push(
-        '--network', 'rra'
-      );
-      break;
-    case 'hyper':
-      args.push(
-        '-e', `HYPER_ACCESS=${config.analysisProcess.hyperAccess}`,
-        '-e', `HYPER_SECRET=${config.analysisProcess.hyperSecret}`
-      );
-      if (config.analysisProcess.hyperSize) {
-        args.push(
-          `--size=${config.analysisProcess.hyperSize}`
-        );
-      }
-      break;
-    default:
-      throw new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`);
+      // Make sure the latest image (dev / stable) is used.
+      let pullImage = cp.spawn(cmd, args, { env: Object.assign({}, process.env, env) });
+
+      let error;
+      pullImage.stderr.on('data', (data) => {
+        error = data.toString();
+        console.log(`[ANALYSIS P${projId} S${scId}][ERROR]`, error);
+      });
+
+      pullImage.on('close', code => {
+        if (code !== 0) {
+          console.log(`[ANALYSIS P${projId} S${scId}][ERROR]`, 'Pull image error', error);
+          console.log(`[ANALYSIS P${projId} S${scId}][ERROR]`, 'Continuing...');
+        }
+        return resolve();
+      });
+    });
   }
 
-  // Append the name of the image last
-  args.push(config.analysisProcess.container);
+  // Run the analysis.
+  function runProcess () {
+    return new Promise((resolve, reject) => {
+      console.log(`[ANALYSIS P${projId} S${scId}]`, 'spawnAnalysisProcess');
+      const containerName = `analysisp${projId}s${scId}`;
+      const service = config.analysisProcess.service;
+      let env = {};
 
-  // Make sure the latest image (dev / stable) is used
-  let pullImage = cp.spawn(service, [
-    'pull', config.analysisProcess.container,
-    '-e', `HYPER_ACCESS=${config.analysisProcess.hyperAccess}`,
-    '-e', `HYPER_SECRET=${config.analysisProcess.hyperSecret}`
-  ]);
-  pullImage.on('close', () => {
-    // Spawn the processing script. It will take care of updating
-    // the database with progress.
-    let analysisProc = cp.spawn(service, args);
-    analysisProc.stdout.on('data', (data) => {
-      console.log(`[ANALYSIS P${projId} S${scId}]`, data.toString());
-    });
+      // Each Project/Scenario combination can only have one analysis process
+      // running.
+      let args = [
+        'run',
+        '--name', containerName,
+        '--rm',
+        '-e', `DB_URI=${config.analysisProcess.db}`,
+        '-e', `PROJECT_ID=${projId}`,
+        '-e', `SCENARIO_ID=${scId}`,
+        '-e', `OPERATION_ID=${opId}`,
+        '-e', `STORAGE_HOST=${config.analysisProcess.storageHost}`,
+        '-e', `STORAGE_PORT=${config.analysisProcess.storagePort}`,
+        '-e', `STORAGE_ENGINE=${config.storage.engine}`,
+        '-e', `STORAGE_ACCESS_KEY=${config.storage.accessKey}`,
+        '-e', `STORAGE_SECRET_KEY=${config.storage.secretKey}`,
+        '-e', `STORAGE_BUCKET=${config.storage.bucket}`,
+        '-e', `STORAGE_REGION=${config.storage.region}`,
+        '-e', 'CONVERSION_DIR=/conversion'
+      ];
 
-    let error;
-    analysisProc.stderr.on('data', (data) => {
-      error = data.toString();
-      console.log(`[ANALYSIS P${projId} S${scId}][ERROR]`, data.toString());
-    });
-
-    analysisProc.on('close', (code) => {
-      let identifier = `p${projId} s${scId}`;
-      delete runningProcesses[identifier];
-
-      if (code !== 0) {
-        // The operation may not have finished if the error took place outside
-        // the promise, or if the error was due to a wrong db connection.
-        let op = new Operation(db);
-        op.loadById(opId)
-          .then(op => {
-            if (!op.isCompleted()) {
-              return op.log('error', {error: error})
-                .then(op => op.finish());
-            }
-          });
+      switch (service) {
+        case 'docker':
+          args.push(
+            '--network', 'rra'
+          );
+          break;
+        case 'hyper':
+          env = {
+            HYPER_ACCESS: config.analysisProcess.hyperAccess,
+            HYPER_SECRET: config.analysisProcess.hyperSecret
+          };
+          if (config.analysisProcess.hyperSize) {
+            args.push(
+              `--size=${config.analysisProcess.hyperSize}`
+            );
+          }
+          break;
+        default:
+          return Promise.reject(new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`));
       }
-      // Remove the container once the process is finished. Especially important
-      // for a hosted scenario, in which stopped containers may incur costs.
-      cp.spawn(service, ['rm', containerName]);
-      console.log(`[ANALYSIS P${projId} S${scId}][EXIT]`, code.toString());
+
+      // Append the name of the image last
+      args.push(config.analysisProcess.container);
+
+      let proc = cp.spawn(service, args, { env: Object.assign({}, process.env, env) });
+      let error;
+
+      proc.stdout.on('data', (data) => {
+        console.log(`[VT P${projId} S${scId}]`, data.toString());
+      });
+
+      proc.stderr.on('data', (data) => {
+        error = data.toString();
+        console.log(`[VT P${projId} S${scId}][ERROR]`, error);
+      });
+
+      proc.on('close', (code) => {
+        let identifier = `p${projId} s${scId}`;
+        console.log(`[ANALYSIS P${projId} S${scId}][EXIT]`, code.toString());
+        delete runningProcesses[identifier];
+
+        if (code !== 0) {
+          // The operation may not have finished if the error took place outside
+          // the promise, or if the error was due to a wrong db connection.
+          let op = new Operation(db);
+          return op.loadById(opId)
+            .then(op => {
+              if (!op.isCompleted()) {
+                return op.log('error', {error: error})
+                  .then(op => op.finish());
+              }
+            })
+            .then(() => reject(error), () => reject(error));
+        }
+
+        return resolve();
+      });
     });
-  });
+  }
+
+  return pullImage()
+    .then(() => runProcess());
 }
 
 function killAnalysisProcess (projId, scId) {
   if (process.env.DS_ENV === 'test') { return Promise.resolve(); }
 
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     let identifier = `p${projId} s${scId}`;
     // Since the processes run sequentially check by order which we need
     // to kill.
@@ -370,38 +414,31 @@ function killAnalysisProcess (projId, scId) {
       return resolve();
     }
 
-    let containerName = `analysisp${projId}s${scId}`;
-    let args = [];
+    const service = config.analysisProcess.service;
+    const containerName = `analysisp${projId}s${scId}`;
+    let env = {};
 
-    let service = config.analysisProcess.service;
     switch (service) {
       case 'hyper':
-        args.push(
-          '-e', `HYPER_ACCESS=${config.analysisProcess.hyperAccess}`,
-          '-e', `HYPER_SECRET=${config.analysisProcess.hyperSecret}`,
-          '-t', '1'
-        );
+        env = {
+          HYPER_ACCESS: config.analysisProcess.hyperAccess,
+          HYPER_SECRET: config.analysisProcess.hyperSecret
+        };
         break;
       case 'docker':
-        args.push('-t', '1');
         break;
       default:
-        throw new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`);
+        return reject(new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`));
     }
 
-    cp.exec(`${service} stop ${args.join(' ')} ${containerName}`, (errStop) => {
+    cp.exec(`${service} rm -f ${containerName}`, { env: Object.assign({}, process.env, env) }, (errStop) => {
       if (errStop) {
         console.log(`[ANALYSIS P${projId} S${scId}][ABORT] stop`, errStop);
       }
-      cp.exec(`${service} rm ${containerName}`, (errRm) => {
-        // This is likely to throw an error because stopping the container
-        // will trigger the remove action on the close listener of the analysis
-        // process. In any case better safe than sorry.
-        if (errRm) {
-          console.log(`[ANALYSIS P${projId} S${scId}][ABORT] rm`, errRm);
-        }
-        resolve();
-      });
     });
+
+    // Assume the exec works and resolve immediately. The closing of the
+    // connection is handled by the process spawn in spawnAnalysisProcess();
+    return resolve();
   });
 }
