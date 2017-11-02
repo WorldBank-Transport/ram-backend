@@ -25,7 +25,7 @@
     "postinstall": "[ -f app/config/local.js ] || echo 'module.exports = {};' > app/config/local.js"
   },
   "engines": {
-    "node": "6.x.x"
+    "node": "8.x.x"
   },
   "dependencies": {
     "@turf/bbox": "^4.0.2",
