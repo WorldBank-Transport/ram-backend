@@ -15,7 +15,8 @@ import {
   getFileInfo,
   getFileContents,
   getJSONFileContents,
-  putFileStream
+  putFileStream,
+  removeFile
 } from '../../s3/utils';
 import { importRoadNetwork, importPOI, removeDatabase } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
@@ -69,7 +70,7 @@ export function concludeProjectSetup (e) {
       throw new Error('Invalid administrative boundaries file');
     }
 
-    let filteredAA = {
+    const filteredAA = {
       'type': 'FeatureCollection',
       'features': adminBoundsFc.features
         .filter(o => !!o.properties[getPropInsensitive(o.properties, 'name')] && o.geometry.type !== 'Point')
@@ -80,7 +81,7 @@ export function concludeProjectSetup (e) {
         })
     };
 
-    let adminAreaTask = () => {
+    const adminAreaTask = () => {
       return db.transaction(function (trx) {
         let adminAreas = _(filteredAA.features)
           .sortBy(o => _.kebabCase(o.properties.name))
@@ -122,7 +123,7 @@ export function concludeProjectSetup (e) {
 
     // Clean the tables so any remnants of previous attempts are removed.
     // This avoids primary keys collisions.
-    let cleanAATable = () => {
+    const cleanAATable = () => {
       return Promise.all([
         db('projects_aa')
           .where('project_id', projId)
@@ -134,12 +135,10 @@ export function concludeProjectSetup (e) {
       ]);
     };
 
-    // Prepare the features for the vector tiles.
-    let processForTiles = () => {
-      // Skip on tests.
-      if (process.env.DS_ENV === 'test') { return; }
-
-      let fc = {
+    // Update the admin bounds file with the filtered features.
+    // A clean file is needed for the VT generation.
+    const updateFile = () => {
+      const fc = {
         'type': 'FeatureCollection',
         'features': filteredAA.features.map(o => ({
           type: 'Feature',
@@ -152,13 +151,37 @@ export function concludeProjectSetup (e) {
         }))
       };
 
-      return createAdminBoundsVT(projId, scId, op, fc).promise;
+      const fileName = `admin-bounds_${Date.now()}`;
+      const filePath = `project-${projId}/${fileName}`;
+
+      // Get current file and remove it
+      return db('projects_files')
+        .select('*')
+        .where('project_id', projId)
+        .where('type', 'admin-bounds')
+        .first()
+        .then(file => removeFile(file.path)
+          //  Put the new file.
+          .then(() => putFileStream(filePath, JSON.stringify(fc)))
+          .then(() => file.id)
+        )
+        // Update the db
+        .then(fileId => db('projects_files')
+          .update({
+            name: fileName,
+            path: filePath,
+            updated_at: (new Date())
+          })
+          .where('id', fileId)
+        )
+        .then(() => filePath);
     };
 
     return op.log('process:admin-bounds', {message: 'Processing admin areas'})
       .then(() => cleanAATable())
       .then(() => adminAreaTask())
-      .then(() => processForTiles());
+      .then(() => updateFile())
+      .then(filePath => process.env.DS_ENV === 'test' ? null : createAdminBoundsVT(projId, scId, op, filePath).promise);
   }
 
   function processOrigins (originsData) {

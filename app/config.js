@@ -48,6 +48,14 @@ if (!(process.env.DS_ENV === 'test' && process.env.TRAVIS)) {
   config.analysisProcess.hyperSecret = process.env.HYPER_SECRET || config.analysisProcess.hyperSecret;
   config.analysisProcess.hyperSize = process.env.HYPER_SIZE || config.analysisProcess.hyperSize;
 
+  config.vtProcess.service = process.env.VT_SERVICE || config.vtProcess.service;
+  config.vtProcess.container = process.env.VT_CONTAINER || config.vtProcess.container;
+  config.vtProcess.storageHost = process.env.VT_STORAGE_HOST || config.vtProcess.storageHost;
+  config.vtProcess.storagePort = process.env.VT_STORAGE_PORT || config.vtProcess.storagePort;
+  config.vtProcess.hyperAccess = process.env.HYPER_ACCESS || config.vtProcess.hyperAccess;
+  config.vtProcess.hyperSecret = process.env.HYPER_SECRET || config.vtProcess.hyperSecret;
+  config.vtProcess.hyperSize = process.env.HYPER_SIZE || config.vtProcess.hyperSize;
+
   config.roadNetEditMax = process.env.ROAD_NET_EDIT_MAX || config.roadNetEditMax;
 }
 

@@ -91,6 +91,13 @@ The following options must be set:
   - `analysisProcess.db` - The database connection string. When using Docker for the analysis process, the host will be the name of the database container (`rra-postgis`). When using Hyper, this will be the IP of your hosted database [ANL_DB]
   - `analysisProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`rra-minio`). When using Hyper, this will be the IP of the storage host. [ANL_STORAGE_HOST]
   - `analysisProcess.storagePort` - The port to use. [ANL_STORAGE_PORT]
+  - `vtProcess.service` - The service to run the vector tiles on. Either `docker` (for local development and off-line) or `hyper`. [VT_SERVICE]
+  - `vtProcess.container` - The name of the rra-vt container (Default wbtransport/rra-vt:latest-stable) [VT_CONTAINER]
+  - `vtProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`rra-minio`). When using Hyper, this will be the IP of the storage host. [VT_STORAGE_HOST]
+  - `vtProcess.storagePort` - The port to use. [VT_STORAGE_PORT]
+  - `vtProcess.hyperAccess` - Access key for Hyper. [HYPER_ACCESS]
+  - `vtProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
+  - `vtProcess.hyperSize` - The size of the Hyper container. If not specified, it will use [Hyper's](https://hyper.sh) default container. [HYPER_SIZE]
   - `roadNetEditMax` - The size in bytes until which the road network can be be edited in browser. When the road network exceeds the size, network editing is disabled. [ROAD_NET_EDIT_MAX]
 
 #### Config Example
@@ -120,6 +127,14 @@ module.exports = {
     hyperSecret: null,
     container: 'wbtransport/rra-analysis:latest-stable',
     db: 'postgresql://rra:rra@rra-postgis:5432/rra',
+    storageHost: 'rra-minio',
+    storagePort: 9000
+  },
+  vtProcess: {
+    service: 'docker',
+    hyperAccess: null,
+    hyperSecret: null,
+    container: 'wbtransport/rra-vt:latest-stable',
     storageHost: 'rra-minio',
     storagePort: 9000
   },
