@@ -9,7 +9,7 @@ networks:
 
 services:
   rra-postgis:
-    image: mdillon/postgis
+    image: mdillon/postgis:9.6
     container_name: rra-postgis
     environment:
       POSTGRES_PASSWORD: rra

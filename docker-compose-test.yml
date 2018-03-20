@@ -1,7 +1,7 @@
 version: '2'
 services:
   rra-postgis:
-    image: mdillon/postgis
+    image: mdillon/postgis:9.6
     ports:
       - 5432
     environment:
