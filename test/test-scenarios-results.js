@@ -31,7 +31,7 @@ describe('Scenario results', function () {
   });
 
   describe('GET /projects/{projId}/scenarios/{scId}/results/geo', function () {
-    it('should return the correct results for a scenario', function () {
+    it('should return the correct results for a scenario, type school', function () {
       return instance.injectThen({
         method: 'GET',
         url: '/projects/2000/scenarios/2000/results/geo?poiType=school&popInd=population'
@@ -49,7 +49,7 @@ describe('Scenario results', function () {
         });
       });
     });
-    it('should return the correct results for a scenario', function () {
+    it('should return the correct results for a scenario, type church', function () {
       return instance.injectThen({
         method: 'GET',
         url: '/projects/2000/scenarios/2000/results/geo?poiType=church&popInd=population'

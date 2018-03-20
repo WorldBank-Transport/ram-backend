@@ -28,5 +28,14 @@ module.exports = {
     storageHost: null,
     storagePort: null
   },
+  vtProcess: {
+    service: null,
+    hyperAccess: null,
+    hyperSecret: null,
+    hyperSize: null,
+    container: null,
+    storageHost: null,
+    storagePort: null
+  },
   roadNetEditMax: 20 * Math.pow(1024, 2) // 20MB
 };
