@@ -63,12 +63,6 @@ All the config files can be found in `app/config`.
 After installing the projects there will be 4 main files:
   - `test.js` - Used for testing. There is typically no need to modify this file.
   - `local.js` - Used only for local development. On production this file should not exist or be empty.
-  - `staging.js`
-  - `production.js`
-
-The `production.js` file serves as base and will override the staging and local configuration as needed:
-  - `staging.js` will be loaded whenever the env variable `DS_ENV` is set to staging.
-  - `local.js` will be loaded if it exists.
 
 Some of the following options are overridable by environment variables, expressed between [].
 The following options must be set:
@@ -104,6 +98,7 @@ The following options must be set:
   - `vtProcess.hyperAccess` - Access key for Hyper. [HYPER_ACCESS]
   - `vtProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
   - `vtProcess.hyperSize` - The size of the Hyper container. If not specified, it will use [Hyper's](https://hyper.sh) default container. [HYPER_SIZE]
+  - `roadNetEditMax` - The size in bytes until which the road network can be be edited in browser. When the road network exceeds the size, network editing is disabled. [ROAD_NET_EDIT_MAX]
 
 #### Config Example
 ```
@@ -142,7 +137,8 @@ module.exports = {
     container: 'wbtransport/rra-vt:latest-stable',
     storageHost: 'rra-minio',
     storagePort: 9000
-  }
+  },
+  roadNetEditMax: 20 * Math.pow(1024, 2) // 20MB
 };
 ```
 

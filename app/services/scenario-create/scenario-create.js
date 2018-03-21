@@ -164,7 +164,7 @@ export function scenarioCreate (e) {
           .then(file => Promise.all([file.path, getFileInfo(file.path)]))
           .then(([filePath, fileInfo]) => {
             // Disable road network editing if size over threshold.
-            let allowImport = fileInfo.size < config.roadNetEditThreshold;
+            let allowImport = fileInfo.size < config.roadNetEditMax;
             return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
               .then(() => {
                 if (process.env.DS_ENV !== 'test') {
@@ -221,7 +221,7 @@ export function scenarioCreate (e) {
           .then(file => Promise.all([file.path, getFileInfo(file.path)]))
           .then(([filePath, fileInfo]) => {
             // Disable road network editing if size over threshold.
-            let allowImport = fileInfo.size < config.roadNetEditThreshold;
+            let allowImport = fileInfo.size < config.roadNetEditMax;
             return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
               .then(() => {
                 if (process.env.DS_ENV !== 'test') {

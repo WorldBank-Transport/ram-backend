@@ -1,18 +1,11 @@
 'use strict';
-const _ = require('lodash');
 
 // Prod settings act as base.
-var config = require('./config/production');
-
-// Staging overrides
-if (process.env.DS_ENV === 'staging') {
-  _.merge(config, require('./config/staging'));
-}
+var config = {};
 
 // local config overrides everything when present.
 try {
-  var localConfig = require('./config/local');
-  _.merge(config, localConfig);
+  config = require('./config/local');
 } catch (e) {
   // Local file is not mandatory.
 }
@@ -62,6 +55,8 @@ if (!(process.env.DS_ENV === 'test' && process.env.TRAVIS)) {
   config.vtProcess.hyperAccess = process.env.HYPER_ACCESS || config.vtProcess.hyperAccess;
   config.vtProcess.hyperSecret = process.env.HYPER_SECRET || config.vtProcess.hyperSecret;
   config.vtProcess.hyperSize = process.env.HYPER_SIZE || config.vtProcess.hyperSize;
+
+  config.roadNetEditMax = process.env.ROAD_NET_EDIT_MAX || config.roadNetEditMax;
 }
 
 config.baseDir = __dirname;
