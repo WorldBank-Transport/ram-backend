@@ -44,18 +44,18 @@ export function getSourceData (db, contentType, id) {
       structure = {
         profile: {
           type: null,
-          files: []
-          // osmOptions
+          files: [],
+          wbCatalogOptions: []
         },
         'admin-bounds': {
           type: null,
-          files: []
-          // osmOptions
+          files: [],
+          wbCatalogOptions: []
         },
         origins: {
           type: null,
-          files: []
-          // osmOptions
+          files: [],
+          wbCatalogOptions: []
         }
       };
       break;
@@ -90,14 +90,15 @@ export function getSourceData (db, contentType, id) {
       let filesFetchTypes = [];
 
       sources.forEach(s => {
-        if (s.type === 'osm' || s.type === 'default') {
+        structure[s.name].type = s.type;
+        if (s.type === 'osm') {
           // Never going to happen for projects, just scenarios.
-          structure[s.name].type = s.type;
           structure[s.name].osmOptions = s.data;
         } else if (s.type === 'file') {
-          structure[s.name].type = 'file';
           filesFetchTypes.push(s.name);
-        } else {
+        } else if (s.type === 'wbcatalog') {
+          structure[s.name].wbCatalogOptions = s.data;
+        } else if (s.type !== 'default') {
           throw new Error('Unknown source type: ' + s.type);
         }
       });

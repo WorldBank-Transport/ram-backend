@@ -67,59 +67,57 @@ export default [
           let sourceType = result.fields['source-type'][0];
           let sourceName = result.fields['source-name'][0];
 
-          if (sourceName === 'profile' && ['file', 'default'].indexOf(sourceType) === -1) {
-            throw new DataValidationError(`"source-type" for "profile" must be one of [file, default]`);
-          } else if (sourceName !== 'profile' && sourceType !== 'file') {
-            throw new DataValidationError(`"source-type" must be one of [file]`);
-          }
-
-          if (['admin-bounds', 'profile', 'origins'].indexOf(sourceName) === -1) {
-            throw new DataValidationError(`"source-name" must be one of [admin-bounds, profile, origins]`);
-          }
-
-          // Store the file if there is one.
+          // Store the file if there is one. It may be needed later for cleanup.
           // File must exist when the source is not origins, but that's
-          // checked afterwards.
+          // checked afterwards. Origin file may not be needed if we're just
+          // updating selected indicators.
           let uploadedFilePath = result.files.file ? result.files.file[0].path : null;
-          let resolver;
-          // Origins need to be handled differently.
-          if (sourceName === 'origins') {
-            resolver = handleOrigins(result, projId);
-          } else {
-            switch (sourceType) {
-              case 'file':
-                if (!uploadedFilePath) {
-                  throw new DataValidationError('"file" is required');
-                }
-                resolver = handleProfileAndAdmin(sourceName, uploadedFilePath, projId);
-                break;
-              case 'default':
-                if (sourceName !== 'profile') {
-                  throw new DataValidationError(`"source-type" default only supported for [profile]`);
-                }
 
-                resolver = upsertSource(sourceName, 'default', projId)
-                  // Check if the file exists.
-                  .then(() => db('projects_files')
-                    .select('id', 'path')
-                    .where('project_id', projId)
-                    .where('type', sourceName)
-                  )
-                  .then(files => {
-                    if (files.length) {
-                      // Remove files from DB.
-                      return db('projects_files')
-                        .whereIn('id', files.map(o => o.id))
-                        .del()
-                        // Remove files from storage.
-                        .then(() => Promise.map(files, file => removeFile(file.path)));
-                    }
-                  });
-                break;
+          const wbcatalogResolver = () => {
+            const keys = result.fields['wbcatalog-options[key]'].filter(o => !!o);
+            if (!keys) {
+              throw new DataValidationError('"wbcatalog-options[key]" is required');
             }
+            if (keys.length !== 1) {
+              throw new DataValidationError('"Invalid wbcatalog-options"');
+            }
+            // The catalog data is stored as an array of objects to be
+            // consistent throughout all sources, since the POI source
+            // can have multiple options with labels.
+            let sourceData = [{ key: keys[0] }];
+
+            return simpleSourceUpdate(sourceName, sourceType, projId, sourceData);
+          };
+
+          // Functions for the different source names / types combinations.
+          const resolverMatrix = {
+            profile: {
+              file: () => handleProfileAndAdmin(sourceName, uploadedFilePath, projId),
+              default: () => simpleSourceUpdate(sourceName, sourceType, projId),
+              wbcatalog: () => wbcatalogResolver()
+            },
+            origins: {
+              file: () => handleOrigins(result, projId),
+              wbcatalog: () => wbcatalogResolver()
+            },
+            'admin-bounds': {
+              file: () => handleProfileAndAdmin(sourceName, uploadedFilePath, projId),
+              wbcatalog: () => wbcatalogResolver()
+            }
+          };
+
+          const allowedSourceNames = Object.keys(resolverMatrix);
+          if (allowedSourceNames.indexOf(sourceName) === -1) {
+            throw new DataValidationError(`"source-name" must be one of [${allowedSourceNames.join(', ')}]`);
           }
 
-          return resolver
+          const allowedSourceTypes = Object.keys(resolverMatrix[sourceName]);
+          if (allowedSourceTypes.indexOf(sourceType) === -1) {
+            throw new DataValidationError(`"source-type" for "${sourceName}" must be one of [${allowedSourceTypes.join(', ')}]`);
+          }
+
+          // Get the right resolver and start the process.
+          return resolverMatrix[sourceName][sourceType]()
             .then(insertResponse => db('projects').update({updated_at: (new Date())}).where('id', projId).then(() => insertResponse))
             .then(insertResponse => reply(Object.assign({}, insertResponse, {
               sourceType,
@@ -203,6 +201,10 @@ export default [
 ];
 
 function handleProfileAndAdmin (sourceName, uploadedFilePath, projId) {
+  if (!uploadedFilePath) {
+    return Promise.reject(new DataValidationError('"file" is required'));
+  }
+
   let fileName = `${sourceName}_${Date.now()}`;
   let filePath = `project-${projId}/${fileName}`;
 
@@ -400,7 +402,7 @@ function handleOrigins (result, projId) {
     });
 }
 
-function upsertSource (sourceName, type, projId) {
+function upsertSource (sourceName, type, projId, sourceData) {
   return db('projects_source_data')
     .select('id')
     .where('project_id', projId)
@@ -409,15 +411,46 @@ function upsertSource (sourceName, type, projId) {
     .then(source => {
       if (source) {
         return db('projects_source_data')
-          .update({type: type})
+          .update({type: type, data: sourceData ? JSON.stringify(sourceData) : null})
           .where('id', source.id);
       } else {
         return db('projects_source_data')
           .insert({
             project_id: projId,
             name: sourceName,
-            type: type
+            type: type,
+            data: sourceData ? JSON.stringify(sourceData) : null
           });
       }
     });
+}
+
+/**
+ * Updates the source by setting the type and some data.
+ * Deletes any file that was updated.
+ * This method is only useful for source types other than file.
+ *
+ * @param {string} sourceName Name of the source
+ * @param {string} sourceType Type of the source
+ * @param {int} projId Project id
+ * @param {object} sourceData Additional data to store
+ */
+function simpleSourceUpdate (sourceName, sourceType, projId, sourceData) {
+  return upsertSource(sourceName, sourceType, projId, sourceData)
+  // Check if the file exists.
+  .then(() => db('projects_files')
+    .select('id', 'path')
+    .where('project_id', projId)
+    .where('type', sourceName)
+  )
+  .then(files => {
+    if (files.length) {
+      // Remove files from DB.
+      return db('projects_files')
+        .whereIn('id', files.map(o => o.id))
+        .del()
+        // Remove files from storage.
+        .then(() => Promise.map(files, file => removeFile(file.path)));
+    }
+  });
 }
