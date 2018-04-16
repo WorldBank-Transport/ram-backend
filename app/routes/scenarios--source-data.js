@@ -3,6 +3,7 @@ import Joi from 'joi';
 import Boom from 'boom';
 import Promise from 'bluebird';
 import Zip from 'node-zip';
+import _ from 'lodash';
 
 import db from '../db/';
 import {
@@ -73,8 +74,28 @@ export default [
           let sourceType = result.fields['source-type'][0];
           let sourceName = result.fields['source-name'][0];
 
-          if (['poi', 'road-network'].indexOf(sourceName) === -1) {
-            throw new DataValidationError(`"source-name" must be one of [poi, road-network]`);
+          // Functions for the different source names / types combinations.
+          const resolverMatrix = {
+            poi: {
+              file: () => handleFileSource(),
+              osm: () => handleOSMSource(),
+              wbcatalog: () => wbcatalogResolver()
+            },
+            'road-network': {
+              file: () => handleFileSource(),
+              osm: () => handleOSMSource(),
+              wbcatalog: () => wbcatalogResolver()
+            }
+          };
+
+          const allowedSourceNames = Object.keys(resolverMatrix);
+          if (allowedSourceNames.indexOf(sourceName) === -1) {
+            throw new DataValidationError(`"source-name" must be one of [${allowedSourceNames.join(', ')}]`);
+          }
+
+          const allowedSourceTypes = Object.keys(resolverMatrix[sourceName]);
+          if (allowedSourceTypes.indexOf(sourceType) === -1) {
+            throw new DataValidationError(`"source-type" for "${sourceName}" must be one of [${allowedSourceTypes.join(', ')}]`);
           }
 
           const handleFileSource = () => {
@@ -99,13 +120,13 @@ export default [
 
             let filePath = `scenario-${scId}/${fileName}`;
 
-            // When switching from an OSM source to File, check if there are any
+            // When switching from a source to File, check if there are any
             // files in the db and remove them. This can happen if files were
-            // imported from OSM but the process failed.
+            // imported from OSM/catalog but the process failed.
             return getScenarioSource(scId, sourceName)
               .then(source => {
                 // Delete files.
-                return source && source.type === 'osm'
+                return source && source.type !== 'road-network'
                   ? deleteScenarioFiles(projId, scId, sourceName)
                   : null;
               })
@@ -212,14 +233,46 @@ export default [
               }));
           };
 
-          switch (sourceType) {
-            case 'file':
-              return handleFileSource();
-            case 'osm':
-              return handleOSMSource();
-            default:
-              throw new DataValidationError(`"source-type" must be one of [osm, file]`);
-          }
+          const wbcatalogResolver = () => {
+            const keys = result.fields['wbcatalog-options[key]'].filter(o => !!o);
+            if (!keys) {
+              throw new DataValidationError('"wbcatalog-options[key]" is required');
+            }
+            if (!keys.length) {
+              throw new DataValidationError('"Invalid wbcatalog-options"');
+            }
+
+            let sourceData;
+            if (sourceName === 'poi') {
+              const labels = result.fields['wbcatalog-options[label]'].filter(o => !!o);
+              if (!labels) {
+                throw new DataValidationError('"wbcatalog-options[label]" is required');
+              }
+              if (!labels.length || labels.length !== keys.length) {
+                throw new DataValidationError('"Invalid wbcatalog-options"');
+              }
+              sourceData = _.zipWith(keys, labels, (k, l) => ({key: k, label: l}));
+            } else if (sourceName === 'road-network') {
+              // The catalog data is stored as an array of objects to be
+              // consistent throughout all sources, since the POI source
+              // can have multiple options with labels.
+              sourceData = [{ key: result.fields['wbcatalog-options[key]'][0] }];
+            } else {
+              throw new DataValidationError(`Invalid source: ${sourceName}`);
+            }
+
+            // Upsert source.
+            return upsertScenarioSource(projId, scId, sourceName, 'wbcatalog', sourceData)
+              // Delete files if exist.
+              .then(() => deleteScenarioFiles(projId, scId, sourceName))
+              .then(() => reply({
+                sourceType,
+                sourceName
+              }));
+          };
+
+          // Get the right resolver and start the process.
+          return resolverMatrix[sourceName][sourceType]();
         })
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))

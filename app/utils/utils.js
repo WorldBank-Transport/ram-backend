@@ -72,12 +72,14 @@ export function getSourceData (db, contentType, id) {
         'road-network': {
           type: null,
           files: [],
-          osmOptions: {}
+          osmOptions: {},
+          wbCatalogOptions: []
         },
         poi: {
           type: null,
           files: [],
-          osmOptions: {}
+          osmOptions: {},
+          wbCatalogOptions: []
         }
       };
       break;
