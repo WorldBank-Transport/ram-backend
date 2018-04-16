@@ -234,22 +234,30 @@ export default [
           };
 
           const wbcatalogResolver = () => {
-            const keys = result.fields['wbcatalog-options[key]'].filter(o => !!o);
-            if (!keys) {
+            try {
+              var keys = result.fields['wbcatalog-options[key]'].filter(o => !!o);
+            } catch (e) {
               throw new DataValidationError('"wbcatalog-options[key]" is required');
             }
+
             if (!keys.length) {
-              throw new DataValidationError('"Invalid wbcatalog-options"');
+              throw new DataValidationError('"wbcatalog-options[key]" must not be empty');
             }
 
             let sourceData;
             if (sourceName === 'poi') {
-              const labels = result.fields['wbcatalog-options[label]'].filter(o => !!o);
-              if (!labels) {
+              try {
+                var labels = result.fields['wbcatalog-options[label]'].filter(o => !!o);
+              } catch (e) {
                 throw new DataValidationError('"wbcatalog-options[label]" is required');
               }
-              if (!labels.length || labels.length !== keys.length) {
-                throw new DataValidationError('"Invalid wbcatalog-options"');
+
+              if (!labels.length) {
+                throw new DataValidationError('"wbcatalog-options[label]" must not be empty');
+              }
+
+              if (labels.length !== keys.length) {
+                throw new DataValidationError('"wbcatalog-options[key]" and "wbcatalog-options[label]" must have the same number of values');
               }
               sourceData = _.zipWith(keys, labels, (k, l) => ({key: k, label: l}));
             } else if (sourceName === 'road-network') {

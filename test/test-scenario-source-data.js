@@ -5,7 +5,7 @@ import FormData from 'form-data';
 import streamToPromise from 'stream-to-promise';
 
 import initServer from '../app/services/server';
-// import db from '../app/db';
+import db from '../app/db';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp } from './utils/data';
@@ -162,7 +162,7 @@ describe('Scenario source data', function () {
         }))
         .then(res => {
           assert.equal(res.statusCode, 400, 'Status code is 400');
-          assert.equal(res.result.message, '"source-type" must be one of [osm, file]');
+          assert.equal(res.result.message, '"source-type" for "poi" must be one of [file, osm, wbcatalog]');
         });
     });
   });
@@ -183,6 +183,259 @@ describe('Scenario source data', function () {
         .then(res => {
           assert.equal(res.statusCode, 400, 'Status code is 400');
           assert.equal(res.result.message, '"file" is required');
+        });
+    });
+  });
+
+  describe('POST /projects/{projId}/scenarios/{scId}/source-data -- poi-osm', function () {
+    it('should error when osmPoiTypes is missing', function () {
+      let form = new FormData();
+      form.append('source-type', 'osm');
+      form.append('source-name', 'poi');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          assert.equal(res.result.message, '"osmPoiTypes" is required for source "poi"');
+        });
+    });
+
+    it('should error when osmPoiTypes is invalid', function () {
+      let form = new FormData();
+      form.append('source-type', 'osm');
+      form.append('source-name', 'poi');
+      form.append('osmPoiTypes', 'invalid');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          assert.equal(res.result.message, 'POI type [invalid] not allowed. "osmPoiTypes" values must be any of [health, education, financial]');
+        });
+    });
+
+    it('should error when one of osmPoiTypes is invalid', function () {
+      let form = new FormData();
+      form.append('source-type', 'osm');
+      form.append('source-name', 'poi');
+      form.append('osmPoiTypes', 'education');
+      form.append('osmPoiTypes', 'invalid-2');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          assert.equal(res.result.message, 'POI type [invalid-2] not allowed. "osmPoiTypes" values must be any of [health, education, financial]');
+        });
+    });
+
+    it('should store the osmPoiTypes in the database', function () {
+      let form = new FormData();
+      form.append('source-type', 'osm');
+      form.append('source-name', 'poi');
+      form.append('osmPoiTypes', 'education');
+      form.append('osmPoiTypes', 'financial');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
+          assert.equal(res.result.sourceType, 'osm');
+          assert.equal(res.result.sourceName, 'poi');
+        })
+        .then(() => db('scenarios_source_data')
+          .select('data')
+          .where('scenario_id', 1000)
+          .where('name', 'poi')
+          .first()
+        )
+        .then(({data}) => {
+          assert.equal(data.osmPoiTypes[0], 'education');
+          assert.equal(data.osmPoiTypes[1], 'financial');
+        });
+    });
+  });
+
+  describe('POST /projects/{projId}/scenarios/{scId}/source-data -- wbcatalog', function () {
+    it('should error when wbcatalog-options[key] is missing', function () {
+      let form = new FormData();
+      form.append('source-type', 'wbcatalog');
+      form.append('source-name', 'poi');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          assert.equal(res.result.message, '"wbcatalog-options[key]" is required');
+        });
+    });
+
+    it('should error when wbcatalog-options[key] is empty', function () {
+      let form = new FormData();
+      form.append('source-type', 'wbcatalog');
+      form.append('source-name', 'poi');
+      form.append('wbcatalog-options[key]', '');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          assert.equal(res.result.message, '"wbcatalog-options[key]" must not be empty');
+        });
+    });
+
+    it('should error when wbcatalog-options[label] is missing - poi specific', function () {
+      let form = new FormData();
+      form.append('source-type', 'wbcatalog');
+      form.append('source-name', 'poi');
+      form.append('wbcatalog-options[key]', 'value');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          assert.equal(res.result.message, '"wbcatalog-options[label]" is required');
+        });
+    });
+
+    it('should error when wbcatalog-options[label] is empty - poi specific', function () {
+      let form = new FormData();
+      form.append('source-type', 'wbcatalog');
+      form.append('source-name', 'poi');
+      form.append('wbcatalog-options[key]', 'value');
+      form.append('wbcatalog-options[label]', '');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          assert.equal(res.result.message, '"wbcatalog-options[label]" must not be empty');
+        });
+    });
+
+    it('should error when wbcatalog-options[key] and wbcatalog-options[label] have different lengths - poi specific', function () {
+      let form = new FormData();
+      form.append('source-type', 'wbcatalog');
+      form.append('source-name', 'poi');
+      form.append('wbcatalog-options[key]', 'value');
+      form.append('wbcatalog-options[label]', 'label 1');
+      form.append('wbcatalog-options[label]', 'label 2');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          assert.equal(res.result.message, '"wbcatalog-options[key]" and "wbcatalog-options[label]" must have the same number of values');
+        });
+    });
+
+    it('should disregard wbcatalog-options[label] when source-name is road-network', function () {
+      let form = new FormData();
+      form.append('source-type', 'wbcatalog');
+      form.append('source-name', 'road-network');
+      form.append('wbcatalog-options[key]', 'value');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
+          assert.equal(res.result.sourceType, 'wbcatalog');
+          assert.equal(res.result.sourceName, 'road-network');
+        })
+        .then(() => db('scenarios_source_data')
+          .select('data')
+          .where('scenario_id', 1000)
+          .where('name', 'road-network')
+          .first()
+        )
+        .then(({data}) => {
+          assert.equal(data[0].key, 'value');
+        });
+    });
+
+    it('should save keys and lables to the database for source-name poi', function () {
+      let form = new FormData();
+      form.append('source-type', 'wbcatalog');
+      form.append('source-name', 'poi');
+      form.append('wbcatalog-options[key]', 'key 1');
+      form.append('wbcatalog-options[key]', 'key 2');
+      form.append('wbcatalog-options[label]', 'label 1');
+      form.append('wbcatalog-options[label]', 'label 2');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
+          assert.equal(res.result.sourceType, 'wbcatalog');
+          assert.equal(res.result.sourceName, 'poi');
+        })
+        .then(() => db('scenarios_source_data')
+          .select('data')
+          .where('scenario_id', 1000)
+          .where('name', 'poi')
+          .first()
+        )
+        .then(({data}) => {
+          assert.deepEqual(data, [
+            {key: 'key 1', label: 'label 1'},
+            {key: 'key 2', label: 'label 2'}
+          ]);
         });
     });
   });
