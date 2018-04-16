@@ -106,3 +106,4 @@ ecs-task-definition-generated.yml
 
 # OSM P2P db
 osm-p2p-dbs
+osm-p2p-dbs-test

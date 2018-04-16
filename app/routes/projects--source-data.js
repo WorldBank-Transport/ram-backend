@@ -74,13 +74,16 @@ export default [
           let uploadedFilePath = result.files.file ? result.files.file[0].path : null;
 
           const wbcatalogResolver = () => {
-            const keys = result.fields['wbcatalog-options[key]'].filter(o => !!o);
-            if (!keys) {
+            try {
+              var keys = result.fields['wbcatalog-options[key]'].filter(o => !!o);
+            } catch (e) {
               throw new DataValidationError('"wbcatalog-options[key]" is required');
             }
-            if (keys.length !== 1) {
-              throw new DataValidationError('"Invalid wbcatalog-options"');
+
+            if (!keys.length) {
+              throw new DataValidationError('"wbcatalog-options[key]" must not be empty');
             }
+
             // The catalog data is stored as an array of objects to be
             // consistent throughout all sources, since the POI source
             // can have multiple options with labels.
@@ -131,6 +134,8 @@ export default [
         })
         .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(FileExistsError, e => reply(Boom.conflict(e.message)))
+        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
+        .catch(ProjectStatusError, e => reply(Boom.badRequest(e.message)))
         .catch(DataValidationError, e => reply(Boom.badRequest(e.message)))
         .catch(err => {
           console.log('err', err);
@@ -275,20 +280,26 @@ function handleProfileAndAdmin (sourceName, uploadedFilePath, projId) {
 function handleOrigins (result, projId) {
   let sourceName = result.fields['source-name'][0];
 
-  if (!result.fields['available-ind']) {
-    throw new DataValidationError('"available-ind" is required');
-  }
-  if (!result.fields['indicators[key]']) {
-    throw new DataValidationError('"indicators[key]" is required');
-  }
-  if (!result.fields['indicators[label]']) {
-    throw new DataValidationError('"indicators[label]" is required');
-  }
+  const check = (key) => {
+    try {
+      var val = result.fields[key].filter(o => !!o);
+    } catch (e) {
+      throw new DataValidationError(`"${key}" is required`);
+    }
 
-  // Data from the stream.
-  let availableInd = result.fields['available-ind'];
-  let indicatorKeys = result.fields['indicators[key]'];
-  let indicatorLabels = result.fields['indicators[label]'];
+    if (!val.length) {
+      throw new DataValidationError(`"${key}" must not be empty`);
+    }
+    return val;
+  };
+
+  var availableInd = check('available-ind');
+  var indicatorKeys = check('indicators[key]');
+  var indicatorLabels = check('indicators[label]');
+
+  if (indicatorKeys.length !== indicatorLabels.length) {
+    throw new DataValidationError('"indicators[key]" and "indicators[label]" must have the same number of values');
+  }
 
   // Are the submitted indicatorKeys in the available indicators.
   let validKeys = indicatorKeys.every(k => availableInd.indexOf(k) !== -1);
