@@ -124,7 +124,7 @@ describe('Scenarios', function () {
         .then(res => {
           assert.equal(res.statusCode, 400, 'Status code is 400');
           var result = res.result;
-          assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" must be one of \[clone, new, osm\]\]/);
+          assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" must be one of \[clone, new, osm, wbcatalog\]\]/);
         });
     });
 
