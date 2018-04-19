@@ -17,6 +17,7 @@ function handler (params, payload, reply) {
   const description = payload.description;
   const rnSource = payload.roadNetworkSource;
   const rnSourceScenarioId = payload.roadNetworkSourceScenario;
+  const rnSourceWbCatalogOption = payload.roadNetworkSourceWbCatalogOption;
   const roadNetworkFile = payload.roadNetworkFile;
   const poiSource = payload.poiSource;
   const poiSourceScenarioId = payload.poiSourceScenario;
@@ -114,7 +115,12 @@ function handler (params, payload, reply) {
       // Add the rn source id to the data object.
       } else if (rnSource === 'clone') {
         action = action.then(data => Object.assign({}, data, {rnSourceScenarioId}));
+
+      // Add the catalog option to the data object.
+      } else if (rnSource === 'wbcatalog') {
+        action = action.then(data => Object.assign({}, data, {rnSourceWbCatalogOption}));
       }
+      // For osm there's nothing to do and it will go straight to scenario creation.
 
       // Add the poi source id to the data object.
       if (poiSource === 'clone') {
@@ -176,6 +182,9 @@ export default [
           if (result.fields.roadNetworkSourceScenario) {
             payload.roadNetworkSourceScenario = result.fields.roadNetworkSourceScenario[0];
           }
+          if (result.fields.roadNetworkSourceWbCatalogOption) {
+            payload.roadNetworkSourceWbCatalogOption = result.fields.roadNetworkSourceWbCatalogOption[0];
+          }
           if (result.files.roadNetworkFile) {
             payload.roadNetworkFile = result.files.roadNetworkFile[0];
           }
@@ -189,8 +198,9 @@ export default [
           let validation = Joi.validate(payload, Joi.object().keys({
             name: Joi.string().required(),
             description: Joi.string(),
-            roadNetworkSource: Joi.string().valid('clone', 'new', 'osm').required(),
+            roadNetworkSource: Joi.string().valid('clone', 'new', 'osm', 'wbcatalog').required(),
             roadNetworkSourceScenario: Joi.number().when('roadNetworkSource', {is: 'clone', then: Joi.required()}),
+            roadNetworkSourceWbCatalogOption: Joi.string().when('roadNetworkSource', {is: 'wbcatalog', then: Joi.required()}),
             roadNetworkFile: Joi.object().when('roadNetworkSource', {is: 'new', then: Joi.required()}),
             poiSource: Joi.string().valid('clone').required(),
             poiSourceScenario: Joi.number().when('poiSource', {is: 'clone', then: Joi.required()})

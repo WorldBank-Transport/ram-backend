@@ -24,7 +24,7 @@ before(function (done) {
   });
 });
 
-describe.only('Wb Catalog Source Data', function () {
+describe('Wb Catalog Source Data', function () {
   before('Before - Wb Catalog Source Data', function () {
     this.timeout(5000);
     return setupDdStructure()
