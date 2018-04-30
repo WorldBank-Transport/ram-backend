@@ -1,7 +1,12 @@
 'use strict';
 
 // Prod settings act as base.
-var config = {};
+var config = {
+  connection: {},
+  storage: {},
+  analysisProcess: {},
+  vtProcess: {}
+};
 
 // local config overrides everything when present.
 try {
