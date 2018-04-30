@@ -1,12 +1,7 @@
 'use strict';
 
-// Prod settings act as base.
-var config = {
-  connection: {},
-  storage: {},
-  analysisProcess: {},
-  vtProcess: {}
-};
+// Empty template as base.
+var config = require('./config/base');
 
 // local config overrides everything when present.
 try {
