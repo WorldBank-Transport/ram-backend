@@ -1,5 +1,4 @@
 'use strict';
-
 // Empty template as base.
 var config = require('./config/base');
 

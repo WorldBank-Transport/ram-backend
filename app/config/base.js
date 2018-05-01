@@ -8,8 +8,8 @@ module.exports = {
   osmP2PDir: null,
   storage: {
     host: null,
-    port: 9000,
-    engine: null,
+    port: null,
+    engine: 's3',
     accessKey: null,
     secretKey: null,
     bucket: null,
@@ -23,7 +23,7 @@ module.exports = {
     container: 'wbtransport/rra-analysis:latest-stable',
     db: null,
     storageHost: null,
-    storagePort: 9000
+    storagePort: null
   },
   vtProcess: {
     service: null,
