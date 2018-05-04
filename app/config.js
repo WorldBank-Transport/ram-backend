@@ -1,10 +1,12 @@
 'use strict';
+const _ = require('lodash');
+
 // Empty template as base.
 var config = require('./config/base');
 
-// local config overrides everything when present.
+// local config overrides when present.
 try {
-  config = require('./config/local');
+  _.merge(config, require('./config/local'));
 } catch (e) {
   // Local file is not mandatory.
 }
