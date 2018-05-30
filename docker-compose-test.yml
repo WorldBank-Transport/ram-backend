@@ -5,9 +5,9 @@ services:
     ports:
       - 5432
     environment:
-      POSTGRES_PASSWORD: ram
-      POSTGRES_USER: ram
-      POSTGRES_DB: ram
+      POSTGRES_PASSWORD: ramtest
+      POSTGRES_USER: ramtest
+      POSTGRES_DB: ramtest
     volumes:
       - ./setup/create-test-db.sh:/docker-entrypoint-initdb.d/create-test-db.sh
       - ./setup/setup-extensions.sh:/docker-entrypoint-initdb.d/setup-extensions.sh
@@ -29,6 +29,12 @@ services:
     environment:
       DS_ENV: test
       DB_CONNECTION: postgresql://ramtest:ramtest@ram-postgis:5432/ramtest
+      STORAGE_PORT: 9000
+      STORAGE_ENGINE: minio
+      STORAGE_ACCESS_KEY: minio
+      STORAGE_SECRET_KEY: miniostorageengine
+      STORAGE_BUCKET: ram-test
+      STORAGE_REGION: us-east-1
       STORAGE_HOST: ram-minio
     links:
       - ram-postgis

@@ -2,7 +2,7 @@
 set -e
 
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
-  CREATE DATABASE rratest;
-  CREATE ROLE rratest WITH LOGIN PASSWORD 'rratest';
-  GRANT ALL PRIVILEGES ON DATABASE "rratest" TO rratest;
+  CREATE DATABASE ramtest;
+  CREATE ROLE ramtest WITH LOGIN PASSWORD 'ramtest';
+  GRANT ALL PRIVILEGES ON DATABASE "ramtest" TO ramtest;
 EOSQL
