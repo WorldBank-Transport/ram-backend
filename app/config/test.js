@@ -7,7 +7,7 @@ module.exports = {
   auth: {
     strategy: 'none'
   },
-  db: 'postgresql://rratest:rratest@localhost:5432/rratest',
+  db: 'postgresql://ramtest:ramtest@localhost:5432/ramtest',
   osmP2PDir: `${__dirname}/../../osm-p2p-dbs-test`,
   storage: {
     host: '0.0.0.0',
@@ -15,7 +15,7 @@ module.exports = {
     engine: 'minio',
     accessKey: 'minio',
     secretKey: 'miniostorageengine',
-    bucket: 'rra-test',
+    bucket: 'ram-test',
     region: 'us-east-1'
   },
   analysisProcess: {

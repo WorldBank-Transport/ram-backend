@@ -8,7 +8,7 @@ module.exports = {
   auth: {
     strategy: 'none'
   },
-  db: 'postgresql://rra:rra@172.99.99.10:5432/rra',
+  db: 'postgresql://ram:ram@172.99.99.10:5432/ram',
   osmP2PDir: `${__dirname}/../../osm-p2p-dbs`,
   storage: {
     host: '172.99.99.15',
@@ -16,13 +16,13 @@ module.exports = {
     engine: 'minio',
     accessKey: 'minio',
     secretKey: 'miniostorageengine',
-    bucket: 'rra',
+    bucket: 'ram',
     region: 'us-east-1'
   },
   analysisProcess: {
     service: 'docker',
     container: 'wbtransport/rra-analysis:latest-stable',
-    db: 'postgresql://rra:rra@172.99.99.10:5432/rra',
+    db: 'postgresql://ram:ram@172.99.99.10:5432/ram',
     storageHost: '172.99.99.15',
     storagePort: 9000
   },

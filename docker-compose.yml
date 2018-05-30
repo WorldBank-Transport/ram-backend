@@ -1,66 +1,66 @@
-# docker network rm rra
-# docker network create --driver=bridge --subnet=172.99.99.0/24 --gateway=172.99.99.1 rra
+# docker network rm ram
+# docker network create --driver=bridge --subnet=172.99.99.0/24 --gateway=172.99.99.1 ram
 version: '2'
 
 networks:
-  rra:
+  ram:
     external:
-      name: rra
+      name: ram
 
 services:
-  rra-postgis:
+  ram-postgis:
     image: mdillon/postgis:9.6
-    container_name: rra-postgis
+    container_name: ram-postgis
     environment:
-      POSTGRES_PASSWORD: rra
-      POSTGRES_USER: rra
-      POSTGRES_DB: rra
+      POSTGRES_PASSWORD: ram
+      POSTGRES_USER: ram
+      POSTGRES_DB: ram
     volumes:
       - ./setup/setup-extensions.sh:/docker-entrypoint-initdb.d/setup-extensions.sh
     ports:
       - 5432:5432
     networks:
-      rra:
+      ram:
         ipv4_address: 172.99.99.10
 
-  rra-minio:
+  ram-minio:
     image: minio/minio
-    container_name: rra-minio
+    container_name: ram-minio
     ports:
       - 9000:9000
     networks:
-      rra:
+      ram:
         ipv4_address: 172.99.99.15
     environment:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: miniostorageengine
     command: server /export
 
-  rra-api:
+  ram-api:
     build: ./
-    container_name: rra-api
+    container_name: ram-api
     ports:
       - 4000:4000
     networks:
-      - rra
+      - ram
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     command: yarn start
     environment:
       DS_ENV: offline
 
-  rra-frontend:
-    image: wbtransport/rra-frontend:latest-stable
-    container_name: rra-frontend
+  ram-frontend:
+    image: wbtransport/ram-frontend:latest-stable
+    container_name: ram-frontend
     ports:
       - 8080:80
     networks:
-      - rra
+      - ram
 
-  rra-id:
+  ram-id:
     image: wbtransport/ram-id:latest-stable
     container_name: ram-id
     ports:
       - 8000:80
     networks:
-      - rra
+      - ram
