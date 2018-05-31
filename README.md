@@ -218,37 +218,3 @@ This command starts the server with `nodemon` which watches files and restarts w
 yarn start
 ```
 Starts the app without file watching
-
-## Deployment to ECS
-Travis is set up to deploy the backend to an AWS ECS Cluster whenever a PR is merged into the `develop` or `master` branch of the project. This triggers a deploy of the API, the database, and the Minio bucket.
-
-### Setting up deployment
-Follow these steps to set up a deployment to an ECS Cluster:
-
-1. [Create an ECS Cluster](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/create_cluster.html) on AWS
-  - the current setup requires one EC2 instance and has been tested on a `t2.medium`
-  - associate a Key Pair to the instance
-  - expose the port for the API (default is `4000`). If you're using Minio as the storage engine, also open that port (eg. `9000`).
-2. Modify the Travis config with your AWS credentials
-  - `AWS_ECS_CLUSTER` = the cluster you created in step 1
-  - `AWS_REGION`
-  - `AWS_ACCESS_KEY_ID`
-  - `AWS_SECRET_ACCESS_KEY` - use `travis encrypt AWS_SECRET_ACCESS_KEY=[secretKey]` to [generate an encrypted key](https://docs.travis-ci.com/user/encryption-keys/)
-3. SSH into the machine with your Key Pair to set up the basic database structure
-  - run `docker ps` and to find the Container ID of `ram-api`
-  - run `docker exec [container_id] npm run setup -- --db --bucket`
-4. [to come] deployment of the Analysis process
-
-This should set up the basic cluster that Travis can push the backend to.
-
-#### Disabling a deployment
-To disable a particular deployment, you can remove it from the deploy block from `.travis.yml`.
-
-```
-deploy:
-  - provider: script
-    skip_cleanup: true
-    script: .build_scripts/deploy.sh
-    on:
-      branch: ${STABLE_BRANCH}
-```
