@@ -24,7 +24,6 @@ services:
     ports:
       - 4000
     environment:
-      DS_ENV: test
       DB_CONNECTION: postgresql://ramtest:ramtest@ram-postgis:5432/ramtest
       STORAGE_PORT: 9000
       STORAGE_ENGINE: minio

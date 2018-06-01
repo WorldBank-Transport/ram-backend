@@ -31,7 +31,7 @@ jobs:
 
       - run:
           name: Run tests
-          command: docker-compose -f docker-compose-test.yml run ram-api yarn test
+          command: docker-compose -f docker-compose-test.yml run ram-api yarn test-no-env
 
       - save_cache:
           paths:

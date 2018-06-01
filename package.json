@@ -19,7 +19,8 @@
   "scripts": {
     "setup": "DEBUG=true node setup/",
     "lint": "eslint app/ test/ --ext .js",
-    "test": "DS_ENV=test DEBUG=false mocha test/test-* --require babel-register",
+    "test-no-env": "DS_ENV=test DEBUG=false mocha test/test-* --require babel-register",
+    "test": ". test/test.env && yarn test-no-env",
     "start": "node index.js",
     "nodemon": "nodemon --watch app index.js",
     "postinstall": "[ -f app/config/local.js ] || echo 'module.exports = {};' > app/config/local.js"
