@@ -33,6 +33,7 @@ services:
       STORAGE_BUCKET: ram-test
       STORAGE_REGION: us-east-1
       STORAGE_HOST: ram-minio
+      OSM_P2P_DIR: ./osm-p2p-dbs-test
     links:
       - ram-postgis
       - ram-minio
