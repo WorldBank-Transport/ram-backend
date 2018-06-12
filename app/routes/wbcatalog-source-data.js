@@ -1,11 +1,35 @@
 'use strict';
 import Joi from 'joi';
 import Boom from 'boom';
+import fetch from 'node-fetch';
+import Promise from 'bluebird';
+import _ from 'lodash';
+import https from 'https';
 
 import db from '../db/';
 
 // Number of days the data is considered valid.
 export const CACHE_DAYS = 7;
+
+// https://github.com/WorldBank-Transport/ram-backend/issues/214#issuecomment-394736868
+const SOURCE_TO_TAG_ID = {
+  // ram-origins
+  origins: -1,
+  // ram-profile
+  profile: -1,
+  // ram-admin
+  admin: 1413,
+  // ram-poi
+  poi: -1,
+  // ram-rn
+  'road-network': 1412
+};
+
+// Allow unauthorized requests.
+// https://github.com/WorldBank-Transport/ram-backend/issues/223
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false
+});
 
 /**
  * Check is a given source has data and is not expired.
@@ -28,6 +52,34 @@ export function checkValidSource (sourceName) {
     WHERE exp.expire_at > now() AND wbcatalog_resources.type = :type
   `, {cacheDays: CACHE_DAYS.toString(), type: sourceName})
   .then(data => !!data.rows.length);
+  // .then(data => false);
+}
+
+function fetchResourceData (sourceName, resource) {
+  return Promise.resolve(_.get(resource, 'field_resources.und[0].target_id', null))
+    .then(fileId => {
+      if (!fileId) { throw new Error('File id not found in resource'); }
+      return fileId;
+    })
+    .then(fileId => fetch(`https://datacatalog.worldbank.org/api/3/action/resource_show?id=${fileId}`, {agent: httpsAgent}))
+    .then(res => res.json())
+    .then(res => {
+      // TODO: Validate mimetype based on sourceName.
+      return res;
+    })
+    .then(res => {
+      return {
+        id: resource.nid,
+        name: resource.title,
+        url: res.result.url
+      };
+    })
+    .catch(e => {
+      console.log('Error fetching file resource for', sourceName, e);
+      console.log('The resource', resource);
+      // Invalidate source in case of any error.
+      return {id: null};
+    });
 }
 
 /**
@@ -38,12 +90,20 @@ export function checkValidSource (sourceName) {
  * @param {string} sourceName (origins | profile | admin | poi | road-network)
  */
 export function fetchCatalogData (sourceName) {
-  // Fetch data form the catalog.
-  return Promise.resolve([1, 2, 3, 4, 5, 6, 7].map(i => ({
-    id: i,
-    name: `${sourceName} ${i}`,
-    url: `http://example.com/resource/${sourceName}/file.ext`
-  })));
+  const tagId = SOURCE_TO_TAG_ID[sourceName];
+
+  return fetch(`https://datacatalog.worldbank.org/search-service/search_api/datasets?filter[field_tags]=${tagId}&fields=title,nid,field_resources`, {agent: httpsAgent})
+    .then(res => res.json())
+    .then(res => {
+      console.log('res', res);
+      return res;
+    })
+    .then(res => {
+      const tasks = _.map(res.result, resource => () => fetchResourceData(sourceName, resource));
+      return Promise.map(tasks, task => task(), {concurrency: 5});
+    })
+    // Remove the invalid results.
+    .then(files => files.filter(f => !!f.id));
 }
 
 /**
