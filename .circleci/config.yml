@@ -12,11 +12,8 @@ jobs:
 
     steps:
       - checkout
-      - setup_remote_docker
-
-      - add_ssh_keys:
-          fingerprints:
-            - "18:04:a0:3c:f9:2f:6c:c8:46:3c:6e:f0:be:56:23:19"
+      - setup_remote_docker:
+          docker_layer_caching: true
 
       # Download and cache dependencies
       - restore_cache:
@@ -47,8 +44,18 @@ jobs:
   deploy-stage:
     docker:
       - image: circleci/node:8
+
     working_directory: ~/repo
+
+    environment:
+      - DOCKER_IMAGE: ram-backend
+      - DOCKER_ORG: wbtransport
+
     steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+
       - run:
           name: Build Docker image for dev version
           command: |
@@ -63,8 +70,22 @@ jobs:
   deploy-prod:
     docker: 
       - image: circleci/node:8
+
     working_directory: ~/repo
+
+    environment:
+      - DOCKER_IMAGE: ram-backend
+      - DOCKER_ORG: wbtransport
+
     steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      - add_ssh_keys:
+          fingerprints:
+            - "18:04:a0:3c:f9:2f:6c:c8:46:3c:6e:f0:be:56:23:19"
+
       - run:
           name: Build Docker image for stable version
           command: |
