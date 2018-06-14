@@ -1,6 +1,5 @@
 'use strict';
 module.exports = {
-  environment: 'production',
   connection: {
     host: '0.0.0.0',
     port: 4000
@@ -9,8 +8,8 @@ module.exports = {
   osmP2PDir: null,
   storage: {
     host: null,
-    port: 9000,
-    engine: null,
+    port: null,
+    engine: 's3',
     accessKey: null,
     secretKey: null,
     bucket: null,
@@ -24,7 +23,16 @@ module.exports = {
     container: 'wbtransport/rra-analysis:latest-stable',
     db: null,
     storageHost: null,
-    storagePort: 9000
+    storagePort: null
   },
-  roadNetEditThreshold: 20 * Math.pow(1024, 2) // 20MB
+  vtProcess: {
+    service: null,
+    hyperAccess: null,
+    hyperSecret: null,
+    hyperSize: null,
+    container: null,
+    storageHost: null,
+    storagePort: null
+  },
+  roadNetEditMax: 20 * Math.pow(1024, 2) // 20MB
 };

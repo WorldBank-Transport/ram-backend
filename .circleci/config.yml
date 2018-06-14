@@ -1,0 +1,130 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/node:8
+
+    working_directory: ~/repo
+
+    environment:
+      - DOCKER_IMAGE: ram-backend
+      - DOCKER_ORG: wbtransport
+
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v1-dependencies-{{ checksum "package.json" }}
+          # fallback to using the latest cache if no exact match is found
+          - v1-dependencies-
+
+      - run:
+          name: Set up the test db and storage bucket
+          command: docker-compose -f docker-compose-test.yml run ram-api yarn run setup -- --db --bucket
+
+      - run:
+          name: Run tests
+          command: docker-compose -f docker-compose-test.yml run ram-api yarn test-no-env
+
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "package.json" }}
+
+      - run:
+          name: Lint
+          command: |
+            yarn install
+            yarn lint
+
+  deploy-stage:
+    docker:
+      - image: circleci/node:8
+
+    working_directory: ~/repo
+
+    environment:
+      - DOCKER_IMAGE: ram-backend
+      - DOCKER_ORG: wbtransport
+
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      - run:
+          name: Build Docker image for dev version
+          command: |
+            echo "Building Docker image"
+            docker build -t ${DOCKER_IMAGE} .
+            docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWD
+
+            echo "Pushing image to Docker Hub as :latest-dev"
+            docker tag ${DOCKER_IMAGE} ${DOCKER_ORG}/${DOCKER_IMAGE}:latest-dev
+            docker push ${DOCKER_ORG}/${DOCKER_IMAGE}:latest-dev
+
+  deploy-prod:
+    docker: 
+      - image: circleci/node:8
+
+    working_directory: ~/repo
+
+    environment:
+      - DOCKER_IMAGE: ram-backend
+      - DOCKER_ORG: wbtransport
+
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+
+      - add_ssh_keys:
+          fingerprints:
+            - "18:04:a0:3c:f9:2f:6c:c8:46:3c:6e:f0:be:56:23:19"
+
+      - run:
+          name: Build Docker image for stable version
+          command: |
+            # Grab version from package.json and prepend with v (v0.5.0)
+            VERSION=v$(grep -m1 version package.json | awk -F: '{ print $2 }' | sed 's/[", ]//g')
+            
+            # Attempt to add a git tag based on version in package.json. If
+            # the tag already exists, git will fail and stop the build.
+            if ! git tag ${VERSION} master
+            then
+              echo >&2 "Failed to tag a new release, skipping build. Did you update the version in package.json?"
+              exit 1
+            else
+              # Push tag to Github
+              git push origin ${VERSION}
+
+              echo Building Docker image
+              docker build -t ${DOCKER_IMAGE} .
+              docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWD
+
+              echo Pushing image to Docker Hub with ${VERSION} tag
+              docker tag ${DOCKER_IMAGE} ${DOCKER_ORG}/${DOCKER_IMAGE}:${VERSION}
+              docker push ${DOCKER_ORG}/${DOCKER_IMAGE}:${VERSION}
+            fi
+
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - build
+      - deploy-stage:
+          requires:
+            - build
+          filters:
+            branches:
+              only: develop
+      - deploy-prod:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master

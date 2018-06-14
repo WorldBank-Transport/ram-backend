@@ -1,15 +1,24 @@
 'use strict';
 import path from 'path';
+import fs from 'fs-extra';
 import bbox from '@turf/bbox';
 import centerOfMass from '@turf/center-of-mass';
 import _ from 'lodash';
+import Promise from 'bluebird';
 
 import config from '../../config';
 import db from '../../db/';
 import Operation from '../../utils/operation';
-import { setScenarioSetting } from '../../utils/utils';
-import { getFileContents, getJSONFileContents, putFileStream } from '../../s3/utils';
-import { importRoadNetwork } from '../rra-osm-p2p';
+import { setScenarioSetting, getScenarioSetting, getPropInsensitive } from '../../utils/utils';
+import { createAdminBoundsVT, createRoadNetworkVT } from '../../utils/vector-tiles';
+import {
+  getFileInfo,
+  getFileContents,
+  getJSONFileContents,
+  putFileStream,
+  removeFile
+} from '../../s3/utils';
+import { importRoadNetwork, importPOI, removeDatabase } from '../rra-osm-p2p';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
 
@@ -57,13 +66,24 @@ export function concludeProjectSetup (e) {
   function processAdminAreas (adminBoundsFc) {
     logger && logger.log('process admin areas');
 
-    let adminAreaTask = () => {
+    if (!adminBoundsFc.features) {
+      throw new Error('Invalid administrative boundaries file');
+    }
+
+    const filteredAA = {
+      'type': 'FeatureCollection',
+      'features': adminBoundsFc.features
+        .filter(o => !!o.properties[getPropInsensitive(o.properties, 'name')] && o.geometry.type !== 'Point')
+        .map(o => {
+          // Normalize name prop.
+          o.properties.name = o.properties[getPropInsensitive(o.properties, 'name')];
+          return o;
+        })
+    };
+
+    const adminAreaTask = () => {
       return db.transaction(function (trx) {
-        if (!adminBoundsFc.features) {
-          throw new Error('Invalid administrative boundaries file');
-        }
-        let adminAreas = _(adminBoundsFc.features)
-          .filter(o => !!o.properties.name && o.geometry.type !== 'Point')
+        let adminAreas = _(filteredAA.features)
           .sortBy(o => _.kebabCase(o.properties.name))
           .map(o => {
             return {
@@ -75,7 +95,7 @@ export function concludeProjectSetup (e) {
           })
           .value();
 
-        let adminAreasBbox = bbox(adminBoundsFc);
+        let adminAreasBbox = bbox(filteredAA);
 
         return Promise.all([
           trx('projects')
@@ -103,7 +123,7 @@ export function concludeProjectSetup (e) {
 
     // Clean the tables so any remnants of previous attempts are removed.
     // This avoids primary keys collisions.
-    let cleanAATable = () => {
+    const cleanAATable = () => {
       return Promise.all([
         db('projects_aa')
           .where('project_id', projId)
@@ -115,9 +135,53 @@ export function concludeProjectSetup (e) {
       ]);
     };
 
+    // Update the admin bounds file with the filtered features.
+    // A clean file is needed for the VT generation.
+    const updateFile = () => {
+      const fc = {
+        'type': 'FeatureCollection',
+        'features': filteredAA.features.map(o => ({
+          type: 'Feature',
+          properties: {
+            name: o.properties.name,
+            type: o.properties.type || 'admin-area',
+            project_id: projId
+          },
+          geometry: o.geometry
+        }))
+      };
+
+      const fileName = `admin-bounds_${Date.now()}`;
+      const filePath = `project-${projId}/${fileName}`;
+
+      // Get current file and remove it
+      return db('projects_files')
+        .select('*')
+        .where('project_id', projId)
+        .where('type', 'admin-bounds')
+        .first()
+        .then(file => removeFile(file.path)
+          //  Put the new file.
+          .then(() => putFileStream(filePath, JSON.stringify(fc)))
+          .then(() => file.id)
+        )
+        // Update the db
+        .then(fileId => db('projects_files')
+          .update({
+            name: fileName,
+            path: filePath,
+            updated_at: (new Date())
+          })
+          .where('id', fileId)
+        )
+        .then(() => filePath);
+    };
+
     return op.log('process:admin-bounds', {message: 'Processing admin areas'})
       .then(() => cleanAATable())
-      .then(() => adminAreaTask());
+      .then(() => adminAreaTask())
+      .then(() => updateFile())
+      .then(filePath => process.env.DS_ENV === 'test' ? null : createAdminBoundsVT(projId, scId, op, filePath).promise);
   }
 
   function processOrigins (originsData) {
@@ -155,7 +219,7 @@ export function concludeProjectSetup (e) {
 
             return {
               project_id: projId,
-              name: feat.properties.name || 'N/A',
+              name: feat.properties[getPropInsensitive(feat.properties, 'name')] || 'N/A',
               coordinates: JSON.stringify(coordinates)
             };
           });
@@ -218,7 +282,7 @@ export function concludeProjectSetup (e) {
 
         return putFileStream(filePath, osmData)
           .then(() => db('scenarios_files').insert(data))
-          .then(() => osmData);
+          .then(() => data);
       });
 
     // Clean the tables so any remnants of previous attempts are removed.
@@ -287,7 +351,8 @@ export function concludeProjectSetup (e) {
         // Save to database.
         let promises = fileUploadPromises.concat(db.batchInsert('scenarios_files', dbInsertions));
 
-        return Promise.all(promises);
+        return Promise.all(promises)
+          .then(() => osmGeoJSON);
       });
 
     // Clean the tables so any remnants of previous attempts are removed.
@@ -305,14 +370,37 @@ export function concludeProjectSetup (e) {
       .then(() => importOSMPOIsTask());
   }
 
+  function copyDefaultProfile (projId) {
+    let fileName = `profile_${Date.now()}`;
+    let filePath = `project-${projId}/${fileName}`;
+
+    return putFileStream(filePath, fs.createReadStream(path.resolve(__dirname, '../../utils/default.profile.lua')))
+      .then(() => db('projects_files')
+        .insert({
+          name: fileName,
+          type: 'profile',
+          path: filePath,
+          project_id: projId,
+          created_at: (new Date()),
+          updated_at: (new Date())
+        })
+      );
+  }
+
   let op = new Operation(db);
   op.loadById(opId)
   .then(() => Promise.all([
-    // Get source for Road Network.
+    // Get source for Road Network and Poi.
     db('scenarios_source_data')
       .select('*')
       .where('scenario_id', scId)
       .whereIn('name', ['poi', 'road-network'])
+      .orderBy('name'),
+    // Get source for Profile.
+    db('projects_source_data')
+      .select('*')
+      .where('project_id', projId)
+      .whereIn('name', ['profile'])
       .orderBy('name'),
     db('projects_files')
       .select('*')
@@ -329,38 +417,104 @@ export function concludeProjectSetup (e) {
       })
   ]))
   .then(filesContent => {
-    // let [roadNetwork, [adminBoundsFc, originsData]] = filesContent;
-    let [[poiSource, rnSource], [adminBoundsFc, originsData]] = filesContent;
+    let [[poiSource, rnSource], [profileSource], [adminBoundsFc, originsData]] = filesContent;
 
-    let rnProcessPromise = rnSource.type === 'osm'
-      ? () => importOSMRoadNetwork(overpass.fcBbox(adminBoundsFc))
-      // We'll need to get the RN contents to import to the osm-p2p-db.
+    //
+    // Handle Road Network.
+    let rnProcessPromise = () => {
+      let executor = Promise.resolve();
+
+      // Both return the db entry for the file.
+      if (rnSource.type === 'osm') {
+        executor = importOSMRoadNetwork(overpass.fcBbox(adminBoundsFc));
+      } else {
+        executor = db('scenarios_files')
+          .select('*')
+          .where('project_id', projId)
+          .where('type', 'road-network')
+          .first();
+      }
+
+      executor = executor
+        .then(file => Promise.all([file.path, getFileInfo(file.path)]))
+        .then(([filePath, fileInfo]) => {
+          // Disable road network editing if size over threshold.
+          let allowImport = fileInfo.size < config.roadNetEditMax;
+          return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
+            .then(() => {
+              if (allowImport) {
+                return getFileContents(filePath)
+                  .then(roadNetwork => {
+                    let rnLogger = appLogger.group(`p${projId} s${scId} rn import`);
+                    rnLogger && rnLogger.log('process road network');
+                    return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
+                  });
+              }
+            })
+            .then(() => process.env.DS_ENV === 'test' ? null : createRoadNetworkVT(projId, scId, op, filePath).promise);
+        });
+
+      return executor;
+    };
+
+    //
+    // Handle POI.
+    let poiProcessPromise = poiSource.type === 'osm'
+      ? () => importOSMPOIs(overpass.fcBbox(adminBoundsFc), poiSource.data.osmPoiTypes)
+      // We'll need to get the POI contents to import to the osm-p2p-db.
       : () => db('scenarios_files')
         .select('*')
         .where('project_id', projId)
-        .where('type', 'road-network')
-        .first()
-        .then(file => getFileContents(file.path));
+        .where('scenario_id', scId)
+        .where('type', 'poi')
+        .then(files => Promise.all([
+          files,
+          Promise.map(files, file => getJSONFileContents(file.path))
+        ])
+        .then(([files, filesContent]) => {
+          // Create an object indexed by poi type.
+          let pois = {};
+          files.forEach((f, idx) => { pois[f.subtype] = filesContent[idx]; });
+          return pois;
+        }));
 
-    let poiProcessPromise = poiSource.type === 'osm'
-      ? () => importOSMPOIs(overpass.fcBbox(adminBoundsFc), poiSource.data.osmPoiTypes)
+    //
+    // Handle Profile.
+    let profileProcessPromise = profileSource.type === 'default'
+      ? () => copyDefaultProfile(projId)
       : () => Promise.resolve();
 
-    // Run the tasks in series rather than in parallel.
-    // This is better for error handling. If they run in parallel and
-    // `processAdminAreas` errors, the script hangs a bit while
-    // `processRoadNetwork` (which is resource intensive) finished and only then
-    // the error is captured by the promise.
-    // Since processing the admin areas is a pretty fast operation, the
-    // performance is not really affected.
-    return Promise.all([
-      processAdminAreas(adminBoundsFc),
-      processOrigins(originsData)
-    ])
-    .then(() => poiProcessPromise())
-    .then(() => rnProcessPromise()
-      .then(roadNetwork => importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork))
-    );
+    return processOrigins(originsData)
+      .then(() => processAdminAreas(adminBoundsFc))
+      .then(() => profileProcessPromise())
+      // Remove anything that might be there. We're importing fresh data.
+      .then(() => removeDatabase(projId, scId))
+      .then(() => rnProcessPromise())
+      .then(() => poiProcessPromise()
+        .then(poisFC => {
+          // Check rn_active_editing setting to see if we need to import.
+          return getScenarioSetting(db, scId, 'rn_active_editing')
+            .then(editing => {
+              if (!editing) {
+                return;
+              }
+              // Merge all feature collection together.
+              // Add a property to keep track of the poi type.
+              let fc = {
+                type: 'FeatureCollection',
+                features: Object.keys(poisFC).reduce((acc, key) => {
+                  let feats = poisFC[key].features;
+                  feats.forEach(f => { f.properties.ram_poi_type = key; });
+                  return acc.concat(feats);
+                }, [])
+              };
+
+              let poiLogger = appLogger.group(`p${projId} s${scId} poi import`);
+              poiLogger && poiLogger.log('process poi');
+              return importPOI(projId, scId, op, fc, poiLogger);
+            });
+        })
+      );
   })
   .then(() => {
     return db.transaction(function (trx) {
@@ -371,9 +525,9 @@ export function concludeProjectSetup (e) {
         trx('scenarios')
           .update({updated_at: (new Date()), status: 'active'})
           .where('id', scId)
-      ])
-      .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
-    });
+      ]);
+    })
+    .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
   })
   .then(() => {
     logger && logger.log('process complete');
@@ -387,19 +541,4 @@ export function concludeProjectSetup (e) {
       .then(op => op.finish())
       .then(() => callback(err.message), () => callback(err.message));
   });
-}
-
-function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
-  let rnLogger = appLogger.group(`p${projId} s${scId} rn import`);
-  rnLogger && rnLogger.log('process road network');
-
-  // Disable road network editing if size over threshold.
-  let allowImport = roadNetwork.length < config.roadNetEditThreshold;
-
-  return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
-    .then(() => {
-      if (allowImport) {
-        return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
-      }
-    });
 }

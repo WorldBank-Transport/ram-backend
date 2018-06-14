@@ -1,16 +1,14 @@
 version: '2'
 services:
-  rra-postgis:
-    image: mdillon/postgis
+  ram-postgis:
+    image: mdillon/postgis:9.6
     ports:
       - 5432
     environment:
-      POSTGRES_PASSWORD: rra
-      POSTGRES_USER: rra
-      POSTGRES_DB: rra
-    volumes:
-      - ./setup/create-test-db.sh:/docker-entrypoint-initdb.d/create-test-db.sh
-  rra-minio:
+      POSTGRES_PASSWORD: ramtest
+      POSTGRES_USER: ramtest
+      POSTGRES_DB: ramtest
+  ram-minio:
     image: minio/minio
     ports:
       - 9000
@@ -18,17 +16,23 @@ services:
       MINIO_ACCESS_KEY: minio
       MINIO_SECRET_KEY: miniostorageengine
     # volumes:
-    #   - /guts/projects/rra/minio-stuff/export:/export
-    #   - /guts/projects/rra/minio-stuff/config:/root/.minio
+    #   - /guts/projects/ram/minio-stuff/export:/export
+    #   - /guts/projects/ram/minio-stuff/config:/root/.minio
     command: server /export
-  rra-api:
+  ram-api:
     build: ./
     ports:
       - 4000
     environment:
-      DS_ENV: test
-      DB_CONNECTION: postgresql://rratest:rratest@rra-postgis:5432/rratest
-      STORAGE_HOST: rra-minio
+      DB_CONNECTION: postgresql://ramtest:ramtest@ram-postgis:5432/ramtest
+      STORAGE_PORT: 9000
+      STORAGE_ENGINE: minio
+      STORAGE_ACCESS_KEY: minio
+      STORAGE_SECRET_KEY: miniostorageengine
+      STORAGE_BUCKET: ram-test
+      STORAGE_REGION: us-east-1
+      STORAGE_HOST: ram-minio
+      OSM_P2P_DIR: ./osm-p2p-dbs-test
     links:
-      - rra-postgis
-      - rra-minio
+      - ram-postgis
+      - ram-minio

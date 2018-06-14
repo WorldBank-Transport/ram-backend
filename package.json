@@ -1,10 +1,10 @@
 {
-  "name": "rural-road-accessibility--server",
-  "version": "0.4.0",
-  "description": "World Bank project to assess rural road accessibility",
+  "name": "ram-backend",
+  "version": "0.5.0",
+  "description": "The backend for RAM, a World Bank project to assess rural road accessibility",
   "repository": {
     "type": "git",
-    "url": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility"
+    "url": "https://github.com/WorldBank-Transport/ram-backend"
   },
   "author": {
     "name": "Development Seed",
@@ -12,20 +12,21 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility/issues"
+    "url": "https://github.com/WorldBank-Transport/ram-backend/issues"
   },
-  "homepage": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility",
+  "homepage": "https://github.com/WorldBank-Transport/ram-backend",
   "main": "index.js",
   "scripts": {
     "setup": "DEBUG=true node setup/",
     "lint": "eslint app/ test/ --ext .js",
-    "test": "DS_ENV=test DEBUG=false mocha test/test-* --require babel-register",
+    "test-no-env": "DS_ENV=test DEBUG=false mocha test/test-* --require babel-register",
+    "test": ". test/test.env && yarn test-no-env",
     "start": "node index.js",
     "nodemon": "nodemon --watch app index.js",
     "postinstall": "[ -f app/config/local.js ] || echo 'module.exports = {};' > app/config/local.js"
   },
   "engines": {
-    "node": "6.7.x"
+    "node": "8.x.x"
   },
   "dependencies": {
     "@turf/bbox": "^4.0.2",
@@ -47,19 +48,20 @@
     "jwks-rsa": "^1.1.1",
     "knex": "0.12.7",
     "lodash": "^4.17.0",
-    "minio": "^3.1.1",
+    "minio": "^3.2.0",
     "multiparty": "^4.1.3",
     "node-zip": "^1.1.1",
     "obj2osm": "^2.0.1",
     "osm-p2p": "^2.0.0",
-    "osm-p2p-db-importer": "^1.1.2",
-    "osm-p2p-server": "^2.1.6",
+    "osm-p2p-import": "^3.0.4",
+    "osm-p2p-server": "^2.3.2",
     "osm2json": "^2.1.0",
     "osmtogeojson": "^3.0.0-beta.2",
     "pg": "^6.1.2",
     "promise-retry": "^1.1.1",
     "request": "^2.79.0",
-    "request-promise": "^4.2.1"
+    "request-promise": "^4.2.1",
+    "temp-dir": "^1.0.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",

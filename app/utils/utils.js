@@ -90,9 +90,9 @@ export function getSourceData (db, contentType, id) {
       let filesFetchTypes = [];
 
       sources.forEach(s => {
-        if (s.type === 'osm') {
+        if (s.type === 'osm' || s.type === 'default') {
           // Never going to happen for projects, just scenarios.
-          structure[s.name].type = 'osm';
+          structure[s.name].type = s.type;
           structure[s.name].osmOptions = s.data;
         } else if (s.type === 'file') {
           structure[s.name].type = 'file';
@@ -183,4 +183,34 @@ export function setScenarioSetting (db, scId, key, value) {
           });
       }
     });
+}
+
+export function getScenarioSetting (db, scId, key) {
+  // Check if setting exists.
+  return db('scenarios_settings')
+    .select('value')
+    .where('scenario_id', scId)
+    .where('key', key)
+    .first()
+    .then(setting => {
+      if (setting) {
+        try {
+          // Convert objects, booleans, and integers.
+          return JSON.parse(setting.value);
+        } catch (e) {
+          // Fallback to strings
+          return setting.value;
+        }
+      } else {
+        return null;
+      }
+    });
+}
+
+export function getPropInsensitive (object, prop) {
+  // prop can be written in caps or any variant.
+  // prop, PROP, Prop, PrOp
+  // Search for the first match an return it.
+  // If not found return prop.
+  return Object.keys(object).find(k => k.toLowerCase() === prop) || prop;
 }

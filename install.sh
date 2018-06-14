@@ -10,7 +10,7 @@ apt-get -qq install -y \
   software-properties-common
 
 # install nodejs
-curl -sL https://deb.nodesource.com/setup_6.x | bash -
+curl -sL https://deb.nodesource.com/setup_8.x | bash -
 apt-get -qq install -y nodejs
 
 # add Docker repository

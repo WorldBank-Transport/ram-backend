@@ -3,13 +3,14 @@ import path from 'path';
 import Promise from 'bluebird';
 
 import config from '../../config';
-import { cloneDatabase, closeDatabase, importRoadNetwork } from '../rra-osm-p2p';
+import { cloneDatabase, closeDatabase, importRoadNetwork, importPOI } from '../rra-osm-p2p';
 import db from '../../db/';
-import { setScenarioSetting } from '../../utils/utils';
-import { copyFile, putFileStream, getFileContents } from '../../s3/utils';
+import { setScenarioSetting, getScenarioSetting } from '../../utils/utils';
+import { copyFile, copyDirectory, putFileStream, getFileContents, getJSONFileContents, getFileInfo } from '../../s3/utils';
 import Operation from '../../utils/operation';
 import AppLogger from '../../utils/app-logger';
 import * as overpass from '../../utils/overpass';
+import { createRoadNetworkVT } from '../../utils/vector-tiles';
 
 const DEBUG = config.debug;
 let appLogger = AppLogger({ output: DEBUG });
@@ -59,75 +60,89 @@ export function scenarioCreate (e) {
     rnSource,
     rnSourceScenarioId,
     roadNetworkFile,
+    poiSource,
+    poiSourceScenarioId,
     callback
   } = e;
 
   let op = new Operation(db);
   op.loadById(opId)
     .then(op => op.log('admin-areas', {message: 'Cloning admin areas'}))
-    .then(() => db.transaction(function (trx) {
+    .then(() => {
       let executor = Promise.resolve();
 
-      if (rnSource === 'clone') {
+      logger && logger.log('poiSource', poiSource);
+      logger && logger.log('rnSource', rnSource);
+
+      if (poiSource === 'clone') {
         executor = executor
           // Copy the scenario files.
-          .then(() => op.log('files', {message: 'Cloning files'}))
-          .then(() => trx('scenarios_files')
+          .then(() => op.log('files', {message: 'Cloning points of interest'}))
+          .then(() => db('scenarios_files')
             .select('*')
-            .where('scenario_id', rnSourceScenarioId)
+            .where('scenario_id', poiSourceScenarioId)
             .where('project_id', projId)
-            .whereIn('type', ['poi', 'road-network'])
-            .then(files => cloneScenarioFiles(trx, files, projId, scId))
+            .where('type', 'poi')
+            .then(files => cloneScenarioFiles(db, files, projId, scId))
           )
-          .then(() => trx('scenarios_source_data')
-            .select('project_id', 'name', 'type', 'data')
-            .where('scenario_id', rnSourceScenarioId)
-            .where('project_id', projId)
-            .then(sourceData => {
-              // Set new id.
-              sourceData.forEach(o => {
-                o.scenario_id = scId;
-              });
-              return sourceData;
-            })
-          )
-          .then(sourceData => trx.batchInsert('scenarios_source_data', sourceData))
-          // Copy the osm-p2p-db.
-          .then(() => op.log('files', {message: 'Cloning road network database'}))
-          .then(() => closeDatabase(projId, scId))
-          .then(() => cloneOsmP2Pdb(projId, rnSourceScenarioId, projId, scId));
-      //
-      } else if (rnSource === 'new') {
-        executor = executor
-          // Copy the scenario files.
-          .then(() => op.log('files', {message: 'Cloning files'}))
-          // When uploading a new file we do so only for the
-          // road-network. Since the poi file is identical for all
-          // scenarios of the project just clone it from the master.
-          .then(() => trx('scenarios_files')
-            .select('scenarios_files.*')
-            .innerJoin('scenarios', 'scenarios.id', 'scenarios_files.scenario_id')
-            .where('scenarios.master', true)
-            .where('scenarios.project_id', projId)
-            .where('scenarios_files.type', 'poi')
-            .then(files => cloneScenarioFiles(trx, files, projId, scId))
-          )
-          // Insert source info.
-          // TODO: This needs to be updated once we have osm data.
-          .then(() => trx.batchInsert('scenarios_source_data', [
-            {
-              project_id: projId,
-              scenario_id: scId,
-              name: 'road-network',
-              type: 'file'
-            },
-            {
+          // Set poi source to file.
+          .then(() => db('scenarios_source_data')
+            .insert({
               project_id: projId,
               scenario_id: scId,
               name: 'poi',
               type: 'file'
-            }
-          ]))
+            })
+          );
+      } else {
+        throw new Error(`Poi source is invalid: ${poiSource}`);
+      }
+
+      // Road Network: Clone.
+      if (rnSource === 'clone') {
+        executor = executor
+          // Copy the scenario files.
+          .then(() => op.log('files', {message: 'Cloning road network'}))
+          .then(() => db('scenarios_files')
+            .select('*')
+            .where('scenario_id', rnSourceScenarioId)
+            .where('project_id', projId)
+            .where('type', 'road-network')
+            .then(files => cloneScenarioFiles(db, files, projId, scId))
+          )
+          // Set road network source to file.
+          .then(() => db('scenarios_source_data')
+            .insert({
+              project_id: projId,
+              scenario_id: scId,
+              name: 'road-network',
+              type: 'file'
+            })
+          )
+          // Copy the setting for road network edition.
+          .then(() => db('scenarios_settings')
+            .select('value')
+            .where('scenario_id', rnSourceScenarioId)
+            .where('key', 'rn_active_editing')
+            .first()
+            .then(res => setScenarioSetting(db, scId, 'rn_active_editing', res ? res.value : false))
+          )
+          // Copy vector tiles.
+          .then(() => copyDirectory(`scenario-${rnSourceScenarioId}/tiles/road-network`, `scenario-${scId}/tiles/road-network`));
+
+      // Road Network: New
+      } else if (rnSource === 'new') {
+        executor = executor
+          .then(() => op.log('files', {message: 'Uploading new road network'}))
+          // Set road network source to file.
+          .then(() => db('scenarios_source_data')
+            .insert({
+              project_id: projId,
+              scenario_id: scId,
+              name: 'road-network',
+              type: 'file'
+            })
+          )
           // Add entry for road network file.
           .then(() => {
             let now = new Date();
@@ -141,44 +156,36 @@ export function scenarioCreate (e) {
               updated_at: now
             };
 
-            return trx('scenarios_files')
+            return db('scenarios_files')
               .returning('*')
               .insert(data)
-              .then(res => res[0]);
+              .then(() => data);
           })
-          .then(file => getFileContents(file.path))
-          // Import to the osm-p2p-db.
-          .then(roadNetwork => {
-            logger && logger.log('process road network');
-            return importRoadNetworkOsmP2Pdb(projId, scId, op, roadNetwork);
+          .then(file => Promise.all([file.path, getFileInfo(file.path)]))
+          .then(([filePath, fileInfo]) => {
+            // Disable road network editing if size over threshold.
+            let allowImport = fileInfo.size < config.roadNetEditMax;
+            return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
+              .then(() => {
+                if (process.env.DS_ENV !== 'test') {
+                  logger && logger.log('process road network');
+                  return createRoadNetworkVT(projId, scId, op, filePath).promise;
+                }
+              });
           });
+
+      // Road Network: Osm
       } else if (rnSource === 'osm') {
         executor = executor
           .then(() => op.log('files', {message: 'Importing road network'}))
-          .then(() => trx.batchInsert('scenarios_source_data', [
-            {
+          // Set road network source to osm.
+          .then(() => db('scenarios_source_data')
+            .insert({
               project_id: projId,
               scenario_id: scId,
               name: 'road-network',
               type: 'osm'
-            },
-            {
-              project_id: projId,
-              scenario_id: scId,
-              name: 'poi',
-              type: 'file'
-            }
-          ]))
-          // When uploading a new file we do so only for the
-          // road-network. Since the poi file is identical for all
-          // scenarios of the project just clone it from the master.
-          .then(() => trx('scenarios_files')
-            .select('scenarios_files.*')
-            .innerJoin('scenarios', 'scenarios.id', 'scenarios_files.scenario_id')
-            .where('scenarios.master', true)
-            .where('scenarios.project_id', projId)
-            .where('scenarios_files.type', 'poi')
-            .then(files => cloneScenarioFiles(trx, files, projId, scId))
+            })
           )
           // Get the bbox for the overpass import.
           .then(() => db('projects')
@@ -188,8 +195,8 @@ export function scenarioCreate (e) {
             .then(res => res.bbox)
           )
           .then(bbox => overpass.importRoadNetwork(overpass.convertBbox(bbox)))
+          // Just to log error
           .catch(err => {
-            // Just to log error
             logger && logger.log('Error importing from overpass', err.message);
             throw err;
           })
@@ -209,18 +216,98 @@ export function scenarioCreate (e) {
 
             return putFileStream(filePath, osmData)
               .then(() => db('scenarios_files').insert(data))
+              .then(() => data);
+          })
+          .then(file => Promise.all([file.path, getFileInfo(file.path)]))
+          .then(([filePath, fileInfo]) => {
+            // Disable road network editing if size over threshold.
+            let allowImport = fileInfo.size < config.roadNetEditMax;
+            return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
               .then(() => {
-                logger && logger.log('process road network');
-                return importRoadNetworkOsmP2Pdb(projId, scId, op, osmData);
+                if (process.env.DS_ENV !== 'test') {
+                  logger && logger.log('process road network');
+                  return createRoadNetworkVT(projId, scId, op, filePath).promise;
+                }
               });
           });
+      } else {
+        throw new Error(`Road network source is invalid: ${rnSource}`);
+      }
+
+      // If we're cloning both the pois and the rn from the same source
+      // we can just clone the database. There's no need to import.
+      if (rnSource === 'clone' && poiSource === 'clone' && rnSourceScenarioId === poiSourceScenarioId) {
+        logger && logger.log('Cloning from same source. Duplicating osm db.');
+        executor = executor
+          // Copy the osm-p2p-db.
+          .then(() => op.log('files', {message: 'Cloning osm database'}))
+          .then(() => closeDatabase(projId, scId))
+          .then(() => cloneOsmP2Pdb(projId, rnSourceScenarioId, projId, scId));
+      } else {
+        // Is there any importing to do?
+        executor = executor
+          .then(() => getScenarioSetting(db, scId, 'rn_active_editing'))
+          // No import. Stop the chain with an error.
+          .then(editing => {
+            if (!editing) {
+              logger && logger.log('Road network editing inactive.');
+              throw new Error('not editing');
+            }
+          })
+          // Get the road network from cache or form the db.
+          .then(() => db('scenarios_files')
+            .select('*')
+            .where('project_id', projId)
+            .where('scenario_id', scId)
+            .where('type', 'road-network')
+            .first()
+            .then(file => getFileContents(file.path))
+          )
+          // Import into osm db.
+          .then(roadNetwork => {
+            let rnLogger = appLogger.group(`p${projId} s${scId} rn import`);
+            rnLogger && rnLogger.log('process road network');
+            return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
+          })
+          // Get all the pois and create a feature collection.
+          .then(() => db('scenarios_files')
+            .select('*')
+            .where('project_id', projId)
+            .where('scenario_id', scId)
+            .where('type', 'poi')
+            .then(files => Promise.all([
+              files,
+              Promise.map(files, file => getJSONFileContents(file.path))
+            ]))
+            .then(([files, filesContent]) => {
+              // Merge all feature collection together.
+              // Add a property to keep track of the poi type.
+              return {
+                type: 'FeatureCollection',
+                features: files.reduce((acc, file, idx) => {
+                  let key = file.subtype;
+                  let features = filesContent[idx].features;
+                  features.forEach(f => { f.properties.ram_poi_type = key; });
+                  return acc.concat(features);
+                }, [])
+              };
+            })
+          )
+          // Import into osm db.
+          .then(poiFc => {
+            let poiLogger = appLogger.group(`p${projId} s${scId} poi import`);
+            poiLogger && poiLogger.log('process poi');
+            return importPOI(projId, scId, op, poiFc, poiLogger);
+          })
+          // Ignore not editing error.
+          .catch(e => { if (e.message !== 'not editing') throw e; });
       }
 
       return executor
-        .then(() => trx('scenarios').update({status: 'active', updated_at: (new Date())}).where('id', scId))
-        .then(() => trx('projects').update({updated_at: (new Date())}).where('id', projId))
+        .then(() => db('scenarios').update({status: 'active', updated_at: (new Date())}).where('id', scId))
+        .then(() => db('projects').update({updated_at: (new Date())}).where('id', projId))
         .then(() => op.log('success', {message: 'Operation complete'}).then(op => op.finish()));
-    }))
+    })
     // Note: There's no need to close the osm-p2p-db because when the process
     // terminates the connection is automatically closed.
     .then(() => {
@@ -243,10 +330,13 @@ export function scenarioCreate (e) {
 
 // Copies the given files from a to the new scenario, both the database entries
 // and the physical file.
-function cloneScenarioFiles (trx, files, projId, scId) {
+function cloneScenarioFiles (db, files, projId, scId) {
   logger && logger.log('cloning files');
   let newFiles = files.map(file => {
-    const fileName = `${file.type}_${Date.now()}`;
+    const fileName = file.type === 'poi'
+      ? `${file.type}_${file.subtype}_${Date.now()}`
+      : `${file.type}_${Date.now()}`;
+
     const filePath = `scenario-${scId}/${fileName}`;
 
     return {
@@ -265,7 +355,7 @@ function cloneScenarioFiles (trx, files, projId, scId) {
     // Insert new files in the db.
     .then(allFiles => {
       let [oldFiles, newFiles] = allFiles;
-      return trx.batchInsert('scenarios_files', newFiles).then(() => [oldFiles, newFiles]);
+      return db.batchInsert('scenarios_files', newFiles).then(() => [oldFiles, newFiles]);
     })
     // Copy files on s3.
     .then(allFiles => {
@@ -277,39 +367,13 @@ function cloneScenarioFiles (trx, files, projId, scId) {
 // Clone the osm-p2p-db.
 function cloneOsmP2Pdb (srcProjId, srcScId, destProjId, destScId) {
   logger && logger.log('cloning osm-p2p-db');
-  return cloneDatabase(srcProjId, srcScId, destProjId, destScId);
-}
-
-function importRoadNetworkOsmP2Pdb (projId, scId, op, roadNetwork) {
-  let rnLogger = appLogger.group(`p${projId} s${scId} rn import`);
-  rnLogger && rnLogger.log('process road network');
-
-  // Disable road network editing if size over threshold.
-  let allowImport = roadNetwork.length < config.roadNetEditThreshold;
-
-  return setScenarioSetting(db, scId, 'rn_active_editing', allowImport)
-    .then(() => {
-      if (allowImport) {
-        return importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
+  return cloneDatabase(srcProjId, srcScId, destProjId, destScId)
+    .catch(err => {
+      // If the road network is too big, the db is not created.
+      // Account for this and avoid errors.
+      // TODO: Check if the DB is supposed to not exist.
+      if (err.code !== 'ENOENT') {
+        throw err;
       }
     });
 }
-
-// TODO: Although some cleanup is good, if we delete the scenario altogether
-// we won't have messages to show the user indicating that it failed.
-// Figure out what's the best way to handle it.
-//
-// function onFailCleanup (projId, scId) {
-//   return db
-//     .delete()
-//     .from('scenarios')
-//     .where('id', scId)
-//     .where('project_id', projId)
-//     // Remove osm-p2p-db.
-//     .then(() => removeDatabase(projId, scId))
-//     // Remove files uploaded to s3.
-//     .then(() => emptyBucket(bucket, `scenario-${scId}/`))
-//     .catch(err => {
-//       console.log('onFailCleanup error', err);
-//     });
-// }

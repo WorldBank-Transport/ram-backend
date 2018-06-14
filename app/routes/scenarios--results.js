@@ -200,6 +200,7 @@ export default [
           scId: Joi.number()
         },
         query: {
+          origin_name: Joi.string(),
           poiType: Joi.string().required(),
           popInd: Joi.string().required(),
           sortBy: Joi.string(),
@@ -213,7 +214,7 @@ export default [
       const { projId, scId } = request.params;
       const { page, limit } = request;
       const offset = (page - 1) * limit;
-      let { sortBy, sortDir, poiType, popInd } = request.query;
+      let { sortBy, sortDir, poiType, popInd, origin_name: originName } = request.query;
 
       sortBy = sortBy || 'origin_name';
       sortDir = sortDir || 'asc';
@@ -228,6 +229,11 @@ export default [
         .where('results.scenario_id', scId)
         .where('projects_origins_indicators.key', popInd)
         .where('results_poi.type', poiType)
+        .modify(function (queryBuilder) {
+          if (originName) {
+            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${originName}%'))`);
+          }
+        })
         .first();
 
       let _results = db('results')
@@ -249,6 +255,11 @@ export default [
         .where('results.scenario_id', scId)
         .where('projects_origins_indicators.key', popInd)
         .where('results_poi.type', poiType)
+        .modify(function (queryBuilder) {
+          if (originName) {
+            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${originName}%'))`);
+          }
+        })
         .orderBy(sortBy, sortDir)
         .offset(offset).limit(limit);
 
@@ -342,7 +353,7 @@ function checkPopInd (projId, popInd) {
 }
 
 function prepGeoResponse (results) {
-  let maxPop = Math.max(...results.map(o => o.pop_value));
+  let maxPop = Math.max.apply(Math, results.map(o => o.pop_value));
 
   return results.map(o => {
     return {
