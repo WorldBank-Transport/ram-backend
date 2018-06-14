@@ -1,10 +1,10 @@
 {
-  "name": "rural-road-accessibility--server",
-  "version": "0.4.0",
-  "description": "World Bank project to assess rural road accessibility",
+  "name": "ram-backend",
+  "version": "0.5.0",
+  "description": "The backend for RAM, a World Bank project to assess rural road accessibility",
   "repository": {
     "type": "git",
-    "url": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility"
+    "url": "https://github.com/WorldBank-Transport/ram-backend"
   },
   "author": {
     "name": "Development Seed",
@@ -12,14 +12,15 @@
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility/issues"
+    "url": "https://github.com/WorldBank-Transport/ram-backend/issues"
   },
-  "homepage": "https://github.com/WorldBank-Transport/Rural-Road-Accessibility",
+  "homepage": "https://github.com/WorldBank-Transport/ram-backend",
   "main": "index.js",
   "scripts": {
     "setup": "DEBUG=true node setup/",
     "lint": "eslint app/ test/ --ext .js",
-    "test": "DS_ENV=test DEBUG=false mocha test/test-* --require babel-register",
+    "test-no-env": "DS_ENV=test DEBUG=false mocha test/test-* --require babel-register",
+    "test": ". test/test.env && yarn test-no-env",
     "start": "node index.js",
     "nodemon": "nodemon --watch app index.js",
     "postinstall": "[ -f app/config/local.js ] || echo 'module.exports = {};' > app/config/local.js"

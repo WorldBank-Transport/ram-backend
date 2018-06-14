@@ -15,9 +15,9 @@ To run RAM analysis locally, follow these steps. On first time setup:
 1. clone this repository
 2. install the project dependencies: node 6, Docker, Docker Compose - [more on project dependencies](#install-project-dependencies)
 3. `yarn install`
-4. `docker network create --driver=bridge --subnet=172.99.99.0/24 --gateway=172.99.99.1 rra` to set up the Docker network
+4. `docker network create --driver=bridge --subnet=172.99.99.0/24 --gateway=172.99.99.1 ram` to set up the Docker network
 5. `docker-compose up -d` to start the full eco-system in the background
-6. `docker exec rra-api yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `docker exec rra-api yarn run setup -- --data` instead - [more on setup](#setup)
+6. `docker exec ram-api yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `docker exec ram-api yarn run setup -- --data` instead - [more on setup](#setup)
 
 Once this is done, you can access RAM in your browser on: http://localhost:8080
 
@@ -29,7 +29,7 @@ To set up a local development environment, it may be easier to run the API outsi
 1. install Node 6, Docker, Docker Compose, python-gdal, python-lxml - [more on project dependencies](#install-project-dependencies)
 2. `yarn install` - [more on application dependencies](#install-application-dependencies)
 3. add configuration variables to `app/config/local.js`. The [example config](#config-example) should work well.
-4. `docker network create rra` to set up the Docker network
+4. `docker network create ram` to set up the Docker network
 5. `docker-compose -f docker-compose-dev.yml up -d` to start the database and bucket in the background - [more on starting the containers](#starting-the-containers)
 6. `yarn start` to start the app - [more on starting the app](#starting-the-app)
 7. `yarn run setup -- --db --bucket` to setup the database and file storage. If you want to start the server with example data, run `yarn run setup -- --data` instead - [more on setup](#setup)
@@ -87,13 +87,13 @@ The following options must be set:
   - `analysisProcess.hyperAccess` - Access key for Hyper. [HYPER_ACCESS]
   - `analysisProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
   - `analysisProcess.hyperSize` - The size of the Hyper container. If not specified, it will use [Hyper's](https://hyper.sh) default container. [HYPER_SIZE]
-  - `analysisProcess.container` - The name of the rra-analysis container (Default wbtransport/rra-analysis:latest-stable) [ANL_CONTAINER]
-  - `analysisProcess.db` - The database connection string. When using Docker for the analysis process, the host will be the name of the database container (`rra-postgis`). When using Hyper, this will be the IP of your hosted database [ANL_DB]
-  - `analysisProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`rra-minio`). When using Hyper, this will be the IP of the storage host. [ANL_STORAGE_HOST]
+  - `analysisProcess.container` - The name of the ram-analysis container (Default wbtransport/ram-analysis:latest-stable) [ANL_CONTAINER]
+  - `analysisProcess.db` - The database connection string. When using Docker for the analysis process, the host will be the name of the database container (`ram-postgis`). When using Hyper, this will be the IP of your hosted database [ANL_DB]
+  - `analysisProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`ram-minio`). When using Hyper, this will be the IP of the storage host. [ANL_STORAGE_HOST]
   - `analysisProcess.storagePort` - The port to use. [ANL_STORAGE_PORT]
   - `vtProcess.service` - The service to run the vector tiles on. Either `docker` (for local development and off-line) or `hyper`. [VT_SERVICE]
-  - `vtProcess.container` - The name of the rra-vt container (Default wbtransport/rra-vt:latest-stable) [VT_CONTAINER]
-  - `vtProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`rra-minio`). When using Hyper, this will be the IP of the storage host. [VT_STORAGE_HOST]
+  - `vtProcess.container` - The name of the ram-vt container (Default wbtransport/ram-vt:latest-stable) [VT_CONTAINER]
+  - `vtProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`ram-minio`). When using Hyper, this will be the IP of the storage host. [VT_STORAGE_HOST]
   - `vtProcess.storagePort` - The port to use. [VT_STORAGE_PORT]
   - `vtProcess.hyperAccess` - Access key for Hyper. [HYPER_ACCESS]
   - `vtProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
@@ -110,7 +110,7 @@ module.exports = {
   auth: {
     strategy: 'none'
   },
-  db: 'postgresql://rra:rra@localhost:5432/rra',
+  db: 'postgresql://ram:ram@localhost:5432/ram',
   osmP2PDir: `${__dirname}/../../osm-p2p-dbs`,
   storage: {
     host: '0.0.0.0',
@@ -118,24 +118,24 @@ module.exports = {
     engine: 'minio',
     accessKey: 'minio',
     secretKey: 'miniostorageengine',
-    bucket: 'rra',
+    bucket: 'ram',
     region: 'us-east-1'
   },
   analysisProcess: {
     service: 'docker',
     hyperAccess: null,
     hyperSecret: null,
-    container: 'wbtransport/rra-analysis:latest-stable',
-    db: 'postgresql://rra:rra@rra-postgis:5432/rra',
-    storageHost: 'rra-minio',
+    container: 'wbtransport/ram-analysis:latest-stable',
+    db: 'postgresql://ram:ram@ram-postgis:5432/ram',
+    storageHost: 'ram-minio',
     storagePort: 9000
   },
   vtProcess: {
     service: 'docker',
     hyperAccess: null,
     hyperSecret: null,
-    container: 'wbtransport/rra-vt:latest-stable',
-    storageHost: 'rra-minio',
+    container: 'wbtransport/ram-vt:latest-stable',
+    storageHost: 'ram-minio',
     storagePort: 9000
   },
   roadNetEditMax: 20 * Math.pow(1024, 2) // 20MB
@@ -186,9 +186,9 @@ yarn run setup -- --data
 Set up the Docker network by running:
 
 ```
-docker network create --driver=bridge --subnet=172.99.99.0/24 --gateway=172.99.99.1 rra
+docker network create --driver=bridge --subnet=172.99.99.0/24 --gateway=172.99.99.1 ram
 ```
-*Note: If the network already exists remove it using `docker network rm rra` and run the command again.*
+*Note: If the network already exists remove it using `docker network rm ram` and run the command again.*
 
 This allows containers that are not part of the Docker Compose file to connect to the database and storage more easily. This includes the container that spins up the OSRM analysis.
 
@@ -218,37 +218,3 @@ This command starts the server with `nodemon` which watches files and restarts w
 yarn start
 ```
 Starts the app without file watching
-
-## Deployment to ECS
-Travis is set up to deploy the backend to an AWS ECS Cluster whenever a PR is merged into the `develop` or `master` branch of the project. This triggers a deploy of the API, the database, and the Minio bucket.
-
-### Setting up deployment
-Follow these steps to set up a deployment to an ECS Cluster:
-
-1. [Create an ECS Cluster](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/create_cluster.html) on AWS
-  - the current setup requires one EC2 instance and has been tested on a `t2.medium`
-  - associate a Key Pair to the instance
-  - expose the port for the API (default is `4000`). If you're using Minio as the storage engine, also open that port (eg. `9000`).
-2. Modify the Travis config with your AWS credentials
-  - `AWS_ECS_CLUSTER` = the cluster you created in step 1
-  - `AWS_REGION`
-  - `AWS_ACCESS_KEY_ID`
-  - `AWS_SECRET_ACCESS_KEY` - use `travis encrypt AWS_SECRET_ACCESS_KEY=[secretKey]` to [generate an encrypted key](https://docs.travis-ci.com/user/encryption-keys/)
-3. SSH into the machine with your Key Pair to set up the basic database structure
-  - run `docker ps` and to find the Container ID of `rra-api`
-  - run `docker exec [container_id] npm run setup -- --db --bucket`
-4. [to come] deployment of the Analysis process
-
-This should set up the basic cluster that Travis can push the backend to.
-
-#### Disabling a deployment
-To disable a particular deployment, you can remove it from the deploy block from `.travis.yml`.
-
-```
-deploy:
-  - provider: script
-    skip_cleanup: true
-    script: .build_scripts/deploy.sh
-    on:
-      branch: ${STABLE_BRANCH}
-```
