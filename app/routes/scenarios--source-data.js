@@ -259,12 +259,12 @@ export default [
               if (labels.length !== keys.length) {
                 throw new DataValidationError('"wbcatalog-options[key]" and "wbcatalog-options[label]" must have the same number of values');
               }
-              sourceData = _.zipWith(keys, labels, (k, l) => ({key: k, label: l}));
+              sourceData = { resources: _.zipWith(keys, labels, (k, l) => ({key: k, label: l})) };
             } else if (sourceName === 'road-network') {
               // The catalog data is stored as an array of objects to be
               // consistent throughout all sources, since the POI source
               // can have multiple options with labels.
-              sourceData = [{ key: result.fields['wbcatalog-options[key]'][0] }];
+              sourceData = { resources: [{ key: result.fields['wbcatalog-options[key]'][0] }] };
             } else {
               throw new DataValidationError(`Invalid source: ${sourceName}`);
             }

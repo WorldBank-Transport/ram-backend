@@ -400,7 +400,7 @@ describe('Scenario source data', function () {
           .first()
         )
         .then(({data}) => {
-          assert.equal(data[0].key, 'value');
+          assert.equal(data.resources[0].key, 'value');
         });
     });
 
@@ -432,10 +432,12 @@ describe('Scenario source data', function () {
           .first()
         )
         .then(({data}) => {
-          assert.deepEqual(data, [
-            {key: 'key 1', label: 'label 1'},
-            {key: 'key 2', label: 'label 2'}
-          ]);
+          assert.deepEqual(data, {
+            resources: [
+              {key: 'key 1', label: 'label 1'},
+              {key: 'key 2', label: 'label 2'}
+            ]
+          });
         });
     });
   });
