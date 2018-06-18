@@ -43,14 +43,13 @@ import { downloadWbCatalogScenarioFile, waitForEventsOnEmitter } from './common'
  */
 export default async function (projId, scId, {op, emitter, logger, appLogger}) {
   logger && logger.log('process roadnetwork');
+  await op.log('process:road-network', {message: 'Processing road network'});
 
   const source = await db('scenarios_source_data')
     .select('*')
     .where('scenario_id', scId)
     .where('name', 'road-network')
     .first();
-
-  await op.log('process:road-network', {message: 'Processing road network'});
 
   let fileData;
   if (source.type === 'wbcatalog') {

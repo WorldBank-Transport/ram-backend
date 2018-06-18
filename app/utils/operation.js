@@ -19,12 +19,16 @@
 export default class Operation {
   constructor (db) {
     if (!db) throw new Error('Missing db instance');
-
     this.db = db;
     this
       ._setId(null)
       ._setName(null)
       ._setStatus(null);
+
+    // Lock and queue to avoid race conditions.
+    this.lock = false;
+    this.queue = [];
+    this.queueClearPromiseResolve = [];
   }
 
   _setStatus (status) {
@@ -138,16 +142,8 @@ export default class Operation {
     }
 
     this._setStatus(Operation.status.complete);
-
-    return this.db(Operation.opTable)
-      .update({
-        updated_at: (new Date()),
-        status: this.getStatus()
-      })
-      .where('id', this.id)
-      .then(res => {
-        return this;
-      }, err => Promise.reject(err));
+    this.queue.push({task: 'finish'});
+    return this._reconcile();
   }
 
   /**
@@ -198,22 +194,61 @@ export default class Operation {
       data = {message: data};
     }
 
-    return this.db.transaction(trx => {
-      let date = new Date();
-      return Promise.all([
-        trx(Operation.opTable)
-          .update({updated_at: date})
-          .where('id', this.id),
-        trx(Operation.logTable)
-          .insert({
-            operation_id: this.id,
-            code,
-            data,
-            created_at: date
-          })
-      ])
-      .then(() => this);
-    });
+    // Queue tasks to be written to the database.
+    this.queue.push({task: 'log', code, data});
+    return this._reconcile();
+  }
+
+  /**
+   * Writes the operations in queue to the database.
+   */
+  _reconcile () {
+    // If locked create a new promise that resolves when everythin is writtem.
+    if (this.lock) {
+      return new Promise(resolve => this.queueClearPromiseResolve.push(resolve));
+    }
+    // If the queue is clear, resolve all pending promises.
+    if (!this.queue.length) {
+      this.queueClearPromiseResolve.forEach(resolve => resolve(this));
+      this.queueClearPromiseResolve = [];
+      return Promise.resolve(this);
+    }
+    this.lock = true;
+
+    const {task, code, data} = this.queue.shift();
+    let exec;
+
+    if (task === 'log') {
+      exec = this.db.transaction(trx => {
+        let date = new Date();
+        return Promise.all([
+          trx(Operation.opTable)
+            .update({updated_at: date})
+            .where('id', this.id),
+          trx(Operation.logTable)
+            .insert({
+              operation_id: this.id,
+              code,
+              data,
+              created_at: date
+            })
+        ]);
+      });
+    } else if (task === 'finish') {
+      exec = this.db(Operation.opTable)
+        .update({
+          updated_at: (new Date()),
+          status: Operation.status.complete
+        })
+        .where('id', this.id);
+    } else {
+      throw new Error('Invalid task');
+    }
+
+    return exec.then(res => {
+      this.lock = false;
+      return this._reconcile();
+    }, err => Promise.reject(err));
   }
 
   /**

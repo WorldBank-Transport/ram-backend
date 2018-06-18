@@ -25,14 +25,13 @@ import { downloadWbCatalogProjectFile } from './common';
  */
 export default async function (projId, {op, logger}) {
   logger && logger.log('process origins');
+  await op.log('process:origins', {message: 'Processing origins'});
 
   const source = await db('projects_source_data')
     .select('*')
     .where('project_id', projId)
     .where('name', 'origins')
     .first();
-
-  await op.log('process:origins', {message: 'Processing origins'});
 
   let originsData;
   if (source.type === 'wbcatalog') {

@@ -147,10 +147,13 @@ export async function concludeProjectSetup (e) {
     DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../project-setup_p${projId}s${scId}.log`));
     callback();
   } catch (err) {
+    console.log('err', err);
     logger && logger.log('error', err);
     DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../project-setup_p${projId}s${scId}.log`));
-    await op.log('error', {error: err.message})
-      .then(op => op.finish())
-      .then(() => callback(err.message), () => callback(err.message));
+    try {
+      await op.log('error', {error: err.message});
+      await op.finish();
+    } catch (e) { /* no-action */ }
+    callback(err.message);
   }
 }

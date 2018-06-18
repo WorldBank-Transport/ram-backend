@@ -34,14 +34,13 @@ import { downloadWbCatalogPoiFile, waitForEventsOnEmitter } from './common';
  */
 export default async function (projId, scId, {op, emitter, logger, appLogger}) {
   logger && logger.log('process points of interest');
+  await op.log('process:poi', {message: 'Processing points of interest'});
 
   const source = await db('scenarios_source_data')
     .select('*')
     .where('scenario_id', scId)
     .where('name', 'poi')
     .first();
-
-  await op.log('process:poi', {message: 'Processing points of interest'});
 
   // Contains the info about the files as is in the database.
   let fileData;
@@ -61,7 +60,7 @@ export default async function (projId, scId, {op, emitter, logger, appLogger}) {
 
   // Load the data into poisData keying it by type.
   if (source.type === 'wbcatalog' || source.type === 'file') {
-    const filesContent = Promise.map(fileData, file => getJSONFileContents(file.path));
+    const filesContent = await Promise.map(fileData, file => getJSONFileContents(file.path));
     fileData.forEach((f, idx) => { poisData[f.subtype] = filesContent[idx]; });
   }
 

@@ -34,14 +34,13 @@ import { downloadWbCatalogProjectFile } from './common';
  */
 export default async function (projId, scId, {op, emitter, logger}) {
   logger && logger.log('process admin areas');
+  await op.log('process:admin-bounds', {message: 'Processing admin areas'});
 
   const source = await db('projects_source_data')
     .select('*')
     .where('project_id', projId)
     .where('name', 'admin-bounds')
     .first();
-
-  await op.log('process:admin-bounds', {message: 'Processing admin areas'});
 
   if (source.type === 'wbcatalog') {
     await downloadWbCatalogProjectFile(projId, source, logger);

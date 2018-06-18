@@ -16,7 +16,7 @@ const FILE_ROAD_NETWORK = path.join(__dirname, 'utils/road-network-small.osm');
 const INVALID_FILE_JSON = path.join(__dirname, 'utils/test-file.json');
 const INVALID_FILE = path.join(__dirname, 'utils/test-file');
 
-describe.only('Finish Project Setup', function () {
+describe('Finish Project Setup', function () {
   before(function () {
     this.timeout(5000);
     return setupDdStructure()
@@ -118,23 +118,27 @@ describe.only('Finish Project Setup', function () {
             db('operations_logs')
               .where('operation_id', op.getId())
               .then(logs => {
-                assert.lengthOf(logs, 8);
+                assert.lengthOf(logs, 10);
                 assert.equal(logs[0].code, 'start');
                 assert.equal(logs[0].data.message, 'Operation started');
-                assert.equal(logs[1].code, 'process:origins');
-                assert.equal(logs[1].data.message, 'Processing origins');
-                assert.equal(logs[2].code, 'process:admin-bounds');
-                assert.equal(logs[2].data.message, 'Processing admin areas');
+                assert.equal(logs[1].code, 'process:admin-bounds');
+                assert.equal(logs[1].data.message, 'Processing admin areas');
+                assert.equal(logs[2].code, 'process:origins');
+                assert.equal(logs[2].data.message, 'Processing origins');
                 assert.equal(logs[3].code, 'process:road-network');
-                assert.equal(logs[3].data.message, 'Road network processing started');
-                assert.equal(logs[4].code, 'process:road-network');
-                assert.equal(logs[4].data.message, 'Road network processing finished');
-                assert.equal(logs[5].code, 'process:poi');
-                assert.equal(logs[5].data.message, 'Poi processing started');
-                assert.equal(logs[6].code, 'process:poi');
-                assert.equal(logs[6].data.message, 'Poi processing finished');
-                assert.equal(logs[7].code, 'success');
-                assert.equal(logs[7].data.message, 'Operation complete');
+                assert.equal(logs[3].data.message, 'Processing road network');
+                assert.equal(logs[4].code, 'process:poi');
+                assert.equal(logs[4].data.message, 'Processing points of interest');
+                assert.equal(logs[5].code, 'process:road-network');
+                assert.equal(logs[5].data.message, 'Road network processing started');
+                assert.equal(logs[6].code, 'process:road-network');
+                assert.equal(logs[6].data.message, 'Road network processing finished');
+                assert.equal(logs[7].code, 'process:poi');
+                assert.equal(logs[7].data.message, 'Poi processing started');
+                assert.equal(logs[8].code, 'process:poi');
+                assert.equal(logs[8].data.message, 'Poi processing finished');
+                assert.equal(logs[9].code, 'success');
+                assert.equal(logs[9].data.message, 'Operation complete');
               })
           ])
           // Delete osm p2p folder.
@@ -177,7 +181,7 @@ describe.only('Finish Project Setup', function () {
             if (err) {
               db('operations_logs')
                 .where('operation_id', op.getId())
-                .orderBy('id', 'desc')
+                .orderBy('created_at', 'desc')
                 .then(logs => {
                   assert.equal(err, 'Invalid administrative boundaries file');
                   assert.lengthOf(logs, 6);
