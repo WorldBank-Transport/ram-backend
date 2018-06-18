@@ -1,33 +1,28 @@
 'use strict';
-import path from 'path';
-import fs from 'fs-extra';
-import bbox from '@turf/bbox';
 import centerOfMass from '@turf/center-of-mass';
-import _ from 'lodash';
-import Promise from 'bluebird';
-import https from 'https';
-import os from 'os';
-import fetch from 'node-fetch';
-import EventEmitter from 'events';
 
-import config from '../../config';
 import db from '../../db/';
-import Operation from '../../utils/operation';
-import { setScenarioSetting, getScenarioSetting, getPropInsensitive } from '../../utils/utils';
-import { createAdminBoundsVT, createRoadNetworkVT } from '../../utils/vector-tiles';
+import { getPropInsensitive } from '../../utils/utils';
 import {
-  putFile as putFileToS3,
-  getFileInfo,
-  getFileContents,
-  getJSONFileContents,
-  putFileStream,
-  removeFile
+  getJSONFileContents
 } from '../../s3/utils';
-import { importRoadNetwork, importPOI, removeDatabase } from '../rra-osm-p2p';
-import AppLogger from '../../utils/app-logger';
-import * as overpass from '../../utils/overpass';
 import { downloadWbCatalogProjectFile } from './common';
 
+/**
+ * Processes the Origins depending on the source.
+ *
+ * Origins
+ *  Catalog:
+ *    - Download from server
+ *    - Cleanup and store in DB
+ *  File:
+ *    - Cleanup and store in DB
+ *
+ * @param {number} projId Project id
+ * @param {object} options Additional parameters
+ * @param {object} options.op Operation instance
+ * @param {object} options.logger Output logger
+ */
 export default async function (projId, {op, logger}) {
   const source = await db('projects_source_data')
     .select('*')

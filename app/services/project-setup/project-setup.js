@@ -42,12 +42,69 @@ process.on('message', function (e) {
 // operations.
 
 /**
- * Finishes the project setup by processing all the needed files:
- * Road network:
- *   - Convert the osm file to a changeset and import it to the osm-p2p-db
- * Admin Bound:
- *   - Extract all the village names, and store them on the database. This is
- *   needed to later select what admin areas are to be processed.
+ * Finishes the project setup by processing all the needed files.
+ * The type of processing done to each file depends on the source and
+ * different sources have different processing dependencies as outlined below:
+ *
+ * Road Network:
+ *  Catalog:
+ *    - Download from server
+ *    - Set editable setting
+ *    - Import into osm-p2p (depends on size)
+ *    - Create vector tiles
+ *  OSM:
+ *    - Import from overpass *
+ *    - Set editable setting
+ *    - Import into osm-p2p (depends on size)
+ *    - Create vector tiles
+ *  File:
+ *    - Set editable setting
+ *    - Import into osm-p2p (depends on size)
+ *    - Create vector tiles
+ *
+ * Profile:
+ *  Catalog:
+ *    - Download from server
+ *  Default:
+ *    - Copy default profile
+ *  File:
+ *    - No action
+ *
+ * Admin bounds
+ *  Catalog:
+ *    - Download from server
+ *    - Cleanup and store in DB
+ *    - Create vector tiles
+ *  File:
+ *    - Cleanup and store in DB
+ *    - Create vector tiles
+ *
+ * Origins
+ *  Catalog:
+ *    - Download from server
+ *    - Cleanup and store in DB
+ *  File:
+ *    - Cleanup and store in DB
+ *
+ * Points of interest:
+ *  Catalog:
+ *    - Download from server
+ *    - Import into osm-p2p **
+ *  OSM:
+ *    - Import from overpass *
+ *    - Import into osm-p2p **
+ *  File:
+ *    - Import into osm-p2p **
+ *
+ * Notes:
+ *    * Depends on the admin bounds bounding box
+ *    ** Depends on the RN editable setting
+ *
+ * Since the execution order depends a lot on the source, all the processing
+ * is started simultaneously, but then the processes wait for each other using
+ * events. Once a process reaches a point where it needs data from another
+ * it will trigger a waitForEventsOnEmitter(emitter, events...) that will only
+ * resolve once all the events are fired.
  *
  * @param  {object} e       Data.
  *         e.opId           Operation Id. It has to be already started.

@@ -13,6 +13,25 @@ import {
 } from '../../s3/utils';
 import { downloadWbCatalogProjectFile } from './common';
 
+/**
+ * Processes the Admin boundaries depending on the source.
+ *
+ * Admin bounds
+ *  Catalog:
+ *    - Download from server
+ *    - Cleanup and store in DB
+ *    - Create vector tiles
+ *  File:
+ *    - Cleanup and store in DB
+ *    - Create vector tiles
+ *
+ * @param {number} projId Project id
+ * @param {number} scId Scenario id
+ * @param {object} options Additional parameters
+ * @param {object} options.op Operation instance
+ * @param {object} options.emitter Emitter to coordinate execution
+ * @param {object} options.logger Output logger
+ */
 export default async function (projId, scId, {op, emitter, logger}) {
   const source = await db('projects_source_data')
     .select('*')
@@ -39,9 +58,6 @@ export default async function (projId, scId, {op, emitter, logger}) {
   if (!adminBoundsFc.features) {
     throw new Error('Invalid administrative boundaries file');
   }
-
-  // Emit data for other processes to use.
-  emitter.emit('admin-bounds:data', adminBoundsFc);
 
   const filteredAA = {
     'type': 'FeatureCollection',
@@ -132,16 +148,20 @@ export default async function (projId, scId, {op, emitter, logger}) {
     .where('type', 'admin-bounds')
     .first();
 
-  await removeFile(fileData.path);
   await putFileStream(filePath, JSON.stringify(fc));
 
   await db('projects_files')
-    .update({
-      name: fileName,
-      path: filePath,
-      updated_at: (new Date())
-    })
-    .where('id', fileData.id);
+  .update({
+    name: fileName,
+    path: filePath,
+    updated_at: (new Date())
+  })
+  .where('id', fileData.id);
+
+  await removeFile(fileData.path);
+
+  // Emit data for other processes to use.
+  emitter.emit('admin-bounds:data', adminBoundsFc);
 
   if (process.env.DS_ENV !== 'test') {
     await createAdminBoundsVT(projId, scId, op, filePath).promise;

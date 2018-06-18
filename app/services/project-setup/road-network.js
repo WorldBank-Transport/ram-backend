@@ -13,6 +13,34 @@ import { importRoadNetwork, removeDatabase } from '../rra-osm-p2p';
 import * as overpass from '../../utils/overpass';
 import { downloadWbCatalogScenarioFile, waitForEventsOnEmitter } from './common';
 
+/**
+ * Processes the POIs depending on the source.
+ *
+ * Road Network:
+ *  Catalog:
+ *    - Download from server
+ *    - Set editable setting
+ *    - Import into osm-p2p (depends on size)
+ *    - Create vector tiles
+ *  OSM:
+ *    - Import from overpass *
+ *    - Set editable setting
+ *    - Import into osm-p2p (depends on size)
+ *    - Create vector tiles
+ *  File:
+ *    - Set editable setting
+ *    - Import into osm-p2p (depends on size)
+ *    - Create vector tiles
+ *
+ * @param {number} projId Project id
+ * @param {number} scId Scenario id
+ * @param {object} options Additional parameters
+ * @param {object} options.op Operation instance
+ * @param {object} options.emitter Emitter to coordinate execution
+ * @param {object} options.logger Output logger
+ * @param {object} options.appLogger Main output logger to create additional
+ *                                   logger groups
+ */
 export default async function (projId, scId, {op, emitter, logger, appLogger}) {
   const source = await db('scenarios_source_data')
     .select('*')
@@ -26,6 +54,7 @@ export default async function (projId, scId, {op, emitter, logger, appLogger}) {
   }
 
   if (source.type === 'osm') {
+    logger && logger.log('road-network is waiting for events...');
     // If importing from OSM we need to wait for the admin bounds.
     const result = await waitForEventsOnEmitter(emitter, 'admin-bounds:data');
     const adminBoundsFc = result['admin-bounds:data'];

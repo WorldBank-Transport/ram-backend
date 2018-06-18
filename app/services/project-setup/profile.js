@@ -8,6 +8,21 @@ import {
 } from '../../s3/utils';
 import { downloadWbCatalogProjectFile } from './common';
 
+/**
+ * Processes the Profile depending on the source.
+ *
+ * Profile:
+ *  Catalog:
+ *    - Download from server
+ *  Default:
+ *    - Copy default profile
+ *  File:
+ *    - No action
+ *
+ * @param {number} projId Project id
+ * @param {object} options Additional parameters
+ * @param {object} options.logger Output logger
+ */
 export default async function (projId, {logger}) {
   const source = await db('projects_source_data')
     .select('*')

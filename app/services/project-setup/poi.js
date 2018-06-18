@@ -10,6 +10,28 @@ import { importPOI } from '../rra-osm-p2p';
 import * as overpass from '../../utils/overpass';
 import { downloadWbCatalogPoiFile, waitForEventsOnEmitter } from './common';
 
+/**
+ * Processes the POIs depending on the source.
+ *
+ * Points of interest:
+ *  Catalog:
+ *    - Download from server
+ *    - Import into osm-p2p **
+ *  OSM:
+ *    - Import from overpass *
+ *    - Import into osm-p2p **
+ *  File:
+ *    - Import into osm-p2p **
+ *
+ * @param {number} projId Project id
+ * @param {number} scId Scenario id
+ * @param {object} options Additional parameters
+ * @param {object} options.op Operation instance
+ * @param {object} options.emitter Emitter to coordinate execution
+ * @param {object} options.logger Output logger
+ * @param {object} options.appLogger Main output logger to create additional
+ *                                   logger groups
+ */
 export default async function (projId, scId, {op, emitter, logger, appLogger}) {
   const source = await db('scenarios_source_data')
     .select('*')
@@ -40,6 +62,7 @@ export default async function (projId, scId, {op, emitter, logger, appLogger}) {
   }
 
   if (source.type === 'osm') {
+    logger && logger.log('poi is waiting for events...');
     // If importing from OSM we need to wait for the admin bounds.
     const result = await waitForEventsOnEmitter(emitter, 'admin-bounds:data');
     const adminBoundsFc = result['admin-bounds:data'];

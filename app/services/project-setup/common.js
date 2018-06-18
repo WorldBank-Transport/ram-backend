@@ -18,6 +18,15 @@ const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 });
 
+/**
+ * Downloads a file form the url to the given destination.
+ * Note:
+ * This is used to download files form the WBCatalog and therefore uses a
+ * special https agent that doesn't reject unauthorized certs. See above.
+ *
+ * @param {string} url Source url
+ * @param {string} dest Destination path
+ */
 function downloadFile (url, dest) {
   return new Promise((resolve, reject) => {
     fetch(url, {agent: httpsAgent})
@@ -31,6 +40,14 @@ function downloadFile (url, dest) {
   });
 }
 
+/**
+ * Download a file from the WB Catalog and store it in the database.
+ *
+ * @param {number} projId Project id
+ * @param {number} scId Scenario id
+ * @param {object} source Source object
+ * @param {object} logger Output logger
+ */
 async function downloadWbCatalogFile (projId, scId, source, logger) {
   logger && logger.log(`download from wbcatalog - ${source.name}`);
 
@@ -131,6 +148,15 @@ async function downloadWbCatalogFile (projId, scId, source, logger) {
   }, {concurrency: 3});
 }
 
+/**
+ * Download a file from the WB Catalog for Project files
+ *
+ * @param {number} projId Project id
+ * @param {object} source Source object
+ * @param {object} logger Output logger
+ *
+ * @see downloadWbCatalogFile
+ */
 export async function downloadWbCatalogProjectFile (projId, source, logger) {
   source = _.cloneDeep(source);
   // Ensure that there is only one resource for these type of files.
@@ -139,6 +165,16 @@ export async function downloadWbCatalogProjectFile (projId, source, logger) {
   return files[0];
 }
 
+/**
+ * Download a file from the WB Catalog for Scenario files
+ *
+ * @param {number} projId Project id
+ * @param {number} scId Scenario id
+ * @param {object} source Source object
+ * @param {object} logger Output logger
+ *
+ * @see downloadWbCatalogFile
+ */
 export async function downloadWbCatalogScenarioFile (projId, scId, source, logger) {
   source = _.cloneDeep(source);
   // Ensure that there is only one resource for these type of files.
@@ -147,14 +183,46 @@ export async function downloadWbCatalogScenarioFile (projId, scId, source, logge
   return files[0];
 }
 
+/**
+ * Download a file from the WB Catalog for the POI source.
+ *
+ * @param {number} projId Project id
+ * @param {number} scId Scenario id
+ * @param {object} source Source object
+ * @param {object} logger Output logger
+ *
+ * @see downloadWbCatalogFile
+ */
 export async function downloadWbCatalogPoiFile (projId, scId, source, logger) {
   return downloadWbCatalogFile(projId, scId, source, logger);
 }
 
-
-
-// TODO add note
-// events could persist but when used in a process they are removed once the process finishes.
+/**
+ * Resolves a promise once all the events fired once.
+ * The promise is resolved with an object keyed by the event name containing
+ * the result of each event.
+ * @example
+ *  waitForEventsOnEmitter(emitter, 'event1', 'event2')
+ *  {
+ *    'event1': result,
+ *    'event2': result2
+ *  }
+ *
+ * Note:
+ * The event listeners are removed once triggered but non triggered events
+ * will presist, possibly causing unwanted side effects. If there's no need
+ * to wait for events anymore, they have to be removed manually.
+ *
+ * Note2:
+ * For the scope of this script the above is not an isseu because all the
+ * events are cleared once the process exits (on error or success), therefore
+ * there's no risk that lingering events contaminate different executions.
+ *
+ * @param {object} emitter EventEmitter intance
+ * @param {string} events Events to listen for
+ *
+ * @returns promise
+ */
 export async function waitForEventsOnEmitter (emitter, ...events) {
   return new Promise((resolve) => {
     let completed = 0;
@@ -165,19 +233,3 @@ export async function waitForEventsOnEmitter (emitter, ...events) {
     }));
   });
 }
-
-// import EventEmitter from 'events';
-// const myEmitter = new EventEmitter();
-
-
-// async function run () {
-//   console.log('a');
-//   const r = await waitForEventsOnEmitter(myEmitter, 'event1', 'event2');
-//   console.log('b', r);
-// }
-
-// run();
-// myEmitter.emit('event1', {stuff: 0});
-// setTimeout(() => {
-//   myEmitter.emit('event2');
-// }, 1000);
