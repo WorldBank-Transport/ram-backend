@@ -24,11 +24,15 @@ import { downloadWbCatalogProjectFile } from './common';
  * @param {object} options.logger Output logger
  */
 export default async function (projId, {op, logger}) {
+  logger && logger.log('process origins');
+
   const source = await db('projects_source_data')
     .select('*')
     .where('project_id', projId)
     .where('name', 'origins')
     .first();
+
+  await op.log('process:origins', {message: 'Processing origins'});
 
   let originsData;
   if (source.type === 'wbcatalog') {
@@ -42,10 +46,6 @@ export default async function (projId, {op, logger}) {
       .where('type', 'origins')
       .first();
   }
-
-  logger && logger.log('process origins');
-
-  await op.log('process:origins', {message: 'Processing origins'});
 
   // Clean the tables so any remnants of previous attempts are removed.
   // This avoids primary keys collisions.

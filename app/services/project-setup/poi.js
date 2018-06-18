@@ -33,11 +33,15 @@ import { downloadWbCatalogPoiFile, waitForEventsOnEmitter } from './common';
  *                                   logger groups
  */
 export default async function (projId, scId, {op, emitter, logger, appLogger}) {
+  logger && logger.log('process points of interest');
+
   const source = await db('scenarios_source_data')
     .select('*')
     .where('scenario_id', scId)
     .where('name', 'poi')
     .first();
+
+  await op.log('process:poi', {message: 'Processing points of interest'});
 
   // Contains the info about the files as is in the database.
   let fileData;

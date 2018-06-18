@@ -33,11 +33,15 @@ import { downloadWbCatalogProjectFile } from './common';
  * @param {object} options.logger Output logger
  */
 export default async function (projId, scId, {op, emitter, logger}) {
+  logger && logger.log('process admin areas');
+
   const source = await db('projects_source_data')
     .select('*')
     .where('project_id', projId)
     .where('name', 'admin-bounds')
     .first();
+
+  await op.log('process:admin-bounds', {message: 'Processing admin areas'});
 
   if (source.type === 'wbcatalog') {
     await downloadWbCatalogProjectFile(projId, source, logger);
@@ -53,8 +57,6 @@ export default async function (projId, scId, {op, emitter, logger}) {
 
   const adminBoundsFc = await getJSONFileContents(adminBoundsData.path);
 
-  logger && logger.log('process admin areas');
-
   if (!adminBoundsFc.features) {
     throw new Error('Invalid administrative boundaries file');
   }
@@ -69,8 +71,6 @@ export default async function (projId, scId, {op, emitter, logger}) {
         return o;
       })
   };
-
-  await op.log('process:admin-bounds', {message: 'Processing admin areas'});
 
   // Clean the tables so any remnants of previous attempts are removed.
   // This avoids primary keys collisions.

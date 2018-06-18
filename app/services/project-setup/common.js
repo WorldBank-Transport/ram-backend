@@ -49,7 +49,7 @@ function downloadFile (url, dest) {
  * @param {object} logger Output logger
  */
 async function downloadWbCatalogFile (projId, scId, source, logger) {
-  logger && logger.log(`download from wbcatalog - ${source.name}`);
+  logger && logger.log(`Download from wbcatalog - ${source.name}...`);
 
   // Figure out what we're dealing with from the source name:
   const what = {
@@ -81,6 +81,8 @@ async function downloadWbCatalogFile (projId, scId, source, logger) {
     }
 
     await downloadFile(wbCatalogRes.resource_url, tempPath);
+
+    logger && logger.log(`Download from wbcatalog - ${source.name}... done`);
 
     // Clean the tables so any remnants of previous attempts are removed.
     // This avoids primary keys collisions and duplication.
@@ -118,6 +120,7 @@ async function downloadWbCatalogFile (projId, scId, source, logger) {
         break;
     }
 
+    logger && logger.log(`Upload wbcatalog file to storage - ${source.name}...`);
     await putFileToS3(filePath, tempPath);
 
     let data = {
@@ -143,6 +146,8 @@ async function downloadWbCatalogFile (projId, scId, source, logger) {
         await db('scenarios_files').insert(data);
         break;
     }
+
+    logger && logger.log(`Upload wbcatalog file to storage - ${source.name}... done`);
 
     return data;
   }, {concurrency: 3});

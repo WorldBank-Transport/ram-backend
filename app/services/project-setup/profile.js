@@ -24,6 +24,8 @@ import { downloadWbCatalogProjectFile } from './common';
  * @param {object} options.logger Output logger
  */
 export default async function (projId, {logger}) {
+  logger && logger.log('process profile');
+
   const source = await db('projects_source_data')
     .select('*')
     .where('project_id', projId)

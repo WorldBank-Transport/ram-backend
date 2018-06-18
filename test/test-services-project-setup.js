@@ -16,7 +16,7 @@ const FILE_ROAD_NETWORK = path.join(__dirname, 'utils/road-network-small.osm');
 const INVALID_FILE_JSON = path.join(__dirname, 'utils/test-file.json');
 const INVALID_FILE = path.join(__dirname, 'utils/test-file');
 
-describe('Finish Project Setup', function () {
+describe.only('Finish Project Setup', function () {
   before(function () {
     this.timeout(5000);
     return setupDdStructure()
@@ -180,7 +180,7 @@ describe('Finish Project Setup', function () {
                 .orderBy('id', 'desc')
                 .then(logs => {
                   assert.equal(err, 'Invalid administrative boundaries file');
-                  assert.lengthOf(logs, 3);
+                  assert.lengthOf(logs, 6);
                   assert.equal(logs[0].code, 'error');
                   assert.equal(logs[0].data.error, 'Invalid administrative boundaries file');
                 })
