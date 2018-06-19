@@ -11,7 +11,7 @@ import {
   putFileStream,
   removeFile
 } from '../../s3/utils';
-import { downloadWbCatalogProjectFile } from './common';
+import { downloadWbCatalogProjectFile } from '../../utils/wbcatalog';
 
 /**
  * Processes the Admin boundaries depending on the source.

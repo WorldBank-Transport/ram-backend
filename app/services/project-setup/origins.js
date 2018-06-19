@@ -6,7 +6,7 @@ import { getPropInsensitive } from '../../utils/utils';
 import {
   getJSONFileContents
 } from '../../s3/utils';
-import { downloadWbCatalogProjectFile } from './common';
+import { downloadWbCatalogProjectFile } from '../../utils/wbcatalog';
 
 /**
  * Processes the Origins depending on the source.

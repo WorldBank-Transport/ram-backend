@@ -6,7 +6,7 @@ import db from '../../db/';
 import {
   putFileStream
 } from '../../s3/utils';
-import { downloadWbCatalogProjectFile } from './common';
+import { downloadWbCatalogProjectFile } from '../../utils/wbcatalog';
 
 /**
  * Processes the Profile depending on the source.

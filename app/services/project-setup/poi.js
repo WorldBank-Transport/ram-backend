@@ -8,7 +8,7 @@ import {
 } from '../../s3/utils';
 import { importPOI } from '../rra-osm-p2p';
 import * as overpass from '../../utils/overpass';
-import { downloadWbCatalogPoiFile, waitForEventsOnEmitter } from './common';
+import { downloadWbCatalogPoiFile, waitForEventsOnEmitter } from '../../utils/wbcatalog';
 
 /**
  * Processes the POIs depending on the source.

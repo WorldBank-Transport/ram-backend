@@ -11,7 +11,8 @@ import {
 } from '../../s3/utils';
 import { importRoadNetwork, removeDatabase } from '../rra-osm-p2p';
 import * as overpass from '../../utils/overpass';
-import { downloadWbCatalogScenarioFile, waitForEventsOnEmitter } from './common';
+import { waitForEventsOnEmitter } from './common';
+import { downloadWbCatalogScenarioFile } from '../../utils/wbcatalog';
 
 /**
  * Processes the POIs depending on the source.
