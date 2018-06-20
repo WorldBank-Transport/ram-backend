@@ -90,7 +90,7 @@ function runProcess (projId, scId, sourceFile, vtType) {
     switch (service) {
       case 'docker':
         args.push(
-          '--network', 'rra'
+          '--network', 'ram'
         );
         break;
       case 'hyper':
@@ -111,10 +111,10 @@ function runProcess (projId, scId, sourceFile, vtType) {
     // Append the name of the image last
     args.push(config.vtProcess.container);
     // Add the command to run.
-    // The `rra-vt` command is the one responsible to generate the vector tiles.
+    // The `ram-vt` command is the one responsible to generate the vector tiles.
     // This container has other commands available like
     // osmtogeojson and tippecanoe
-    args.push('rra-vt');
+    args.push('ram-vt');
 
     let proc = spawn(service, args, { env: Object.assign({}, process.env, env) });
     let error;
