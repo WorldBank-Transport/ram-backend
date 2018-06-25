@@ -1,47 +1,18 @@
 'use strict';
 import Joi from 'joi';
 import Boom from 'boom';
+import Promise from 'bluebird';
 import Octokit from '@octokit/rest';
 
 import db from '../db/';
 import { ProjectNotFoundError, DataConflictError } from '../utils/errors';
+import { getFileContents } from '../s3/utils';
 
 const OWNER = 'danielfdsilva';
 const REPO = 'the-rah';
 const AUTH_TOKEN = '--redacted--';
 
 module.exports = [
-  {
-    path: '/rahhh',
-    method: 'GET',
-    handler: async (request, reply) => {
-      const gClient = new GHClient(OWNER, REPO, AUTH_TOKEN);
-      const projectId = Date.now();
-      const branchName = `ram-export/${projectId}`;
-
-      await gClient.createBranch('master', branchName);
-
-      gClient.addFile(`data/project-${projectId}/data.md`, `
-# Project ${projectId}
-Some info about this
-`);
-
-      gClient.addFile(`data/project-${projectId}/results.geojson`, `
-{
-  "type": "FeatureCollection",
-  "features": [
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [29.88, -3.51] } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [51.67, 40.17] } },
-    { "type": "Feature", "geometry": { "type": "Point", "coordinates": [-109.33, 42.55] } }
-  ]
-}
-`);
-
-      await gClient.commit(`RAM automated export of project ${projectId}`);
-      const pullReq = await gClient.openPR(`RAM automated export of project ${projectId}`);
-      reply({statusCode: 200, message: 'Project exported. Approval pending.', prUrl: pullReq.data.url});
-    }
-  },
   {
     path: '/projects/{projId}/rah-export',
     method: 'POST',
@@ -72,24 +43,62 @@ Some info about this
         }
       }
     },
-    handler: (request, reply) => {
-      return db('projects')
-        .select('status')
-        .where('id', request.params.projId)
-        .then(projects => {
-          if (!projects.length) throw new ProjectNotFoundError();
-          //  It's not possible export pending projects.
-          if (projects[0].status === 'pending') throw new DataConflictError('Project setup not completed');
-        })
-        .then(() => {
-          reply({ok: 'ok'});
-        })
-        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
+    handler: async (request, reply) => {
+      try {
+        const project = await db('projects')
+          .select('*')
+          .where('id', request.params.projId)
+          .first();
+
+        if (!project) {
+          return reply(Boom.notFound(new ProjectNotFoundError()));
+        }
+        //  It's not possible export pending projects.
+        if (project.status === 'pending') {
+          return reply(Boom.conflict(new DataConflictError('Project setup not completed')));
+        }
+
+        const files = await db('scenarios_files')
+          .select('*')
+          .where('project_id', request.params.projId)
+          .whereIn('type', ['results-csv', 'results-geojson']);
+
+        if (!files.length) {
+          return reply(Boom.conflict(new DataConflictError('There are no scenarios with results')));
+        }
+
+        const gClient = new GHClient(OWNER, REPO, AUTH_TOKEN);
+
+        // Add all the files.
+        // Readme.
+        gClient.addFile(`data/project-${project.id}/readme.md`, `# Project ${project.name}\n${project.description}`);
+        // Data files.
+        await Promise.map(files, async f => {
+          const ext = f.type === 'results-csv' ? 'csv' : 'geojson';
+          gClient.addFile(`data/project-${project.id}/${f.name}.${ext}`, await getFileContents(f.path));
         });
+
+        // Create branch.
+        const branchName = `ram-export/${project.id}`;
+        try {
+          await gClient.createBranch('master', branchName);
+        } catch (error) {
+          const message = JSON.parse(error.message).message;
+          if (message === 'Reference already exists') {
+            return reply(Boom.conflict(new DataConflictError('This project was already exported and awaits processing')));
+          } else {
+            throw error;
+          }
+        }
+
+        // Commit and PR.
+        await gClient.commit(`RAM automated export of project ${project.id}`);
+        const pullReq = await gClient.openPR(`RAM automated export of project ${project.id}`);
+        return reply({statusCode: 200, message: 'Project exported. Approval pending.', prUrl: pullReq.data.url});
+      } catch (err) {
+        console.log('err', err);
+        reply(Boom.badImplementation(err));
+      }
     }
   }
 ];
