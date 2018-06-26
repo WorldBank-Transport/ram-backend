@@ -98,6 +98,13 @@ The following options must be set:
   - `vtProcess.hyperAccess` - Access key for Hyper. [HYPER_ACCESS]
   - `vtProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
   - `vtProcess.hyperSize` - The size of the Hyper container. If not specified, it will use [Hyper's](https://hyper.sh) default container. [HYPER_SIZE]
+  - `rahExport.ghRepo` - Repo where exports for rah should be placed (formatted as user/repo). [RAH_GH_REPO]
+  - `rahExport.ghToken` - Token to interact with GH api. [RAH_GH_TOKEN]
+  - `rahExport.ghPath` - Base path in the repo where to store the exports (no leading or trailing slashes). A folder with the project id will be created. [RAH_GH_PATH]
+  - `rahExport.committerName` - Committer's name (optional).  [RAH_CNAME]
+  - `rahExport.committerEmail` - Committer's email (optional).  [RAH_CEMAIL]
+  - `rahExport.authorName` - Author's name (optional).  [RAH_ANAME]
+  - `rahExport.authorEmail` - Author's email (optional).  [RAH_AEMAIL]
   - `roadNetEditMax` - The size in bytes until which the road network can be be edited in browser. When the road network exceeds the size, network editing is disabled. [ROAD_NET_EDIT_MAX]
 
 #### Config Example

@@ -2,15 +2,15 @@
 import Joi from 'joi';
 import Boom from 'boom';
 import Promise from 'bluebird';
+import _ from 'lodash';
 import Octokit from '@octokit/rest';
 
+import config from '../config';
 import db from '../db/';
 import { ProjectNotFoundError, DataConflictError } from '../utils/errors';
 import { getFileContents } from '../s3/utils';
 
-const OWNER = 'danielfdsilva';
-const REPO = 'the-rah';
-const AUTH_TOKEN = '--redacted--';
+const rahExport = config.rahExport;
 
 module.exports = [
   {
@@ -44,6 +44,16 @@ module.exports = [
       }
     },
     handler: async (request, reply) => {
+      // Check config.
+      const pieces = _.get(rahExport, 'ghRepo', '').split('/');
+      const ghOwner = pieces[0];
+      const ghRepo = pieces[1];
+      const ghPath = _.get(rahExport, 'ghPath', '');
+      const ghToken = _.get(rahExport, 'ghToken', '');
+      if (!rahExport || !ghOwner || !ghRepo || !ghPath || !ghToken) {
+        return reply(Boom.serverUnavailable('RAH export not setup'));
+      }
+
       try {
         const project = await db('projects')
           .select('*')
@@ -67,11 +77,11 @@ module.exports = [
           return reply(Boom.conflict(new DataConflictError('There are no scenarios with results')));
         }
 
-        const gClient = new GHClient(OWNER, REPO, AUTH_TOKEN);
+        const gClient = new GHClient(ghOwner, ghRepo, ghToken);
 
         // Add all the files.
         // Readme.
-        gClient.addFile(`data/project-${project.id}/readme.md`, `# Project ${project.name}\n${project.description}`);
+        gClient.addFile(`${ghPath}/project-${project.id}/readme.md`, `# Project ${project.name}\n${project.description}`);
         // Data files.
         await Promise.map(files, async f => {
           const ext = f.type === 'results-csv' ? 'csv' : 'geojson';
@@ -91,8 +101,16 @@ module.exports = [
           }
         }
 
+        let committer;
+        if (rahExport.committerName && rahExport.committerEmail) {
+          committer = { name: rahExport.committerName, email: rahExport.committerEmail };
+        }
+        let author;
+        if (rahExport.authorName && rahExport.authorEmail) {
+          author = { name: rahExport.authorName, email: rahExport.authorEmail };
+        }
         // Commit and PR.
-        await gClient.commit(`RAM automated export of project ${project.id}`);
+        await gClient.commit(`RAM automated export of project ${project.id}`, committer, author);
         const pullReq = await gClient.openPR(`RAM automated export of project ${project.id}`);
         return reply({statusCode: 200, message: 'Project exported. Approval pending.', prUrl: pullReq.data.url});
       } catch (err) {

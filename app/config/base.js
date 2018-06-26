@@ -34,5 +34,14 @@ module.exports = {
     storageHost: null,
     storagePort: null
   },
+  rahExport: {
+    ghRepo: null,
+    ghPath: null,
+    ghToken: null,
+    committerName: null,
+    committerEmail: null,
+    authorName: null,
+    authorEmail: null
+  },
   roadNetEditMax: 20 * Math.pow(1024, 2) // 20MB
 };

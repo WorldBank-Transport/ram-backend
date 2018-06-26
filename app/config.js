@@ -50,6 +50,14 @@ config.vtProcess.hyperAccess = process.env.HYPER_ACCESS || config.vtProcess.hype
 config.vtProcess.hyperSecret = process.env.HYPER_SECRET || config.vtProcess.hyperSecret;
 config.vtProcess.hyperSize = process.env.HYPER_SIZE || config.vtProcess.hyperSize;
 
+config.rahExport.ghRepo = process.env.RAH_GH_REPO || config.rahExport.ghRepo;
+config.rahExport.ghToken = process.env.RAH_GH_TOKEN || config.rahExport.ghToken;
+config.rahExport.ghPath = process.env.RAH_GH_PATH || config.rahExport.ghPath;
+config.rahExport.committerName = process.env.RAH_CNAME || config.rahExport.committerName;
+config.rahExport.committerEmail = process.env.RAH_CEMAIL || config.rahExport.committerEmail;
+config.rahExport.authorName = process.env.RAH_ANAME || config.rahExport.authorName;
+config.rahExport.authorEmail = process.env.RAH_AEMAIL || config.rahExport.authorEmail;
+
 config.roadNetEditMax = process.env.ROAD_NET_EDIT_MAX || config.roadNetEditMax;
 
 config.baseDir = __dirname;
