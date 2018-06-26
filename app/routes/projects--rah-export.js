@@ -2,7 +2,6 @@
 import Joi from 'joi';
 import Boom from 'boom';
 import Promise from 'bluebird';
-import _ from 'lodash';
 import Octokit from '@octokit/rest';
 
 import config from '../config';
@@ -45,11 +44,11 @@ module.exports = [
     },
     handler: async (request, reply) => {
       // Check config.
-      const pieces = _.get(rahExport, 'ghRepo', '').split('/');
+      const pieces = (rahExport.ghRepo || '').split('/');
       const ghOwner = pieces[0];
       const ghRepo = pieces[1];
-      const ghPath = _.get(rahExport, 'ghPath', '');
-      const ghToken = _.get(rahExport, 'ghToken', '');
+      const ghPath = rahExport.ghPath;
+      const ghToken = rahExport.ghToken;
       if (!rahExport || !ghOwner || !ghRepo || !ghPath || !ghToken) {
         return reply(Boom.serverUnavailable('RAH export not setup'));
       }

@@ -33,6 +33,9 @@ services:
       STORAGE_REGION: us-east-1
       STORAGE_HOST: ram-minio
       OSM_P2P_DIR: ./osm-p2p-dbs-test
+      RAH_GH_REPO: ram/ram
+      RAH_GH_TOKEN: --redacted--
+      RAH_GH_PATH: data
     links:
       - ram-postgis
       - ram-minio

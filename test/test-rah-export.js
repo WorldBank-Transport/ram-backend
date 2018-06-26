@@ -35,7 +35,7 @@ const getBasePayload = () => {
   };
 };
 
-describe.only('RAH Export', function () {
+describe('RAH Export', function () {
   before('Before - Rah export', function () {
     this.timeout(5000);
     return setupDdStructure()
