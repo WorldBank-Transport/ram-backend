@@ -3,6 +3,8 @@ import Joi from 'joi';
 import Boom from 'boom';
 import Promise from 'bluebird';
 import Octokit from '@octokit/rest';
+import { safeDump } from 'js-yaml';
+import Zip from 'node-zip';
 
 import config from '../config';
 import db from '../db/';
@@ -76,16 +78,41 @@ module.exports = [
           return reply(Boom.conflict(new DataConflictError('There are no scenarios with results')));
         }
 
+        // Build the markdown file.
+        const frontmatter = {
+          title: request.payload.title,
+          country: request.payload.country,
+          date: request.payload.date,
+          authors: request.payload.authors.map(a => a.name),
+          topics: request.payload.topics.map(t => t.name),
+          contact: {
+            name: request.payload.contactName,
+            email: request.payload.contactEmail
+          }
+        };
+
+        const indexMd = `---
+${safeDump(frontmatter)}
+---
+
+${request.payload.description}
+        `;
+
         const gClient = new GHClient(ghOwner, ghRepo, ghToken);
 
         // Add all the files.
         // Readme.
-        gClient.addFile(`${ghPath}/project-${project.id}/readme.md`, `# Project ${project.name}\n${project.description}`);
+        gClient.addFile(`${ghPath}/project-${project.id}/index.md`, indexMd);
         // Data files.
+        const zip = new Zip();
         await Promise.map(files, async f => {
           const ext = f.type === 'results-csv' ? 'csv' : 'geojson';
-          gClient.addFile(`data/project-${project.id}/${f.name}.${ext}`, await getFileContents(f.path));
+          zip.file(`${f.name}.${ext}`, await getFileContents(f.path));
         });
+
+        const zipFile = zip.generate({ base64: true, compression: 'DEFLATE' });
+
+        gClient.addBinaryFile(`${ghPath}/project-${project.id}/results.zip`, zipFile);
 
         // Create branch.
         const branchName = `ram-export/${project.id}`;
@@ -132,6 +159,7 @@ class GHClient {
     // - Get the base branch SHA to create a new branch from it.
     // - Create a file tree which uses the tree of the new branch (its SHA)
     //   as a base.
+    // - Create blobs for the binary files and add their sha to the tree.
     // - Create a commit which points to the creates tree and has the base
     //   branch as a parent.
     // - Update the new branch to point to that commit.
@@ -141,6 +169,7 @@ class GHClient {
 
     this.branch = null;
     this.fileTree = [];
+    this.fileBinaries = [];
   }
 
   async createBranch (base, dest) {
@@ -164,8 +193,25 @@ class GHClient {
     });
   }
 
+  addBinaryFile (path, content) {
+    this.fileBinaries.push({
+      path,
+      content
+    });
+  }
+
   async commit (message, committer, author) {
     const {owner, repo, branch, fileTree} = this;
+    // Create the binaries.
+    for (const { content, path } of this.fileBinaries) {
+      const blobResult = await this.octokit.gitdata.createBlob({owner, repo, content, encoding: 'base64'});
+      this.fileTree.push({
+        mode: '100644',
+        type: 'blob',
+        path,
+        sha: blobResult.data.sha
+      });
+    }
     const treeResult = await this.octokit.gitdata.createTree({owner, repo, tree: fileTree, base_tree: branch.sha});
     const commit = await this.octokit.gitdata.createCommit({owner, repo, message, tree: treeResult.data.sha, parents: [branch.sha], committer, author});
     return this.octokit.gitdata.updateReference({owner, repo, ref: `heads/${branch.name}`, sha: commit.data.sha});
