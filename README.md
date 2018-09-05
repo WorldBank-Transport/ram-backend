@@ -67,6 +67,7 @@ After installing the projects there will be 4 main files:
 Some of the following options are overridable by environment variables, expressed between [].
 The following options must be set:
 
+  - `instanceId` - The RAM instance id. Should be unique. [INSTANCE_ID]
   - `connection.host` - The host. (mostly cosmetic. Default to 0.0.0.0). [PORT]
   - `connection.port` - The port where the app runs. (Default 4000). [HOST]
   - `auth` - Authentication strategy object

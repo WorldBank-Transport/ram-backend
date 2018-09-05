@@ -4,6 +4,7 @@ module.exports = {
     host: '0.0.0.0',
     port: 4000
   },
+  instanceId: null,
   db: null,
   osmP2PDir: null,
   storage: {

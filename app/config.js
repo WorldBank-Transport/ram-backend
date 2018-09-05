@@ -16,6 +16,13 @@ if (process.env.DS_ENV === 'offline') {
   config = require('./config/offline');
 }
 
+// Check if an instance id was defined.
+config.instanceId = process.env.INSTANCE_ID || config.instanceId;
+
+if (!config.instanceId) throw new Error('The RAM instance id was not defined. Set one with INSTANCE_ID');
+
+if (!config.instanceId.match(/^[a-z0-9-_.]+$/)) throw new Error('Instance id invalid. Use only lowercase alphanumeric characters and _ - .');
+
 // Overrides by ENV variables.
 config.db = process.env.DB_CONNECTION || config.db;
 

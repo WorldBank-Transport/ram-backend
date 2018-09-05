@@ -46,6 +46,10 @@ module.exports = [
     },
     handler: async (request, reply) => {
       // Check config.
+      if (config.environment === 'offline') {
+        return reply(Boom.serverUnavailable('RAH export is disabled for offline instances'));
+      }
+      const instId = config.instanceId;
       const pieces = (rahExport.ghRepo || '').split('/');
       const ghOwner = pieces[0];
       const ghRepo = pieces[1];
@@ -102,7 +106,7 @@ ${request.payload.description}
 
         // Add all the files.
         // Readme.
-        gClient.addFile(`${ghPath}/project-${project.id}/index.md`, indexMd);
+        gClient.addFile(`${ghPath}/project-${instId}-${project.id}/index.md`, indexMd);
         // Data files.
         const zip = new Zip();
         await Promise.map(files, async f => {
@@ -112,10 +116,10 @@ ${request.payload.description}
 
         const zipFile = zip.generate({ base64: true, compression: 'DEFLATE' });
 
-        gClient.addBinaryFile(`${ghPath}/project-${project.id}/results.zip`, zipFile);
+        gClient.addBinaryFile(`${ghPath}/project-${instId}-${project.id}/results.zip`, zipFile);
 
         // Create branch.
-        const branchName = `ram-export/${project.id}`;
+        const branchName = `ram-export/${instId}-${project.id}`;
         try {
           await gClient.createBranch('master', branchName);
         } catch (error) {
@@ -136,8 +140,8 @@ ${request.payload.description}
           author = { name: rahExport.authorName, email: rahExport.authorEmail };
         }
         // Commit and PR.
-        await gClient.commit(`RAM automated export of project ${project.id}`, committer, author);
-        const pullReq = await gClient.openPR(`RAM automated export of project ${project.id}`);
+        await gClient.commit(`RAM automated export of project ${project.id} (${instId})`, committer, author);
+        const pullReq = await gClient.openPR(`RAM automated export of project ${project.name} from ${instId}`);
         return reply({statusCode: 200, message: 'Project exported. Approval pending.', prUrl: pullReq.data.url});
       } catch (err) {
         console.log('err', err);
