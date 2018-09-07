@@ -24,6 +24,7 @@ services:
     ports:
       - 4000
     environment:
+      INSTANCE_ID: ci-test
       DB_CONNECTION: postgresql://ramtest:ramtest@ram-postgis:5432/ramtest
       STORAGE_PORT: 9000
       STORAGE_ENGINE: minio
