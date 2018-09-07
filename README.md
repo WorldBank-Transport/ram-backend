@@ -100,7 +100,7 @@ The following options must be set:
   - `vtProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
   - `vtProcess.hyperSize` - The size of the Hyper container. If not specified, it will use [Hyper's](https://hyper.sh) default container. [HYPER_SIZE]
   - `rahExport.ghRepo` - Repo where exports for rah should be placed (formatted as user/repo). [RAH_GH_REPO]
-  - `rahExport.ghToken` - Token to interact with GH api. [RAH_GH_TOKEN]
+  - `rahExport.ghToken` - Token to interact with GH api. This token needs to have write access to the repo. [RAH_GH_TOKEN]
   - `rahExport.ghPath` - Base path in the repo where to store the exports (no leading or trailing slashes). A folder with the project id will be created. [RAH_GH_PATH]
   - `rahExport.committerName` - Committer's name (optional).  [RAH_CNAME]
   - `rahExport.committerEmail` - Committer's email (optional).  [RAH_CEMAIL]
@@ -111,6 +111,7 @@ The following options must be set:
 #### Config Example
 ```
 module.exports = {
+  instanceId: null, // Change me!
   connection: {
     host: '0.0.0.0',
     port: 4000
@@ -146,6 +147,15 @@ module.exports = {
     storageHost: 'ram-minio',
     storagePort: 9000
   },
+  rahExport: {
+    ghRepo: 'WorldBank-Transport/rah',
+    ghToken: null',
+    ghPath: 'app/assets/content/projects',
+    committerName: null,
+    committerEmail: null,
+    authorName: null,
+    authorEmail: null
+  },
   roadNetEditMax: 20 * Math.pow(1024, 2) // 20MB
 };
 ```
@@ -169,6 +179,11 @@ auth: {
 
 **Disable auth**
 For development purposes it might be easier to disable authentication altogether. To do this simply set `auth.strategy` to `none` using the config or the env variable `AUTH_STRATEGY`. Note that auth must be disabled on the client as well.
+
+#### Rural Accessibility Hub
+The [Rural Accessibility Hub (RAH)](http://rah.surge.sh/about) is a central hub to showcase and share accessibility analysis generated using different RAM instances.
+After running the analysis, users can export the results to RAH while providing some meta information about them. After a project is exported it will need to be approved by a RAH maintainer before it appears on the website. The list of pending projects can be seen on [Github's Pull Request page](https://github.com/WorldBank-Transport/rah/pulls).
+To setup RAM for integration with RAH, add the config variables under `rahExport` and set a unique `instanceId`.
 
 ### Setup
 Both the database and the local storage need some setup.
