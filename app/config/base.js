@@ -4,6 +4,7 @@ module.exports = {
     host: '0.0.0.0',
     port: 4000
   },
+  instanceId: null,
   db: null,
   osmP2PDir: null,
   storage: {
@@ -33,6 +34,15 @@ module.exports = {
     container: null,
     storageHost: null,
     storagePort: null
+  },
+  rahExport: {
+    ghRepo: null,
+    ghPath: null,
+    ghToken: null,
+    committerName: null,
+    committerEmail: null,
+    authorName: null,
+    authorEmail: null
   },
   roadNetEditMax: 20 * Math.pow(1024, 2) // 20MB
 };

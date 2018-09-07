@@ -1,6 +1,7 @@
 module.exports = {
   environment: 'offline',
   debug: false,
+  instanceId: 'offline-ram',
   connection: {
     host: '0.0.0.0',
     port: 4000

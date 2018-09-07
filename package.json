@@ -29,6 +29,7 @@
     "node": "8.x.x"
   },
   "dependencies": {
+    "@octokit/rest": "^15.9.2",
     "@turf/bbox": "^4.0.2",
     "@turf/center-of-mass": "^4.5.2",
     "babel-preset-es2015": "^6.18.0",
@@ -45,6 +46,7 @@
     "hapi-auth-jwt2": "^7.3.0",
     "hapi-router": "^3.5.0",
     "joi": "^10.0.0",
+    "js-yaml": "^3.12.0",
     "jwks-rsa": "^1.1.1",
     "knex": "0.12.7",
     "lodash": "^4.17.0",
