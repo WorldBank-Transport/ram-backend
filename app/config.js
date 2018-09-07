@@ -16,6 +16,13 @@ if (process.env.DS_ENV === 'offline') {
   config = require('./config/offline');
 }
 
+// Check if an instance id was defined.
+config.instanceId = process.env.INSTANCE_ID || config.instanceId;
+
+if (!config.instanceId) throw new Error('The RAM instance id was not defined. Set one with INSTANCE_ID');
+
+if (!config.instanceId.match(/^[a-z0-9-_.]+$/)) throw new Error('Instance id invalid. Use only lowercase alphanumeric characters and _ - .');
+
 // Overrides by ENV variables.
 config.db = process.env.DB_CONNECTION || config.db;
 
@@ -49,6 +56,14 @@ config.vtProcess.storagePort = process.env.VT_STORAGE_PORT || config.vtProcess.s
 config.vtProcess.hyperAccess = process.env.HYPER_ACCESS || config.vtProcess.hyperAccess;
 config.vtProcess.hyperSecret = process.env.HYPER_SECRET || config.vtProcess.hyperSecret;
 config.vtProcess.hyperSize = process.env.HYPER_SIZE || config.vtProcess.hyperSize;
+
+config.rahExport.ghRepo = process.env.RAH_GH_REPO || config.rahExport.ghRepo;
+config.rahExport.ghToken = process.env.RAH_GH_TOKEN || config.rahExport.ghToken;
+config.rahExport.ghPath = process.env.RAH_GH_PATH || config.rahExport.ghPath;
+config.rahExport.committerName = process.env.RAH_CNAME || config.rahExport.committerName;
+config.rahExport.committerEmail = process.env.RAH_CEMAIL || config.rahExport.committerEmail;
+config.rahExport.authorName = process.env.RAH_ANAME || config.rahExport.authorName;
+config.rahExport.authorEmail = process.env.RAH_AEMAIL || config.rahExport.authorEmail;
 
 config.roadNetEditMax = process.env.ROAD_NET_EDIT_MAX || config.roadNetEditMax;
 

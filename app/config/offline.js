@@ -1,6 +1,7 @@
 module.exports = {
   environment: 'offline',
   debug: false,
+  instanceId: 'offline-ram',
   connection: {
     host: '0.0.0.0',
     port: 4000
@@ -21,14 +22,14 @@ module.exports = {
   },
   analysisProcess: {
     service: 'docker',
-    container: 'wbtransport/rra-analysis:latest-stable',
+    container: 'wbtransport/ram-analysis:v0.1.0',
     db: 'postgresql://ram:ram@172.99.99.10:5432/ram',
     storageHost: '172.99.99.15',
     storagePort: 9000
   },
   vtProcess: {
     service: 'docker',
-    container: 'wbtransport/rra-vt:latest-stable',
+    container: 'wbtransport/ram-vt:v0.1.0',
     storageHost: '172.99.99.15',
     storagePort: 9000
   },
