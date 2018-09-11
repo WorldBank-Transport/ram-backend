@@ -17,7 +17,7 @@ import {
   ProjectStatusError
 } from '../utils/errors';
 import { parseFormData, getPropInsensitive } from '../utils/utils';
-import { getOSRMProfileDefaultSpeedSettings, renderProfileFile } from '../utils/osrm-profile';
+import { getOSRMProfileDefaultSpeedSettings, renderProfileFile, getOSRMProfileDefaultSpeedMeta } from '../utils/osrm-profile';
 
 const profileValidationSchema = Object.keys(getOSRMProfileDefaultSpeedSettings())
   .reduce((acc, setting) => {
@@ -243,7 +243,10 @@ export default [
           .where('name', 'profile')
           .first();
 
-        return reply(sourceData.data.settings);
+        return reply({
+          sections: getOSRMProfileDefaultSpeedMeta(),
+          settings: sourceData.data.settings
+        });
       } catch (err) {
         console.log('err', err);
         return reply(Boom.badImplementation(err));

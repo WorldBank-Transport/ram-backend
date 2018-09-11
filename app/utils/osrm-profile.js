@@ -28,6 +28,24 @@ export function toLua (element) {
   }
 }
 
+// How the profile edit works:
+// Section are gorups of speeds that can be edited (ex: "Surface Speeds",
+// "Tracktype Speeds", "Smoothness Speeds", etc) These are required by the api
+// and defined on the server alongside the labels.
+// A section can have the `multi` flag set, which means that two levels are
+// allowed.
+
+export function getOSRMProfileDefaultSpeedMeta () {
+  return [
+    { key: 'speed_profile', label: 'Speeds' },
+    { key: 'surface_speeds', label: 'Surface Speeds' },
+    { key: 'tracktype_speeds', label: 'Tracktype Speeds' },
+    { key: 'smoothness_speeds', label: 'Smoothness Speeds' },
+    { key: 'maxspeed_table_default', label: 'Maxspeed Default' },
+    { key: 'maxspeed_table', label: 'Maxspeed' }
+  ];
+}
+
 export function getOSRMProfileDefaultSpeedSettings () {
   return {
     speed_profile: {

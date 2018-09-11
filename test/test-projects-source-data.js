@@ -9,7 +9,7 @@ import db from '../app/db';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp } from './utils/data';
-import { getOSRMProfileDefaultSpeedSettings, toLua } from '../app/utils/osrm-profile';
+import { getOSRMProfileDefaultSpeedSettings, toLua, getOSRMProfileDefaultSpeedMeta } from '../app/utils/osrm-profile';
 
 var options = {
   connection: {port: 2000, host: '0.0.0.0'}
@@ -509,7 +509,10 @@ describe('Projects source data', function () {
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
         var result = res.result;
-        assert.deepEqual(result, getOSRMProfileDefaultSpeedSettings());
+        assert.deepEqual(result, {
+          sections: getOSRMProfileDefaultSpeedMeta(),
+          settings: getOSRMProfileDefaultSpeedSettings()
+        });
       });
     });
   });
