@@ -9,6 +9,7 @@ import db from '../app/db';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
 import { setupStructure as setupStorageStructure } from '../app/s3/structure';
 import { fixMeUp } from './utils/data';
+import { getOSRMProfileDefaultSpeedSettings, toLua } from '../app/utils/osrm-profile';
 
 var options = {
   connection: {port: 2000, host: '0.0.0.0'}
@@ -453,6 +454,248 @@ describe('Projects source data', function () {
             {key: 'key 1'}
           ]);
         });
+    });
+  });
+
+  describe('GET /projects/{projId}/source-data/editor -- profile', function () {
+    it('should fail without a type', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/source-data/editor'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /"type" is required/);
+      });
+    });
+
+    it('should fail without a type different than profile', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/source-data/editor?type=invalid'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /"type" must be one of \[profile\]/);
+      });
+    });
+
+    it('should fail if project is not found', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/0000/source-data/editor?type=profile'
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        var result = res.result;
+        assert.equal(result.message, 'Project not found');
+      });
+    });
+
+    it('should fail if project setup is not completed', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/1000/source-data/editor?type=profile'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.equal(result.message, 'Project setup not completed');
+      });
+    });
+
+    it('should return the profile settings', function () {
+      return instance.injectThen({
+        method: 'GET',
+        url: '/projects/2000/source-data/editor?type=profile'
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        assert.deepEqual(result, getOSRMProfileDefaultSpeedSettings());
+      });
+    });
+  });
+
+  describe('POST /projects/{projId}/source-data/editor -- profile', function () {
+    it('should fail without a type', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/source-data/editor'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /"type" is required/);
+      });
+    });
+
+    it('should fail without a type different than profile', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/source-data/editor?type=invalid'
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /"type" must be one of \[profile\]/);
+      });
+    });
+
+    it('should fail with missing keys', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/2000/source-data/editor?type=profile',
+        payload: {
+
+        }
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /"speed_profile" is required/);
+      });
+    });
+
+    const emptySettings = {
+      speed_profile: {},
+      surface_speeds: {},
+      tracktype_speeds: {},
+      smoothness_speeds: {},
+      maxspeed_table_default: {},
+      maxspeed_table: {}
+    };
+
+    it('should fail with invalid section keys', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/2000/source-data/editor?type=profile',
+        payload: Object.assign({}, emptySettings, {
+          invalid: {}
+        })
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.equal(result.message, '"invalid" is not allowed');
+      });
+    });
+
+    it('should fail with invalid speed keys', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/2000/source-data/editor?type=profile',
+        payload: Object.assign({}, emptySettings, {
+          speed_profile: {
+            'invalid key': 10
+          }
+        })
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /"invalid key" is not allowed/);
+      });
+    });
+
+    it('should fail with invalid speed values', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/2000/source-data/editor?type=profile',
+        payload: Object.assign({}, emptySettings, {
+          speed_profile: {
+            'valid_key': 'invalid'
+          }
+        })
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.match(result.message, /"valid_key" must be a number/);
+      });
+    });
+
+    it('should fail if project is not found', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/0000/source-data/editor?type=profile',
+        payload: emptySettings
+      }).then(res => {
+        assert.equal(res.statusCode, 404, 'Status code is 404');
+        var result = res.result;
+        assert.equal(result.message, 'Project not found');
+      });
+    });
+
+    it('should fail if project setup is not completed', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/source-data/editor?type=profile',
+        payload: emptySettings
+      }).then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        var result = res.result;
+        assert.equal(result.message, 'Project setup not completed');
+      });
+    });
+
+    it('should render the object to lua', function () {
+      const data = {
+        foo: 'bar',
+        another: 'baz'
+      };
+      assert.equal(toLua(data), `{
+  ["foo"] = "bar",
+  ["another"] = "baz"
+}`);
+    });
+
+    it('should render the nested object to lua', function () {
+      const data = {
+        foo: 'bar',
+        another: {
+          baz: 10,
+          more: 20,
+          double: {
+            nesting: 'all the way'
+          }
+        },
+        bax: 10
+      };
+      assert.equal(toLua(data), `{
+  ["foo"] = "bar",
+  ["another"] = {
+    ["baz"] = 10,
+    ["more"] = 20,
+    ["double"] = {
+      ["nesting"] = "all the way"
+    }
+  },
+  ["bax"] = 10
+}`);
+    });
+
+    it('should update the profile settings', function () {
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/2000/source-data/editor?type=profile',
+        payload: Object.assign({}, emptySettings, {
+          speed_profile: {
+            highway: '100',
+            secondary: 20
+          }
+        })
+      }).then(res => {
+        assert.equal(res.statusCode, 200, 'Status code is 200');
+        var result = res.result;
+        assert.equal(result.message, 'Profile settings uploaded');
+      })
+      .then(() => {
+        return db('projects_source_data')
+          .select('*')
+          .where('project_id', 2000)
+          .where('name', 'profile')
+          .first();
+      })
+      .then(({data}) => {
+        assert.deepEqual(data.settings, Object.assign({}, emptySettings, {
+          speed_profile: {
+            highway: 100,
+            secondary: 20
+          }
+        }));
+      });
     });
   });
 });

@@ -1,7 +1,7 @@
 'use strict';
 import renderProfile from './default.profile.template';
 
-function toLua (element) {
+export function toLua (element) {
   let properties = [];
 
   // Array
@@ -12,7 +12,9 @@ function toLua (element) {
   // Object
   } else if (typeof element === 'object') {
     Object.keys(element).forEach(key => {
-      properties.push(`  ["${key}"] = ${toLua(element[key])}`);
+      // Ensure correct indentation.
+      const lua = toLua(element[key]).toString().replace(/\n/gm, '\n  ');
+      properties.push(`  ["${key}"] = ${lua}`);
     });
     return `{\n${properties.join(',\n')}\n}`;
 

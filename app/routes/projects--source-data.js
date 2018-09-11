@@ -299,7 +299,7 @@ export default [
           .where('project_id', projId)
           .where('type', 'profile');
 
-        return reply({statusCode: 200, message: 'Profile settigns uploaded'});
+        return reply({statusCode: 200, message: 'Profile settings uploaded'});
       } catch (err) {
         console.log('err', err);
         return reply(Boom.badImplementation(err));

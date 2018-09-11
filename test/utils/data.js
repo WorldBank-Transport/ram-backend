@@ -8,7 +8,8 @@ import fs from 'fs';
 import config from '../../app/config';
 import db from '../../app/db';
 import { bucket } from '../../app/s3/';
-import { putObjectFromFile } from '../../app/s3/structure';
+import { putObjectFromFile, putObject } from '../../app/s3/structure';
+import { getOSRMProfileDefaultSpeedSettings, renderProfileFile } from '../../app/utils/osrm-profile';
 
 function readJSONSync (file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -846,11 +847,12 @@ export function project1200 () {
 
 // Project 2000 in active state with one scenarios and all files.
 // Files represent real data from Sergipe, Brazil
+// Profile is default.
 export function project2000 () {
   return project({
     'id': 2000,
     'name': 'Sergipe, Brazil',
-    'description': 'Townhalls in a part of Sergipe, brazil.',
+    'description': 'Townhalls in a part of Sergipe, Brazil. Includes a default profile to allow editing.',
     'status': 'active',
     'bbox': JSON.stringify(ADMIN_AREAS_BBOX),
     'created_at': '2017-02-01T12:00:06.000Z',
@@ -888,16 +890,18 @@ export function project2000 () {
   ]))
   .then(() => projectAA(getAdminAreasForProject(2000)))
   .then(() => projectOrigins(getOriginsForProject(2000)))
-  .then(() => putObjectFromFile(bucket, 'project-2000/profile_000000', FILE_PROFILE))
+  .then(() => putObject(bucket, 'project-2000/profile_000000', renderProfileFile(getOSRMProfileDefaultSpeedSettings())))
   .then(() => putObjectFromFile(bucket, 'project-2000/origins_000000', FILE_ORIGINS))
   .then(() => putObjectFromFile(bucket, 'project-2000/admin-bounds_000000', FILE_ADMIN))
   .then(() => projectSourceData([
     {
       'id': 2000,
       'name': 'profile',
-      'type': 'file',
-      'project_id': 2000
-      // 'data':
+      'type': 'default',
+      'project_id': 2000,
+      'data': {
+        'settings': getOSRMProfileDefaultSpeedSettings()
+      }
     },
     {
       'id': 2001,
