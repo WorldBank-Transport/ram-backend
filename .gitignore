@@ -103,6 +103,7 @@ dist
 .nyc_output
 ecs-task-definition-generated.yml
 *.pyc
+.vscode
 
 # OSM P2P db
 osm-p2p-dbs
