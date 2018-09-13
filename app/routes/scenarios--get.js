@@ -173,7 +173,7 @@ function attachAdminAreas (scenario) {
 }
 
 function attachOperation (opName, prop, scenario) {
-  return getOperationData(db, opName, prop, scenario.id)
+  return getOperationData(db, opName, scenario.id)
     .then(opData => {
       scenario[prop] = opData;
       return scenario;
