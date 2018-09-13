@@ -126,7 +126,7 @@ export default [
             return getScenarioSource(scId, sourceName)
               .then(source => {
                 // Delete files.
-                return source && source.type !== 'road-network'
+                return source && source.type !== 'file'
                   ? deleteScenarioFiles(projId, scId, sourceName)
                   : null;
               })
