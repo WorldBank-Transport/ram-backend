@@ -134,7 +134,7 @@ module.exports = {
     service: 'docker',
     hyperAccess: null,
     hyperSecret: null,
-    container: 'wbtransport/ram-analysis:latest-stable',
+    container: 'wbtransport/ram-analysis:latest-dev',
     db: 'postgresql://ram:ram@ram-postgis:5432/ram',
     storageHost: 'ram-minio',
     storagePort: 9000
@@ -143,7 +143,7 @@ module.exports = {
     service: 'docker',
     hyperAccess: null,
     hyperSecret: null,
-    container: 'wbtransport/ram-vt:latest-stable',
+    container: 'wbtransport/ram-vt:latest-dev',
     storageHost: 'ram-minio',
     storagePort: 9000
   },
