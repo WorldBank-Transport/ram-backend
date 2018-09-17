@@ -215,9 +215,8 @@ module.exports = [
           authors: request.payload.authors.map(a => a.name),
           topics: request.payload.topics.map(t => t.name),
           contact: {
-            name: request.payload.contactName,
-            email: request.payload.contactEmail
-          }
+          contact_name: request.payload.contactName,
+          contact_email: request.payload.contactEmail
         };
 
         const indexMd = `---
