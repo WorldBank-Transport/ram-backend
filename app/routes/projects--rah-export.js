@@ -281,7 +281,8 @@ ${request.payload.description}
         }
         // Commit and PR.
         await gClient.commit(`RAM automated export of project ${project.id} (${instId})`, committer, author);
-        const pullReq = await gClient.openPR(`RAM automated export of project ${project.name} from ${instId}`);
+        // Include mention to moderators to send out notifications.
+        const pullReq = await gClient.openPR(`RAM automated export of project ${project.name} from ${instId}`, 'cc @WorldBank-Transport/rah-moderators');
         return reply({statusCode: 200, message: 'Project exported. Approval pending.', prUrl: pullReq.data.url});
       } catch (error) {
         return reply(getBoomResponseForError(error));
