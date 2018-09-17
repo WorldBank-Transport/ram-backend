@@ -41,6 +41,7 @@ module.exports = [
               name: Joi.string().required()
             })
           ).required(),
+          includeResults: Joi.bool().required(),
           contactName: Joi.string().required(),
           contactEmail: Joi.string().email().required()
         }
@@ -58,6 +59,7 @@ module.exports = [
       const ghRepo = pieces[1];
       const ghPath = rahExport.ghPath;
       const ghToken = rahExport.ghToken;
+      const includeResults = request.payload.includeResults;
       if (!rahExport || !ghOwner || !ghRepo || !ghPath || !ghToken) {
         throw new DisabledServiceError('RAH export not setup');
       }
@@ -81,7 +83,7 @@ module.exports = [
           .where('project_id', projId)
           .whereIn('type', ['results-csv', 'results-geojson']);
 
-        if (!files.length) {
+        if (includeResults && !files.length) {
           throw new DataConflictError('There are no scenarios with results');
         }
 
@@ -214,7 +216,7 @@ module.exports = [
           date: request.payload.date,
           authors: request.payload.authors.map(a => a.name),
           topics: request.payload.topics.map(t => t.name),
-          contact: {
+          include_results: includeResults,
           contact_name: request.payload.contactName,
           contact_email: request.payload.contactEmail
         };
@@ -246,13 +248,15 @@ ${request.payload.description}
         });
 
         // Data files.
-        const zip = new Zip();
-        await Promise.map(files, async f => {
-          const ext = f.type === 'results-csv' ? 'csv' : 'geojson';
-          zip.file(`${f.name}.${ext}`, await getFileContents(f.path));
-        });
-        const zipFile = zip.generate({ base64: true, compression: 'DEFLATE' });
-        gClient.addBinaryFile(`${projectGHFolder}/results.zip`, zipFile);
+        if (files.length) {
+          const zip = new Zip();
+          await Promise.map(files, async f => {
+            const ext = f.type === 'results-csv' ? 'csv' : 'geojson';
+            zip.file(`${f.name}.${ext}`, await getFileContents(f.path));
+          });
+          const zipFile = zip.generate({ base64: true, compression: 'DEFLATE' });
+          gClient.addBinaryFile(`${projectGHFolder}/results.zip`, zipFile);
+        }
 
         // Create branch.
         const branchName = `ram-export/${instId}-${project.id}`;
