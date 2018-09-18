@@ -1,5 +1,6 @@
 'use strict';
 import renderProfile from './default.profile.template';
+import * as luafmt from 'lua-fmt';
 
 export function toLua (element) {
   let properties = [];
@@ -167,5 +168,5 @@ export function renderProfileFile (settings) {
     data[key] = toLua(element);
   }
 
-  return renderProfile(data);
+  return luafmt.formatText(renderProfile(data));
 }
