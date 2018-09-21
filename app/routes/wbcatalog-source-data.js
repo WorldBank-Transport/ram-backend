@@ -20,7 +20,7 @@ const SOURCE_TO_TAG_ID = {
   // ram-admin
   admin: 1413,
   // ram-poi
-  poi: -1,
+  poi: 1425,
   // ram-rn
   'road-network': 1412
 };
@@ -30,6 +30,20 @@ const SOURCE_TO_TAG_ID = {
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 });
+
+/**
+ * Checks if mimetype is valid according to source name.
+ *
+ * @param {string} sourceName Name of the source being validated.
+ * @param {stringq} mimetype Mime type to validate.
+ *
+ * @returns {boolean} Whether or not the mimetype is valid.
+ */
+function isValidMimetypeForSource (sourceName, mimetype) {
+  if ((sourceName === 'poi' || sourceName === 'admin') && mimetype === 'GeoJSON') return true;
+
+  return false;
+}
 
 /**
  * Check is a given source has data and is not expired.
@@ -55,24 +69,29 @@ export function checkValidSource (sourceName) {
   // .then(data => false);
 }
 
-async function fetchResourceData (sourceName, resource) {
+/**
+ * Fetches the resource information for a given resourceId
+ *
+ * @param {string} sourceName Name of the source.
+ * @param {string} resourceId The id of the resource
+ *
+ * @returns {object} The resource information
+ */
+async function fetchResourceData (sourceName, resourceId) {
   try {
-    const fileId = _.get(resource, 'field_resources.und[0].target_id', null);
-    if (!fileId) throw new Error('File id not found in resource');
-
-    const data = await fetch(`https://datacatalog.worldbank.org/api/3/action/resource_show?id=${fileId}`, {agent: httpsAgent})
+    const {result: {url, name, mimetype}} = await fetch(`https://datacatalog.worldbank.org/api/3/action/resource_show?id=${resourceId}`, {agent: httpsAgent})
       .then(res => res.json());
 
-    // TODO: Validate mimetype based on sourceName.
+    // If there's no url, file is not valid.
+    if (!url) throw new Error('Resource file missing url');
 
-    return {
-      id: resource.nid,
-      name: resource.title,
-      url: data.result.url
-    };
+    // Validate mimetype based on sourceName.
+    if (!isValidMimetypeForSource(sourceName, mimetype)) throw new Error(`Invalid mimetype for source: ${sourceName} - ${mimetype}`);
+
+    return {id: resourceId, name, url};
   } catch (error) {
-    console.log('Error fetching file resource for', sourceName, error);
-    console.log('The resource', resource);
+    console.log('Error fetching resource data for', resourceId, error);
+    console.log('Error handled ^');
     // Invalidate source in case of any error.
     return {id: null};
   }
@@ -87,11 +106,28 @@ async function fetchResourceData (sourceName, resource) {
 export async function fetchCatalogData (sourceName) {
   const tagId = SOURCE_TO_TAG_ID[sourceName];
 
-  const data = await fetch(`https://datacatalog.worldbank.org/search-service/search_api/datasets?filter[field_tags]=${tagId}&fields=title,nid,field_resources`, {agent: httpsAgent})
+  const datasets = await fetch(`https://datacatalog.worldbank.org/search-service/search_api/datasets?filter[field_tags]=${tagId}&fields=title,nid,field_resources`, {agent: httpsAgent})
     .then(res => res.json());
 
   // Build concurrent tasks.
-  const tasks = _.map(data.result, resource => () => fetchResourceData(sourceName, resource));
+  // Using lodash's reduce because `datasets.result` is an object.
+  const tasks = _.reduce(datasets.result, (acc, dataset) => {
+    // Ensure there are resources.
+    const res = _.get(dataset, 'field_resources.und', []);
+    return acc.concat(_.reduce(res, (_acc, r) => {
+      return r.target_id
+        ? _acc.concat(async () => {
+          const data = await fetchResourceData(sourceName, r.target_id);
+          return {
+            ...data,
+            name: `${dataset.title} - ${data.name}`
+          };
+        })
+        : _acc;
+    }, []));
+  }, []);
+
+  // Execute tasks.
   const files = await Promise.map(tasks, task => task(), {concurrency: 5});
 
   // Remove the invalid results.
