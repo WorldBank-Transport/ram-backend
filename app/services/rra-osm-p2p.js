@@ -89,55 +89,70 @@ export function removeDatabase (projId, scId) {
   });
 }
 
-export function importRoadNetwork (projId, scId, op, roadNetwork, logger) {
+export async function importRoadNetwork (projId, scId, op, roadNetwork, logger) {
   const importPromise = Promise.promisify(importer);
   const basePath = path.resolve(os.tmpdir(), `road-networkP${projId}S${scId}`);
   const osmDb = getDatabase(projId, scId);
 
-  return op.log('process:road-network', {message: 'Road network processing started'})
-    .then(() => convertToOSMXml(roadNetwork, 'osm', basePath, logger))
-    .then(() => logger && logger.log('Importing changeset into osm-p2p...'))
-    .then(() => {
-      const xml = fs.createReadStream(`${basePath}.osm`);
-      return importPromise(osmDb, xml);
-    })
-    .then(() => logger && logger.log('Importing changeset into osm-p2p... done'))
-    // Note: There's no need to close the osm-p2p-db because when the process
-    // terminates the connection is automatically closed.
-    .then(() => op.log('process:road-network', {message: 'Road network processing finished'}));
+  await op.log('process:road-network', {message: 'Road network processing started'});
+  try {
+    await convertToOSMXml(roadNetwork, 'osm', basePath, logger);
+  } catch (error) {
+    if (error.message.match(/'list' object has no attribute 'addparent'/)) {
+      throw new Error('Road network format is not valid.');
+    }
+    throw error;
+  }
+
+  logger && logger.log('Importing changeset into osm-p2p...');
+
+  const xml = fs.createReadStream(`${basePath}.osm`);
+  await importPromise(osmDb, xml);
+
+  // Note: There's no need to close the osm-p2p-db because when the process
+  // terminates the connection is automatically closed.
+  return op.log('process:road-network', {message: 'Road network processing finished'});
 }
 
-export function importPOI (projId, scId, op, poiFc, logger) {
+export async function importPOI (projId, scId, op, poiFc, logger) {
   const importPromise = Promise.promisify(importer);
   const basePath = path.resolve(os.tmpdir(), `poiP${projId}S${scId}`);
   const osmDb = getDatabase(projId, scId);
 
-  return op.log('process:poi', {message: 'Poi processing started'})
-    .then(() => convertToOSMXml(JSON.stringify(poiFc), 'geojson', basePath, logger))
-    .then(() => logger && logger.log('Importing changeset into osm-p2p...'))
-    .then(() => {
-      let xml = fs.createReadStream(`${basePath}.osm`);
-      return importPromise(osmDb, xml);
-    })
-    .then(() => logger && logger.log('Importing changeset into osm-p2p... done'))
-    // Note: There's no need to close the osm-p2p-db because when the process
-    // terminates the connection is automatically closed.
-    .then(() => op.log('process:poi', {message: 'Poi processing finished'}));
+  await op.log('process:poi', {message: 'Poi processing started'});
+  try {
+    await convertToOSMXml(JSON.stringify(poiFc), 'geojson', basePath, logger);
+  } catch (error) {
+    console.log('value', JSON.stringify(poiFc));
+    if (error.message.match(/'list' object has no attribute 'addparent'/)) {
+      throw new Error('Poi files data is not ram compliant.');
+    }
+    throw error;
+  }
+
+  logger && logger.log('Importing changeset into osm-p2p...');
+
+  const xml = fs.createReadStream(`${basePath}.osm`);
+  await importPromise(osmDb, xml);
+
+  // Note: There's no need to close the osm-p2p-db because when the process
+  // terminates the connection is automatically closed.
+  return op.log('process:poi', {message: 'Poi processing finished'});
 }
 
 function convertToOSMXml (data, dataType, basePath, logger) {
   // Create an OSM Change file and store it in system /tmp folder.
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     logger && logger.log('Creating changeset file...');
     // OGR reads from a file
-    fs.writeFileSync(`${basePath}.${dataType}`, data);
+    await fs.writeFile(`${basePath}.${dataType}`, data);
 
     // Use ogr2osm with:
     // -t - a custom translation file. Default only removes empty values
     // -o - to specify output file
     // -f - to force overwrite
-    let cmd = path.resolve(__dirname, '../lib/ogr2osm/ogr2osm.py');
-    let args = [
+    const cmd = path.resolve(__dirname, '../lib/ogr2osm/ogr2osm.py');
+    const args = [
       cmd,
       `${basePath}.${dataType}`,
       '-t', './app/lib/ogr2osm/default_translation.py',
@@ -145,14 +160,14 @@ function convertToOSMXml (data, dataType, basePath, logger) {
       '-f'
     ];
 
-    let conversionProcess = cp.spawn('python', args);
+    const conversionProcess = cp.spawn('python', args);
     let processError = '';
     conversionProcess.stderr.on('data', err => {
       processError += err.toString();
     });
     conversionProcess.on('close', code => {
       if (code !== 0) {
-        let err = processError || `Unknown error. Code ${code}`;
+        const err = processError || `Unknown error. Code ${code}`;
         return reject(new Error(err));
       }
       logger && logger.log('Creating changeset file... done');

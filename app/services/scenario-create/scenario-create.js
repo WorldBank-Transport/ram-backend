@@ -1,6 +1,7 @@
 'use strict';
 import path from 'path';
 import Promise from 'bluebird';
+import centerOfMass from '@turf/center-of-mass';
 
 import config from '../../config';
 import { cloneDatabase, closeDatabase, importRoadNetwork, importPOI } from '../rra-osm-p2p';
@@ -302,9 +303,19 @@ export function scenarioCreate (e) {
               return {
                 type: 'FeatureCollection',
                 features: files.reduce((acc, file, idx) => {
-                  let key = file.subtype;
-                  let features = filesContent[idx].features;
-                  features.forEach(f => { f.properties.ram_poi_type = key; });
+                  const key = file.subtype;
+                  const features = filesContent[idx].features.map(feat => {
+                    return {
+                      ...feat,
+                      properties: {
+                        ...feat.properties,
+                        ram_poi_type: key
+                      },
+                      geometry: feat.geometry.type !== 'Point'
+                        ? centerOfMass(feat).geometry
+                        : feat.geometry
+                    };
+                  });
                   return acc.concat(features);
                 }, [])
               };

@@ -1,5 +1,6 @@
 'use strict';
 import Promise from 'bluebird';
+import centerOfMass from '@turf/center-of-mass';
 
 import db from '../../db/';
 import {
@@ -83,9 +84,19 @@ export default async function (projId, scId, {op, emitter, logger, appLogger}) {
     let fc = {
       type: 'FeatureCollection',
       features: Object.keys(poisData).reduce((acc, key) => {
-        let feats = poisData[key].features;
-        feats.forEach(f => { f.properties.ram_poi_type = key; });
-        return acc.concat(feats);
+        const features = poisData[key].features.map(feat => {
+          return {
+            ...feat,
+            properties: {
+              ...feat.properties,
+              ram_poi_type: key
+            },
+            geometry: feat.geometry.type !== 'Point'
+              ? centerOfMass(feat).geometry
+              : feat.geometry
+          };
+        });
+        return acc.concat(features);
       }, [])
     };
 
