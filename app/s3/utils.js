@@ -3,7 +3,7 @@ import fs from 'fs-extra';
 import Promise from 'bluebird';
 
 import s3, { bucket } from './';
-import { removeObject, putObjectFromFile, listObjects, emptyBucket } from './structure';
+import { removeObject, putObjectFromFile, listObjects, emptyBucket, putObject } from './structure';
 
 const readFile = Promise.promisify(fs.readFile);
 
@@ -115,14 +115,10 @@ export function getJSONFileContents (file) {
     .then(result => JSON.parse(result));
 }
 
-// Put file from stream
+// Put object
+// Proxy of putObject function, assuming the bucket.
 export function putFileStream (file, stream) {
-  return new Promise((resolve, reject) => {
-    s3.putObject(bucket, file, stream, (err, etag) => {
-      if (err) return reject(err);
-      return resolve(etag);
-    });
-  });
+  return putObject(bucket, file, stream);
 }
 
 // Put file

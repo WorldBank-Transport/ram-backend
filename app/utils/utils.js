@@ -96,9 +96,10 @@ export function getSourceData (db, contentType, id) {
         if (s.type === 'osm') {
           // Never going to happen for projects, just scenarios.
           structure[s.name].osmOptions = s.data;
-        } else if (s.type === 'file') {
+        } else if (s.type === 'file' || s.type === 'default') {
           filesFetchTypes.push(s.name);
         } else if (s.type === 'wbcatalog') {
+          filesFetchTypes.push(s.name);
           structure[s.name].wbCatalogOptions = s.data;
         } else if (s.type !== 'default') {
           throw new Error('Unknown source type: ' + s.type);
@@ -118,7 +119,7 @@ export function getSourceData (db, contentType, id) {
     });
 }
 
-export function getOperationData (db, opName, prop, id) {
+export function getOperationData (db, opName, id) {
   return db.select('*')
     .from('operations')
     .where('operations.scenario_id', id)

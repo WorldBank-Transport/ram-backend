@@ -98,3 +98,12 @@ export function putObjectFromFile (bucket, name, filepath) {
     });
   });
 }
+
+export function putObject (bucket, file, stream) {
+  return new Promise((resolve, reject) => {
+    s3.putObject(bucket, file, stream, (err, etag) => {
+      if (err) return reject(err);
+      return resolve(etag);
+    });
+  });
+}

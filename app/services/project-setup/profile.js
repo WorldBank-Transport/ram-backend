@@ -1,12 +1,10 @@
 'use strict';
-import path from 'path';
-import fs from 'fs-extra';
-
 import db from '../../db/';
 import {
   putFileStream
 } from '../../s3/utils';
 import { downloadWbCatalogProjectFile } from '../../utils/wbcatalog';
+import { getOSRMProfileDefaultSpeedSettings, renderProfileFile } from '../../utils/osrm-profile';
 
 /**
  * Processes the Profile depending on the source.
@@ -33,16 +31,26 @@ export default async function (projId, {logger}) {
     .first();
 
   if (source.type === 'wbcatalog') {
-    await downloadWbCatalogProjectFile(projId, source, logger);
+    return downloadWbCatalogProjectFile(projId, source, logger);
   }
 
   if (source.type === 'default') {
-    // Copy default profile.
+    // Generate default profile.
     const fileName = `profile_${Date.now()}`;
     const filePath = `project-${projId}/${fileName}`;
 
-    await putFileStream(filePath, fs.createReadStream(path.resolve(__dirname, '../../utils/default.profile.lua')));
-    await db('projects_files')
+    const defaultSettings = getOSRMProfileDefaultSpeedSettings();
+
+    // Update source data.
+    await db('projects_source_data')
+      .update({
+        data: { settings: defaultSettings }
+      })
+      .where('id', source.id);
+
+    const profile = renderProfileFile(defaultSettings);
+    await putFileStream(filePath, profile);
+    return db('projects_files')
       .insert({
         name: fileName,
         type: 'profile',

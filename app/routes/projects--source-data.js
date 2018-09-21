@@ -8,7 +8,7 @@ import Promise from 'bluebird';
 import Zip from 'node-zip';
 
 import db from '../db/';
-import { putFile as putFileToS3, removeFile, removeLocalFile, getLocalJSONFileContents, getFileContents } from '../s3/utils';
+import { putFile as putFileToS3, putFileStream, removeFile, removeLocalFile, getLocalJSONFileContents, getFileContents } from '../s3/utils';
 import {
   ProjectNotFoundError,
   FileExistsError,
@@ -17,6 +17,14 @@ import {
   ProjectStatusError
 } from '../utils/errors';
 import { parseFormData, getPropInsensitive } from '../utils/utils';
+import { getOSRMProfileDefaultSpeedSettings, renderProfileFile, getOSRMProfileDefaultSpeedMeta } from '../utils/osrm-profile';
+
+const profileValidationSchema = Object.keys(getOSRMProfileDefaultSpeedSettings())
+  .reduce((acc, setting) => {
+    // Ensure that the values are all numeric and the keys are correct.
+    acc[setting] = Joi.object().pattern(/^[0-9a-zA-Z_:-]+$/, Joi.number()).required();
+    return acc;
+  }, {});
 
 export default [
   {
@@ -201,6 +209,104 @@ export default [
           console.log('err', err);
           reply(Boom.badImplementation(err));
         });
+    }
+  },
+  {
+    path: '/projects/{projId}/source-data/editor',
+    method: 'GET',
+    config: {
+      validate: {
+        params: {
+          projId: Joi.number()
+        },
+        query: {
+          type: Joi.string().valid(['profile']).required()
+        }
+      }
+    },
+    handler: async (request, reply) => {
+      const { projId } = request.params;
+
+      try {
+        const project = await db('projects')
+          .select('*')
+          .where('id', projId)
+          .first();
+
+        if (!project) return reply(Boom.notFound('Project not found'));
+        if (project.status === 'pending') return reply(Boom.badRequest('Project setup not completed'));
+
+        // Get source data for the profile.
+        const sourceData = await db('projects_source_data')
+          .select('*')
+          .where('project_id', projId)
+          .where('name', 'profile')
+          .first();
+
+        return reply({
+          sections: getOSRMProfileDefaultSpeedMeta(),
+          settings: sourceData.data.settings
+        });
+      } catch (err) {
+        console.log('err', err);
+        return reply(Boom.badImplementation(err));
+      }
+    }
+  },
+  {
+    path: '/projects/{projId}/source-data/editor',
+    method: 'POST',
+    config: {
+      validate: {
+        params: {
+          projId: Joi.number()
+        },
+        query: {
+          type: Joi.string().valid(['profile']).required()
+        },
+        payload: profileValidationSchema
+      }
+    },
+    handler: async (request, reply) => {
+      const { projId } = request.params;
+      const settings = request.payload;
+
+      try {
+        const project = await db('projects')
+          .select('*')
+          .where('id', projId)
+          .first();
+
+        if (!project) return reply(Boom.notFound('Project not found'));
+        if (project.status === 'pending') return reply(Boom.badRequest('Project setup not completed'));
+
+        // Update source data.
+        await db('projects_source_data')
+          .update({
+            data: { settings }
+          })
+          .where('project_id', projId)
+          .where('name', 'profile');
+
+        const fileName = `profile_${Date.now()}`;
+        const filePath = `project-${projId}/${fileName}`;
+        const profile = renderProfileFile(settings);
+
+        await putFileStream(filePath, profile);
+        await db('projects_files')
+          .update({
+            name: fileName,
+            path: filePath,
+            updated_at: (new Date())
+          })
+          .where('project_id', projId)
+          .where('type', 'profile');
+
+        return reply({statusCode: 200, message: 'Profile settings uploaded'});
+      } catch (err) {
+        console.log('err', err);
+        return reply(Boom.badImplementation(err));
+      }
     }
   }
 ];

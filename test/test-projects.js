@@ -141,7 +141,7 @@ describe('Projects', function () {
         let project = res.result;
         assert.deepEqual(project.sourceData, {
           profile: {
-            type: 'file',
+            type: 'default',
             files: [
               {
                 'id': 2000,
