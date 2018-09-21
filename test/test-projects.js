@@ -116,17 +116,17 @@ describe('Projects', function () {
           profile: {
             type: null,
             files: [],
-            wbCatalogOptions: []
+            wbCatalogOptions: {}
           },
           'admin-bounds': {
             type: null,
             files: [],
-            wbCatalogOptions: []
+            wbCatalogOptions: {}
           },
           origins: {
             type: null,
             files: [],
-            wbCatalogOptions: []
+            wbCatalogOptions: {}
           }
         });
       });
@@ -152,7 +152,7 @@ describe('Projects', function () {
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
             ],
-            wbCatalogOptions: []
+            wbCatalogOptions: {}
           },
           'admin-bounds': {
             type: 'file',
@@ -166,7 +166,7 @@ describe('Projects', function () {
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
             ],
-            wbCatalogOptions: []
+            wbCatalogOptions: {}
           },
           origins: {
             type: 'file',
@@ -183,7 +183,7 @@ describe('Projects', function () {
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
             ],
-            wbCatalogOptions: []
+            wbCatalogOptions: {}
           }
         });
       });

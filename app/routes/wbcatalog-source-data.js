@@ -143,7 +143,7 @@ async function wbCatalogHandler (request, reply) {
 
   try {
     const hasData = await checkValidSource(sourceName);
-    if (hasData) {
+    if (!hasData) {
       const catalogData = await fetchCatalogData(sourceName);
       await buildCache(sourceName, catalogData);
     }

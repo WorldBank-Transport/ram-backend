@@ -156,13 +156,13 @@ describe('Scenarios', function () {
             type: null,
             files: [],
             osmOptions: {},
-            wbCatalogOptions: []
+            wbCatalogOptions: {}
           },
           poi: {
             type: null,
             files: [],
             osmOptions: {},
-            wbCatalogOptions: []
+            wbCatalogOptions: {}
           }
         });
       });
@@ -189,7 +189,7 @@ describe('Scenarios', function () {
               }
             ],
             osmOptions: {},
-            wbCatalogOptions: []
+            wbCatalogOptions: {}
           },
           poi: {
             type: 'file',
@@ -204,7 +204,7 @@ describe('Scenarios', function () {
               }
             ],
             osmOptions: {},
-            wbCatalogOptions: []
+            wbCatalogOptions: {}
           }
         });
       });

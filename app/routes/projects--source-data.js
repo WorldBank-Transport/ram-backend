@@ -95,7 +95,7 @@ export default [
             // The catalog data is stored as an array of objects to be
             // consistent throughout all sources, since the POI source
             // can have multiple options with labels.
-            let sourceData = [{ key: keys[0] }];
+            let sourceData = {resources: [{ key: keys[0] }]};
 
             return simpleSourceUpdate(sourceName, sourceType, projId, sourceData);
           };

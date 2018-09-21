@@ -440,5 +440,34 @@ describe('Scenario source data', function () {
           });
         });
     });
+
+    it('should save key to the database for source-name road-network', function () {
+      let form = new FormData();
+      form.append('source-type', 'wbcatalog');
+      form.append('source-name', 'road-network');
+      form.append('wbcatalog-options[key]', 'key road-network');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
+          assert.equal(res.result.sourceType, 'wbcatalog');
+          assert.equal(res.result.sourceName, 'road-network');
+        })
+        .then(() => db('scenarios_source_data')
+          .select('data')
+          .where('project_id', 1000)
+          .where('name', 'road-network')
+          .first()
+        )
+        .then(({data}) => {
+          assert.deepEqual(data, {resources: [ {key: 'key road-network'} ]});
+        });
+    });
   });
 });

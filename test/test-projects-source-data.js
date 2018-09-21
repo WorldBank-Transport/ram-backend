@@ -418,9 +418,65 @@ describe('Projects source data', function () {
           .first()
         )
         .then(({data}) => {
-          assert.deepEqual(data, [
-            {key: 'key 1'}
-          ]);
+          assert.deepEqual(data, {resources: [ {key: 'key 1'} ]});
+        });
+    });
+
+    it('should save key to the database for source-name origins', function () {
+      let form = new FormData();
+      form.append('source-type', 'wbcatalog');
+      form.append('source-name', 'origins');
+      form.append('wbcatalog-options[key]', 'key origins');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
+          assert.equal(res.result.sourceType, 'wbcatalog');
+          assert.equal(res.result.sourceName, 'origins');
+        })
+        .then(() => db('projects_source_data')
+          .select('data')
+          .where('project_id', 1000)
+          .where('name', 'origins')
+          .first()
+        )
+        .then(({data}) => {
+          assert.deepEqual(data, {resources: [ {key: 'key origins'} ]});
+        });
+    });
+
+    it('should save key to the database for source-name admin-bounds', function () {
+      let form = new FormData();
+      form.append('source-type', 'wbcatalog');
+      form.append('source-name', 'admin-bounds');
+      form.append('wbcatalog-options[key]', 'key admin-bounds');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/source-data',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 200, 'Status code is 200');
+          assert.equal(res.result.sourceType, 'wbcatalog');
+          assert.equal(res.result.sourceName, 'admin-bounds');
+        })
+        .then(() => db('projects_source_data')
+          .select('data')
+          .where('project_id', 1000)
+          .where('name', 'admin-bounds')
+          .first()
+        )
+        .then(({data}) => {
+          assert.deepEqual(data, {resources: [ {key: 'key admin-bounds'} ]});
         });
     });
 
@@ -450,9 +506,7 @@ describe('Projects source data', function () {
           .first()
         )
         .then(({data}) => {
-          assert.deepEqual(data, [
-            {key: 'key 1'}
-          ]);
+          assert.deepEqual(data, {resources: [ {key: 'key 1'} ]});
         });
     });
   });

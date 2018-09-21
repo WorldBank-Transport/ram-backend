@@ -45,17 +45,17 @@ export function getSourceData (db, contentType, id) {
         profile: {
           type: null,
           files: [],
-          wbCatalogOptions: []
+          wbCatalogOptions: {}
         },
         'admin-bounds': {
           type: null,
           files: [],
-          wbCatalogOptions: []
+          wbCatalogOptions: {}
         },
         origins: {
           type: null,
           files: [],
-          wbCatalogOptions: []
+          wbCatalogOptions: {}
         }
       };
       break;
@@ -73,13 +73,13 @@ export function getSourceData (db, contentType, id) {
           type: null,
           files: [],
           osmOptions: {},
-          wbCatalogOptions: []
+          wbCatalogOptions: {}
         },
         poi: {
           type: null,
           files: [],
           osmOptions: {},
-          wbCatalogOptions: []
+          wbCatalogOptions: {}
         }
       };
       break;
