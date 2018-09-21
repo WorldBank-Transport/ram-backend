@@ -49,8 +49,6 @@ function downloadFile (url, dest) {
  * @param {object} logger Output logger
  */
 async function downloadWbCatalogFile (projId, scId, source, logger) {
-  logger && logger.log(`Download from wbcatalog - ${source.name}...`);
-
   // Figure out what we're dealing with from the source name:
   const what = {
     'poi': 'poi', // Special case because of multiple files.
@@ -60,7 +58,27 @@ async function downloadWbCatalogFile (projId, scId, source, logger) {
     'admin-bounds': 'projects'
   }[source.name];
 
-  return Promise.map(source.data.resources, async (wbCatRes) => {
+  // Clean the tables so any remnants of previous attempts are removed.
+  // This avoids primary keys collisions and duplication.
+  switch (what) {
+    case 'projects':
+      await db('projects_files')
+        .where('project_id', projId)
+        .where('type', source.name)
+        .del();
+      break;
+    case 'scenarios':
+    case 'poi':
+      await db('scenarios_files')
+        .where('project_id', projId)
+        .where('scenario_id', scId)
+        .where('type', source.name)
+        .del();
+      break;
+  }
+
+  return Promise.map(source.data.resources, async (wbCatRes, idx, len) => {
+    logger && logger.log(`Download from wbcatalog - ${source.name} (${idx + 1} of ${len})...`);
     const {key, label} = wbCatRes;
     const wbCatalogRes = await db('wbcatalog_resources')
       .select('*')
@@ -81,27 +99,7 @@ async function downloadWbCatalogFile (projId, scId, source, logger) {
     }
 
     await downloadFile(wbCatalogRes.resource_url, tempPath);
-
-    logger && logger.log(`Download from wbcatalog - ${source.name}... done`);
-
-    // Clean the tables so any remnants of previous attempts are removed.
-    // This avoids primary keys collisions and duplication.
-    switch (what) {
-      case 'projects':
-        await db('projects_files')
-          .where('project_id', projId)
-          .where('type', source.name)
-          .del();
-        break;
-      case 'scenarios':
-      case 'poi':
-        await db('scenarios_files')
-          .where('project_id', projId)
-          .where('scenario_id', scId)
-          .where('type', source.name)
-          .del();
-        break;
-    }
+    logger && logger.log(`Download from wbcatalog - ${source.name} (${idx + 1} of ${len})... done`);
 
     let fileName;
     let filePath;
@@ -120,7 +118,7 @@ async function downloadWbCatalogFile (projId, scId, source, logger) {
         break;
     }
 
-    logger && logger.log(`Upload wbcatalog file to storage - ${source.name}...`);
+    logger && logger.log(`Upload wbcatalog file to storage - ${source.name} (${idx + 1} of ${len})...`);
     await putFileToS3(filePath, tempPath);
 
     let data = {
@@ -147,7 +145,7 @@ async function downloadWbCatalogFile (projId, scId, source, logger) {
         break;
     }
 
-    logger && logger.log(`Upload wbcatalog file to storage - ${source.name}... done`);
+    logger && logger.log(`Upload wbcatalog file to storage - ${source.name} (${idx + 1} of ${len})... done`);
 
     return data;
   }, {concurrency: 3});
