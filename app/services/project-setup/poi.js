@@ -9,7 +9,6 @@ import {
 } from '../../s3/utils';
 import { importPOI } from '../rra-osm-p2p';
 import * as overpass from '../../utils/overpass';
-import { waitForEventsOnEmitter } from './common';
 import { downloadWbCatalogPoiFile } from '../../utils/wbcatalog';
 
 /**
@@ -67,15 +66,18 @@ export default async function (projId, scId, {op, emitter, logger, appLogger}) {
   }
 
   if (source.type === 'osm') {
-    logger && logger.log('poi is waiting for events...');
+    logger && logger.log('poi is waiting for events (admin-bounds:data)...');
     // If importing from OSM we need to wait for the admin bounds.
-    const result = await waitForEventsOnEmitter(emitter, 'admin-bounds:data');
+    const result = await emitter.waitForEvents('admin-bounds:data');
+    logger && logger.log('poi is waiting for events (admin-bounds:data)... done');
     const adminBoundsFc = result['admin-bounds:data'];
     poisData = await importOSMPOIs(projId, scId, overpass.fcBbox(adminBoundsFc), source.data.osmPoiTypes, op, logger);
   }
 
   // Wait for the road network to know if edition is enabled or not.
-  const result = await waitForEventsOnEmitter(emitter, 'road-network:active-editing');
+  logger && logger.log('poi is waiting for events (road-network:active-editing)...');
+  const result = await emitter.waitForEvents('road-network:active-editing');
+  logger && logger.log('poi is waiting for events (road-network:active-editing)... done');
   const allowImport = result['road-network:active-editing'];
 
   if (allowImport) {

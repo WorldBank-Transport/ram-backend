@@ -11,7 +11,6 @@ import {
 } from '../../s3/utils';
 import { importRoadNetwork, removeDatabase } from '../rra-osm-p2p';
 import * as overpass from '../../utils/overpass';
-import { waitForEventsOnEmitter } from './common';
 import { downloadWbCatalogScenarioFile } from '../../utils/wbcatalog';
 
 /**
@@ -58,9 +57,10 @@ export default async function (projId, scId, {op, emitter, logger, appLogger}) {
   }
 
   if (source.type === 'osm') {
-    logger && logger.log('road-network is waiting for events...');
+    logger && logger.log('road-network is waiting for events (admin-bounds:data)...');
     // If importing from OSM we need to wait for the admin bounds.
-    const result = await waitForEventsOnEmitter(emitter, 'admin-bounds:data');
+    const result = await emitter.waitForEvents('admin-bounds:data');
+    logger && logger.log('road-network is waiting for events (admin-bounds:data)... done');
     const adminBoundsFc = result['admin-bounds:data'];
     fileData = await importOSMRoadNetwork(projId, scId, overpass.fcBbox(adminBoundsFc), op, logger);
   }
@@ -91,7 +91,7 @@ export default async function (projId, scId, {op, emitter, logger, appLogger}) {
     await importRoadNetwork(projId, scId, op, roadNetwork, rnLogger);
   }
 
-  // Emitt after importing to avoid concurrency.
+  // Emit after importing to avoid concurrency.
   emitter.emit('road-network:active-editing', allowImport);
 
   if (process.env.DS_ENV !== 'test') {

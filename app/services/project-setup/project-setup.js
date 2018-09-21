@@ -1,7 +1,6 @@
 'use strict';
 import path from 'path';
 import Promise from 'bluebird';
-import EventEmitter from 'events';
 
 import config from '../../config';
 import db from '../../db/';
@@ -13,13 +12,14 @@ import processRoadNetwork from './road-network';
 import processProfile from './profile';
 import processOrigins from './origins';
 import processPoi from './poi';
+import { ProjectEventEmitter } from './common';
 
 const DEBUG = config.debug;
 let appLogger = AppLogger({ output: DEBUG });
 let logger;
 
 // Emitter to manage execution order.
-const projectSetupEmitter = new EventEmitter();
+const projectSetupEmitter = new ProjectEventEmitter();
 
 process.on('message', function (e) {
   // Capture all the errors.
@@ -103,8 +103,8 @@ process.on('message', function (e) {
  * Since the execution order depends a lot on the source, all the processing
  * is started simultaneously, but then the processes wait for each other using
  * events. Once a process reaches a point where it needs data from another
- * it will trigger a waitForEventsOnEmitter(emitter, events...) that will only
- * resolve once all the events are fired.
+ * it will trigger a emitter.waitForEvents(events...) that will only
+ * resolve once all the events have fired.
  *
  * @param  {object} e       Data.
  *         e.opId           Operation Id. It has to be already started.
