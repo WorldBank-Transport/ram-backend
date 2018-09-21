@@ -113,7 +113,7 @@ function attachFinishSetupOperation (project) {
     .where('project_id', project.id)
     .where('master', true)
     .first()
-    .then(scenario => getOperationData(db, 'project-setup-finish', 'finish_setup', scenario.id))
+    .then(scenario => getOperationData(db, 'project-setup-finish', scenario.id))
     .then(opData => {
       project.finish_setup = opData;
       return project;

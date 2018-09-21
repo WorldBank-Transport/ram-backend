@@ -119,7 +119,7 @@ export function getSourceData (db, contentType, id) {
     });
 }
 
-export function getOperationData (db, opName, prop, id) {
+export function getOperationData (db, opName, id) {
   return db.select('*')
     .from('operations')
     .where('operations.scenario_id', id)

@@ -55,62 +55,53 @@ export function checkValidSource (sourceName) {
   // .then(data => false);
 }
 
-function fetchResourceData (sourceName, resource) {
-  return Promise.resolve(_.get(resource, 'field_resources.und[0].target_id', null))
-    .then(fileId => {
-      if (!fileId) { throw new Error('File id not found in resource'); }
-      return fileId;
-    })
-    .then(fileId => fetch(`https://datacatalog.worldbank.org/api/3/action/resource_show?id=${fileId}`, {agent: httpsAgent}))
-    .then(res => res.json())
-    .then(res => {
-      // TODO: Validate mimetype based on sourceName.
-      return res;
-    })
-    .then(res => {
-      return {
-        id: resource.nid,
-        name: resource.title,
-        url: res.result.url
-      };
-    })
-    .catch(e => {
-      console.log('Error fetching file resource for', sourceName, e);
-      console.log('The resource', resource);
-      // Invalidate source in case of any error.
-      return {id: null};
-    });
+async function fetchResourceData (sourceName, resource) {
+  try {
+    const fileId = _.get(resource, 'field_resources.und[0].target_id', null);
+    if (!fileId) throw new Error('File id not found in resource');
+
+    const data = await fetch(`https://datacatalog.worldbank.org/api/3/action/resource_show?id=${fileId}`, {agent: httpsAgent})
+      .then(res => res.json());
+
+    // TODO: Validate mimetype based on sourceName.
+
+    return {
+      id: resource.nid,
+      name: resource.title,
+      url: data.result.url
+    };
+  } catch (error) {
+    console.log('Error fetching file resource for', sourceName, error);
+    console.log('The resource', resource);
+    // Invalidate source in case of any error.
+    return {id: null};
+  }
 }
 
 /**
  * Fetch data for a given source from the wb catalog.
  *
- * TODO: Implement fetchCatalogData
  *
  * @param {string} sourceName (origins | profile | admin | poi | road-network)
  */
-export function fetchCatalogData (sourceName) {
+export async function fetchCatalogData (sourceName) {
   const tagId = SOURCE_TO_TAG_ID[sourceName];
 
-  return fetch(`https://datacatalog.worldbank.org/search-service/search_api/datasets?filter[field_tags]=${tagId}&fields=title,nid,field_resources`, {agent: httpsAgent})
-    .then(res => res.json())
-    .then(res => {
-      console.log('res', res);
-      return res;
-    })
-    .then(res => {
-      const tasks = _.map(res.result, resource => () => fetchResourceData(sourceName, resource));
-      return Promise.map(tasks, task => task(), {concurrency: 5});
-    })
-    // Remove the invalid results.
-    .then(files => files.filter(f => !!f.id));
+  const data = await fetch(`https://datacatalog.worldbank.org/search-service/search_api/datasets?filter[field_tags]=${tagId}&fields=title,nid,field_resources`, {agent: httpsAgent})
+    .then(res => res.json());
+
+  // Build concurrent tasks.
+  const tasks = _.map(data.result, resource => () => fetchResourceData(sourceName, resource));
+  const files = await Promise.map(tasks, task => task(), {concurrency: 5});
+
+  // Remove the invalid results.
+  return files.filter(f => !!f.id);
 }
 
 /**
  * Removes old data from the database and stores the wb catalog data
  * for caching purposes.
  *
- * TODO: Implement buildCache
  *
  * @param {string} sourceName (origins | profile | admin | poi | road-network)
  * @param {array} catalogData Data from the WB catalog as returned by fetchCatalogData()
@@ -147,20 +138,21 @@ export function getResourcesFromDb (sourceName) {
 /**
  * Hapi handler for endpoints.
  */
-function wbCatalogHandler (request, reply) {
+async function wbCatalogHandler (request, reply) {
   const {sourceName} = request.payload;
 
-  checkValidSource(sourceName)
-    .then(hasData => !hasData
-      ? fetchCatalogData(sourceName).then(catalogData => buildCache(sourceName, catalogData))
-      : null // No action
-    )
-    .then(() => getResourcesFromDb(sourceName))
-    .then(data => reply(data))
-    .catch(err => {
-      console.error(err);
-      return reply(Boom.badImplementation(err));
-    });
+  try {
+    const hasData = await checkValidSource(sourceName);
+    if (hasData) {
+      const catalogData = await fetchCatalogData(sourceName);
+      await buildCache(sourceName, catalogData);
+    }
+    const data = await getResourcesFromDb(sourceName);
+    return reply(data);
+  } catch (err) {
+    console.error(err);
+    return reply(Boom.badImplementation(err));
+  }
 }
 
 export default [
