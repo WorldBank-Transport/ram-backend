@@ -114,8 +114,7 @@ function concludeProjectSetup (projId, scId, opId, cb) {
         op.loadById(opId)
           .then(op => {
             if (!op.isCompleted()) {
-              return op.log('error', {error: err.message})
-                .then(op => op.finish());
+              return op.finish('error', {error: err.message});
             }
           });
       }

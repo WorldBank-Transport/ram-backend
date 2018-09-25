@@ -151,8 +151,7 @@ export async function concludeProjectSetup (e) {
     logger && logger.log('error', err);
     DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../project-setup_p${projId}s${scId}.log`));
     try {
-      await op.log('error', {error: err.message});
-      await op.finish();
+      await op.finish('error', {error: err.message});
     } catch (e) { /* no-action */ }
     callback(err.message);
   }

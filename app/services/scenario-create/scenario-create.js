@@ -347,8 +347,7 @@ export function scenarioCreate (e) {
       logger && logger.log('error', err);
       DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../scenario-create_p${projId}s${scId}.log`));
 
-      return op.log('error', {error: err.message})
-        .then(() => op.finish())
+      return op.finish('error', {error: err.message})
         // If the process fails do some cleanup of what was not in
         // a transaction, namely the files, and the originally create scenario.
         // .then(() => onFailCleanup(projId, scId))

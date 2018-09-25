@@ -179,12 +179,13 @@ describe('Finish Project Setup', function () {
           scId: 3010,
           callback: (err) => {
             if (err) {
+              // It is not certain how many logs we'll end up with, but the
+              // last one must be an error.
               db('operations_logs')
                 .where('operation_id', op.getId())
                 .orderBy('created_at', 'desc')
                 .then(logs => {
                   assert.equal(err, 'Invalid administrative boundaries file');
-                  assert.lengthOf(logs, 6);
                   assert.equal(logs[0].code, 'error');
                   assert.equal(logs[0].data.error, 'Invalid administrative boundaries file');
                 })

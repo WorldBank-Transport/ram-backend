@@ -227,8 +227,7 @@ function updateRN (projId, scId, opId, cb) {
         op.loadById(opId)
           .then(op => {
             if (!op.isCompleted()) {
-              return op.log('error', {error: err.message})
-                .then(op => op.finish());
+              return op.finish('error', {error: err.message});
             }
           })
           .then(() => reject(err), () => reject(err));
@@ -263,8 +262,7 @@ function generateTiles (projId, scId, op) {
       let executor = Promise.resolve();
       if (!op.isCompleted()) {
         executor = executor
-          .then(() => op.log('error', {error: err.message}))
-          .then(op => op.finish());
+          .then(() => op.finish('error', {error: err.message}));
       }
 
       // Rethrow to stop;
@@ -380,8 +378,7 @@ function spawnAnalysisProcess (projId, scId, opId) {
           return op.loadById(opId)
             .then(op => {
               if (!op.isCompleted()) {
-                return op.log('error', {error: error})
-                  .then(op => op.finish());
+                return op.finish('error', {error: error});
               }
             })
             .then(() => reject(error), () => reject(error));
