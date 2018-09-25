@@ -87,128 +87,6 @@ module.exports = [
           throw new DataConflictError('There are no scenarios with results');
         }
 
-        // Get the master scenario id. This is used as the base scenario.
-        const masterScenarioId = await db('scenarios')
-          .where('project_id', projId)
-          .where('master', true)
-          .first('id')
-          .then(r => r.id);
-
-        // Unique scenario ids.
-        const scIdsWithResults = files.reduce((acc, o) => (
-          acc.indexOf(o.scenario_id) === -1
-            ? acc.concat(o.scenario_id)
-            : acc
-        ), []);
-
-        // Get:
-        // Population indicators for the filter bar.
-        // Poi types for the filter bar.
-        // Scenarios with results for the result selection.
-        const [popIndicators, poiTypes, scenarios] = await Promise.all([
-          getPopulationIndicators(projId),
-          getPoiTypesOptions(projId, masterScenarioId),
-          db('scenarios')
-            .select('id', 'name')
-            .whereIn('id', scIdsWithResults)
-        ]);
-
-        // Get the POI faux features.
-        const poiFauxFeatures = await Promise.map(poiTypes, async (type) => {
-          const fauxFeature = await getFauxPoiFeature(projId, masterScenarioId, type.key);
-          return {
-            key: `poi-${type.key}.json`,
-            data: fauxFeature
-          };
-        }, {concurrency: 3});
-
-        // Build the poi and pop key index to use on the results mapping.
-        // Eg. {'Townhalls': 'e0'}
-        const poiKIndex = poiTypes.reduce((acc, o) => ({
-          ...acc, [o.key]: o.prop
-        }), {});
-        // Eg. {'pop-m': 'p0'}
-        const popKIndex = popIndicators.reduce((acc, o) => ({
-          ...acc, [o.key]: o.prop
-        }), {});
-
-        // For each one of the scenarios get the results with the population
-        // and the poi values. The result is compressed to save bandwidth.
-        // On the client it must be rehydrated and mapped to the correct
-        // poi and pop keys using the `prop` attribute.
-        const scenariosFauxFeatures = await Promise.map(scIdsWithResults, async (scId) => {
-          // Get the scenario results.
-          const scenarioResults = await db('results')
-            .select(
-              'projects_origins.id as origin_id',
-              'projects_origins.name as origin_name',
-              'projects_origins.coordinates as origin_coords',
-              'projects_origins_indicators.value as pop_value',
-              'projects_origins_indicators.key as pop_key',
-              'results_poi.type as poi_type',
-              'results_poi.time as time_to_poi'
-            )
-            .innerJoin('results_poi', 'results.id', 'results_poi.result_id')
-            .innerJoin('projects_origins', 'projects_origins.id', 'results.origin_id')
-            .innerJoin('projects_origins_indicators', 'projects_origins_indicators.origin_id', 'projects_origins.id')
-            .where('results.project_id', projId)
-            .whereIn('results.scenario_id', scId).then(ids => _.uniq(ids));
-
-          // Each feature will look something like:
-          // {
-          //   "i": 2000021,
-          //   "n": "Tobias Barreto",
-          //   "c": [
-          //       -38.00345,
-          //       -11.18803
-          //   ],
-          //   "p0": 69500,
-          //   "p1": 35418,
-          //   "p2": 34082
-          //   "e1": 4448,
-          //   "e0": 16,
-          // }
-          const fauxFeature = scenarioResults.reduce((acc, result) => {
-            const id = result.origin_id;
-            const popK = popKIndex[result.pop_key];
-            const poiK = poiKIndex[result.poi_type];
-            let object = {
-              [popK]: result.pop_value,
-              [poiK]: result.time_to_poi
-            };
-            if (!acc[id]) {
-              object = {
-                ...object,
-                'i': id,
-                'n': result.origin_name,
-                'c': [parseInt(result.origin_coords[0] * 100000) / 100000, parseInt(result.origin_coords[1] * 100000) / 100000]
-              };
-            }
-            return {
-              ...acc,
-              [id]: {
-                ...acc[id],
-                ...object
-              }
-            };
-          }, {});
-
-          return {
-            key: `results-sc-${scId}.json`,
-            data: Object.values(fauxFeature)
-          };
-        }, {concurrency: 3});
-
-        // Meta object
-        const scenarioMetaInformation = {
-          bbox: project.bbox,
-          poiTypes,
-          popIndicators,
-          scenarios
-          // scenariosFauxFeatures, // <-------------- Not meta
-          // poiFauxFeatures // <-------------- Not meta
-        };
-
         // Build the markdown file.
         const frontmatter = {
           title: request.payload.title,
@@ -226,29 +104,151 @@ ${safeDump(frontmatter)}
 ---
 
 ${request.payload.description}
-        `;
+`;
 
         const gClient = new GHClient(ghOwner, ghRepo, ghToken);
-
         // Project folder on the GH repo.
-        const projectGHFolder = `${ghPath}/project-${instId}-${project.id}`;
-
-        // Add all the files.
+        const projectGHFolder = `${ghPath}/${instId}--${project.id}--${_.kebabCase(project.name).substr(0, 32)}`;
         // Readme.
         gClient.addFile(`${projectGHFolder}/index.md`, indexMd);
 
-        // Results meta file.
-        gClient.addFile(`${projectGHFolder}/index.json`, JSON.stringify(scenarioMetaInformation));
+        // Prepare the meta object. More properties will be added if there are
+        // results to export.
+        let scenarioMetaInformation = {
+          bbox: project.bbox
+        };
 
-        // Faux features. (poi and results).
-        [scenariosFauxFeatures, poiFauxFeatures].forEach(featureFiles => {
-          featureFiles.forEach(fileData => {
-            gClient.addFile(`${projectGHFolder}/${fileData.key}`, JSON.stringify(fileData.data));
+        // If we're ton inlcude results, compute the files and add them.
+        if (includeResults) {
+          // Get the master scenario id. This is used as the base scenario.
+          const masterScenarioId = await db('scenarios')
+            .where('project_id', projId)
+            .where('master', true)
+            .first('id')
+            .then(r => r.id);
+
+          // Unique scenario ids.
+          const scIdsWithResults = files.reduce((acc, o) => (
+            acc.indexOf(o.scenario_id) === -1
+              ? acc.concat(o.scenario_id)
+              : acc
+          ), []);
+
+          // Get:
+          // Population indicators for the filter bar.
+          // Poi types for the filter bar.
+          // Scenarios with results for the result selection.
+          const [popIndicators, poiTypes, scenarios] = await Promise.all([
+            getPopulationIndicators(projId),
+            getPoiTypesOptions(projId, masterScenarioId),
+            db('scenarios')
+              .select('id', 'name')
+              .whereIn('id', scIdsWithResults)
+          ]);
+
+          // Get the POI faux features.
+          const poiFauxFeatures = await Promise.map(poiTypes, async (type) => {
+            const fauxFeature = await getFauxPoiFeature(projId, masterScenarioId, type.key);
+            return {
+              key: `poi-${type.key}.json`,
+              data: fauxFeature
+            };
+          }, {concurrency: 3});
+
+          // Build the poi and pop key index to use on the results mapping.
+          // Eg. {'Townhalls': 'e0'}
+          const poiKIndex = poiTypes.reduce((acc, o) => ({
+            ...acc, [o.key]: o.prop
+          }), {});
+          // Eg. {'pop-m': 'p0'}
+          const popKIndex = popIndicators.reduce((acc, o) => ({
+            ...acc, [o.key]: o.prop
+          }), {});
+
+          // For each one of the scenarios get the results with the population
+          // and the poi values. The result is compressed to save bandwidth.
+          // On the client it must be rehydrated and mapped to the correct
+          // poi and pop keys using the `prop` attribute.
+          const scenariosFauxFeatures = await Promise.map(scIdsWithResults, async (scId) => {
+            // Get the scenario results.
+            const scenarioResults = await db('results')
+              .select(
+                'projects_origins.id as origin_id',
+                'projects_origins.name as origin_name',
+                'projects_origins.coordinates as origin_coords',
+                'projects_origins_indicators.value as pop_value',
+                'projects_origins_indicators.key as pop_key',
+                'results_poi.type as poi_type',
+                'results_poi.time as time_to_poi'
+              )
+              .innerJoin('results_poi', 'results.id', 'results_poi.result_id')
+              .innerJoin('projects_origins', 'projects_origins.id', 'results.origin_id')
+              .innerJoin('projects_origins_indicators', 'projects_origins_indicators.origin_id', 'projects_origins.id')
+              .where('results.project_id', projId)
+              .whereIn('results.scenario_id', scId).then(ids => _.uniq(ids));
+
+            // Each feature will look something like:
+            // {
+            //   "i": 2000021,
+            //   "n": "Tobias Barreto",
+            //   "c": [
+            //       -38.00345,
+            //       -11.18803
+            //   ],
+            //   "p0": 69500,
+            //   "p1": 35418,
+            //   "p2": 34082
+            //   "e1": 4448,
+            //   "e0": 16,
+            // }
+            const fauxFeature = scenarioResults.reduce((acc, result) => {
+              const id = result.origin_id;
+              const popK = popKIndex[result.pop_key];
+              const poiK = poiKIndex[result.poi_type];
+              let object = {
+                [popK]: result.pop_value,
+                [poiK]: result.time_to_poi
+              };
+              if (!acc[id]) {
+                object = {
+                  ...object,
+                  'i': id,
+                  'n': result.origin_name,
+                  'c': [parseInt(result.origin_coords[0] * 100000) / 100000, parseInt(result.origin_coords[1] * 100000) / 100000]
+                };
+              }
+              return {
+                ...acc,
+                [id]: {
+                  ...acc[id],
+                  ...object
+                }
+              };
+            }, {});
+
+            return {
+              key: `results-sc-${scId}.json`,
+              data: Object.values(fauxFeature)
+            };
+          }, {concurrency: 3});
+
+          // Meta object
+          scenarioMetaInformation = {
+            ...scenarioMetaInformation,
+            poiTypes,
+            popIndicators,
+            scenarios
+            // scenariosFauxFeatures, // <-------------- Not meta
+            // poiFauxFeatures // <-------------- Not meta
+          };
+
+          // Faux features. (poi and results).
+          [scenariosFauxFeatures, poiFauxFeatures].forEach(featureFiles => {
+            featureFiles.forEach(fileData => {
+              gClient.addFile(`${projectGHFolder}/${fileData.key}`, JSON.stringify(fileData.data));
+            });
           });
-        });
 
-        // Data files.
-        if (files.length) {
           const zip = new Zip();
           await Promise.map(files, async f => {
             const ext = f.type === 'results-csv' ? 'csv' : 'geojson';
@@ -257,6 +257,9 @@ ${request.payload.description}
           const zipFile = zip.generate({ base64: true, compression: 'DEFLATE' });
           gClient.addBinaryFile(`${projectGHFolder}/results.zip`, zipFile);
         }
+
+        // Results meta file.
+        gClient.addFile(`${projectGHFolder}/index.json`, JSON.stringify(scenarioMetaInformation));
 
         // Create branch.
         const branchName = `ram-export/${instId}-${project.id}`;
