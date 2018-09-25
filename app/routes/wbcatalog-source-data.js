@@ -35,7 +35,7 @@ const httpsAgent = new https.Agent({
  * Checks if mimetype is valid according to source name.
  *
  * @param {string} sourceName Name of the source being validated.
- * @param {stringq} mimetype Mime type to validate.
+ * @param {string} mimetype Mime type to validate.
  *
  * @returns {boolean} Whether or not the mimetype is valid.
  */
