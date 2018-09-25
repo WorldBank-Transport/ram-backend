@@ -22,7 +22,8 @@ const SOURCE_TO_TAG_ID = {
   // ram-poi
   poi: 1425,
   // ram-rn
-  'road-network': 1412
+  // 'road-network': 1412
+  'road-network': -1 // Disable temporarily
 };
 
 // Allow unauthorized requests.
