@@ -1,12 +1,12 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 import fetch from 'node-fetch';
 import Promise from 'bluebird';
 import _ from 'lodash';
 import https from 'https';
 
 import db from '../db/';
+import { getBoomResponseForError } from '../utils/errors';
 
 // Number of days the data is considered valid.
 export const CACHE_DAYS = 7;
@@ -186,8 +186,7 @@ async function wbCatalogHandler (request, reply) {
     const data = await getResourcesFromDb(sourceName);
     return reply(data);
   } catch (err) {
-    console.error(err);
-    return reply(Boom.badImplementation(err));
+    return reply(getBoomResponseForError(err));
   }
 }
 

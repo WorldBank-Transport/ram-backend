@@ -5,7 +5,7 @@ import Promise from 'bluebird';
 
 import db from '../db/';
 import { putFile as putFileToS3, removeLocalFile } from '../s3/utils';
-import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError, DataValidationError } from '../utils/errors';
+import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError, DataValidationError, getBoomResponseForError } from '../utils/errors';
 import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
 import { parseFormData } from '../utils/utils';
@@ -38,7 +38,7 @@ function handler (params, payload, reply) {
           .where('id', rnSourceScenarioId)
           .where('project_id', params.projId)
           .then((scenarios) => {
-            if (!scenarios.length) throw new ScenarioNotFoundError();
+            if (!scenarios.length) throw new ScenarioNotFoundError('Source scenario for cloning not found');
           });
       }
     })
@@ -139,13 +139,14 @@ function handler (params, payload, reply) {
       }
       throw err;
     })
-    .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-    .catch(ScenarioNotFoundError, e => reply(Boom.badRequest('Source scenario for cloning not found')))
-    .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
     .catch(err => {
-      console.log('err', err);
-      reply(Boom.badImplementation(err));
-    });
+      // Specific override
+      if (err.message.match(/Source scenario for cloning not found/)) {
+        return reply(Boom.badRequest(err.message));
+      }
+      throw err;
+    })
+    .catch(err => reply(getBoomResponseForError(err)));
 }
 
 export default [
@@ -213,11 +214,7 @@ export default [
           return payload;
         })
         .then(payload => handler(request.params, payload, reply))
-        .catch(DataValidationError, e => reply(Boom.badRequest(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   },
   {
@@ -273,11 +270,7 @@ export default [
           };
           return handler(request.params, payload, reply);
         })
-        .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];

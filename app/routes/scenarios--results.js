@@ -1,13 +1,12 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 import Promise from 'bluebird';
 import Zip from 'node-zip';
 import _ from 'lodash';
 
 import db from '../db/';
 import { getFileContents } from '../s3/utils';
-import { FileNotFoundError, DataValidationError } from '../utils/errors';
+import { FileNotFoundError, DataValidationError, getBoomResponseForError } from '../utils/errors';
 
 export default [
   {
@@ -61,14 +60,7 @@ export default [
           .encoding('binary')
           .header('Content-Disposition', `attachment; filename=results-${type}-p${projId}s${scId}.zip`)
         )
-        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(err => {
-          if (err.code === 'NoSuchKey') {
-            return reply(Boom.notFound('File not found in storage bucket'));
-          }
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   },
   {
@@ -183,11 +175,7 @@ export default [
           return accessibilityTime;
         })
         .then(accessibilityTime => reply({accessibilityTime}))
-        .catch(DataValidationError, e => reply(Boom.badRequest(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   },
   {
@@ -269,10 +257,8 @@ export default [
         .then(res => {
           request.count = parseInt(res[0].count);
           reply(res[1]);
-        }).catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        })
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   },
   {
@@ -317,10 +303,7 @@ export default [
         .then(() => Promise.all(_results))
         .then(res => prepGeoResponse(res))
         .then(res => reply(res))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];

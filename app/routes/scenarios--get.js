@@ -1,10 +1,9 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 import Promise from 'bluebird';
 
 import db from '../db/';
-import { ScenarioNotFoundError, ProjectNotFoundError } from '../utils/errors';
+import { ScenarioNotFoundError, ProjectNotFoundError, getBoomResponseForError } from '../utils/errors';
 import { getSourceData, getOperationData } from '../utils/utils';
 
 const routeSingleScenarioConfig = {
@@ -61,11 +60,7 @@ export default [
           request.params.scId = id;
           singleScenarioHandler(request, reply);
         })
-        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   },
   {
@@ -95,13 +90,9 @@ export function loadScenario (projId, scId) {
 }
 
 function singleScenarioHandler (request, reply) {
-  loadScenario(request.params.projId, request.params.scId)
+  return loadScenario(request.params.projId, request.params.scId)
     .then(scenario => reply(scenario))
-    .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
-    .catch(err => {
-      console.log('err', err);
-      reply(Boom.badImplementation(err));
-    });
+    .catch(err => reply(getBoomResponseForError(err)));
 }
 
 function attachScenarioSettings (scenario) {

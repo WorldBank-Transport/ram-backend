@@ -1,10 +1,9 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 
 import db from '../db/';
 import { removeDir as removeS3Dir } from '../s3/utils';
-import { MasterScenarioError, ScenarioNotFoundError } from '../utils/errors';
+import { MasterScenarioError, ScenarioNotFoundError, getBoomResponseForError } from '../utils/errors';
 
 module.exports = [
   {
@@ -58,12 +57,7 @@ module.exports = [
             });
         }))
       .then(() => reply({statusCode: 200, message: 'Scenario deleted'}))
-      .catch(MasterScenarioError, e => reply(Boom.conflict(e.message)))
-      .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
-      .catch(err => {
-        console.log('err', err);
-        reply(Boom.badImplementation(err));
-      });
+      .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];

@@ -1,6 +1,5 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 import Promise from 'bluebird';
 import Zip from 'node-zip';
 import _ from 'lodash';
@@ -19,7 +18,8 @@ import {
   FileExistsError,
   DataValidationError,
   ProjectStatusError,
-  FileNotFoundError
+  FileNotFoundError,
+  getBoomResponseForError
 } from '../utils/errors';
 import { parseFormData } from '../utils/utils';
 import { osmPOIGroups } from '../utils/overpass';
@@ -282,15 +282,7 @@ export default [
           // Get the right resolver and start the process.
           return resolverMatrix[sourceName][sourceType]();
         })
-        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(FileExistsError, e => reply(Boom.conflict(e.message)))
-        .catch(ProjectStatusError, e => reply(Boom.badRequest(e.message)))
-        .catch(DataValidationError, e => reply(Boom.badRequest(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   },
   {
@@ -344,14 +336,7 @@ export default [
             .header('Content-Disposition', `attachment; filename=${files[0].type}-p${projId}s${scId}.zip`)
           );
         })
-        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(err => {
-          if (err.code === 'NoSuchKey') {
-            return reply(Boom.notFound('File not found in storage bucket'));
-          }
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];

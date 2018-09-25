@@ -2,7 +2,6 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Joi from 'joi';
-import Boom from 'boom';
 import _ from 'lodash';
 import Promise from 'bluebird';
 import Zip from 'node-zip';
@@ -14,7 +13,8 @@ import {
   FileExistsError,
   FileNotFoundError,
   DataValidationError,
-  ProjectStatusError
+  ProjectStatusError,
+  getBoomResponseForError
 } from '../utils/errors';
 import { parseFormData, getPropInsensitive } from '../utils/utils';
 import { getOSRMProfileDefaultSpeedSettings, renderProfileFile, getOSRMProfileDefaultSpeedMeta } from '../utils/osrm-profile';
@@ -140,15 +140,7 @@ export default [
               throw err;
             });
         })
-        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(FileExistsError, e => reply(Boom.conflict(e.message)))
-        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(ProjectStatusError, e => reply(Boom.badRequest(e.message)))
-        .catch(DataValidationError, e => reply(Boom.badRequest(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   },
   {
@@ -201,14 +193,7 @@ export default [
             .header('Content-Disposition', `attachment; filename=${files[0].type}-p${projId}.zip`)
           );
         })
-        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(err => {
-          if (err.code === 'NoSuchKey') {
-            return reply(Boom.notFound('File not found in storage bucket'));
-          }
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   },
   {
@@ -233,8 +218,8 @@ export default [
           .where('id', projId)
           .first();
 
-        if (!project) return reply(Boom.notFound('Project not found'));
-        if (project.status === 'pending') return reply(Boom.badRequest('Project setup not completed'));
+        if (!project) throw new ProjectNotFoundError();
+        if (project.status === 'pending') throw new ProjectStatusError('Project setup not completed');
 
         // Get source data for the profile.
         const sourceData = await db('projects_source_data')
@@ -248,8 +233,7 @@ export default [
           settings: sourceData.data.settings
         });
       } catch (err) {
-        console.log('err', err);
-        return reply(Boom.badImplementation(err));
+        return reply(getBoomResponseForError(err));
       }
     }
   },
@@ -277,8 +261,8 @@ export default [
           .where('id', projId)
           .first();
 
-        if (!project) return reply(Boom.notFound('Project not found'));
-        if (project.status === 'pending') return reply(Boom.badRequest('Project setup not completed'));
+        if (!project) throw new ProjectNotFoundError();
+        if (project.status === 'pending') throw new ProjectStatusError('Project setup not completed');
 
         // Update source data.
         await db('projects_source_data')
@@ -304,8 +288,7 @@ export default [
 
         return reply({statusCode: 200, message: 'Profile settings uploaded'});
       } catch (err) {
-        console.log('err', err);
-        return reply(Boom.badImplementation(err));
+        return reply(getBoomResponseForError(err));
       }
     }
   }

@@ -3,7 +3,7 @@ import Joi from 'joi';
 import Boom from 'boom';
 
 import db from '../db/';
-import { ScenarioNotFoundError } from '../utils/errors';
+import { ScenarioNotFoundError, getBoomResponseForError } from '../utils/errors';
 import { getFile } from '../s3/utils';
 
 module.exports = [
@@ -38,14 +38,14 @@ module.exports = [
             .type('application/octet-stream')
             .header('Content-Encoding', 'gzip');
         })
-        .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
         .catch(err => {
+          // Specific override for this case.
           if (err.code === 'NoSuchKey') {
             return reply(Boom.notFound('Tile not found'));
           }
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+          throw err;
+        })
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];

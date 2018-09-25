@@ -1,11 +1,10 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 import Promise from 'bluebird';
 
 import db from '../db/';
 import { loadScenario } from './scenarios--get';
-import { ScenarioNotFoundError, DataConflictError } from '../utils/errors';
+import { ScenarioNotFoundError, DataConflictError, getBoomResponseForError } from '../utils/errors';
 
 module.exports = [
   {
@@ -72,12 +71,7 @@ module.exports = [
           }
           throw err;
         })
-        .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];

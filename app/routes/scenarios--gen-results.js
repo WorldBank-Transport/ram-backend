@@ -1,13 +1,12 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 import Promise from 'bluebird';
 import cp from 'child_process';
 
 import config from '../config';
 import db from '../db/';
 import { removeFile } from '../s3/utils';
-import { ProjectNotFoundError, ScenarioNotFoundError, DataConflictError } from '../utils/errors';
+import { ScenarioNotFoundError, DataConflictError, getBoomResponseForError } from '../utils/errors';
 import { getProject } from './projects--get';
 import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
@@ -104,13 +103,7 @@ module.exports = [
         // Start generation.
         .then(op => generateResults(projId, scId, op))
         .then(() => reply({statusCode: 200, message: 'Result generation started'}))
-        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   },
   {
@@ -143,13 +136,9 @@ module.exports = [
         // Send kill signal to generation process.
         .then(() => killAnalysisProcess(projId, scId))
         // Abort operation.
-        .then(() => op.log('error', {error: 'Operation aborted'}).then(op => op.finish()))
+        .then(() => op.finish('error', {error: 'Operation aborted'}))
         .then(() => reply({statusCode: 200, message: 'Result generation aborted'}))
-        .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];

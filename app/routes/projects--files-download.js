@@ -4,7 +4,7 @@ import Boom from 'boom';
 
 import db from '../db/';
 import { getFile } from '../s3/utils';
-import { FileNotFoundError } from '../utils/errors';
+import { FileNotFoundError, getBoomResponseForError } from '../utils/errors';
 
 module.exports = [
   {
@@ -53,14 +53,7 @@ module.exports = [
                 .header('Content-Disposition', `attachment; filename=${file.name}`);
             });
         })
-        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(err => {
-          if (err.code === 'NoSuchKey') {
-            return reply(Boom.notFound('File not found in storage bucket'));
-          }
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];
