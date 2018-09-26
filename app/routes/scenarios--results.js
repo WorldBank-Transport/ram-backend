@@ -24,43 +24,35 @@ export default [
         }
       }
     },
-    handler: (request, reply) => {
+    handler: async (request, reply) => {
       const { projId, scId } = request.params;
       const { type } = request.query;
 
-      db('scenarios_files')
-        .select('*')
-        .where('project_id', projId)
-        .where('scenario_id', scId)
-        .where('type', `results-${type}`)
-        .then(files => {
-          if (!files.length) throw new FileNotFoundError('Results not found');
-          return files;
-        })
-        // Match file metadata with their content.
-        .then(files => {
-          return Promise.map(files, f => getFileContents(f.path))
-            .then(filesData => files.map((f, i) => {
-              f.content = filesData[i];
-              return f;
-            }));
-        })
-        // Zip the files.
-        .then(files => {
-          let zip = new Zip();
-          files.forEach(f => {
-            zip.file(`${f.name}.${type}`, f.content);
-          });
+      try {
+        const files = await db('scenarios_files')
+          .select('*')
+          .where('project_id', projId)
+          .where('scenario_id', scId)
+          .where('type', `results-${type}`);
 
-          return zip.generate({ base64: false, compression: 'DEFLATE' });
-        })
-        // Send!
-        .then(data => reply(data)
+        if (!files.length) throw new FileNotFoundError('Results not found');
+
+        // Zip the files.
+        const zip = new Zip();
+        files.forEach(async f => {
+          const content = await getFileContents(f.path);
+          zip.file(`${f.name}.${type}`, content);
+        });
+
+        const zipFile = zip.generate({ base64: false, compression: 'DEFLATE' });
+
+        return reply(zipFile)
           .type('application/zip')
           .encoding('binary')
-          .header('Content-Disposition', `attachment; filename=results-${type}-p${projId}s${scId}.zip`)
-        )
-        .catch(err => reply(getBoomResponseForError(err)));
+          .header('Content-Disposition', `attachment; filename=results-${type}-p${projId}s${scId}.zip`);
+      } catch (error) {
+        return reply(getBoomResponseForError(error));
+      }
     }
   },
   {
@@ -197,67 +189,73 @@ export default [
         }
       }
     },
-    handler: (request, reply) => {
+    handler: async (request, reply) => {
       const { projId, scId } = request.params;
       const { page, limit } = request;
       const offset = (page - 1) * limit;
-      let { sortBy, sortDir, poiType, popInd, origin_name: originName } = request.query;
+      const { poiType, popInd, origin_name: originName } = request.query;
+      let { sortBy, sortDir } = request.query;
 
       sortBy = sortBy || 'origin_name';
       sortDir = sortDir || 'asc';
 
-      let _count = db('results')
-        .count('projects_origins.id')
-        .innerJoin('results_poi', 'results.id', 'results_poi.result_id')
-        .innerJoin('projects_origins', 'projects_origins.id', 'results.origin_id')
-        .innerJoin('projects_origins_indicators', 'projects_origins_indicators.origin_id', 'projects_origins.id')
-        .innerJoin('projects_aa', 'projects_aa.id', 'results.project_aa_id')
-        .where('results.project_id', projId)
-        .where('results.scenario_id', scId)
-        .where('projects_origins_indicators.key', popInd)
-        .where('results_poi.type', poiType)
-        .modify(function (queryBuilder) {
-          if (originName) {
-            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${originName}%'))`);
-          }
-        })
-        .first();
+      try {
+        const _count = db('results')
+          .count('projects_origins.id')
+          .innerJoin('results_poi', 'results.id', 'results_poi.result_id')
+          .innerJoin('projects_origins', 'projects_origins.id', 'results.origin_id')
+          .innerJoin('projects_origins_indicators', 'projects_origins_indicators.origin_id', 'projects_origins.id')
+          .innerJoin('projects_aa', 'projects_aa.id', 'results.project_aa_id')
+          .where('results.project_id', projId)
+          .where('results.scenario_id', scId)
+          .where('projects_origins_indicators.key', popInd)
+          .where('results_poi.type', poiType)
+          .modify(function (queryBuilder) {
+            if (originName) {
+              queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${originName}%'))`);
+            }
+          })
+          .first();
 
-      let _results = db('results')
-        .select(
-          'projects_origins.id as origin_id',
-          'projects_origins.name as origin_name',
-          'results.project_aa_id as aa_id',
-          'projects_aa.name as aa_name',
-          'projects_origins_indicators.value as pop_value',
-          'projects_origins_indicators.key as pop_key',
-          'results_poi.type as poi_type',
-          'results_poi.time as time_to_poi'
-        )
-        .innerJoin('results_poi', 'results.id', 'results_poi.result_id')
-        .innerJoin('projects_origins', 'projects_origins.id', 'results.origin_id')
-        .innerJoin('projects_origins_indicators', 'projects_origins_indicators.origin_id', 'projects_origins.id')
-        .innerJoin('projects_aa', 'projects_aa.id', 'results.project_aa_id')
-        .where('results.project_id', projId)
-        .where('results.scenario_id', scId)
-        .where('projects_origins_indicators.key', popInd)
-        .where('results_poi.type', poiType)
-        .modify(function (queryBuilder) {
-          if (originName) {
-            queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${originName}%'))`);
-          }
-        })
-        .orderBy(sortBy, sortDir)
-        .offset(offset).limit(limit);
+        const _results = db('results')
+          .select(
+            'projects_origins.id as origin_id',
+            'projects_origins.name as origin_name',
+            'results.project_aa_id as aa_id',
+            'projects_aa.name as aa_name',
+            'projects_origins_indicators.value as pop_value',
+            'projects_origins_indicators.key as pop_key',
+            'results_poi.type as poi_type',
+            'results_poi.time as time_to_poi'
+          )
+          .innerJoin('results_poi', 'results.id', 'results_poi.result_id')
+          .innerJoin('projects_origins', 'projects_origins.id', 'results.origin_id')
+          .innerJoin('projects_origins_indicators', 'projects_origins_indicators.origin_id', 'projects_origins.id')
+          .innerJoin('projects_aa', 'projects_aa.id', 'results.project_aa_id')
+          .where('results.project_id', projId)
+          .where('results.scenario_id', scId)
+          .where('projects_origins_indicators.key', popInd)
+          .where('results_poi.type', poiType)
+          .modify(function (queryBuilder) {
+            if (originName) {
+              queryBuilder.whereRaw(`LOWER(UNACCENT(projects_origins.name)) like LOWER(UNACCENT('%${originName}%'))`);
+            }
+          })
+          .orderBy(sortBy, sortDir)
+          .offset(offset).limit(limit);
 
-      checkPoi(projId, scId, poiType)
-        .then(() => checkPopInd(projId, popInd))
-        .then(() => Promise.all([_count, _results]))
-        .then(res => {
-          request.count = parseInt(res[0].count);
-          reply(res[1]);
-        })
-        .catch(err => reply(getBoomResponseForError(err)));
+        await Promise.all([
+          checkPoi(projId, scId, poiType),
+          checkPopInd(projId, popInd)
+        ]);
+
+        const [{count}, results] = await Promise.all([_count, _results]);
+
+        request.count = parseInt(count);
+        return reply(results);
+      } catch (error) {
+        return reply(getBoomResponseForError(error));
+      }
     }
   },
   {
@@ -275,63 +273,69 @@ export default [
         }
       }
     },
-    handler: (request, reply) => {
+    handler: async (request, reply) => {
       const { projId, scId } = request.params;
-      let { poiType, popInd } = request.query;
+      const { poiType, popInd } = request.query;
 
-      let _results = db('results')
-        .select(
-          'projects_origins.id as origin_id',
-          'projects_origins.name as origin_name',
-          'projects_origins.coordinates as origin_coords',
-          'projects_origins_indicators.value as pop_value',
-          'projects_origins_indicators.key as pop_key',
-          'results_poi.type as poi_type',
-          'results_poi.time as time_to_poi'
-        )
-        .innerJoin('results_poi', 'results.id', 'results_poi.result_id')
-        .innerJoin('projects_origins', 'projects_origins.id', 'results.origin_id')
-        .innerJoin('projects_origins_indicators', 'projects_origins_indicators.origin_id', 'projects_origins.id')
-        .where('results.project_id', projId)
-        .where('results.scenario_id', scId)
-        .where('projects_origins_indicators.key', popInd)
-        .where('results_poi.type', poiType);
+      try {
+        await Promise.all([
+          checkPoi(projId, scId, poiType),
+          checkPopInd(projId, popInd)
+        ]);
 
-      checkPoi(projId, scId, poiType)
-        .then(() => checkPopInd(projId, popInd))
-        .then(() => Promise.all(_results))
-        .then(res => prepGeoResponse(res))
-        .then(res => reply(res))
-        .catch(err => reply(getBoomResponseForError(err)));
+        const results = await db('results')
+          .select(
+            'projects_origins.id as origin_id',
+            'projects_origins.name as origin_name',
+            'projects_origins.coordinates as origin_coords',
+            'projects_origins_indicators.value as pop_value',
+            'projects_origins_indicators.key as pop_key',
+            'results_poi.type as poi_type',
+            'results_poi.time as time_to_poi'
+          )
+          .innerJoin('results_poi', 'results.id', 'results_poi.result_id')
+          .innerJoin('projects_origins', 'projects_origins.id', 'results.origin_id')
+          .innerJoin('projects_origins_indicators', 'projects_origins_indicators.origin_id', 'projects_origins.id')
+          .where('results.project_id', projId)
+          .where('results.scenario_id', scId)
+          .where('projects_origins_indicators.key', popInd)
+          .where('results_poi.type', poiType);
+
+        return reply(prepGeoResponse(results));
+      } catch (error) {
+        return reply(getBoomResponseForError(error));
+      }
     }
   }
 ];
 
-function checkPoi (projId, scId, poiType) {
-  return db('results')
+async function checkPoi (projId, scId, poiType) {
+  const poiTypes = await db('results')
     .distinct('results_poi.type')
     .select()
     .innerJoin('results_poi', 'results_poi.result_id', 'results.id')
     .where('project_id', projId)
     .where('scenario_id', scId)
-    .then(poiTypes => _.map(poiTypes, 'type'))
-    .then(poiTypes => {
-      if (!poiTypes.length) throw new DataValidationError(`There are no available poi types to use`);
-      if (poiTypes.indexOf(poiType) === -1) throw new DataValidationError(`"poiType" must be one of [${poiTypes.join(', ')}]`);
-    });
+    .then(poiTypes => _.map(poiTypes, 'type'));
+
+  if (!poiTypes.length) throw new DataValidationError(`There are no available poi types to use`);
+  if (poiTypes.indexOf(poiType) === -1) throw new DataValidationError(`"poiType" must be one of [${poiTypes.join(', ')}]`);
+
+  return poiTypes;
 }
 
-function checkPopInd (projId, popInd) {
-  return db('projects_files')
+async function checkPopInd (projId, popInd) {
+  const popInds = await db('projects_files')
     .select('data')
     .where('project_id', projId)
     .where('type', 'origins')
     .first()
-    .then(res => _.map(res.data.indicators, 'key'))
-    .then(popInds => {
-      if (!popInds.length) throw new DataValidationError(`There are no available population indicators to use`);
-      if (popInds.indexOf(popInd) === -1) throw new DataValidationError(`"popInd" must be one of [${popInds.join(', ')}]`);
-    });
+    .then(popInds => _.map(popInds.data.indicators, 'key'));
+
+  if (!popInds.length) throw new DataValidationError(`There are no available population indicators to use`);
+  if (popInds.indexOf(popInd) === -1) throw new DataValidationError(`"popInd" must be one of [${popInds.join(', ')}]`);
+
+  return popInds;
 }
 
 function prepGeoResponse (results) {
