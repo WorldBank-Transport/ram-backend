@@ -78,11 +78,21 @@ export default [
         }
       }
     },
-    handler: (request, reply) => {
+    handler: async (request, reply) => {
       const { projId, scId } = request.params;
       const { poiType, popInd } = request.query;
 
       // Prepare response.
+      // The response is returned with the amount of the population that have
+      // access to a given POI in a given time.
+      // The amount of people in the 1st position of the pop array are within
+      // (1st postition of analysisMins) minutes of the poi.
+      // To know the percentage is just a matter of dividing this number by
+      // the total population.
+      // The response is returned in this way instead of precomputed because
+      // calculation the totals when comparing scenarios would show a
+      // a skewed result. In this way the value is computed client side with
+      // only the comparing admin areas being taken into account. 
       // let r = {
       //   accessibilityTime: {
       //     poi: 'bank',
@@ -91,7 +101,8 @@ export default [
       //       {
       //         id: 00000,
       //         name: 'something',
-      //         data: [0, 0, 10, 50, 100]
+      //         totalPop: 15000,
+      //         pop: [0, 0, 9000, 10000, 14000]
       //       }
       //     ]
       //   }
@@ -102,23 +113,31 @@ export default [
         analysisMins: [10, 20, 30, 60, 90, 120]
       };
 
-      // Get all the admin areas for which results were generated.
-      const getAdminAreas = () => {
-        return db('scenarios_settings')
+      // Sum by pop_value.
+      const sumPop = (arr) => arr.reduce((acc, o) => acc + (parseInt(o.pop_value) || 1), 0);
+      // Check if given time is less that given nimutes accounting for nulls.
+      const isLessThanMinutes = (time, min) => time === null ? false : time <= min * 60;
+
+      try {
+        await checkPoi(projId, scId, poiType);
+        await checkPopInd(projId, popInd);
+
+        // Get all the admin areas for which results were generated.
+        const aa = await db('scenarios_settings')
           .select('value')
           .where('key', 'admin_areas')
           .where('scenario_id', scId)
-          .first()
-          .then(aa => JSON.parse(aa.value))
-          .then(selectedAA => db('projects_aa')
-            .select('id', 'name')
-            .where('project_id', projId)
-            .whereIn('id', selectedAA)
-          );
-      };
+          .first();
+        const selectedAA = await db('projects_aa')
+          .select('id', 'name')
+          .where('project_id', projId)
+          .whereIn('id', JSON.parse(aa.value));
 
-      const getResults = () => {
-        return db.raw(`
+        accessibilityTime.adminAreas = selectedAA.map(a => {
+          return { id: a.id, name: a.name };
+        });
+
+        const results = await db.raw(`
           SELECT
             pop.value as pop_value,
             pop.key as pop_key,
@@ -133,49 +152,29 @@ export default [
           WHERE pop.key = :popInd and rp.type = :poiType and r.project_id = :projId and r.scenario_id = :scId
         `, { popInd, poiType, projId, scId })
         .then(res => res.rows);
-      };
 
-      // Sum by pop_value.
-      const sumPop = (arr) => arr.reduce((acc, o) => acc + (parseInt(o.pop_value) || 1), 0);
-      // Check if given time is less that given nimutes accounting for nulls.
-      const isLessThanMinutes = (time, min) => time === null ? false : time <= min * 60;
+        // Accessibility times groupped by admin area.
+        accessibilityTime.adminAreas = _(accessibilityTime.adminAreas).map(aa => {
+          const filtered = results.filter(r => r.aa_id === aa.id);
 
-      // GO!
+          if (filtered.length) {
+            aa.totalPop = sumPop(filtered);
+            aa.pop = accessibilityTime.analysisMins.map(time => sumPop(filtered.filter(o => isLessThanMinutes(o.time_to_poi, time))));
+          } else {
+            aa.pop = [];
+            aa.totalPop = null;
+          }
 
-      checkPoi(projId, scId, poiType)
-        .then(() => checkPopInd(projId, popInd))
-        .then(() => getAdminAreas())
-        .then(aa => {
-          accessibilityTime.adminAreas = aa.map(a => {
-            return {
-              id: a.id,
-              name: a.name
-            };
-          });
+          return aa;
         })
-        .then(() => getResults())
-        .then(results => {
-          accessibilityTime.adminAreas = _(accessibilityTime.adminAreas).map(aa => {
-            let filtered = results.filter(r => r.aa_id === aa.id);
+        .sortBy(accessibilityTime.adminAreas, o => _.deburr(o.name))
+        .reverse()
+        .value();
 
-            if (filtered.length) {
-              let totalPop = sumPop(filtered);
-              let pop = accessibilityTime.analysisMins.map(time => sumPop(filtered.filter(o => isLessThanMinutes(o.time_to_poi, time))));
-              aa.data = pop.map(o => o / totalPop * 100);
-            } else {
-              aa.data = [];
-            }
-
-            return aa;
-          })
-          .sortBy(accessibilityTime.adminAreas, o => _.deburr(o.name))
-          .reverse()
-          .value();
-
-          return accessibilityTime;
-        })
-        .then(accessibilityTime => reply({accessibilityTime}))
-        .catch(err => reply(getBoomResponseForError(err)));
+        return reply({accessibilityTime});
+      } catch (error) {
+        return reply(getBoomResponseForError(error));
+      }
     }
   },
   {
