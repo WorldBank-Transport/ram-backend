@@ -39,7 +39,7 @@ export default [
 
         // Zip the files.
         const zip = new Zip();
-        files.forEach(async f => {
+        await Promise.mapSeries(files, async f => {
           const content = await getFileContents(f.path);
           zip.file(`${f.name}.${type}`, content);
         });
@@ -84,7 +84,7 @@ export default [
       // The response is returned in this way instead of precomputed because
       // calculation the totals when comparing scenarios would show a
       // a skewed result. In this way the value is computed client side with
-      // only the comparing admin areas being taken into account. 
+      // only the comparing admin areas being taken into account.
       // let r = {
       //   accessibilityTime: {
       //     poi: 'bank',
