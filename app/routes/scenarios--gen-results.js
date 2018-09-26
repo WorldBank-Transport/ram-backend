@@ -347,12 +347,12 @@ function spawnAnalysisProcess (projId, scId, opId) {
       let error;
 
       proc.stdout.on('data', (data) => {
-        console.log(`[VT P${projId} S${scId}]`, data.toString());
+        console.log(`[ANALYSIS P${projId} S${scId}]`, data.toString());
       });
 
       proc.stderr.on('data', (data) => {
         error = data.toString();
-        console.log(`[VT P${projId} S${scId}][ERROR]`, error);
+        console.log(`[ANALYSIS P${projId} S${scId}][ERROR]`, error);
       });
 
       proc.on('close', (code) => {
