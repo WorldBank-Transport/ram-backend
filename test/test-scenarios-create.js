@@ -124,7 +124,7 @@ describe('Scenarios', function () {
         .then(res => {
           assert.equal(res.statusCode, 400, 'Status code is 400');
           var result = res.result;
-          assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" must be one of \[clone, new, osm\]\]/);
+          assert.match(result.message, /child "roadNetworkSource" fails because \["roadNetworkSource" must be one of \[clone, new, osm, wbcatalog\]\]/);
         });
     });
 
@@ -163,6 +163,25 @@ describe('Scenarios', function () {
           assert.equal(res.statusCode, 400, 'Status code is 400');
           var result = res.result;
           assert.match(result.message, /child "roadNetworkFile" fails because \["roadNetworkFile" is required\]/);
+        });
+    });
+
+    it('should require an catalog option when road-network source is wbcatalog', function () {
+      let form = new FormData();
+      form.append('name', 'Scenario name');
+      form.append('roadNetworkSource', 'wbcatalog');
+
+      return streamToPromise(form)
+        .then(payload => instance.injectThen({
+          method: 'POST',
+          url: '/projects/1000/scenarios',
+          payload,
+          headers: form.getHeaders()
+        }))
+        .then(res => {
+          assert.equal(res.statusCode, 400, 'Status code is 400');
+          var result = res.result;
+          assert.match(result.message, /child "roadNetworkSourceWbCatalogOption" fails because \["roadNetworkSourceWbCatalogOption" is required\]/);
         });
     });
 

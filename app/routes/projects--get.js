@@ -1,10 +1,9 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 import Promise from 'bluebird';
 
 import db from '../db/';
-import { ProjectNotFoundError } from '../utils/errors';
+import { ProjectNotFoundError, getBoomResponseForError } from '../utils/errors';
 import { getSourceData, getOperationData } from '../utils/utils';
 
 module.exports = [
@@ -41,11 +40,7 @@ module.exports = [
     handler: (request, reply) => {
       getProject(request.params.projId)
         .then(project => reply(project))
-        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];
@@ -113,7 +108,7 @@ function attachFinishSetupOperation (project) {
     .where('project_id', project.id)
     .where('master', true)
     .first()
-    .then(scenario => getOperationData(db, 'project-setup-finish', 'finish_setup', scenario.id))
+    .then(scenario => getOperationData(db, 'project-setup-finish', scenario.id))
     .then(opData => {
       project.finish_setup = opData;
       return project;

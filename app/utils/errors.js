@@ -1,5 +1,6 @@
 'use strict';
 import ExtendableError from 'es6-error';
+import Boom from 'boom';
 
 export class ProjectNotFoundError extends ExtendableError {
   constructor (message = 'Project not found', extra) {
@@ -55,4 +56,40 @@ export class DataValidationError extends ExtendableError {
     super(message);
     this.extra = extra;
   }
+}
+
+export class DisabledServiceError extends ExtendableError {
+  constructor (message, extra) {
+    super(message);
+    this.extra = extra;
+  }
+}
+
+/**
+ * Gets the appropriate Boom response for the given error. Can be passed
+ * directly to the reply interface.
+ * This function is specially useful when workin with try/catch blocks that can
+ * throw multiple errors.
+ *
+ * @param {Error} error Error object
+ *
+ * @returns Boom response
+ */
+export function getBoomResponseForError (error) {
+  // Check for known error types.
+  if (error instanceof FileNotFoundError) return Boom.notFound(error.message);
+  if (error instanceof FileExistsError) return Boom.conflict(error.message);
+  if (error instanceof ProjectNotFoundError) return Boom.notFound(error.message);
+  if (error instanceof ScenarioNotFoundError) return Boom.notFound(error.message);
+  if (error instanceof MasterScenarioError) return Boom.conflict(error.message);
+  if (error instanceof ProjectStatusError) return Boom.badRequest(error.message);
+  if (error instanceof DataConflictError) return Boom.conflict(error.message);
+  if (error instanceof DataValidationError) return Boom.badRequest(error.message);
+
+  // Check for known error codes.
+  if (error.code === 'NoSuchKey') return Boom.notFound('File not found in storage bucket');
+
+  // Default handling.
+  console.log('error', error);
+  return Boom.badImplementation(error);
 }

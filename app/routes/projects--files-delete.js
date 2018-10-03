@@ -1,10 +1,9 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 
 import db from '../db/';
 import { removeFile } from '../s3/utils';
-import { ProjectNotFoundError, FileNotFoundError, ProjectStatusError } from '../utils/errors';
+import { ProjectNotFoundError, FileNotFoundError, ProjectStatusError, getBoomResponseForError } from '../utils/errors';
 
 module.exports = [
   {
@@ -41,13 +40,7 @@ module.exports = [
             .then(() => removeFile(data.file_path));
         })
         .then(() => reply({statusCode: 200, message: 'File deleted'}))
-        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(ProjectStatusError, e => reply(Boom.badRequest(e.message)))
-        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];

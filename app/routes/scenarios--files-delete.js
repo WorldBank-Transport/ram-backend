@@ -1,6 +1,5 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 
 import db from '../db/';
 import { removeFile } from '../s3/utils';
@@ -8,7 +7,8 @@ import {
   ProjectNotFoundError,
   ScenarioNotFoundError,
   FileNotFoundError,
-  ProjectStatusError
+  ProjectStatusError,
+  getBoomResponseForError
 } from '../utils/errors';
 
 module.exports = [
@@ -54,14 +54,7 @@ module.exports = [
         })
         .then(() => db('projects').update({updated_at: (new Date())}).where('id', request.params.projId))
         .then(() => reply({statusCode: 200, message: 'File deleted'}))
-        .catch(ScenarioNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(ProjectStatusError, e => reply(Boom.badRequest(e.message)))
-        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];

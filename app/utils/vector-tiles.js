@@ -63,8 +63,8 @@ function killSwitch (projId, scId) {
 
 function runProcess (projId, scId, sourceFile, vtType) {
   return new Promise((resolve, reject) => {
-    console.log(`[VT P${projId} S${scId}]`, 'spawnVectorTilesProcess', vtType);
-    const containerName = `vtp${projId}s${scId}`;
+    console.log(`[VT P${projId} S${scId} ${vtType}]`, 'spawnVectorTilesProcess', vtType);
+    const containerName = `vtp${projId}s${scId}-${vtType}`;
     const service = config.vtProcess.service;
     let env = {};
 
@@ -120,12 +120,12 @@ function runProcess (projId, scId, sourceFile, vtType) {
     let error;
 
     proc.stdout.on('data', (data) => {
-      console.log(`[VT P${projId} S${scId}]`, data.toString());
+      console.log(`[VT P${projId} S${scId} ${vtType}]`, data.toString());
     });
 
     proc.stderr.on('data', (data) => {
       error = data.toString();
-      console.log(`[VT P${projId} S${scId}][ERROR]`, error);
+      console.log(`[VT P${projId} S${scId} ${vtType}][ERROR]`, error);
     });
 
     proc.on('close', (code) => {

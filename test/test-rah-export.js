@@ -28,6 +28,7 @@ const getBasePayload = () => {
     country: 'Portugal',
     date: '2018-01-01',
     description: 'The description',
+    includeResults: true,
     authors: [{name: 'rural accessibility hub', id: 'rah'}],
     topics: [{name: 'rah'}],
     contactName: 'Rah export',
@@ -111,6 +112,20 @@ describe('RAH Export', function () {
       .then(res => {
         assert.equal(res.statusCode, 400, 'Status code is 400');
         assert.match(res.result.message, /\["description" is required\]/);
+      });
+    });
+
+    it('should fail when missing includeResults', function () {
+      let payload = getBasePayload();
+      delete payload.includeResults;
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/1000/rah-export',
+        payload
+      })
+      .then(res => {
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.match(res.result.message, /\["includeResults" is required\]/);
       });
     });
 
@@ -265,6 +280,19 @@ describe('RAH Export', function () {
       .then(res => {
         assert.equal(res.statusCode, 409, 'Status code is 409');
         assert.match(res.result.message, /Project setup not completed/);
+      });
+    });
+
+    it('should fail when includeResults is true but there are none', function () {
+      let payload = getBasePayload();
+      return instance.injectThen({
+        method: 'POST',
+        url: '/projects/2000/rah-export',
+        payload
+      })
+      .then(res => {
+        assert.equal(res.statusCode, 409, 'Status code is 409');
+        assert.equal(res.result.message, 'There are no scenarios with results');
       });
     });
   });
