@@ -19,12 +19,16 @@
 export default class Operation {
   constructor (db) {
     if (!db) throw new Error('Missing db instance');
-
     this.db = db;
     this
       ._setId(null)
       ._setName(null)
       ._setStatus(null);
+
+    // Lock and queue to avoid race conditions.
+    this.lock = false;
+    this.queue = [];
+    this.queueClearPromiseResolve = [];
   }
 
   _setStatus (status) {
@@ -42,20 +46,19 @@ export default class Operation {
     return this;
   }
 
-  _load (opts) {
-    return this.db(Operation.opTable)
+  async _load (opts) {
+    const op = await this.db(Operation.opTable)
       .select('*')
       .where(opts)
       .orderBy('created_at', 'desc')
-      .then(res => {
-        if (!res.length) return Promise.reject(new Error('Operation does not exist'));
-        let op = res[0];
+      .first();
 
-        return this
-          ._setId(op.id)
-          ._setName(op.name)
-          ._setStatus(op.status);
-      }, err => Promise.reject(err));
+    if (!op) throw new Error('Operation does not exist');
+
+    return this
+      ._setId(op.id)
+      ._setName(op.name)
+      ._setStatus(op.status);
   }
 
   /**
@@ -69,22 +72,22 @@ export default class Operation {
    *
    * @return {Operation}     This operation instance
    */
-  start (name, projId, scId) {
+  async start (name, projId, scId) {
     if (!name || !projId || !scId) {
       throw new Error('Missing parameters');
     }
 
     if (this.isCompleted()) {
-      return Promise.reject(new Error('Operation already complete'));
+      throw new Error('Operation already complete');
     }
 
     if (this.isStarted()) {
-      return Promise.reject(new Error('Operation already running'));
+      throw new Error('Operation already running');
     }
 
     // Check that there isn't another operation with the same values
     // that is not complete.
-    return this.db(Operation.opTable)
+    const op = await this.db(Operation.opTable)
       .select('id')
       .where({
         name,
@@ -92,62 +95,63 @@ export default class Operation {
         scenario_id: scId
       })
       .andWhereNot('status', Operation.status.complete)
-      .then(res => {
-        if (res.length) {
-          throw new Error('Operation with the same name, project_id and scenario_id is already running');
-        }
-      })
-      .then(() => {
-        this.projId = projId;
-        this.scId = scId;
-        this
-          ._setName(name)
-          ._setStatus(Operation.status.running);
+      .first();
 
-        return this.db(Operation.opTable)
-          .returning('*')
-          .insert({
-            name,
-            project_id: this.projId,
-            scenario_id: this.scId,
-            status: this.getStatus(),
-            created_at: (new Date()),
-            updated_at: (new Date())
-          });
-      })
-      .then(res => {
-        this.id = res[0].id;
-        return this;
-      })
-      .catch(err => {
-        if (err.message.match(/Operation with the same/)) {
-          return Promise.reject(err);
-        }
-        throw err;
+    if (op) throw new Error('Operation with the same name, project_id and scenario_id is already running');
+
+    this.projId = projId;
+    this.scId = scId;
+    this
+      ._setName(name)
+      ._setStatus(Operation.status.running);
+
+    const insert = await this.db(Operation.opTable)
+      .returning('*')
+      .insert({
+        name,
+        project_id: this.projId,
+        scenario_id: this.scId,
+        status: this.getStatus(),
+        created_at: (new Date()),
+        updated_at: (new Date())
       });
+
+    this.id = insert[0].id;
+    return this;
   }
 
   /**
    * Sets the status of the operation to complete.
+   * If a log is provided creates a last log before finishing.
+   *
+   * @param  {String} code   Operation code
+   * @param  {Any} data      Any arbitrary data. It will be stored as json
+   *                         format. If `data` is not an object it will be
+   *                         stored as {message: `data`}
    *
    * @return {Operation}     This operation instance
    */
-  finish () {
+  async finish (code, data = null) {
+    if (this.isCompleted()) {
+      throw new Error('Operation already complete');
+    }
+
     if (!this.isStarted()) {
-      return Promise.reject(new Error('Operation not running'));
+      throw new Error('Operation not running');
+    }
+
+    if (code) {
+      if (data !== null && data.toString() !== '[object Object]') {
+        data = {message: data};
+      }
+
+      // Queue tasks to be written to the database.
+      this.queue.push({task: 'log', code, data});
     }
 
     this._setStatus(Operation.status.complete);
-
-    return this.db(Operation.opTable)
-      .update({
-        updated_at: (new Date()),
-        status: this.getStatus()
-      })
-      .where('id', this.id)
-      .then(res => {
-        return this;
-      }, err => Promise.reject(err));
+    this.queue.push({task: 'finish'});
+    return this._reconcile();
   }
 
   /**
@@ -185,35 +189,71 @@ export default class Operation {
    *                         stored as {message: `data`}
    * @return {Operation}     This operation instance
    */
-  log (code, data = null) {
+  async log (code, data = null) {
     if (this.isCompleted()) {
-      return Promise.reject(new Error('Operation already complete'));
+      throw new Error('Operation already complete');
     }
 
     if (!this.isStarted()) {
-      return Promise.reject(new Error('Operation not running'));
+      throw new Error('Operation not running');
     }
 
     if (data !== null && data.toString() !== '[object Object]') {
       data = {message: data};
     }
 
-    return this.db.transaction(trx => {
-      let date = new Date();
-      return Promise.all([
-        trx(Operation.opTable)
-          .update({updated_at: date})
-          .where('id', this.id),
-        trx(Operation.logTable)
-          .insert({
-            operation_id: this.id,
-            code,
-            data,
-            created_at: date
-          })
-      ])
-      .then(() => this);
-    });
+    // Queue tasks to be written to the database.
+    this.queue.push({task: 'log', code, data});
+    return this._reconcile();
+  }
+
+  /**
+   * Writes the operations in queue to the database.
+   */
+  async _reconcile () {
+    // If locked create a new promise that resolves when everythin is writtem.
+    if (this.lock) {
+      return new Promise(resolve => this.queueClearPromiseResolve.push(resolve));
+    }
+    // If the queue is clear, resolve all pending promises.
+    if (!this.queue.length) {
+      this.queueClearPromiseResolve.forEach(resolve => resolve(this));
+      this.queueClearPromiseResolve = [];
+      return this;
+    }
+    this.lock = true;
+
+    const {task, code, data} = this.queue.shift();
+
+    if (task === 'log') {
+      await this.db.transaction(trx => {
+        let date = new Date();
+        return Promise.all([
+          trx(Operation.opTable)
+            .update({updated_at: date})
+            .where('id', this.id),
+          trx(Operation.logTable)
+            .insert({
+              operation_id: this.id,
+              code,
+              data,
+              created_at: date
+            })
+        ]);
+      });
+    } else if (task === 'finish') {
+      await this.db(Operation.opTable)
+        .update({
+          updated_at: (new Date()),
+          status: Operation.status.complete
+        })
+        .where('id', this.id);
+    } else {
+      throw new Error('Invalid task');
+    }
+
+    this.lock = false;
+    return this._reconcile();
   }
 
   /**

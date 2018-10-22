@@ -1,10 +1,9 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 
 import db from '../db/';
 
-import { ProjectNotFoundError, DataConflictError } from '../utils/errors';
+import { ProjectNotFoundError, DataConflictError, getBoomResponseForError } from '../utils/errors';
 
 module.exports = [
   {
@@ -45,12 +44,7 @@ module.exports = [
         }
         throw err;
       })
-      .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-      .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
-      .catch(err => {
-        console.log('err', err);
-        reply(Boom.badImplementation(err));
-      });
+      .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];

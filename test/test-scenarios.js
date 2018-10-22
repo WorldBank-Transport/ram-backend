@@ -155,12 +155,14 @@ describe('Scenarios', function () {
           'road-network': {
             type: null,
             files: [],
-            osmOptions: {}
+            osmOptions: {},
+            wbCatalogOptions: {}
           },
           poi: {
             type: null,
             files: [],
-            osmOptions: {}
+            osmOptions: {},
+            wbCatalogOptions: {}
           }
         });
       });
@@ -186,7 +188,8 @@ describe('Scenarios', function () {
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
             ],
-            osmOptions: {}
+            osmOptions: {},
+            wbCatalogOptions: {}
           },
           poi: {
             type: 'file',
@@ -200,7 +203,8 @@ describe('Scenarios', function () {
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
             ],
-            osmOptions: {}
+            osmOptions: {},
+            wbCatalogOptions: {}
           }
         });
       });

@@ -2,21 +2,29 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Joi from 'joi';
-import Boom from 'boom';
 import _ from 'lodash';
 import Promise from 'bluebird';
 import Zip from 'node-zip';
 
 import db from '../db/';
-import { putFile as putFileToS3, removeFile, removeLocalFile, getLocalJSONFileContents, getFileContents } from '../s3/utils';
+import { putFile as putFileToS3, putFileStream, removeFile, removeLocalFile, getLocalJSONFileContents, getFileContents } from '../s3/utils';
 import {
   ProjectNotFoundError,
   FileExistsError,
   FileNotFoundError,
   DataValidationError,
-  ProjectStatusError
+  ProjectStatusError,
+  getBoomResponseForError
 } from '../utils/errors';
 import { parseFormData, getPropInsensitive } from '../utils/utils';
+import { getOSRMProfileDefaultSpeedSettings, renderProfileFile, getOSRMProfileDefaultSpeedMeta } from '../utils/osrm-profile';
+
+const profileValidationSchema = Object.keys(getOSRMProfileDefaultSpeedSettings())
+  .reduce((acc, setting) => {
+    // Ensure that the values are all numeric and the keys are correct.
+    acc[setting] = Joi.object().pattern(/^[0-9a-zA-Z_:-]+$/, Joi.number()).required();
+    return acc;
+  }, {});
 
 export default [
   {
@@ -67,59 +75,60 @@ export default [
           let sourceType = result.fields['source-type'][0];
           let sourceName = result.fields['source-name'][0];
 
-          if (sourceName === 'profile' && ['file', 'default'].indexOf(sourceType) === -1) {
-            throw new DataValidationError(`"source-type" for "profile" must be one of [file, default]`);
-          } else if (sourceName !== 'profile' && sourceType !== 'file') {
-            throw new DataValidationError(`"source-type" must be one of [file]`);
-          }
-
-          if (['admin-bounds', 'profile', 'origins'].indexOf(sourceName) === -1) {
-            throw new DataValidationError(`"source-name" must be one of [admin-bounds, profile, origins]`);
-          }
-
-          // Store the file if there is one.
+          // Store the file if there is one. It may be needed later for cleanup.
           // File must exist when the source is not origins, but that's
-          // checked afterwards.
+          // checked afterwards. Origin file may not be needed if we're just
+          // updating selected indicators.
           let uploadedFilePath = result.files.file ? result.files.file[0].path : null;
-          let resolver;
-          // Origins need to be handled differently.
-          if (sourceName === 'origins') {
-            resolver = handleOrigins(result, projId);
-          } else {
-            switch (sourceType) {
-              case 'file':
-                if (!uploadedFilePath) {
-                  throw new DataValidationError('"file" is required');
-                }
-                resolver = handleProfileAndAdmin(sourceName, uploadedFilePath, projId);
-                break;
-              case 'default':
-                if (sourceName !== 'profile') {
-                  throw new DataValidationError(`"source-type" default only supported for [profile]`);
-                }
 
-                resolver = upsertSource(sourceName, 'default', projId)
-                  // Check if the file exists.
-                  .then(() => db('projects_files')
-                    .select('id', 'path')
-                    .where('project_id', projId)
-                    .where('type', sourceName)
-                  )
-                  .then(files => {
-                    if (files.length) {
-                      // Remove files from DB.
-                      return db('projects_files')
-                        .whereIn('id', files.map(o => o.id))
-                        .del()
-                        // Remove files from storage.
-                        .then(() => Promise.map(files, file => removeFile(file.path)));
-                    }
-                  });
-                break;
+          const wbcatalogResolver = () => {
+            try {
+              var keys = result.fields['wbcatalog-options[key]'].filter(o => !!o);
+            } catch (e) {
+              throw new DataValidationError('"wbcatalog-options[key]" is required');
             }
+
+            if (!keys.length) {
+              throw new DataValidationError('"wbcatalog-options[key]" must not be empty');
+            }
+
+            // The catalog data is stored as an array of objects to be
+            // consistent throughout all sources, since the POI source
+            // can have multiple options with labels.
+            let sourceData = {resources: [{ key: keys[0] }]};
+
+            return simpleSourceUpdate(sourceName, sourceType, projId, sourceData);
+          };
+
+          // Functions for the different source names / types combinations.
+          const resolverMatrix = {
+            profile: {
+              file: () => handleProfileAndAdmin(sourceName, uploadedFilePath, projId),
+              default: () => simpleSourceUpdate(sourceName, sourceType, projId),
+              wbcatalog: () => wbcatalogResolver()
+            },
+            origins: {
+              file: () => handleOrigins(result, projId),
+              wbcatalog: () => wbcatalogResolver()
+            },
+            'admin-bounds': {
+              file: () => handleProfileAndAdmin(sourceName, uploadedFilePath, projId),
+              wbcatalog: () => wbcatalogResolver()
+            }
+          };
+
+          const allowedSourceNames = Object.keys(resolverMatrix);
+          if (allowedSourceNames.indexOf(sourceName) === -1) {
+            throw new DataValidationError(`"source-name" must be one of [${allowedSourceNames.join(', ')}]`);
           }
 
-          return resolver
+          const allowedSourceTypes = Object.keys(resolverMatrix[sourceName]);
+          if (allowedSourceTypes.indexOf(sourceType) === -1) {
+            throw new DataValidationError(`"source-type" for "${sourceName}" must be one of [${allowedSourceTypes.join(', ')}]`);
+          }
+
+          // Get the right resolver and start the process.
+          return resolverMatrix[sourceName][sourceType]()
             .then(insertResponse => db('projects').update({updated_at: (new Date())}).where('id', projId).then(() => insertResponse))
             .then(insertResponse => reply(Object.assign({}, insertResponse, {
               sourceType,
@@ -131,13 +140,7 @@ export default [
               throw err;
             });
         })
-        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(FileExistsError, e => reply(Boom.conflict(e.message)))
-        .catch(DataValidationError, e => reply(Boom.badRequest(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   },
   {
@@ -190,19 +193,112 @@ export default [
             .header('Content-Disposition', `attachment; filename=${files[0].type}-p${projId}.zip`)
           );
         })
-        .catch(FileNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(err => {
-          if (err.code === 'NoSuchKey') {
-            return reply(Boom.notFound('File not found in storage bucket'));
-          }
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
+        .catch(err => reply(getBoomResponseForError(err)));
+    }
+  },
+  {
+    path: '/projects/{projId}/source-data/editor',
+    method: 'GET',
+    config: {
+      validate: {
+        params: {
+          projId: Joi.number()
+        },
+        query: {
+          type: Joi.string().valid(['profile']).required()
+        }
+      }
+    },
+    handler: async (request, reply) => {
+      const { projId } = request.params;
+
+      try {
+        const project = await db('projects')
+          .select('*')
+          .where('id', projId)
+          .first();
+
+        if (!project) throw new ProjectNotFoundError();
+        if (project.status === 'pending') throw new ProjectStatusError('Project setup not completed');
+
+        // Get source data for the profile.
+        const sourceData = await db('projects_source_data')
+          .select('*')
+          .where('project_id', projId)
+          .where('name', 'profile')
+          .first();
+
+        return reply({
+          sections: getOSRMProfileDefaultSpeedMeta(),
+          settings: sourceData.data.settings
         });
+      } catch (err) {
+        return reply(getBoomResponseForError(err));
+      }
+    }
+  },
+  {
+    path: '/projects/{projId}/source-data/editor',
+    method: 'POST',
+    config: {
+      validate: {
+        params: {
+          projId: Joi.number()
+        },
+        query: {
+          type: Joi.string().valid(['profile']).required()
+        },
+        payload: profileValidationSchema
+      }
+    },
+    handler: async (request, reply) => {
+      const { projId } = request.params;
+      const settings = request.payload;
+
+      try {
+        const project = await db('projects')
+          .select('*')
+          .where('id', projId)
+          .first();
+
+        if (!project) throw new ProjectNotFoundError();
+        if (project.status === 'pending') throw new ProjectStatusError('Project setup not completed');
+
+        // Update source data.
+        await db('projects_source_data')
+          .update({
+            data: { settings }
+          })
+          .where('project_id', projId)
+          .where('name', 'profile');
+
+        const fileName = `profile_${Date.now()}`;
+        const filePath = `project-${projId}/${fileName}`;
+        const profile = renderProfileFile(settings);
+
+        await putFileStream(filePath, profile);
+        await db('projects_files')
+          .update({
+            name: fileName,
+            path: filePath,
+            updated_at: (new Date())
+          })
+          .where('project_id', projId)
+          .where('type', 'profile');
+
+        return reply({statusCode: 200, message: 'Profile settings uploaded'});
+      } catch (err) {
+        return reply(getBoomResponseForError(err));
+      }
     }
   }
 ];
 
 function handleProfileAndAdmin (sourceName, uploadedFilePath, projId) {
+  if (!uploadedFilePath) {
+    return Promise.reject(new DataValidationError('"file" is required'));
+  }
+
   let fileName = `${sourceName}_${Date.now()}`;
   let filePath = `project-${projId}/${fileName}`;
 
@@ -273,20 +369,26 @@ function handleProfileAndAdmin (sourceName, uploadedFilePath, projId) {
 function handleOrigins (result, projId) {
   let sourceName = result.fields['source-name'][0];
 
-  if (!result.fields['available-ind']) {
-    throw new DataValidationError('"available-ind" is required');
-  }
-  if (!result.fields['indicators[key]']) {
-    throw new DataValidationError('"indicators[key]" is required');
-  }
-  if (!result.fields['indicators[label]']) {
-    throw new DataValidationError('"indicators[label]" is required');
-  }
+  const check = (key) => {
+    try {
+      var val = result.fields[key].filter(o => !!o);
+    } catch (e) {
+      throw new DataValidationError(`"${key}" is required`);
+    }
 
-  // Data from the stream.
-  let availableInd = result.fields['available-ind'];
-  let indicatorKeys = result.fields['indicators[key]'];
-  let indicatorLabels = result.fields['indicators[label]'];
+    if (!val.length) {
+      throw new DataValidationError(`"${key}" must not be empty`);
+    }
+    return val;
+  };
+
+  var availableInd = check('available-ind');
+  var indicatorKeys = check('indicators[key]');
+  var indicatorLabels = check('indicators[label]');
+
+  if (indicatorKeys.length !== indicatorLabels.length) {
+    throw new DataValidationError('"indicators[key]" and "indicators[label]" must have the same number of values');
+  }
 
   // Are the submitted indicatorKeys in the available indicators.
   let validKeys = indicatorKeys.every(k => availableInd.indexOf(k) !== -1);
@@ -400,7 +502,7 @@ function handleOrigins (result, projId) {
     });
 }
 
-function upsertSource (sourceName, type, projId) {
+function upsertSource (sourceName, type, projId, sourceData) {
   return db('projects_source_data')
     .select('id')
     .where('project_id', projId)
@@ -409,15 +511,46 @@ function upsertSource (sourceName, type, projId) {
     .then(source => {
       if (source) {
         return db('projects_source_data')
-          .update({type: type})
+          .update({type: type, data: sourceData ? JSON.stringify(sourceData) : null})
           .where('id', source.id);
       } else {
         return db('projects_source_data')
           .insert({
             project_id: projId,
             name: sourceName,
-            type: type
+            type: type,
+            data: sourceData ? JSON.stringify(sourceData) : null
           });
       }
     });
+}
+
+/**
+ * Updates the source by setting the type and some data.
+ * Deletes any file that was updated.
+ * This method is only useful for source types other than file.
+ *
+ * @param {string} sourceName Name of the source
+ * @param {string} sourceType Type of the source
+ * @param {int} projId Project id
+ * @param {object} sourceData Additional data to store
+ */
+function simpleSourceUpdate (sourceName, sourceType, projId, sourceData) {
+  return upsertSource(sourceName, sourceType, projId, sourceData)
+  // Check if the file exists.
+  .then(() => db('projects_files')
+    .select('id', 'path')
+    .where('project_id', projId)
+    .where('type', sourceName)
+  )
+  .then(files => {
+    if (files.length) {
+      // Remove files from DB.
+      return db('projects_files')
+        .whereIn('id', files.map(o => o.id))
+        .del()
+        // Remove files from storage.
+        .then(() => Promise.map(files, file => removeFile(file.path)));
+    }
+  });
 }

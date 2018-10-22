@@ -1,10 +1,9 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 import Promise from 'bluebird';
 
 import db from '../db/';
-import { ProjectNotFoundError, DataConflictError } from '../utils/errors';
+import { DataConflictError, getBoomResponseForError } from '../utils/errors';
 import { getProject } from './projects--get';
 import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
@@ -67,12 +66,7 @@ module.exports = [
           );
         })
         .then(() => reply({statusCode: 200, message: 'Project setup finish started'}))
-        .catch(ProjectNotFoundError, e => reply(Boom.notFound(e.message)))
-        .catch(DataConflictError, e => reply(Boom.conflict(e.message)))
-        .catch(err => {
-          console.log('err', err);
-          reply(Boom.badImplementation(err));
-        });
+        .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];
@@ -114,8 +108,7 @@ function concludeProjectSetup (projId, scId, opId, cb) {
         op.loadById(opId)
           .then(op => {
             if (!op.isCompleted()) {
-              return op.log('error', {error: err.message})
-                .then(op => op.finish());
+              return op.finish('error', {error: err.message});
             }
           });
       }

@@ -115,15 +115,18 @@ describe('Projects', function () {
         assert.deepEqual(project.sourceData, {
           profile: {
             type: null,
-            files: []
+            files: [],
+            wbCatalogOptions: {}
           },
           'admin-bounds': {
             type: null,
-            files: []
+            files: [],
+            wbCatalogOptions: {}
           },
           origins: {
             type: null,
-            files: []
+            files: [],
+            wbCatalogOptions: {}
           }
         });
       });
@@ -138,7 +141,7 @@ describe('Projects', function () {
         let project = res.result;
         assert.deepEqual(project.sourceData, {
           profile: {
-            type: 'file',
+            type: 'default',
             files: [
               {
                 'id': 2000,
@@ -148,7 +151,8 @@ describe('Projects', function () {
                 'data': null,
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
-            ]
+            ],
+            wbCatalogOptions: {}
           },
           'admin-bounds': {
             type: 'file',
@@ -161,7 +165,8 @@ describe('Projects', function () {
                 'data': null,
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
-            ]
+            ],
+            wbCatalogOptions: {}
           },
           origins: {
             type: 'file',
@@ -177,7 +182,8 @@ describe('Projects', function () {
                 },
                 'created_at': new Date('2017-02-01T12:00:06.000Z')
               }
-            ]
+            ],
+            wbCatalogOptions: {}
           }
         });
       });

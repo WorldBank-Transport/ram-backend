@@ -33,9 +33,17 @@ describe('Operation', function () {
     it('should throw error when starting with missing parameters', function () {
       let op = new Operation(db);
 
-      assert.throws(op.start.bind(op), 'Missing parameters');
-      assert.throws(op.start.bind(op, 'name'), 'Missing parameters');
-      assert.throws(op.start.bind(op, 'name', 10), 'Missing parameters');
+      return Promise.all([
+        op.start().catch(err => {
+          assert.equal(err.message, 'Missing parameters');
+        }),
+        op.start('name').catch(err => {
+          assert.equal(err.message, 'Missing parameters');
+        }),
+        op.start('name', 10).catch(err => {
+          assert.equal(err.message, 'Missing parameters');
+        })
+      ]);
     });
 
     it('should throw error when finishing a non started operation', function () {

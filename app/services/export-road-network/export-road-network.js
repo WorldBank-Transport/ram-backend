@@ -180,8 +180,7 @@ export function exportRoadNetwork (e) {
     .catch(err => {
       logger && logger.log('error', err);
       DEBUG && appLogger && appLogger.toFile(path.resolve(__dirname, `../../../export-road-network_p${projId}s${scId}.log`));
-      return op.log('error', {error: err.message})
-        .then(op => op.finish())
+      return op.finish('error', {error: err.message})
         .then(() => callback(err.message), () => callback(err.message));
     });
 }

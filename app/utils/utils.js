@@ -44,18 +44,18 @@ export function getSourceData (db, contentType, id) {
       structure = {
         profile: {
           type: null,
-          files: []
-          // osmOptions
+          files: [],
+          wbCatalogOptions: {}
         },
         'admin-bounds': {
           type: null,
-          files: []
-          // osmOptions
+          files: [],
+          wbCatalogOptions: {}
         },
         origins: {
           type: null,
-          files: []
-          // osmOptions
+          files: [],
+          wbCatalogOptions: {}
         }
       };
       break;
@@ -72,12 +72,14 @@ export function getSourceData (db, contentType, id) {
         'road-network': {
           type: null,
           files: [],
-          osmOptions: {}
+          osmOptions: {},
+          wbCatalogOptions: {}
         },
         poi: {
           type: null,
           files: [],
-          osmOptions: {}
+          osmOptions: {},
+          wbCatalogOptions: {}
         }
       };
       break;
@@ -90,14 +92,16 @@ export function getSourceData (db, contentType, id) {
       let filesFetchTypes = [];
 
       sources.forEach(s => {
-        if (s.type === 'osm' || s.type === 'default') {
+        structure[s.name].type = s.type;
+        if (s.type === 'osm') {
           // Never going to happen for projects, just scenarios.
-          structure[s.name].type = s.type;
           structure[s.name].osmOptions = s.data;
-        } else if (s.type === 'file') {
-          structure[s.name].type = 'file';
+        } else if (s.type === 'file' || s.type === 'default') {
           filesFetchTypes.push(s.name);
-        } else {
+        } else if (s.type === 'wbcatalog') {
+          filesFetchTypes.push(s.name);
+          structure[s.name].wbCatalogOptions = s.data;
+        } else if (s.type !== 'default') {
           throw new Error('Unknown source type: ' + s.type);
         }
       });
@@ -115,7 +119,7 @@ export function getSourceData (db, contentType, id) {
     });
 }
 
-export function getOperationData (db, opName, prop, id) {
+export function getOperationData (db, opName, id) {
   return db.select('*')
     .from('operations')
     .where('operations.scenario_id', id)

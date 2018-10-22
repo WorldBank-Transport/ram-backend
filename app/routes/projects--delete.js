@@ -1,10 +1,9 @@
 'use strict';
 import Joi from 'joi';
-import Boom from 'boom';
 
 import db from '../db/';
 import { removeDir as removeS3Dir } from '../s3/utils';
-import { ProjectNotFoundError } from '../utils/errors';
+import { ProjectNotFoundError, getBoomResponseForError } from '../utils/errors';
 
 module.exports = [
   {
@@ -48,11 +47,7 @@ module.exports = [
         });
       })
       .then(() => reply({statusCode: 200, message: 'Project deleted'}))
-      .catch(ProjectNotFoundError, () => reply(Boom.notFound('Project not found')))
-      .catch(err => {
-        console.log('err', err);
-        reply(Boom.badImplementation(err));
-      });
+      .catch(err => reply(getBoomResponseForError(err)));
     }
   }
 ];

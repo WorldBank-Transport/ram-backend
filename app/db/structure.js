@@ -74,6 +74,11 @@ export function dropScenariosSourceData () {
   return db.schema.dropTableIfExists('scenarios_source_data');
 }
 
+export function dropWbCatalogResources () {
+  DEBUG && console.log('Dropping table: wbcatalog_resources');
+  return db.schema.dropTableIfExists('wbcatalog_resources');
+}
+
 export function createProjectsTable () {
   DEBUG && console.log('Creating table: projects');
   return db.schema.createTable('projects', table => {
@@ -300,6 +305,19 @@ export function createScenariosSourceData () {
   });
 }
 
+export function createWbCatalogResources () {
+  DEBUG && console.log('Creating table: wbcatalog_resources');
+  return db.schema.createTable('wbcatalog_resources', table => {
+    table.increments('id').primary();
+    table.string('type');
+    table.string('name');
+    table.timestamp('created_at').defaultTo(db.fn.now());
+    table.string('resource_id');
+    table.string('resource_url');
+    table.json('data');
+  });
+}
+
 export function setupStructure () {
   return dropScenariosFiles()
   .then(() => dropProjectsFiles())
@@ -315,6 +333,7 @@ export function setupStructure () {
   .then(() => dropProjectsOriginsIndicators())
   .then(() => dropProjectsOrigins())
   .then(() => dropProjects())
+  .then(() => dropWbCatalogResources())
   .then(() => createProjectsTable())
   .then(() => createProjectsAATable())
   .then(() => createScenariosTable())
@@ -328,5 +347,6 @@ export function setupStructure () {
   .then(() => createResultsTable())
   .then(() => createResultsPoiTable())
   .then(() => createScenariosSourceData())
-  .then(() => createProjectsSourceData());
+  .then(() => createProjectsSourceData())
+  .then(() => createWbCatalogResources());
 }
