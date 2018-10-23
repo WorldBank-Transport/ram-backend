@@ -36,7 +36,7 @@ export default [
         }
       },
       payload: {
-        maxBytes: 1 * Math.pow(1024, 3), // 1GB
+        maxBytes: 2 * Math.pow(1024, 3), // 1GB
         output: 'stream',
         parse: false,
         allow: 'multipart/form-data'
