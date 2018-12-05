@@ -9,7 +9,8 @@ import fetch from 'node-fetch';
 
 import db from '../db/';
 import {
-  putFile as putFileToS3
+  putFile as putFileToS3,
+  getLocalJSONFileContents
 } from '../s3/utils';
 
 // Allow unauthorized requests.
@@ -106,7 +107,7 @@ async function downloadWbCatalogFile (projId, scId, source, logger) {
     switch (what) {
       case 'projects':
         fileName = `${source.name}_${Date.now()}`;
-        filePath = `project-${scId}/${fileName}`;
+        filePath = `project-${projId}/${fileName}`;
         break;
       case 'scenarios':
         fileName = `${source.name}_${Date.now()}`;
@@ -129,6 +130,33 @@ async function downloadWbCatalogFile (projId, scId, source, logger) {
       created_at: (new Date()),
       updated_at: (new Date())
     };
+
+    // When using a wbcatalog file for the origins figure out which ones of the
+    // properties are numbers and use those as indicators.
+    if (source.name === 'origins') {
+      const originsFileData = await getLocalJSONFileContents(tempPath);
+      const feat = originsFileData.features[0];
+      const featPropKeys = Object.keys(feat.properties).filter(p => {
+        const val = feat.properties[p];
+        const type = typeof val;
+        if (type === 'number') {
+          return !isNaN(val);
+        } else if (type === 'string') {
+          return val.match(/^[0-9]+(.[0-9]+)?$/);
+        }
+        return false;
+      });
+
+      if (!featPropKeys.length) {
+        throw new Error('Unable to find valid population estimates on WB Catalog source for Population data');
+      }
+
+      // Add the the indicator information to the data to store.
+      data.data = {
+        indicators: featPropKeys.map(p => ({key: p, label: p})),
+        availableInd: featPropKeys
+      };
+    }
 
     switch (what) {
       case 'projects':
