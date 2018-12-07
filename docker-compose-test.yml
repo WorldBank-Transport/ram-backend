@@ -25,7 +25,7 @@ services:
       - 4000
     environment:
       INSTANCE_ID: ci-test
-      DB_CONNECTION: postgresql://ramtest:ramtest@ram-postgis:5432/ramtest
+      DB_URI: postgresql://ramtest:ramtest@ram-postgis:5432/ramtest
       STORAGE_PORT: 9000
       STORAGE_ENGINE: minio
       STORAGE_ACCESS_KEY: minio

@@ -74,7 +74,7 @@ The following options must be set:
   - `auth.strategy` - `jwt` or `none` (see "Auth0" section for more details)
   - `auth.audience` - JWT resource server namespace in case of `jwt`
   - `auth.issuer` - JWT issuer URL in case of `jwt`
-  - `db` - The database connection string. [DB_CONNECTION]
+  - `db` - The database connection string. [DB_URI]
   - `osmP2PDir` - The folder to store the osm-p2p dbs. [OSM_P2P_DIR]
   - `storage` - Object with storage related settings. Has to be s3 compatible.
   - `storage.host` - The host to use. (Default 0.0.0.0). [STORAGE_HOST]

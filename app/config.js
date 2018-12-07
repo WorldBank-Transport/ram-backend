@@ -24,7 +24,7 @@ if (!config.instanceId) throw new Error('The RAM instance id was not defined. Se
 if (!config.instanceId.match(/^[a-z0-9-_.]+$/)) throw new Error('Instance id invalid. Use only lowercase alphanumeric characters and _ - .');
 
 // Overrides by ENV variables.
-config.db = process.env.DB_CONNECTION || config.db;
+config.db = process.env.DB_URI || config.db;
 
 config.debug = process.env.DEBUG !== undefined ? (process.env.DEBUG.toLowerCase() === 'true') : config.debug;
 config.connection.port = process.env.PORT || config.connection.port;
