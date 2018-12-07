@@ -139,12 +139,7 @@ async function downloadWbCatalogFile (projId, scId, source, logger) {
       const featPropKeys = Object.keys(feat.properties).filter(p => {
         const val = feat.properties[p];
         const type = typeof val;
-        if (type === 'number') {
-          return !isNaN(val);
-        } else if (type === 'string') {
-          return val.match(/^[0-9]+(.[0-9]+)?$/);
-        }
-        return false;
+        return ((type === 'number' || type === 'string') && val !== '') ? !isNaN(Number(val)) : false;
       });
 
       if (!featPropKeys.length) {
