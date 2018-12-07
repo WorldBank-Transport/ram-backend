@@ -14,7 +14,7 @@ export const CACHE_DAYS = 7;
 // https://github.com/WorldBank-Transport/ram-backend/issues/214#issuecomment-394736868
 const SOURCE_TO_TAG_ID = {
   // ram-origins
-  origins: -1,
+  origins: 1426,
   // ram-profile
   profile: -1,
   // ram-admin
@@ -41,7 +41,7 @@ const httpsAgent = new https.Agent({
  * @returns {boolean} Whether or not the mimetype is valid.
  */
 function isValidMimetypeForSource (sourceName, mimetype) {
-  if ((sourceName === 'poi' || sourceName === 'admin') && mimetype === 'GeoJSON') return true;
+  if ((sourceName === 'poi' || sourceName === 'admin' || sourceName === 'origins') && mimetype === 'GeoJSON') return true;
 
   return false;
 }
