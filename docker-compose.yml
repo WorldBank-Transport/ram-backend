@@ -50,7 +50,7 @@ services:
       DS_ENV: offline
 
   ram-frontend:
-    image: wbtransport/ram-frontend:latest-stable
+    image: wbtransport/ram-frontend:latest
     container_name: ram-frontend
     ports:
       - 8080:80
@@ -58,7 +58,7 @@ services:
       - ram
 
   ram-id:
-    image: wbtransport/ram-id:latest-stable
+    image: wbtransport/ram-id:latest
     container_name: ram-id
     ports:
       - 8000:80
