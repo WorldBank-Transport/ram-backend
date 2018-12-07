@@ -295,7 +295,7 @@ function spawnAnalysisProcess (projId, scId, opId) {
   function runProcess () {
     return new Promise((resolve, reject) => {
       console.log(`[ANALYSIS P${projId} S${scId}]`, 'spawnAnalysisProcess');
-      const containerName = `analysisp${projId}s${scId}`;
+      const containerName = `${config.instanceId}-analysisp${projId}s${scId}`;
       const service = config.analysisProcess.service;
       let env = {};
 

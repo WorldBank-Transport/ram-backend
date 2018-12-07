@@ -35,7 +35,7 @@ function pullImage (projId, scId) {
 function killSwitch (projId, scId) {
   return new Promise((resolve, reject) => {
     const service = config.vtProcess.service;
-    const containerName = `vtp${projId}s${scId}`;
+    const containerName = `${config.instanceId}-vtp${projId}s${scId}`;
     let env = {};
 
     switch (service) {
