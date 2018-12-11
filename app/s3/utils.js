@@ -19,16 +19,6 @@ export function getPresignedUrl (file) {
   });
 }
 
-export function listenForFile (file) {
-  return new Promise((resolve, reject) => {
-    var listener = s3.listenBucketNotification(bucket, file, '', ['s3:ObjectCreated:*']);
-    listener.on('notification', record => {
-      listener.stop();
-      return resolve(record);
-    });
-  });
-}
-
 // Proxy of removeObject function, assuming the bucket.
 export function removeFile (file) {
   return removeObject(bucket, file);
@@ -92,12 +82,12 @@ export function getFileInfo (file) {
 }
 
 // Copy directory.
-export function copyDirectory (sourceDir, destDir) {
-  return listFiles(sourceDir)
-    .then(files => Promise.map(files, file => {
-      let newName = file.name.replace(sourceDir, destDir);
-      return copyFile(file.name, newName);
-    }, { concurrency: 10 }));
+export async function copyDirectory (sourceDir, destDir) {
+  const files = await listFiles(sourceDir);
+  return Promise.map(files, file => {
+    const newName = file.name.replace(sourceDir, destDir);
+    return copyFile(file.name, newName);
+  }, { concurrency: 10 });
 }
 
 // Get file content.
@@ -116,9 +106,9 @@ export function getFileContents (file) {
 }
 
 // Get file content in JSON.
-export function getJSONFileContents (file) {
-  return getFileContents(file)
-    .then(result => JSON.parse(result));
+export async function getJSONFileContents (file) {
+  const result = await getFileContents(file);
+  return JSON.parse(result);
 }
 
 // Put object
@@ -161,26 +151,22 @@ export function removeLocalFile (path, quiet = false) {
   });
 }
 
-export function getLocalFileContents (path) {
-  return readFile(path, 'utf8')
-    .then(data => {
-      // https://github.com/sindresorhus/strip-bom
-      // Catches EFBBBF (UTF-8 BOM) because the buffer-to-string
-      // conversion translates it to FEFF (UTF-16 BOM)
-      if (data.charCodeAt(0) === 0xFEFF) {
-        return data.slice(1);
-      }
-      return data;
-    });
+export async function getLocalFileContents (path) {
+  const data = await readFile(path, 'utf8');
+
+  // https://github.com/sindresorhus/strip-bom
+  // Catches EFBBBF (UTF-8 BOM) because the buffer-to-string
+  // conversion translates it to FEFF (UTF-16 BOM)
+  return data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data;
 }
 
-export function getLocalJSONFileContents (path) {
-  return getLocalFileContents(path)
-    .then(result => JSON.parse(result));
+export async function getLocalJSONFileContents (path) {
+  const result = await getLocalFileContents(path);
+  return JSON.parse(result);
 }
 
-export function getLocalFilesInDir (dir) {
-  const files = fs.readdirSync(dir);
+export async function getLocalFilesInDir (dir) {
+  const files = await fs.readdir(dir);
 
   return files.reduce((acc, file) => {
     let name = dir + '/' + file;

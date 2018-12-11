@@ -25,15 +25,16 @@ export function listObjects (bucket, objPrefix = '') {
   });
 }
 
-export function emptyBucket (bucket, objPrefix = '') {
-  return listObjects(bucket, objPrefix)
-    .catch(err => {
-      if (err.code === 'NoSuchBucket') {
-        return [];
-      }
-      throw err;
-    })
-    .then(objects => Promise.map(objects, o => removeObject(bucket, o.name), { concurrency: 10 }));
+export async function emptyBucket (bucket, objPrefix = '') {
+  try {
+    const objects = await listObjects(bucket, objPrefix);
+    return Promise.map(objects, o => removeObject(bucket, o.name), { concurrency: 10 });
+  } catch (err) {
+    if (err.code === 'NoSuchBucket') {
+      return [];
+    }
+    throw err;
+  }
 }
 
 export function destroyBucket (bucket) {
@@ -58,9 +59,9 @@ export function createBucket (bucket, region) {
   });
 }
 
-export function setupStructure () {
-  return destroyBucket(BUCKET)
-    .then(() => createBucket(BUCKET, REGION));
+export async function setupStructure () {
+  await destroyBucket(BUCKET);
+  return createBucket(BUCKET, REGION);
 }
 
 export function removeObject (bucket, name) {
