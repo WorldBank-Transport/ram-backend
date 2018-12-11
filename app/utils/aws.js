@@ -7,7 +7,7 @@ import fetch from 'node-fetch';
 let AWSInstanceCredentialsCache = {
   accessKey: null,
   secretKey: null,
-  token: null,
+  sessionToken: null,
   expireTime: null
 };
 
@@ -34,7 +34,7 @@ export async function fetchAWSInstanceCredentials (roleName) {
   return {
     accessKey: accessCredentials.AccessKeyId,
     secretKey: accessCredentials.SecretAccessKey,
-    token: accessCredentials.Token,
+    sessionToken: accessCredentials.Token,
     // Set the expiration back 30min to give some margin.
     expireTime: (new Date(accessCredentials.Expiration)).getTime() - 1800 * 1000
   };

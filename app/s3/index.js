@@ -45,7 +45,7 @@ export default async function S3 () {
         credentials = {
           accessKey: AWSInstanceCredentials.accessKey,
           secretKey: AWSInstanceCredentials.secretKey,
-          token: AWSInstanceCredentials.token
+          sessionToken: AWSInstanceCredentials.sessionToken
         };
       } else {
         credentials = { accessKey, secretKey };
