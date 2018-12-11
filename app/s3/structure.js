@@ -1,7 +1,7 @@
 'use strict';
 import Promise from 'bluebird';
 
-import s3, { bucket, region } from './';
+import S3, { bucket, region } from './';
 import config from '../config';
 
 const DEBUG = config.debug;
@@ -9,8 +9,9 @@ const BUCKET = bucket;
 const REGION = region;
 
 export function listObjects (bucket, objPrefix = '') {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     var objects = [];
+    const s3 = await S3();
     var stream = s3.listObjectsV2(bucket, objPrefix, true);
     stream.on('data', obj => {
       objects.push(obj);
@@ -41,7 +42,8 @@ export function destroyBucket (bucket) {
 }
 
 export function createBucket (bucket, region) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const s3 = await S3();
     s3.makeBucket(bucket, region, err => {
       if (err) {
         if (err.code === 'BucketAlreadyOwnedByYou') {
@@ -62,7 +64,8 @@ export function setupStructure () {
 }
 
 export function removeObject (bucket, name) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const s3 = await S3();
     s3.removeObject(bucket, name, err => {
       if (err) {
         return reject(err);
@@ -73,7 +76,8 @@ export function removeObject (bucket, name) {
 }
 
 function removeBucket (bucket) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const s3 = await S3();
     s3.removeBucket(bucket, err => {
       if (err) {
         if (err.code === 'NoSuchBucket') {
@@ -89,7 +93,8 @@ function removeBucket (bucket) {
 }
 
 export function putObjectFromFile (bucket, name, filepath) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const s3 = await S3();
     s3.fPutObject(bucket, name, filepath, 'application/octet-stream', (err, etag) => {
       if (err) {
         return reject(err);
@@ -100,7 +105,8 @@ export function putObjectFromFile (bucket, name, filepath) {
 }
 
 export function putObject (bucket, file, stream) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const s3 = await S3();
     s3.putObject(bucket, file, stream, (err, etag) => {
       if (err) return reject(err);
       return resolve(etag);

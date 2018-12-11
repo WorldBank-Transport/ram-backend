@@ -2,13 +2,14 @@
 import fs from 'fs-extra';
 import Promise from 'bluebird';
 
-import s3, { bucket } from './';
+import S3, { bucket } from './';
 import { removeObject, putObjectFromFile, listObjects, emptyBucket, putObject } from './structure';
 
 const readFile = Promise.promisify(fs.readFile);
 
 export function getPresignedUrl (file) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const s3 = await S3();
     s3.presignedPutObject(bucket, file, 24 * 60 * 60, (err, presignedUrl) => {
       if (err) {
         return reject(err);
@@ -40,7 +41,8 @@ export function removeDir (dir) {
 
 // Get file.
 export function getFile (file) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const s3 = await S3();
     s3.getObject(bucket, file, (err, dataStream) => {
       if (err) {
         return reject(err);
@@ -52,7 +54,8 @@ export function getFile (file) {
 
 // Get s3 file to file.
 export function fGetFile (file, dest) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const s3 = await S3();
     s3.fGetObject(bucket, file, dest, (err) => {
       if (err) {
         return reject(err);
@@ -64,7 +67,8 @@ export function fGetFile (file, dest) {
 
 // Copy file.
 export function copyFile (oldFile, newFile) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const s3 = await S3();
     s3.copyObject(bucket, newFile, `${bucket}/${oldFile}`, null, (err, data) => {
       if (err) {
         return reject(err);
@@ -76,7 +80,8 @@ export function copyFile (oldFile, newFile) {
 
 // File stats.
 export function getFileInfo (file) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const s3 = await S3();
     s3.statObject(bucket, file, (err, stat) => {
       if (err) {
         return reject(err);
@@ -97,7 +102,8 @@ export function copyDirectory (sourceDir, destDir) {
 
 // Get file content.
 export function getFileContents (file) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
+    const s3 = await S3();
     s3.getObject(bucket, file, (err, dataStream) => {
       if (err) return reject(err);
 
