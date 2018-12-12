@@ -8,10 +8,10 @@ const DEBUG = config.debug;
 const BUCKET = bucket;
 const REGION = region;
 
-export function listObjects (bucket, objPrefix = '') {
-  return new Promise(async (resolve, reject) => {
+export async function listObjects (bucket, objPrefix = '') {
+  const s3 = await S3();
+  return new Promise((resolve, reject) => {
     var objects = [];
-    const s3 = await S3();
     var stream = s3.listObjectsV2(bucket, objPrefix, true);
     stream.on('data', obj => {
       objects.push(obj);
@@ -42,9 +42,9 @@ export function destroyBucket (bucket) {
     .then(() => removeBucket(bucket));
 }
 
-export function createBucket (bucket, region) {
-  return new Promise(async (resolve, reject) => {
-    const s3 = await S3();
+export async function createBucket (bucket, region) {
+  const s3 = await S3();
+  return new Promise((resolve, reject) => {
     s3.makeBucket(bucket, region, err => {
       if (err) {
         if (err.code === 'BucketAlreadyOwnedByYou') {
@@ -64,9 +64,9 @@ export async function setupStructure () {
   return createBucket(BUCKET, REGION);
 }
 
-export function removeObject (bucket, name) {
-  return new Promise(async (resolve, reject) => {
-    const s3 = await S3();
+export async function removeObject (bucket, name) {
+  const s3 = await S3();
+  return new Promise((resolve, reject) => {
     s3.removeObject(bucket, name, err => {
       if (err) {
         return reject(err);
@@ -76,9 +76,9 @@ export function removeObject (bucket, name) {
   });
 }
 
-function removeBucket (bucket) {
-  return new Promise(async (resolve, reject) => {
-    const s3 = await S3();
+async function removeBucket (bucket) {
+  const s3 = await S3();
+  return new Promise((resolve, reject) => {
     s3.removeBucket(bucket, err => {
       if (err) {
         if (err.code === 'NoSuchBucket') {
@@ -93,9 +93,9 @@ function removeBucket (bucket) {
   });
 }
 
-export function putObjectFromFile (bucket, name, filepath) {
-  return new Promise(async (resolve, reject) => {
-    const s3 = await S3();
+export async function putObjectFromFile (bucket, name, filepath) {
+  const s3 = await S3();
+  return new Promise((resolve, reject) => {
     s3.fPutObject(bucket, name, filepath, 'application/octet-stream', (err, etag) => {
       if (err) {
         return reject(err);
@@ -105,9 +105,9 @@ export function putObjectFromFile (bucket, name, filepath) {
   });
 }
 
-export function putObject (bucket, file, stream) {
-  return new Promise(async (resolve, reject) => {
-    const s3 = await S3();
+export async function putObject (bucket, file, stream) {
+  const s3 = await S3();
+  return new Promise((resolve, reject) => {
     s3.putObject(bucket, file, stream, (err, etag) => {
       if (err) return reject(err);
       return resolve(etag);
