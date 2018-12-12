@@ -130,8 +130,8 @@ export function listFiles (namePrefix) {
 }
 
 // Put directory
-export function putDirectory (sourceDir, destDir) {
-  let files = getLocalFilesInDir(sourceDir);
+export async function putDirectory (sourceDir, destDir) {
+  let files = await getLocalFilesInDir(sourceDir);
   return Promise.map(files, file => {
     let newName = file.replace(sourceDir, destDir);
     return putFile(newName, file);
@@ -168,14 +168,12 @@ export async function getLocalJSONFileContents (path) {
 export async function getLocalFilesInDir (dir) {
   const files = await fs.readdir(dir);
 
-  return files.reduce((acc, file) => {
-    let name = dir + '/' + file;
-    if (fs.statSync(name).isDirectory()) {
-      acc = acc.concat(getLocalFilesInDir(name));
-    } else {
-      acc.push(name);
-    }
+  return Promise.reduce(files, async (acc, file) => {
+    const name = dir + '/' + file;
+    const stats = await fs.stat(name);
 
-    return acc;
+    return stats.isDirectory()
+      ? acc.concat(await getLocalFilesInDir(name))
+      : acc.concat(name);
   }, []);
 }
