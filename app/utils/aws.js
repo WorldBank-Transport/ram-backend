@@ -2,6 +2,13 @@
 import fetch from 'node-fetch';
 
 /**
+ * NOTE: This file is duplicated on some services. Be sure to update all of them
+ * - ram-analysis
+ * - ram-vt
+ * - ram-backend
+ */
+
+/**
  * Cache for the credentials.
  */
 let AWSInstanceCredentialsCache = {
@@ -20,14 +27,26 @@ let AWSInstanceCredentialsCache = {
  * @throws Error if any of the requests fail.
  */
 export async function fetchAWSInstanceCredentials (roleName) {
-  const awsIAMUrl = 'http://169.254.169.254/latest/meta-data/iam/security-credentials/';
-  if (!roleName) {
-    const roleRes = await fetch(awsIAMUrl, { timeout: 2000 });
-    if (roleRes.status >= 400) throw new Error('Unable to fetch role name');
-    roleName = await roleRes.text();
+  // When inside a container in a ec2 instance (or when using fargate), the ecs
+  // client adds a varible with the credentials url. If is is available use that.
+  // Docs at: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html
+  const relUrl = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
+  let accessCredUrl = '';
+  if (relUrl) {
+    accessCredUrl = `http://169.254.170.2${relUrl}`;
+  } else {
+    // If we're inside an ec2 machine just use the regular url and fetch the
+    // role if it was not provided.
+    const awsIAMUrl = 'http://169.254.169.254/latest/meta-data/iam/security-credentials/';
+    if (!roleName) {
+      const roleRes = await fetch(awsIAMUrl, { timeout: 2000 });
+      if (roleRes.status >= 400) throw new Error('Unable to fetch role name');
+      roleName = await roleRes.text();
+    }
+    accessCredUrl = `${awsIAMUrl}${roleName}`;
   }
 
-  const accessRes = await fetch(`${awsIAMUrl}${roleName}`, { timeout: 2000 });
+  const accessRes = await fetch(accessCredUrl, { timeout: 2000 });
   if (accessRes.status >= 400) throw new Error('Unable to fetch access credentials');
   const accessCredentials = await accessRes.json();
 
