@@ -401,7 +401,7 @@ function killAnalysisProcess (projId, scId) {
     }
 
     const service = config.analysisProcess.service;
-    const containerName = `analysisp${projId}s${scId}`;
+    const containerName = `${config.instanceId}-analysisp${projId}s${scId}`;
     let env = {};
 
     switch (service) {
