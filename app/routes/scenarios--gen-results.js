@@ -12,6 +12,7 @@ import Operation from '../utils/operation';
 import ServiceRunner from '../utils/service-runner';
 import { closeDatabase } from '../services/rra-osm-p2p';
 import { createRoadNetworkVT } from '../utils/vector-tiles';
+import { prepareAWSTask } from '../utils/aws-task-runner';
 
 // Stores running processes to be able to kill them.
 let runningProcesses = {};
@@ -146,6 +147,11 @@ module.exports = [
   }
 ];
 
+/**
+ * Wraps setImmediate in a promise to capture the result of the execution.
+ *
+ * @param {Promise} cb The promise to execute.
+ */
 function setImmediatePromise (cb) {
   return new Promise((resolve, reject) => {
     setImmediate(() => {
@@ -154,6 +160,20 @@ function setImmediatePromise (cb) {
   });
 }
 
+/**
+ * Starts the result generation, cleaning the db and executing the appropriate
+ * process as defined in the config.
+ * @see runAnalysisProcess()
+ * @see runAWSTaskProcess()
+ *
+ * If the osm-p2p database is in use, checks if the road network needs to be
+ * exported and generated the new vector tiles.
+ * @see updateRN()
+ * @see generateRNTiles()
+ *
+ * @param {number} projId Project Id
+ * @param {number} scId Scenario Id
+ */
 async function generateResults (projId, scId) {
   // In test mode we don't want to start the generation.
   // It will be tested in the appropriate place.
@@ -197,10 +217,17 @@ async function generateResults (projId, scId) {
         // road network on a new thread process. (using a service runner)
         await closeDatabase(projId, scId);
         await updateRN(projId, scId, opId);
-        await generateTiles(projId, scId, op);
+        await generateRNTiles(projId, scId, op);
       }
 
-      await spawnAnalysisProcess(projId, scId, opId);
+      // When running in aws it needs to be started in a different way.
+      if (config.analysisProcess.service === 'aws') {
+        await runAWSTaskProcess(projId, scId, opId);
+      } else {
+        await runAnalysisProcess(projId, scId, opId);
+      }
+      // Success. Cleanup.
+      delete runningProcesses[identifier];
     });
 
   // Catching errors.
@@ -210,10 +237,19 @@ async function generateResults (projId, scId) {
     if (!op.isCompleted()) {
       await op.finish('error', {error: error.message || error});
     }
+    // If anything went wrong, do some cleanup.
+    delete runningProcesses[identifier];
     console.log(identifier, 'generateResults error was handled:', error);
   }
 }
 
+/**
+ * Runs the 'export-road-network' service.
+ *
+ * @param {number} projId Project Id
+ * @param {number} scId Scenario Id
+ * @param {number} opId Operation Id
+ */
 function updateRN (projId, scId, opId) {
   return new Promise((resolve, reject) => {
     let identifier = `p${projId} s${scId}`;
@@ -237,7 +273,14 @@ function updateRN (projId, scId, opId) {
   });
 }
 
-async function generateTiles (projId, scId, op) {
+/**
+ * Starts the vector tile generation for the road-network.
+ *
+ * @param {number} projId Project Id
+ * @param {number} scId Scenario Id
+ * @param {Operation} op Operation
+ */
+async function generateRNTiles (projId, scId, op) {
   const identifier = `p${projId} s${scId}`;
   console.log(identifier, 'generating vector tiles');
 
@@ -258,7 +301,16 @@ async function generateTiles (projId, scId, op) {
   runningProcesses[identifier].genVT = null;
 }
 
-async function spawnAnalysisProcess (projId, scId, opId) {
+/**
+ * Runs the analysis process when using Docker or Hyper.
+ * Pulls the image and then starts the container.
+ *
+ * @param {number} projId Project Id
+ * @param {number} scId Scenario Id
+ * @param {number} opId Operation Id
+ */
+async function runAnalysisProcess (projId, scId, opId) {
+  const identifier = `p${projId} s${scId}`;
   // Update image before starting.
   function pullImage () {
     return new Promise((resolve, reject) => {
@@ -291,7 +343,7 @@ async function spawnAnalysisProcess (projId, scId, opId) {
   // Run the analysis.
   function runProcess () {
     return new Promise((resolve, reject) => {
-      console.log(`[ANALYSIS P${projId} S${scId}]`, 'spawnAnalysisProcess');
+      console.log(`[ANALYSIS P${projId} S${scId}]`, 'runAnalysisProcess');
       const containerName = `${config.instanceId}-analysisp${projId}s${scId}`;
       const service = config.analysisProcess.service;
       let env = {};
@@ -353,66 +405,119 @@ async function spawnAnalysisProcess (projId, scId, opId) {
       });
 
       proc.on('close', (code) => {
-        let identifier = `p${projId} s${scId}`;
         console.log(`[ANALYSIS P${projId} S${scId}][EXIT]`, code.toString());
-        delete runningProcesses[identifier];
 
-        if (code !== 0) {
-          return reject(new Error(error));
-        }
-
+        if (code !== 0) return reject(new Error(error));
         return resolve();
       });
     });
   }
 
+  function killProcess () {
+    return new Promise((resolve, reject) => {
+      const service = config.analysisProcess.service;
+      const containerName = `${config.instanceId}-analysisp${projId}s${scId}`;
+      let env = {};
+
+      switch (service) {
+        case 'hyper':
+          env = {
+            HYPER_ACCESS: config.analysisProcess.hyperAccess,
+            HYPER_SECRET: config.analysisProcess.hyperSecret
+          };
+          break;
+        case 'docker':
+          break;
+        default:
+          return reject(new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`));
+      }
+
+      cp.exec(`${service} rm -f ${containerName}`, { env: Object.assign({}, process.env, env) }, (errStop) => {
+        if (errStop) {
+          console.log(`[ANALYSIS P${projId} S${scId}][ABORT] stop`, errStop);
+        }
+      });
+
+      // Assume the exec works and resolve immediately. The closing of the
+      // connection is handled by the process spawn in runAnalysisProcess();
+      return resolve();
+    });
+  }
+
   await pullImage();
+  runningProcesses[identifier].analysis = {
+    kill: killProcess
+  };
   await runProcess();
 }
 
+/**
+ * Runs the analysis process when AWS.
+ * Starts the aws task
+ *
+ * @param {number} projId Project Id
+ * @param {number} scId Scenario Id
+ * @param {number} opId Operation Id
+ */
+async function runAWSTaskProcess (projId, scId, opId) {
+  const identifier = `p${projId} s${scId}`;
+  // Perform check of env variables.
+  const globalVars = [
+    'ANL_TASK_DEF',
+    'ANL_AWS_LOG_GROUP'
+  ].filter(v => !process.env[v]);
+
+  if (globalVars.length) {
+    throw new Error(`Missing env vars for analysis aws task: ${globalVars.join(', ')}`);
+  }
+
+  const params = {
+    environment: {
+      PROJECT_ID: projId,
+      SCENARIO_ID: scId,
+      OPERATION_ID: opId,
+      // When running in AWS, use the global db uri.
+      DB_URI: config.db
+    },
+    taskDefinition: process.env.ANL_TASK_DEF,
+    logGroupName: process.env.ANL_AWS_LOG_GROUP
+  };
+
+  const awsTask = prepareAWSTask('ram-analysis', params);
+
+  runningProcesses[identifier].analysis = {
+    kill: awsTask.kill
+  };
+
+  const success = await awsTask.run();
+  if (!success) throw new Error('Analysis failed. (AWS Task exited with non 0 code)');
+}
+
+/**
+ * Stops the ongoing analysis process.
+ *
+ * @param {number} projId Project Id
+ * @param {number} scId Scenario Id
+ */
 function killAnalysisProcess (projId, scId) {
   if (process.env.DS_ENV === 'test') { return Promise.resolve(); }
 
   return new Promise((resolve, reject) => {
-    const identifier = `p${projId} s${scId}`;
-    // Since the processes run sequentially check by order which we need
-    // to kill.
-    if (runningProcesses[identifier].updateRN) {
-      runningProcesses[identifier].updateRN.kill();
-      runningProcesses[identifier].updateRN = null;
-      return resolve();
-    }
-    if (runningProcesses[identifier].genVT) {
-      runningProcesses[identifier].genVT.kill();
-      runningProcesses[identifier].genVT = null;
-      return resolve();
-    }
-
-    const service = config.analysisProcess.service;
-    const containerName = `${config.instanceId}-analysisp${projId}s${scId}`;
-    let env = {};
-
-    switch (service) {
-      case 'hyper':
-        env = {
-          HYPER_ACCESS: config.analysisProcess.hyperAccess,
-          HYPER_SECRET: config.analysisProcess.hyperSecret
-        };
-        break;
-      case 'docker':
-        break;
-      default:
-        return reject(new Error(`${service} is not a valid option. The analysis should be run on 'docker' or 'hyper'. Check your config file or env variables.`));
-    }
-
-    cp.exec(`${service} rm -f ${containerName}`, { env: Object.assign({}, process.env, env) }, (errStop) => {
-      if (errStop) {
-        console.log(`[ANALYSIS P${projId} S${scId}][ABORT] stop`, errStop);
+    try {
+      const identifier = `p${projId} s${scId}`;
+      // Since the processes run sequentially check by order which we need
+      // to kill.
+      if (runningProcesses[identifier].updateRN) {
+        runningProcesses[identifier].updateRN.kill();
+      } else if (runningProcesses[identifier].genVT) {
+        runningProcesses[identifier].genVT.kill();
+      } else if (runningProcesses[identifier].analysis) {
+        runningProcesses[identifier].analysis.kill();
       }
-    });
-
-    // Assume the exec works and resolve immediately. The closing of the
-    // connection is handled by the process spawn in spawnAnalysisProcess();
-    return resolve();
+      delete runningProcesses[identifier];
+      return resolve();
+    } catch (error) {
+      reject(error);
+    }
   });
 }

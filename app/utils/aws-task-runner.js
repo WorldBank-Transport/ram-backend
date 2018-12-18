@@ -64,7 +64,10 @@ export function prepareAWSTask (taskName, params, command = null) {
   };
 
   const awsTask = new AWSTaskRunner(taskName, options);
-  return awsTask.env(baseEnv).command(command);
+  awsTask
+    .env(baseEnv)
+    .command(command);
+  return awsTask;
 }
 
 /**
@@ -98,7 +101,7 @@ class AWSTaskRunner extends EventEmitter {
     this.commandName = null;
 
     // Time interval for status fetching.
-    this.poolTime = 1000;
+    this.poolTime = 5000;
 
     // Kill control.
     this.killed = false;
@@ -124,9 +127,10 @@ class AWSTaskRunner extends EventEmitter {
   }
 
   async run () {
+    console.log('this.envVars', this.envVars);
     const environment = Object.keys(this.envVars).map(k => ({
       name: k,
-      value: this.envVars[k].toString()
+      value: this.envVars[k] + ''
     }));
     const command = this.commandName ? { command: [this.commandName] } : {};
 
@@ -154,7 +158,7 @@ class AWSTaskRunner extends EventEmitter {
         containerOverrides: [
           {
             name: this.taskName,
-            // Will be included if it was set
+            // Will be included if it was set.
             ...command,
             environment
           }
