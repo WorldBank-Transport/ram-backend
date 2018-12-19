@@ -26,7 +26,7 @@ After the first time setup, use `docker-compose down` and `docker-compose up -d`
 ## Local development environment
 To set up a local development environment, it may be easier to run the API outside of a container. To do so, follow these steps:
 
-1. install Node 6, Docker, Docker Compose, python-gdal, python-lxml - [more on project dependencies](#install-project-dependencies)
+1. install Node 8, Docker, Docker Compose, python-gdal, python-lxml - [more on project dependencies](#install-project-dependencies)
 2. `yarn install` - [more on application dependencies](#install-application-dependencies)
 3. add configuration variables to `app/config/local.js`. The [example config](#config-example) should work well.
 4. `docker network create ram` to set up the Docker network
@@ -39,7 +39,7 @@ This will provide access to the API through http://localhost:4000.
 ### Install Project Dependencies
 To set up the development environment for this website, you'll need to install the following on your system:
 
-- [Node](http://nodejs.org/) v6.x (To manage multiple node versions we recommend [nvm](https://github.com/creationix/nvm))
+- [Node](http://nodejs.org/) v8.x (To manage multiple node versions we recommend [nvm](https://github.com/creationix/nvm))
 - [Yarn](https://yarnpkg.com/) Package manager
 - [Docker](https://www.docker.com/products/docker) and [Docker Compose](https://docs.docker.com/compose/install/) v1.10.0
 - python-gdal and python-lxml to generate OSM Change files (eg. `$ apt-get install -y python-gdal python-lxml`)
@@ -84,7 +84,7 @@ The following options must be set:
   - `storage.secretKey` - Secret key for storage. [STORAGE_SECRET_KEY]
   - `storage.bucket` - Secret key for storage. [STORAGE_BUCKET]
   - `storage.region` - Secret key for storage. [STORAGE_REGION]
-  - `analysisProcess.service` - The service to run the analysis on. Either `docker` (for local development and off-line) or `hyper`. [ANL_SERVICE]
+  - `analysisProcess.service` - The service to run the analysis on. Either `docker` (for local development and off-line), `hyper` or `aws` (only if running with Amazon Web Services through `ram-deployment`). [ANL_SERVICE]
   - `analysisProcess.hyperAccess` - Access key for Hyper. [HYPER_ACCESS]
   - `analysisProcess.hyperSecret` - Secret key for Hyper. [HYPER_SECRET]
   - `analysisProcess.hyperSize` - The size of the Hyper container. If not specified, it will use [Hyper's](https://hyper.sh) default container. [HYPER_SIZE]
@@ -92,7 +92,7 @@ The following options must be set:
   - `analysisProcess.db` - The database connection string. When using Docker for the analysis process, the host will be the name of the database container (`ram-postgis`). When using Hyper, this will be the IP of your hosted database [ANL_DB]
   - `analysisProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`ram-minio`). When using Hyper, this will be the IP of the storage host. [ANL_STORAGE_HOST]
   - `analysisProcess.storagePort` - The port to use. [ANL_STORAGE_PORT]
-  - `vtProcess.service` - The service to run the vector tiles on. Either `docker` (for local development and off-line) or `hyper`. [VT_SERVICE]
+  - `vtProcess.service` - The service to run the vector tiles on. Either `docker` (for local development and off-line), `hyper` or `aws` (only if running with Amazon Web Services through `ram-deployment`). [VT_SERVICE]
   - `vtProcess.container` - The name of the ram-vt container (Default wbtransport/ram-vt:latest-stable) [VT_CONTAINER]
   - `vtProcess.storageHost` - The host of the storage service. When using Docker, this will be the name of the storage container (`ram-minio`). When using Hyper, this will be the IP of the storage host. [VT_STORAGE_HOST]
   - `vtProcess.storagePort` - The port to use. [VT_STORAGE_PORT]
