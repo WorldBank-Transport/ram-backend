@@ -25,6 +25,20 @@ export async function listObjects (bucket, objPrefix = '') {
   });
 }
 
+export async function bucketExists (bucket) {
+  const s3 = await S3();
+  return new Promise((resolve, reject) => {
+    s3.bucketExists(bucket, err => {
+      if (err) {
+        return err.code === 'NoSuchBucket' || err.code === 'NotFound'
+          ? resolve(false)
+          : reject(err);
+      }
+      return resolve(true);
+    });
+  });
+}
+
 export async function emptyBucket (bucket, objPrefix = '') {
   try {
     const objects = await listObjects(bucket, objPrefix);
