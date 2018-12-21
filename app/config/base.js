@@ -18,9 +18,6 @@ module.exports = {
   },
   analysisProcess: {
     service: null,
-    hyperAccess: null,
-    hyperSecret: null,
-    hyperSize: null,
     container: 'wbtransport/ram-analysis:v0.1.0',
     db: null,
     storageHost: null,
@@ -28,9 +25,6 @@ module.exports = {
   },
   vtProcess: {
     service: null,
-    hyperAccess: null,
-    hyperSecret: null,
-    hyperSize: null,
     container: null,
     storageHost: null,
     storagePort: null
