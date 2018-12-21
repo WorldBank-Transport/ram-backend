@@ -3,6 +3,7 @@ import { spawn, exec } from 'child_process';
 import Promise from 'bluebird';
 
 import config from '../config';
+import { prepareAWSTask } from './aws-task-runner';
 
 function pullImage (projId, scId) {
   return new Promise((resolve, reject) => {
@@ -35,7 +36,7 @@ function pullImage (projId, scId) {
 function killSwitch (projId, scId) {
   return new Promise((resolve, reject) => {
     const service = config.vtProcess.service;
-    const containerName = `vtp${projId}s${scId}`;
+    const containerName = `${config.instanceId}-vtp${projId}s${scId}`;
     let env = {};
 
     switch (service) {
@@ -139,6 +140,39 @@ function runProcess (projId, scId, sourceFile, vtType) {
 }
 
 /**
+ * Helper function to contruct the aws task.
+ *
+ * @param  {int} projId
+ * @param  {int} scId
+ * @param  {String} sourceFile
+ * @param  {type} type Type of vector tiles generation. (admin-bounds|road-network)
+ */
+function initAWSTask (projId, scId, sourceFile, type) {
+  // Perform check of env variables.
+  const globalVars = [
+    'VT_TASK_DEF',
+    'VT_AWS_LOG_GROUP'
+  ].filter(v => !process.env[v]);
+
+  if (globalVars.length) {
+    throw new Error(`Missing env vars for vt aws task: ${globalVars.join(', ')}`);
+  }
+
+  const params = {
+    environment: {
+      PROJECT_ID: projId,
+      SCENARIO_ID: scId,
+      SOURCE_FILE: sourceFile,
+      VT_TYPE: type
+    },
+    taskDefinition: process.env.VT_TASK_DEF,
+    logGroupName: process.env.VT_AWS_LOG_GROUP
+  };
+
+  return prepareAWSTask('ram-vt', params, 'ram-vt');
+}
+
+/**
  * Create the vector tiles for the admin bounds.
  * Full process:
  * - Clean up local folders
@@ -157,14 +191,48 @@ function runProcess (projId, scId, sourceFile, vtType) {
  * @return Object with a `promise` and a `kill` switch.
  */
 export function createAdminBoundsVT (projId, scId, op, adminBoundsPath) {
-  let executor = op.log('admin-bounds', {message: 'Creating admin-bounds vector tiles'})
-    .then(() => pullImage(projId, scId))
-    .then(() => runProcess(projId, scId, adminBoundsPath, 'admin-bounds'));
+  // Using an executor because this function needs to return an object
+  // instead of a promise.
+  let executor = op.log('admin-bounds', {message: 'Creating admin-bounds vector tiles'});
 
-  return {
-    promise: executor,
-    kill: () => killSwitch(projId, scId)
-  };
+  // When running in aws it needs to be started in a different way.
+  if (config.vtProcess.service === 'aws') {
+    let awsTask;
+    try {
+      awsTask = initAWSTask(projId, scId, adminBoundsPath, 'admin-bounds');
+    } catch (error) {
+      return {
+        promise: executor.then(() => Promise.reject(error)),
+        kill: Promise.resolve()
+      };
+    }
+
+    awsTask.on('data', data => {
+      console.log(`[VT P${projId} S${scId} admin-bounds]`, data.message);
+    });
+
+    executor = executor
+      .then(() => awsTask.run())
+      .then(success => {
+        if (!success) throw new Error('Admin bounds vector tiles generation failed.');
+      });
+
+    return {
+      promise: executor,
+      kill: awsTask.kill
+    };
+
+    // Docker or Hyper.
+  } else {
+    executor = executor
+      .then(() => pullImage(projId, scId))
+      .then(() => runProcess(projId, scId, adminBoundsPath, 'admin-bounds'));
+
+    return {
+      promise: executor,
+      kill: () => killSwitch(projId, scId)
+    };
+  }
 }
 
 /**
@@ -187,12 +255,46 @@ export function createAdminBoundsVT (projId, scId, op, adminBoundsPath) {
  * @return Object with a `promise` and a `kill` switch.
  */
 export function createRoadNetworkVT (projId, scId, op, roadNetworkPath) {
-  let executor = op.log('road-network', {message: 'Creating road-network vector tiles'})
-    .then(() => pullImage(projId, scId))
-    .then(() => runProcess(projId, scId, roadNetworkPath, 'road-network'));
+  // Using an executor because this function needs to return an object
+  // instead of a promise.
+  let executor = op.log('road-network', {message: 'Creating road-network vector tiles'});
 
-  return {
-    promise: executor,
-    kill: () => killSwitch(projId, scId)
-  };
+  // When running in aws it needs to be started in a different way.
+  if (config.vtProcess.service === 'aws') {
+    let awsTask;
+    try {
+      awsTask = initAWSTask(projId, scId, roadNetworkPath, 'road-network');
+    } catch (error) {
+      return {
+        promise: executor.then(() => Promise.reject(error)),
+        kill: Promise.resolve()
+      };
+    }
+
+    awsTask.on('data', data => {
+      console.log(`[VT P${projId} S${scId} road-network]`, data.message);
+    });
+
+    executor = executor
+      .then(() => awsTask.run())
+      .then(success => {
+        if (!success) throw new Error('Road network vector tiles generation failed.');
+      });
+
+    return {
+      promise: executor,
+      kill: awsTask.kill
+    };
+
+    // Docker or Hyper.
+  } else {
+    executor = executor
+      .then(() => pullImage(projId, scId))
+      .then(() => runProcess(projId, scId, roadNetworkPath, 'road-network'));
+
+    return {
+      promise: executor,
+      kill: () => killSwitch(projId, scId)
+    };
+  }
 }

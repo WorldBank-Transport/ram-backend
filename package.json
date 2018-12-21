@@ -1,6 +1,6 @@
 {
   "name": "ram-backend",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "The backend for RAM, a World Bank project to assess rural road accessibility",
   "repository": {
     "type": "git",
@@ -32,6 +32,7 @@
     "@octokit/rest": "^15.9.2",
     "@turf/bbox": "^4.0.2",
     "@turf/center-of-mass": "^6.0.1",
+    "aws-sdk": "^2.372.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-es2015": "^6.18.0",
     "babel-register": "^6.23.0",

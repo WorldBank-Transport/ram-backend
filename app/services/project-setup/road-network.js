@@ -69,6 +69,7 @@ export default async function (projId, scId, {op, emitter, logger, appLogger}) {
     fileData = await db('scenarios_files')
       .select('*')
       .where('project_id', projId)
+      .where('scenario_id', scId)
       .where('type', 'road-network')
       .first();
   }
@@ -137,4 +138,5 @@ async function importOSMRoadNetwork (projId, scId, bbox, op, logger) {
 
   await putFileStream(filePath, osmData);
   await db('scenarios_files').insert(data);
+  return data;
 }

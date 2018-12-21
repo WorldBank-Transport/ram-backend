@@ -134,15 +134,19 @@ describe('Result generation', function () {
         .where('name', 'generate-analysis')
       )
       .then(op => {
-        assert.equal(op[0].status, 'running');
+        // Operation is only started when generation starts.
+        assert.equal(op.length, 0);
       });
     });
 
     it('should throw error if the results generation is already running', function () {
-      return instance.injectThen({
+      const op = new Operation(db);
+      return op.start('generate-analysis', 2000, 2000)
+      .then(() => op.log('start', {message: 'Operation started'}))
+      .then(() => instance.injectThen({
         method: 'POST',
         url: '/projects/2000/scenarios/2000/generate'
-      })
+      }))
       .then(res => {
         assert.equal(res.statusCode, 409, 'Status code is 409');
         assert.equal(res.result.message, 'Result generation already running');

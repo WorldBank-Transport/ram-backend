@@ -2,28 +2,19 @@
 import fs from 'fs-extra';
 import Promise from 'bluebird';
 
-import s3, { bucket } from './';
+import S3, { bucket } from './';
 import { removeObject, putObjectFromFile, listObjects, emptyBucket, putObject } from './structure';
 
 const readFile = Promise.promisify(fs.readFile);
 
-export function getPresignedUrl (file) {
+export async function getPresignedUrl (file) {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     s3.presignedPutObject(bucket, file, 24 * 60 * 60, (err, presignedUrl) => {
       if (err) {
         return reject(err);
       }
       return resolve(presignedUrl);
-    });
-  });
-}
-
-export function listenForFile (file) {
-  return new Promise((resolve, reject) => {
-    var listener = s3.listenBucketNotification(bucket, file, '', ['s3:ObjectCreated:*']);
-    listener.on('notification', record => {
-      listener.stop();
-      return resolve(record);
     });
   });
 }
@@ -39,7 +30,8 @@ export function removeDir (dir) {
 }
 
 // Get file.
-export function getFile (file) {
+export async function getFile (file) {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     s3.getObject(bucket, file, (err, dataStream) => {
       if (err) {
@@ -51,7 +43,8 @@ export function getFile (file) {
 }
 
 // Get s3 file to file.
-export function fGetFile (file, dest) {
+export async function fGetFile (file, dest) {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     s3.fGetObject(bucket, file, dest, (err) => {
       if (err) {
@@ -63,7 +56,8 @@ export function fGetFile (file, dest) {
 }
 
 // Copy file.
-export function copyFile (oldFile, newFile) {
+export async function copyFile (oldFile, newFile) {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     s3.copyObject(bucket, newFile, `${bucket}/${oldFile}`, null, (err, data) => {
       if (err) {
@@ -75,7 +69,8 @@ export function copyFile (oldFile, newFile) {
 }
 
 // File stats.
-export function getFileInfo (file) {
+export async function getFileInfo (file) {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     s3.statObject(bucket, file, (err, stat) => {
       if (err) {
@@ -87,16 +82,17 @@ export function getFileInfo (file) {
 }
 
 // Copy directory.
-export function copyDirectory (sourceDir, destDir) {
-  return listFiles(sourceDir)
-    .then(files => Promise.map(files, file => {
-      let newName = file.name.replace(sourceDir, destDir);
-      return copyFile(file.name, newName);
-    }, { concurrency: 10 }));
+export async function copyDirectory (sourceDir, destDir) {
+  const files = await listFiles(sourceDir);
+  return Promise.map(files, file => {
+    const newName = file.name.replace(sourceDir, destDir);
+    return copyFile(file.name, newName);
+  }, { concurrency: 10 });
 }
 
 // Get file content.
-export function getFileContents (file) {
+export async function getFileContents (file) {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     s3.getObject(bucket, file, (err, dataStream) => {
       if (err) return reject(err);
@@ -110,9 +106,9 @@ export function getFileContents (file) {
 }
 
 // Get file content in JSON.
-export function getJSONFileContents (file) {
-  return getFileContents(file)
-    .then(result => JSON.parse(result));
+export async function getJSONFileContents (file) {
+  const result = await getFileContents(file);
+  return JSON.parse(result);
 }
 
 // Put object
@@ -134,8 +130,8 @@ export function listFiles (namePrefix) {
 }
 
 // Put directory
-export function putDirectory (sourceDir, destDir) {
-  let files = getLocalFilesInDir(sourceDir);
+export async function putDirectory (sourceDir, destDir) {
+  let files = await getLocalFilesInDir(sourceDir);
   return Promise.map(files, file => {
     let newName = file.replace(sourceDir, destDir);
     return putFile(newName, file);
@@ -155,35 +151,29 @@ export function removeLocalFile (path, quiet = false) {
   });
 }
 
-export function getLocalFileContents (path) {
-  return readFile(path, 'utf8')
-    .then(data => {
-      // https://github.com/sindresorhus/strip-bom
-      // Catches EFBBBF (UTF-8 BOM) because the buffer-to-string
-      // conversion translates it to FEFF (UTF-16 BOM)
-      if (data.charCodeAt(0) === 0xFEFF) {
-        return data.slice(1);
-      }
-      return data;
-    });
+export async function getLocalFileContents (path) {
+  const data = await readFile(path, 'utf8');
+
+  // https://github.com/sindresorhus/strip-bom
+  // Catches EFBBBF (UTF-8 BOM) because the buffer-to-string
+  // conversion translates it to FEFF (UTF-16 BOM)
+  return data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data;
 }
 
-export function getLocalJSONFileContents (path) {
-  return getLocalFileContents(path)
-    .then(result => JSON.parse(result));
+export async function getLocalJSONFileContents (path) {
+  const result = await getLocalFileContents(path);
+  return JSON.parse(result);
 }
 
-export function getLocalFilesInDir (dir) {
-  const files = fs.readdirSync(dir);
+export async function getLocalFilesInDir (dir) {
+  const files = await fs.readdir(dir);
 
-  return files.reduce((acc, file) => {
-    let name = dir + '/' + file;
-    if (fs.statSync(name).isDirectory()) {
-      acc = acc.concat(getLocalFilesInDir(name));
-    } else {
-      acc.push(name);
-    }
+  return Promise.reduce(files, async (acc, file) => {
+    const name = dir + '/' + file;
+    const stats = await fs.stat(name);
 
-    return acc;
+    return stats.isDirectory()
+      ? acc.concat(await getLocalFilesInDir(name))
+      : acc.concat(name);
   }, []);
 }
