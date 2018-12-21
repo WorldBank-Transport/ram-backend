@@ -6,25 +6,25 @@ import db from '../db/';
 import { ProjectNotFoundError, getBoomResponseForError } from '../utils/errors';
 import { getSourceData, getOperationData } from '../utils/utils';
 
-module.exports = [
+export default [
   {
     path: '/projects',
     method: 'GET',
-    handler: (request, reply) => {
+    handler: async (request, reply) => {
       let {page, limit} = request;
       let offset = (page - 1) * limit;
 
-      Promise.all([
-        db('projects').count('id'),
-        db.select('*').from('projects').orderBy('created_at').offset(offset).limit(limit)
-      ]).then(res => {
-        const [count, projects] = res;
-        return Promise.map(projects, p => attachProjectSourceData(p).then(p => attachScenarioCount(p)))
-          .then(projects => {
-            request.count = parseInt(count[0].count);
-            reply(projects);
-          });
-      });
+      try {
+        let [{count}, projects] = await Promise.all([
+          db('projects').count('id').first(),
+          db.select('*').from('projects').orderBy('created_at').offset(offset).limit(limit)
+        ]);
+        projects = await Promise.map(projects, p => attachProjectSourceData(p).then(p => attachScenarioCount(p)));
+        request.count = parseInt(count);
+        reply(projects);
+      } catch (error) {
+        reply(getBoomResponseForError(error));
+      }
     }
   },
   {
@@ -37,10 +37,13 @@ module.exports = [
         }
       }
     },
-    handler: (request, reply) => {
-      getProject(request.params.projId)
-        .then(project => reply(project))
-        .catch(err => reply(getBoomResponseForError(err)));
+    handler: async(request, reply) => {
+      try {
+        const project = await getProject(request.params.projId);
+        reply(project);
+      } catch (error) {
+        reply(getBoomResponseForError(error));
+      }
     }
   }
 ];

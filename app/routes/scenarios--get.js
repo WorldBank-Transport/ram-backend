@@ -26,41 +26,43 @@ export default [
         }
       }
     },
-    handler: (request, reply) => {
+    handler: async (request, reply) => {
       let {page, limit} = request;
       let offset = (page - 1) * limit;
 
-      Promise.all([
-        db('scenarios').where('project_id', request.params.projId).count('id'),
-        db.select('id').from('scenarios').where('project_id', request.params.projId).orderBy('created_at').offset(offset).limit(limit)
-      ]).then(res => {
-        const [count, scenarios] = res;
-        return Promise.map(scenarios, s => loadScenario(request.params.projId, s.id))
-          .then(scenarios => {
-            request.count = parseInt(count[0].count);
-            reply(scenarios);
-          });
-      });
+      try {
+        let [{count}, scenarios] = await Promise.all([
+          db('scenarios').where('project_id', request.params.projId).count('id').first(),
+          db.select('id').from('scenarios').where('project_id', request.params.projId).orderBy('created_at').offset(offset).limit(limit)
+        ]);
+        scenarios = await Promise.map(scenarios, s => loadScenario(request.params.projId, s.id));
+        request.count = parseInt(count);
+        reply(scenarios);
+      } catch (error) {
+        reply(getBoomResponseForError(error));
+      }
     }
   },
   {
     path: '/projects/{projId}/scenarios/0',
     method: 'GET',
     config: routeSingleScenarioConfig,
-    handler: (request, reply) => {
-      db('scenarios')
-        .select('id')
-        .where('project_id', request.params.projId)
-        .where('master', true)
-        .then(res => {
-          if (!res.length) throw new ProjectNotFoundError();
-          return res[0].id;
-        })
-        .then(id => {
-          request.params.scId = id;
-          singleScenarioHandler(request, reply);
-        })
-        .catch(err => reply(getBoomResponseForError(err)));
+    handler: async (request, reply) => {
+      try {
+        const masterProj = await db('scenarios')
+          .select('id')
+          .where('project_id', request.params.projId)
+          .where('master', true)
+          .first();
+
+        if (!masterProj) throw new ProjectNotFoundError();
+
+        // Fake scenario load.
+        request.params.scId = masterProj.id;
+        singleScenarioHandler(request, reply);
+      } catch (error) {
+        reply(getBoomResponseForError(error));
+      }
     }
   },
   {
@@ -70,6 +72,12 @@ export default [
     handler: singleScenarioHandler
   }
 ];
+
+function singleScenarioHandler (request, reply) {
+  return loadScenario(request.params.projId, request.params.scId)
+    .then(scenario => reply(scenario))
+    .catch(err => reply(getBoomResponseForError(err)));
+}
 
 export function loadScenario (projId, scId) {
   return db.select('*')
@@ -87,12 +95,6 @@ export function loadScenario (projId, scId) {
     .then(scenario => attachScenarioSourceData(scenario))
     .then(scenario => attachOperation('generate-analysis', 'gen_analysis', scenario))
     .then(scenario => attachOperation('scenario-create', 'scen_create', scenario));
-}
-
-function singleScenarioHandler (request, reply) {
-  return loadScenario(request.params.projId, request.params.scId)
-    .then(scenario => reply(scenario))
-    .catch(err => reply(getBoomResponseForError(err)));
 }
 
 function attachScenarioSettings (scenario) {

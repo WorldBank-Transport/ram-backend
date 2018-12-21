@@ -1,9 +1,9 @@
 'use strict';
 require('dotenv').config();
-import fetch from 'node-fetch';
 
 import config from './config';
 import initServer from './services/server';
+import { getAWSInstanceCredentials } from './utils/aws';
 
 var options = {
   connection: config.connection
@@ -17,18 +17,9 @@ async function main () {
   if (engine === 's3' && !accessKey && !secretKey) {
     console.log('AWS access key and secret not set. Will try to get them.');
     try {
-      const awsIAMUrl = 'http://169.254.169.254/latest/meta-data/iam/security-credentials/';
-      const roleRes = await fetch(awsIAMUrl);
-      if (roleRes.status >= 400) throw new Error('Unable to fetch role name');
-
-      const roleName = await roleRes.text();
-      const accessRes = await fetch(`${awsIAMUrl}${roleName}`);
-      if (accessRes.status >= 400) throw new Error('Unable to fetch access credentials');
-      const accessCredentials = await accessRes.json();
-
-      // Updating config and set the credentials.
-      config.storage.accessKey = accessCredentials.AccessKeyId;
-      config.storage.secretKey = accessCredentials.SecretAccessKey;
+      // Try to get the credentials on start just to see if everything is ok.
+      await getAWSInstanceCredentials('', true);
+      console.log('AWS credentials successfully fetched.');
     } catch (err) {
       console.log(err);
       console.log('Is this running on a EC2 instance?');

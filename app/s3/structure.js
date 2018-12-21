@@ -1,14 +1,15 @@
 'use strict';
 import Promise from 'bluebird';
 
-import s3, { bucket, region } from './';
+import S3, { bucket, region } from './';
 import config from '../config';
 
 const DEBUG = config.debug;
 const BUCKET = bucket;
 const REGION = region;
 
-export function listObjects (bucket, objPrefix = '') {
+export async function listObjects (bucket, objPrefix = '') {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     var objects = [];
     var stream = s3.listObjectsV2(bucket, objPrefix, true);
@@ -24,15 +25,30 @@ export function listObjects (bucket, objPrefix = '') {
   });
 }
 
-export function emptyBucket (bucket, objPrefix = '') {
-  return listObjects(bucket, objPrefix)
-    .catch(err => {
-      if (err.code === 'NoSuchBucket') {
-        return [];
+export async function bucketExists (bucket) {
+  const s3 = await S3();
+  return new Promise((resolve, reject) => {
+    s3.bucketExists(bucket, err => {
+      if (err) {
+        return err.code === 'NoSuchBucket' || err.code === 'NotFound'
+          ? resolve(false)
+          : reject(err);
       }
-      throw err;
-    })
-    .then(objects => Promise.map(objects, o => removeObject(bucket, o.name), { concurrency: 10 }));
+      return resolve(true);
+    });
+  });
+}
+
+export async function emptyBucket (bucket, objPrefix = '') {
+  try {
+    const objects = await listObjects(bucket, objPrefix);
+    return Promise.map(objects, o => removeObject(bucket, o.name), { concurrency: 10 });
+  } catch (err) {
+    if (err.code === 'NoSuchBucket') {
+      return [];
+    }
+    throw err;
+  }
 }
 
 export function destroyBucket (bucket) {
@@ -40,7 +56,8 @@ export function destroyBucket (bucket) {
     .then(() => removeBucket(bucket));
 }
 
-export function createBucket (bucket, region) {
+export async function createBucket (bucket, region) {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     s3.makeBucket(bucket, region, err => {
       if (err) {
@@ -56,12 +73,13 @@ export function createBucket (bucket, region) {
   });
 }
 
-export function setupStructure () {
-  return destroyBucket(BUCKET)
-    .then(() => createBucket(BUCKET, REGION));
+export async function setupStructure () {
+  await destroyBucket(BUCKET);
+  return createBucket(BUCKET, REGION);
 }
 
-export function removeObject (bucket, name) {
+export async function removeObject (bucket, name) {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     s3.removeObject(bucket, name, err => {
       if (err) {
@@ -72,7 +90,8 @@ export function removeObject (bucket, name) {
   });
 }
 
-function removeBucket (bucket) {
+async function removeBucket (bucket) {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     s3.removeBucket(bucket, err => {
       if (err) {
@@ -88,7 +107,8 @@ function removeBucket (bucket) {
   });
 }
 
-export function putObjectFromFile (bucket, name, filepath) {
+export async function putObjectFromFile (bucket, name, filepath) {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     s3.fPutObject(bucket, name, filepath, 'application/octet-stream', (err, etag) => {
       if (err) {
@@ -99,7 +119,8 @@ export function putObjectFromFile (bucket, name, filepath) {
   });
 }
 
-export function putObject (bucket, file, stream) {
+export async function putObject (bucket, file, stream) {
+  const s3 = await S3();
   return new Promise((resolve, reject) => {
     s3.putObject(bucket, file, stream, (err, etag) => {
       if (err) return reject(err);
