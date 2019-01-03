@@ -177,3 +177,12 @@ export async function getLocalFilesInDir (dir) {
       : acc.concat(name);
   }, []);
 }
+
+export function writeFileStreamPromise (stream, path) {
+  return new Promise((resolve, reject) => {
+    const writeStream = fs.createWriteStream(path);
+    writeStream.on('error', err => reject(err));
+    writeStream.on('finish', () => resolve(path));
+    stream.pipe(writeStream);
+  });
+}
