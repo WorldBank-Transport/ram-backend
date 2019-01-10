@@ -1,4 +1,6 @@
 'use strict';
+import os from 'os';
+import path from 'path';
 import Joi from 'joi';
 import Promise from 'bluebird';
 import Zip from 'node-zip';
@@ -10,7 +12,8 @@ import {
   removeLocalFile,
   removeFile,
   getLocalJSONFileContents,
-  getFileContents
+  getFileContents,
+  writeFileStreamPromise
 } from '../s3/utils';
 import {
   ProjectNotFoundError,
@@ -21,7 +24,6 @@ import {
   FileNotFoundError,
   getBoomResponseForError
 } from '../utils/errors';
-import { parseFormData } from '../utils/utils';
 import { osmPOIGroups } from '../utils/overpass';
 
 export default [
@@ -38,251 +40,253 @@ export default [
       payload: {
         maxBytes: 2 * Math.pow(1024, 3), // 2GB
         output: 'stream',
-        parse: false,
+        parse: true,
         allow: 'multipart/form-data'
       }
     },
-    handler: (request, reply) => {
+    handler: async (request, reply) => {
       const projId = parseInt(request.params.projId);
       const scId = parseInt(request.params.scId);
 
-      // Check if project exists and is still in setup phase.
-      db('projects')
-        .select('*')
-        .where('id', projId)
-        .first()
-        .then(project => {
-          if (!project) throw new ProjectNotFoundError();
-          if (project.status !== 'pending') throw new ProjectStatusError('Project no longer in the setup phase. Source data can not be uploaded');
-        })
-        .then(() => db('scenarios')
+      const tempFilename = `ram-p${projId}-s${scId}--${Date.now()}`;
+      const tempFilePath = path.join(os.tmpdir(), tempFilename);
+
+      try {
+        if (request.payload.file) {
+          await writeFileStreamPromise(request.payload.file, tempFilePath);
+        }
+
+        // Check if project exists and is still in setup phase.
+        const project = await db('projects')
+          .select('*')
+          .where('id', projId)
+          .first();
+        if (!project) throw new ProjectNotFoundError();
+        if (project.status !== 'pending') throw new ProjectStatusError('Project no longer in the setup phase. Source data can not be uploaded');
+
+        // Check if the scenario exists.
+        const scenario = await db('scenarios')
           .select('id')
           .where('id', scId)
-          .first()
-          .then(scenario => { if (!scenario) throw new ScenarioNotFoundError(); })
-        )
-        .then(() => parseFormData(request.raw.req))
-        .then(result => {
-          if (!result.fields['source-type']) {
-            throw new DataValidationError('"source-type" is required');
+          .first();
+        if (!scenario) throw new ScenarioNotFoundError();
+
+        const payload = request.payload;
+
+        if (!payload['source-type']) {
+          throw new DataValidationError('"source-type" is required');
+        }
+
+        if (!payload['source-name']) {
+          throw new DataValidationError('"source-name" is required');
+        }
+
+        let sourceType = payload['source-type'];
+        let sourceName = payload['source-name'];
+
+        const handleFileSource = async () => {
+          if (!payload.file) {
+            throw new DataValidationError('"file" is required');
           }
 
-          if (!result.fields['source-name']) {
-            throw new DataValidationError('"source-name" is required');
+          // With poi source the subtype is required.
+          let subtype = payload.subtype;
+          if (sourceName === 'poi' && !subtype) {
+            throw new DataValidationError('"subtype" is required for source "poi"');
           }
 
-          let sourceType = result.fields['source-type'][0];
-          let sourceName = result.fields['source-name'][0];
+          let fileName;
 
-          // Functions for the different source names / types combinations.
-          const resolverMatrix = {
-            poi: {
-              file: () => handleFileSource(),
-              osm: () => handleOSMSource(),
-              wbcatalog: () => wbcatalogResolver()
-            },
-            'road-network': {
-              file: () => handleFileSource(),
-              osm: () => handleOSMSource(),
-              wbcatalog: () => wbcatalogResolver()
-            }
-          };
-
-          const allowedSourceNames = Object.keys(resolverMatrix);
-          if (allowedSourceNames.indexOf(sourceName) === -1) {
-            throw new DataValidationError(`"source-name" must be one of [${allowedSourceNames.join(', ')}]`);
+          if (subtype) {
+            fileName = `${sourceName}_${subtype}_${Date.now()}`;
+          } else {
+            fileName = `${sourceName}_${Date.now()}`;
           }
 
-          const allowedSourceTypes = Object.keys(resolverMatrix[sourceName]);
-          if (allowedSourceTypes.indexOf(sourceType) === -1) {
-            throw new DataValidationError(`"source-type" for "${sourceName}" must be one of [${allowedSourceTypes.join(', ')}]`);
+          let filePath = `scenario-${scId}/${fileName}`;
+
+          // When switching from a source to File, check if there are any
+          // files in the db and remove them. This can happen if files were
+          // imported from OSM/catalog but the process failed.
+          const source = await getScenarioSource(scId, sourceName);
+          if (source && source.type !== 'file') {
+            // Delete files.
+            await deleteScenarioFiles(projId, scId, sourceName);
           }
 
-          const handleFileSource = () => {
-            if (!result.files.file) {
-              throw new DataValidationError('"file" is required');
-            }
+          // Upsert source.
+          await upsertScenarioSource(projId, scId, sourceName, 'file');
 
-            // With poi source the subtype is required.
-            let subtype = result.fields['subtype'] ? result.fields['subtype'][0] : null;
-            if (sourceName === 'poi' && !subtype) {
-              throw new DataValidationError('"subtype" is required for source "poi"');
-            }
+          // Check if the file exists.
+          let query = db('scenarios_files')
+            .select('id')
+            .where('scenario_id', scId)
+            .where('type', sourceName);
 
-            let file = result.files.file[0];
-            let fileName;
+          if (subtype) {
+            query = query.where('subtype', subtype);
+          }
 
-            if (subtype) {
-              fileName = `${sourceName}_${subtype}_${Date.now()}`;
-            } else {
-              fileName = `${sourceName}_${Date.now()}`;
-            }
+          const files = await query;
+          if (files.length) { throw new FileExistsError(); }
 
-            let filePath = `scenario-${scId}/${fileName}`;
-
-            // When switching from a source to File, check if there are any
-            // files in the db and remove them. This can happen if files were
-            // imported from OSM/catalog but the process failed.
-            return getScenarioSource(scId, sourceName)
-              .then(source => {
-                // Delete files.
-                return source && source.type !== 'file'
-                  ? deleteScenarioFiles(projId, scId, sourceName)
-                  : null;
-              })
-              // Upsert source.
-              .then(() => upsertScenarioSource(projId, scId, sourceName, 'file'))
-              // Check if the file exists.
-              .then(() => {
-                let query = db('scenarios_files')
-                  .select('id')
-                  .where('scenario_id', scId)
-                  .where('type', sourceName);
-
-                if (subtype) {
-                  query = query.where('subtype', subtype);
-                }
-
-                return query;
-              })
-              .then(files => {
-                if (files.length) { throw new FileExistsError(); }
-              })
-              // Validations.
-              .then(() => {
-                if (sourceName === 'poi') {
-                  return getLocalJSONFileContents(file.path)
-                    .catch(err => {
-                      if (err instanceof SyntaxError) throw new DataValidationError(`Invalid GeoJSON file`);
-                      throw err;
-                    })
-                    .then(contents => {
-                      if (contents.type !== 'FeatureCollection') {
-                        throw new DataValidationError('GeoJSON file must be a feature collection');
-                      }
-
-                      if (!contents.features || !contents.features.length) {
-                        throw new DataValidationError('No valid poi found in file');
-                      }
-                    });
-                }
-              })
-              // Upload to S3.
-              .then(() => putFileToS3(filePath, file.path))
-              // Insert into database.
-              .then(() => {
-                let data = {
-                  name: fileName,
-                  type: sourceName,
-                  path: filePath,
-                  project_id: projId,
-                  scenario_id: scId,
-                  created_at: (new Date()),
-                  updated_at: (new Date())
-                };
-
-                if (subtype) {
-                  data.subtype = subtype;
-                }
-
-                return db('scenarios_files')
-                  .returning(['id', 'name', 'type', 'subtype', 'path', 'created_at'])
-                  .insert(data)
-                  .then(insertResponse => insertResponse[0])
-                  .then(insertResponse => db('scenarios').update({updated_at: (new Date())}).where('id', scId).then(() => insertResponse))
-                  .then(insertResponse => db('projects').update({updated_at: (new Date())}).where('id', projId).then(() => insertResponse));
-              })
-              // Delete temp file.
-              .then(insertResponse => removeLocalFile(file.path, true).then(() => insertResponse))
-              .then(insertResponse => reply(Object.assign({}, insertResponse, {
-                sourceType,
-                sourceName
-              })))
-              .catch(err => {
-                // Delete temp file in case of error. Re-throw error to continue.
-                file && removeLocalFile(file.path, true);
-                throw err;
-              });
-          };
-
-          const handleOSMSource = () => {
-            // With poi source the osmPoiTypes are required.
-            let osmPoiTypes = result.fields['osmPoiTypes'] || [];
-            if (sourceName === 'poi') {
-              // Validate POI.
-              if (!osmPoiTypes.length) {
-                throw new DataValidationError('"osmPoiTypes" is required for source "poi"');
-              }
-
-              let validPOI = osmPOIGroups.map(o => o.key);
-              let invalid = osmPoiTypes.filter(o => validPOI.indexOf(o) === -1);
-              if (invalid.length) {
-                throw new DataValidationError(`POI type [${invalid.join(', ')}] not allowed. "osmPoiTypes" values must be any of [${validPOI.join(', ')}]`);
-              }
-            }
-
-            let sourceData = osmPoiTypes ? { osmPoiTypes } : null;
-
-            // Upsert source.
-            return upsertScenarioSource(projId, scId, sourceName, 'osm', sourceData)
-              // Delete files if exist.
-              .then(() => deleteScenarioFiles(projId, scId, sourceName))
-              .then(() => reply({
-                sourceType,
-                sourceName
-              }));
-          };
-
-          const wbcatalogResolver = () => {
+          // Validations.
+          if (sourceName === 'poi') {
+            let contents;
             try {
-              var keys = result.fields['wbcatalog-options[key]'].filter(o => !!o);
-            } catch (e) {
-              throw new DataValidationError('"wbcatalog-options[key]" is required');
+              contents = await getLocalJSONFileContents(tempFilePath);
+            } catch (error) {
+              if (error instanceof SyntaxError) throw new DataValidationError(`Invalid GeoJSON file`);
+              throw error;
+            }
+            if (contents.type !== 'FeatureCollection') {
+              throw new DataValidationError('GeoJSON file must be a feature collection');
             }
 
-            if (!keys.length) {
-              throw new DataValidationError('"wbcatalog-options[key]" must not be empty');
+            if (!contents.features || !contents.features.length) {
+              throw new DataValidationError('No valid poi found in file');
             }
+          }
 
-            let sourceData;
-            if (sourceName === 'poi') {
-              try {
-                var labels = result.fields['wbcatalog-options[label]'].filter(o => !!o);
-              } catch (e) {
-                throw new DataValidationError('"wbcatalog-options[label]" is required');
-              }
+          // Upload to S3.
+          await putFileToS3(filePath, tempFilePath);
 
-              if (!labels.length) {
-                throw new DataValidationError('"wbcatalog-options[label]" must not be empty');
-              }
-
-              if (labels.length !== keys.length) {
-                throw new DataValidationError('"wbcatalog-options[key]" and "wbcatalog-options[label]" must have the same number of values');
-              }
-              sourceData = { resources: _.zipWith(keys, labels, (k, l) => ({key: k, label: l})) };
-            } else if (sourceName === 'road-network') {
-              // The catalog data is stored as an array of objects to be
-              // consistent throughout all sources, since the POI source
-              // can have multiple options with labels.
-              sourceData = { resources: [{ key: result.fields['wbcatalog-options[key]'][0] }] };
-            } else {
-              throw new DataValidationError(`Invalid source: ${sourceName}`);
-            }
-
-            // Upsert source.
-            return upsertScenarioSource(projId, scId, sourceName, 'wbcatalog', sourceData)
-              // Delete files if exist.
-              .then(() => deleteScenarioFiles(projId, scId, sourceName))
-              .then(() => reply({
-                sourceType,
-                sourceName
-              }));
+          // Insert into database.
+          let data = {
+            name: fileName,
+            type: sourceName,
+            path: filePath,
+            project_id: projId,
+            scenario_id: scId,
+            created_at: (new Date()),
+            updated_at: (new Date())
           };
 
-          // Get the right resolver and start the process.
-          return resolverMatrix[sourceName][sourceType]();
-        })
-        .catch(err => reply(getBoomResponseForError(err)));
+          if (subtype) {
+            data.subtype = subtype;
+          }
+
+          const insertResponse = await db('scenarios_files')
+            .returning(['id', 'name', 'type', 'subtype', 'path', 'created_at'])
+            .insert(data);
+          // Update timestamps.
+          await db('scenarios').update({updated_at: (new Date())}).where('id', scId);
+          await db('projects').update({updated_at: (new Date())}).where('id', projId);
+          // Delete temp file.
+          await removeLocalFile(tempFilePath, true);
+
+          return reply({
+            ...insertResponse[0],
+            sourceType,
+            sourceName
+          });
+        };
+
+        const handleOSMSource = async () => {
+          // With poi source the osmPoiTypes are required.
+          // Cast to array.
+          let osmPoiTypes = [].concat(payload.osmPoiTypes).filter(o => !!o);
+          if (sourceName === 'poi') {
+            // Validate POI.
+            if (!osmPoiTypes.length) {
+              throw new DataValidationError('"osmPoiTypes" is required for source "poi"');
+            }
+
+            let validPOI = osmPOIGroups.map(o => o.key);
+            let invalid = osmPoiTypes.filter(o => validPOI.indexOf(o) === -1);
+            if (invalid.length) {
+              throw new DataValidationError(`POI type [${invalid.join(', ')}] not allowed. "osmPoiTypes" values must be any of [${validPOI.join(', ')}]`);
+            }
+          }
+
+          let sourceData = osmPoiTypes ? { osmPoiTypes } : null;
+
+          // Upsert source.
+          await upsertScenarioSource(projId, scId, sourceName, 'osm', sourceData);
+          // Delete files if exist.
+          await deleteScenarioFiles(projId, scId, sourceName);
+          return reply({
+            sourceType,
+            sourceName
+          });
+        };
+
+        const wbcatalogResolver = async () => {
+          if (payload['wbcatalog-options[key]'] === undefined) {
+            throw new DataValidationError('"wbcatalog-options[key]" is required');
+          }
+          // Cast to array.
+          const keys = [].concat(payload['wbcatalog-options[key]']).filter(o => !!o);
+          if (!keys.length) {
+            throw new DataValidationError('"wbcatalog-options[key]" must not be empty');
+          }
+
+          let sourceData;
+          if (sourceName === 'poi') {
+            if (payload['wbcatalog-options[label]'] === undefined) {
+              throw new DataValidationError('"wbcatalog-options[label]" is required');
+            }
+            // Cast to array.
+            const labels = [].concat(payload['wbcatalog-options[label]']).filter(o => !!o);
+
+            if (!labels.length) {
+              throw new DataValidationError('"wbcatalog-options[label]" must not be empty');
+            }
+
+            if (labels.length !== keys.length) {
+              throw new DataValidationError('"wbcatalog-options[key]" and "wbcatalog-options[label]" must have the same number of values');
+            }
+            sourceData = { resources: _.zipWith(keys, labels, (k, l) => ({key: k, label: l})) };
+          } else if (sourceName === 'road-network') {
+            // The catalog data is stored as an array of objects to be
+            // consistent throughout all sources, since the POI source
+            // can have multiple options with labels.
+            sourceData = { resources: [{ key: keys[0] }] };
+          } else {
+            throw new DataValidationError(`Invalid source: ${sourceName}`);
+          }
+
+          // Upsert source.
+          await upsertScenarioSource(projId, scId, sourceName, 'wbcatalog', sourceData);
+          // Delete files if exist.
+          await deleteScenarioFiles(projId, scId, sourceName);
+          return reply({
+            sourceType,
+            sourceName
+          });
+        };
+
+        // Functions for the different source names / types combinations.
+        const resolverMatrix = {
+          poi: {
+            file: handleFileSource,
+            osm: handleOSMSource,
+            wbcatalog: wbcatalogResolver
+          },
+          'road-network': {
+            file: handleFileSource,
+            osm: handleOSMSource,
+            wbcatalog: wbcatalogResolver
+          }
+        };
+
+        const allowedSourceNames = Object.keys(resolverMatrix);
+        if (allowedSourceNames.indexOf(sourceName) === -1) {
+          throw new DataValidationError(`"source-name" must be one of [${allowedSourceNames.join(', ')}]`);
+        }
+
+        const allowedSourceTypes = Object.keys(resolverMatrix[sourceName]);
+        if (allowedSourceTypes.indexOf(sourceType) === -1) {
+          throw new DataValidationError(`"source-type" for "${sourceName}" must be one of [${allowedSourceTypes.join(', ')}]`);
+        }
+
+        // Get the right resolver and start the process.
+        await resolverMatrix[sourceName][sourceType]();
+      } catch (error) {
+        // Delete temp file in case of error. Re-throw error to continue.
+        request.payload.file && removeLocalFile(tempFilePath, true);
+        return reply(getBoomResponseForError(error));
+      }
     }
   },
   {

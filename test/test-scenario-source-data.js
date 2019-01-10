@@ -47,7 +47,7 @@ describe('Scenario source data', function () {
 
     it('should return 404 for a project not found', function () {
       let form = new FormData();
-      form.append('', '');
+      form.append('null', '');
 
       return streamToPromise(form)
         .then(payload => instance.injectThen({
@@ -64,7 +64,7 @@ describe('Scenario source data', function () {
 
     it('should return 404 for a scenario not found', function () {
       let form = new FormData();
-      form.append('', '');
+      form.append('null', '');
 
       return streamToPromise(form)
         .then(payload => instance.injectThen({
@@ -81,7 +81,7 @@ describe('Scenario source data', function () {
 
     it('should return 400 when project is not pending', function () {
       let form = new FormData();
-      form.append('', '');
+      form.append('null', '');
 
       return streamToPromise(form)
         .then(payload => instance.injectThen({
@@ -98,7 +98,7 @@ describe('Scenario source data', function () {
 
     it('should error when source-type is not provided', function () {
       let form = new FormData();
-      form.append('', '');
+      form.append('null', '');
 
       return streamToPromise(form)
         .then(payload => instance.injectThen({
