@@ -41,7 +41,8 @@ export default [
         maxBytes: 2 * Math.pow(1024, 3), // 2GB
         output: 'stream',
         parse: true,
-        allow: 'multipart/form-data'
+        allow: 'multipart/form-data',
+        timeout: false
       }
     },
     handler: async (request, reply) => {
