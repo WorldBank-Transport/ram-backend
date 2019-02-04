@@ -26,7 +26,8 @@ export class ProjectEventEmitter extends EventEmitter {
   /**
    * Resolves a promise once all the events fired once.
    * The promise is resolved with an object keyed by the event name containing
-   * the result of each event.
+   * the result of each event. The results of each event will be an array, even
+   * if the emit method was called just with one argument.
    * As soon as the method is called, it checks if the events were already emitted
    * and if so, resolves them immediately preventing "waiting for Godot"
    *
@@ -61,8 +62,9 @@ export class ProjectEventEmitter extends EventEmitter {
           results[e] = this.emitted[e];
           if (++completed === events.length) resolve(results);
         } else {
-          this.once(e, (result = null) => {
-            results[e] = result;
+          // Setup a once listener that gets all the passed arguments.
+          this.once(e, (...args) => {
+            results[e] = args;
             if (++completed === events.length) resolve(results);
           });
         }

@@ -61,7 +61,7 @@ export default async function (projId, scId, {op, emitter, logger, appLogger}) {
     // If importing from OSM we need to wait for the admin bounds.
     const result = await emitter.waitForEvents('admin-bounds:data');
     logger && logger.log('road-network is waiting for events (admin-bounds:data)... done');
-    const adminBoundsFc = result['admin-bounds:data'];
+    const [adminBoundsFc] = result['admin-bounds:data'];
     fileData = await importOSMRoadNetwork(projId, scId, overpass.fcBbox(adminBoundsFc), op, logger);
   }
 
