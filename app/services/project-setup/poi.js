@@ -70,7 +70,7 @@ export default async function (projId, scId, {op, emitter, logger, appLogger}) {
     // If importing from OSM we need to wait for the admin bounds.
     const result = await emitter.waitForEvents('admin-bounds:data');
     logger && logger.log('poi is waiting for events (admin-bounds:data)... done');
-    const adminBoundsFc = result['admin-bounds:data'];
+    const [adminBoundsFc] = result['admin-bounds:data'];
     poisData = await importOSMPOIs(projId, scId, overpass.fcBbox(adminBoundsFc), source.data.osmPoiTypes, op, logger);
   }
 
@@ -78,7 +78,7 @@ export default async function (projId, scId, {op, emitter, logger, appLogger}) {
   logger && logger.log('poi is waiting for events (road-network:active-editing)...');
   const result = await emitter.waitForEvents('road-network:active-editing');
   logger && logger.log('poi is waiting for events (road-network:active-editing)... done');
-  const allowImport = result['road-network:active-editing'];
+  const [allowImport] = result['road-network:active-editing'];
 
   if (allowImport) {
     // Merge all feature collection together.
