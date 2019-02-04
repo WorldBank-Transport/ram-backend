@@ -62,8 +62,9 @@ export class ProjectEventEmitter extends EventEmitter {
           results[e] = this.emitted[e];
           if (++completed === events.length) resolve(results);
         } else {
-          this.once(e, (result = null) => {
-            results[e] = result;
+          // Setup a once listener that gets all the passed arguments.
+          this.once(e, (...args) => {
+            results[e] = args;
             if (++completed === events.length) resolve(results);
           });
         }
