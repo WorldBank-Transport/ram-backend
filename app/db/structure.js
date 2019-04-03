@@ -228,6 +228,8 @@ export function createResultsTable () {
     table.foreign('project_aa_id')
       .references('projects_aa.id')
       .onDelete('CASCADE');
+
+    table.index(['project_id', 'scenario_id']);
   });
 }
 
@@ -241,6 +243,8 @@ export function createResultsPoiTable () {
       .onDelete('CASCADE');
     table.string('type');
     table.integer('time');
+
+    table.index('type');
   });
 }
 
@@ -254,6 +258,7 @@ export function createProjectsOriginsTable () {
       .onDelete('CASCADE');
     table.string('name');
     table.json('coordinates');
+
     table.index('project_id');
   });
 }
@@ -269,7 +274,9 @@ export function createProjectsOriginsIndicatorsTable () {
     table.string('key');
     table.string('label');
     table.integer('value');
+
     table.index('origin_id');
+    table.index('key');
   });
 }
 
