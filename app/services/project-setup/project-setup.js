@@ -153,6 +153,6 @@ export async function concludeProjectSetup (e) {
     try {
       await op.finish('error', {error: err.message});
     } catch (e) { /* no-action */ }
-    callback(err.message);
+    callback(err);
   }
 }

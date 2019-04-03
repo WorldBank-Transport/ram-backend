@@ -154,7 +154,7 @@ describe('Finish Project Setup', function () {
           scId: 3000,
           callback: (err) => {
             if (err) {
-              done(new Error('The script ended in error ' + err));
+              done(err);
             } else {
               validate();
             }
@@ -185,7 +185,7 @@ describe('Finish Project Setup', function () {
                 .where('operation_id', op.getId())
                 .orderBy('created_at', 'desc')
                 .then(logs => {
-                  assert.equal(err, 'Invalid administrative boundaries file');
+                  assert.equal(err.message, 'Invalid administrative boundaries file');
                   assert.equal(logs[0].code, 'error');
                   assert.equal(logs[0].data.error, 'Invalid administrative boundaries file');
                 })
