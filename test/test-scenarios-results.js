@@ -1,5 +1,6 @@
 'use strict';
 import { assert } from 'chai';
+import _ from 'lodash';
 
 import initServer from '../app/services/server';
 import { setupStructure as setupDdStructure } from '../app/db/structure';
@@ -37,7 +38,9 @@ describe('Scenario results', function () {
         url: '/projects/2000/scenarios/2000/results/geo?poiType=school&popInd=population'
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
-        let origins = res.result;
+        // It is not important fot the query result to be sorted, but we need
+        // to ensure order for the tests.
+        let origins = _.sortBy(res.result, 'i');
         assert.equal(origins.length, 3);
         assert.deepEqual(origins[0], {
           'n': 'Paripiranga',
@@ -55,17 +58,20 @@ describe('Scenario results', function () {
         url: '/projects/2000/scenarios/2000/results/geo?poiType=church&popInd=population'
       }).then(res => {
         assert.equal(res.statusCode, 200, 'Status code is 200');
-        let origins = res.result;
+        // It is not important fot the query result to be sorted, but we need
+        // to ensure order for the tests.
+        let origins = _.sortBy(res.result, 'i');
         assert.equal(origins.length, 2);
         assert.equal(origins[1].e, 350000);
       });
     });
-    it.skip('should return an error for unknown POI types', function () {
+    it('should return an error for unknown POI types', function () {
       return instance.injectThen({
         method: 'GET',
         url: '/projects/2000/scenarios/2000/results/geo?poiType=mockery&popInd=population'
       }).then(res => {
-        assert.equal(res.statusCode, 500, 'Internal Server Error');
+        assert.equal(res.statusCode, 400, 'Status code is 400');
+        assert.equal(res.result.message, '"poiType" must be one of [church, school]');
       });
     });
   });
