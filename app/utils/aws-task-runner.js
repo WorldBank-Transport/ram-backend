@@ -215,7 +215,7 @@ class AWSTaskRunner extends EventEmitter {
       if (lastStatus === 'STOPPED') {
         // Clean up.
         this.removeAllListeners();
-        return exitCode === 0;
+        return this.killed || exitCode === 0;
       }
     } while (true);
   }
