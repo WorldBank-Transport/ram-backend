@@ -291,7 +291,7 @@ export function createRoadNetworkVT (projId, scId, op, roadNetworkPath) {
 
     return {
       promise: executor,
-      kill: awsTask.kill
+      kill: () => awsTask.kill()
     };
 
     // Docker or Hyper.

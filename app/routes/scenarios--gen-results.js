@@ -488,7 +488,7 @@ async function runAWSTaskProcess (projId, scId, opId) {
   const awsTask = prepareAWSTask('ram-analysis', params);
 
   runningProcesses[identifier].analysis = {
-    kill: awsTask.kill
+    kill: () => awsTask.kill()
   };
 
   const success = await awsTask.run();
@@ -508,17 +508,18 @@ async function runAWSTaskProcess (projId, scId, opId) {
 function killAnalysisProcess (projId, scId) {
   if (process.env.DS_ENV === 'test') { return Promise.resolve(); }
 
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       const identifier = `p${projId} s${scId}`;
       // Since the processes run sequentially check by order which we need
       // to kill.
       if (runningProcesses[identifier].updateRN) {
+        // Killing a ServiceRunner process is synchronous.
         runningProcesses[identifier].updateRN.kill();
       } else if (runningProcesses[identifier].genVT) {
-        runningProcesses[identifier].genVT.kill();
+        await runningProcesses[identifier].genVT.kill();
       } else if (runningProcesses[identifier].analysis) {
-        runningProcesses[identifier].analysis.kill();
+        await runningProcesses[identifier].analysis.kill();
       }
       delete runningProcesses[identifier];
       return resolve();
