@@ -214,7 +214,11 @@ export function createAdminBoundsVT (projId, scId, op, adminBoundsPath) {
     executor = executor
       .then(() => awsTask.run())
       .then(success => {
-        if (!success) throw new Error('Admin bounds vector tiles generation failed.');
+        if (!success) {
+          const err = new Error(`Admin bounds vector tiles generation failed. (AWS Task exited with non 0 code on ${new Date().toUTCString()})`);
+          err.awsDetails = awsTask.getLastStatus();
+          throw err;
+        }
       });
 
     return {
@@ -278,7 +282,11 @@ export function createRoadNetworkVT (projId, scId, op, roadNetworkPath) {
     executor = executor
       .then(() => awsTask.run())
       .then(success => {
-        if (!success) throw new Error('Road network vector tiles generation failed.');
+        if (!success) {
+          const err = new Error(`Road network vector tiles generation failed. (AWS Task exited with non 0 code on ${new Date().toUTCString()})`);
+          err.awsDetails = awsTask.getLastStatus();
+          throw err;
+        }
       });
 
     return {

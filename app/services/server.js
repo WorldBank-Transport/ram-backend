@@ -14,7 +14,7 @@ module.exports = function (options, callback) {
     },
     debug: config.debug && process.env.DS_ENV !== 'test' ? {
       log: [ 'error' ],
-      request: [ 'error', 'received', 'response' ]
+      request: [ 'error' ]
     } : false
   });
 

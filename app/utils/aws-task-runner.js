@@ -129,7 +129,6 @@ class AWSTaskRunner extends EventEmitter {
   }
 
   async run () {
-    console.log('this.envVars', this.envVars);
     const environment = Object.keys(this.envVars).map(k => ({
       name: k,
       value: this.envVars[k] + ''
@@ -175,6 +174,7 @@ class AWSTaskRunner extends EventEmitter {
 
     // Get the task Id.
     this.taskId = task.taskArn.split('/')[1];
+    l(`Started aws task with id ${this.taskId}`);
 
     const logStreamName = `${logStreamPrefix}${this.taskId}`;
     // Store the log token so we can get only the new logs.
