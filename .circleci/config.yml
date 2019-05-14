@@ -70,7 +70,7 @@ jobs:
             # Also publish a tag with the CIRCLE_SHA1 so dev versions can
             # be redeployed to AWS.
             CODE=$(echo $CIRCLE_SHA1 | cut -c 1-8)
-            echo "Pushing image to Docker Hub as :latest-dev"
+            echo "Pushing image to Docker Hub as :dev-${CODE}"
             docker tag ${DOCKER_IMAGE} ${DOCKER_ORG}/${DOCKER_IMAGE}:dev-${CODE}
             docker push ${DOCKER_ORG}/${DOCKER_IMAGE}:dev-${CODE}
 
