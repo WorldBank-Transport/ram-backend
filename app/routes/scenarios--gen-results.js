@@ -240,6 +240,8 @@ async function generateResults (projId, scId) {
     // If anything went wrong, do some cleanup.
     delete runningProcesses[identifier];
     console.log(identifier, 'generateResults error was handled:', error);
+    // Print aws error details if there are any.
+    typeof error.awsDetails !== 'undefined' && console.log(identifier, JSON.stringify(error.awsDetails));
   }
 }
 
@@ -490,7 +492,11 @@ async function runAWSTaskProcess (projId, scId, opId) {
   };
 
   const success = await awsTask.run();
-  if (!success) throw new Error('Analysis failed. (AWS Task exited with non 0 code)');
+  if (!success) {
+    const err = new Error(`Analysis failed. (AWS Task exited with non 0 code on ${new Date().toUTCString()})`);
+    err.awsDetails = awsTask.getLastStatus();
+    throw err;
+  }
 }
 
 /**

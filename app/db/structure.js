@@ -245,6 +245,7 @@ export function createResultsPoiTable () {
     table.integer('time');
 
     table.index('type');
+    table.index('result_id');
   });
 }
 

@@ -108,6 +108,8 @@ class AWSTaskRunner extends EventEmitter {
 
     // Task id is set after running.
     this.taskId = null;
+
+    this.lastTaskStatus = null;
   }
 
   env (_) {
@@ -185,7 +187,7 @@ class AWSTaskRunner extends EventEmitter {
 
       if (this.killed) return false; // Sanity check.
       l('Checking aws task status');
-      const status = await getTask(cluster, task.taskArn);
+      this.lastTaskStatus = await getTask(cluster, task.taskArn);
 
       try {
         if (this.killed) return false; // Sanity check.
@@ -209,7 +211,7 @@ class AWSTaskRunner extends EventEmitter {
         }
       }
 
-      const { lastStatus, exitCode } = status.containers[0];
+      const { lastStatus, exitCode } = this.lastTaskStatus.containers[0];
       if (lastStatus === 'STOPPED') {
         // Clean up.
         this.removeAllListeners();
@@ -226,6 +228,10 @@ class AWSTaskRunner extends EventEmitter {
     // Clean up.
     this.removeAllListeners();
     return stopTask(this.options.cluster, this.taskId, 'Task aborted via ram');
+  }
+
+  getLastStatus () {
+    return this.lastTaskStatus;
   }
 }
 
