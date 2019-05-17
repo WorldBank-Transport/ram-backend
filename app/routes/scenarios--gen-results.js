@@ -232,6 +232,9 @@ async function generateResults (projId, scId) {
 
   // Catching errors.
   } catch (error) {
+    // If the operation was completed through the process, the operation
+    // has to be reloaded.
+    await op.reload();
     // The operation may not have finished if the error took place outside
     // the promise, or if the error was due to a wrong db connection.
     if (!op.isCompleted()) {

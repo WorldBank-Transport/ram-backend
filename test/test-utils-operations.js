@@ -215,6 +215,24 @@ describe('Operation', function () {
           assert.equal(op.getName(), 'op-load-test');
         });
     });
+
+    it('should reload the operation', async function () {
+      let op = new Operation(db);
+      let op2 = new Operation(db);
+
+      await op.loadById(2000);
+      await op2.loadById(2000);
+
+      assert.isFalse(op.isCompleted());
+      assert.isFalse(op2.isCompleted());
+      await op.finish();
+
+      assert.isTrue(op.isCompleted());
+      assert.isFalse(op2.isCompleted());
+      await op2.reload();
+
+      assert.isTrue(op2.isCompleted());
+    });
   });
 
   describe('Log', function () {

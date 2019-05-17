@@ -164,6 +164,19 @@ export default class Operation {
   }
 
   /**
+   * Reload the operation
+   *
+   * @return {Operation}     This operation instance
+   */
+  reload () {
+    if (!this.id) {
+      throw new Error('Operation not loaded');
+    }
+
+    return this._load({id: this.id});
+  }
+
+  /**
    * Load the operation by name, project, scenario
    *
    * @param  {String} name   Name of the operation
