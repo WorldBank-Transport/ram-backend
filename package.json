@@ -1,6 +1,6 @@
 {
   "name": "ram-backend",
-  "version": "0.8.4",
+  "version": "0.8.5",
   "description": "The backend for RAM, a World Bank project to assess rural road accessibility",
   "repository": {
     "type": "git",
